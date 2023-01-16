@@ -44,9 +44,10 @@ const defaultSelectedPkg = {
       identifier: "test/test",
       plugin: { name: "my.plugin", version: "0.0.1" },
     } as AvailablePackageReference,
+    defaultValues: "package: defaults",
   } as AvailablePackageDetail,
   pkgVersion: "1.2.4",
-  values: "bar: foo",
+  values: "package: defaults",
 };
 
 const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.packageCluster}/${defaultProps.packageNamespace}/${defaultProps.pkgName}/versions/${defaultProps.version}`;
@@ -128,6 +129,21 @@ it("fetches the available versions", () => {
   );
 });
 
+describe("default values", () => {
+  it("uses the selected package default values", () => {
+    const wrapper = mountWrapper(
+      getStore({ packages: { selected: defaultSelectedPkg } } as IStoreState),
+      <Router history={history}>
+        <Route path={routePath}>
+          <DeploymentForm />
+        </Route>
+      </Router>,
+    );
+
+    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("package: defaults");
+  });
+});
+
 describe("renders an error", () => {
   it("renders a custom error if the deployment failed", () => {
     const wrapper = mountWrapper(
@@ -185,11 +201,11 @@ describe("renders an error", () => {
       .find(DeploymentFormBody)
       .prop("setValues");
     act(() => {
-      handleValuesChange("foo: bar");
+      handleValuesChange("changed: defaults");
     });
     wrapper.update();
 
-    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("foo: bar");
+    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("changed: defaults");
   });
 
   it("changes values if the version changes and it has not been modified", () => {
@@ -201,7 +217,7 @@ describe("renders an error", () => {
         </Route>
       </Router>,
     );
-    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("bar: foo");
+    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("package: defaults");
   });
 
   it("display the service account selector", () => {

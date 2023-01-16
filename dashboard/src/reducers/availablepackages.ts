@@ -8,6 +8,7 @@ import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { PackagesAction } from "../actions/availablepackages";
 import { NamespaceAction } from "../actions/namespace";
+import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 export const initialState: IPackageState = {
   isFetching: false,
@@ -20,6 +21,16 @@ export const initialState: IPackageState = {
   },
   size: 20,
 };
+
+// defaultValues determines whether the package defaults or custom default
+// values should be used.
+function defaultValues(pkg: AvailablePackageDetail) {
+  const additionalValues = Object.values(pkg.additionalDefaultValues || []);
+  if (additionalValues.length === 1) {
+    return additionalValues[0];
+  }
+  return pkg.defaultValues || "";
+}
 
 const selectedPackageReducer = (
   state: IPackageState["selected"],
@@ -35,7 +46,7 @@ const selectedPackageReducer = (
         pkgVersion: action.payload.selectedPackage.version?.pkgVersion,
         appVersion: action.payload.selectedPackage.version?.appVersion,
         readme: action.payload.selectedPackage.readme,
-        values: action.payload.selectedPackage.defaultValues,
+        values: defaultValues(action.payload.selectedPackage),
         schema:
           action.payload.selectedPackage.valuesSchema !== ""
             ? (JSON.parse(action.payload.selectedPackage.valuesSchema) as JSONSchemaType<any>)

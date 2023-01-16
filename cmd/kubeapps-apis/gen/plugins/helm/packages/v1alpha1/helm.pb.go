@@ -151,9 +151,10 @@ type RollbackInstalledPackageResponse struct {
 	unknownFields protoimpl.UnknownFields
 
 	// TODO: add example for API docs
-	// option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-	//   example: '{"installed_package_ref": {}}'
-	// };
+	//
+	//	option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+	//	  example: '{"installed_package_ref": {}}'
+	//	};
 	InstalledPackageRef *v1alpha1.InstalledPackageReference `protobuf:"bytes,1,opt,name=installed_package_ref,json=installedPackageRef,proto3" json:"installed_package_ref,omitempty"`
 }
 

@@ -26,7 +26,7 @@ export const setSessionExpired = createAction("SET_AUTHENTICATION_SESSION_EXPIRE
 
 const allActions = [setAuthenticated, authenticating, authenticationError, setSessionExpired];
 
-export type AuthAction = ActionType<typeof allActions[number]>;
+export type AuthAction = ActionType<(typeof allActions)[number]>;
 
 export function authenticate(
   cluster: string,

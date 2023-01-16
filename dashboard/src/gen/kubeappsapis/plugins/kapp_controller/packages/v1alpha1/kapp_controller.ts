@@ -161,6 +161,12 @@ export const KappControllerPackageRepositoryCustomDetail = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<KappControllerPackageRepositoryCustomDetail>, I>>(
+    base?: I,
+  ): KappControllerPackageRepositoryCustomDetail {
+    return KappControllerPackageRepositoryCustomDetail.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<KappControllerPackageRepositoryCustomDetail>, I>>(
     object: I,
   ): KappControllerPackageRepositoryCustomDetail {
@@ -262,6 +268,12 @@ export const PackageRepositoryFetch = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<PackageRepositoryFetch>, I>>(
+    base?: I,
+  ): PackageRepositoryFetch {
+    return PackageRepositoryFetch.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<PackageRepositoryFetch>, I>>(
     object: I,
   ): PackageRepositoryFetch {
@@ -337,6 +349,12 @@ export const PackageRepositoryImgpkg = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<PackageRepositoryImgpkg>, I>>(
+    base?: I,
+  ): PackageRepositoryImgpkg {
+    return PackageRepositoryImgpkg.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<PackageRepositoryImgpkg>, I>>(
     object: I,
   ): PackageRepositoryImgpkg {
@@ -402,6 +420,12 @@ export const PackageRepositoryImage = {
         : undefined);
     message.subPath !== undefined && (obj.subPath = message.subPath);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<PackageRepositoryImage>, I>>(
+    base?: I,
+  ): PackageRepositoryImage {
+    return PackageRepositoryImage.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<PackageRepositoryImage>, I>>(
@@ -488,6 +512,10 @@ export const PackageRepositoryGit = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<PackageRepositoryGit>, I>>(base?: I): PackageRepositoryGit {
+    return PackageRepositoryGit.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<PackageRepositoryGit>, I>>(
     object: I,
   ): PackageRepositoryGit {
@@ -551,6 +579,10 @@ export const PackageRepositoryHttp = {
     message.subPath !== undefined && (obj.subPath = message.subPath);
     message.sha256 !== undefined && (obj.sha256 = message.sha256);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<PackageRepositoryHttp>, I>>(base?: I): PackageRepositoryHttp {
+    return PackageRepositoryHttp.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<PackageRepositoryHttp>, I>>(
@@ -637,6 +669,12 @@ export const PackageRepositoryInline = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<PackageRepositoryInline>, I>>(
+    base?: I,
+  ): PackageRepositoryInline {
+    return PackageRepositoryInline.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<PackageRepositoryInline>, I>>(
     object: I,
   ): PackageRepositoryInline {
@@ -707,6 +745,12 @@ export const PackageRepositoryInline_SourceRef = {
     message.name !== undefined && (obj.name = message.name);
     message.directoryPath !== undefined && (obj.directoryPath = message.directoryPath);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<PackageRepositoryInline_SourceRef>, I>>(
+    base?: I,
+  ): PackageRepositoryInline_SourceRef {
+    return PackageRepositoryInline_SourceRef.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<PackageRepositoryInline_SourceRef>, I>>(
@@ -788,6 +832,12 @@ export const PackageRepositoryInline_Source = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<PackageRepositoryInline_Source>, I>>(
+    base?: I,
+  ): PackageRepositoryInline_Source {
+    return PackageRepositoryInline_Source.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<PackageRepositoryInline_Source>, I>>(
     object: I,
   ): PackageRepositoryInline_Source {
@@ -857,6 +907,12 @@ export const PackageRepositoryInline_PathsEntry = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<PackageRepositoryInline_PathsEntry>, I>>(
+    base?: I,
+  ): PackageRepositoryInline_PathsEntry {
+    return PackageRepositoryInline_PathsEntry.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<PackageRepositoryInline_PathsEntry>, I>>(
     object: I,
   ): PackageRepositoryInline_PathsEntry {
@@ -908,6 +964,10 @@ export const VersionSelection = {
     message.semver !== undefined &&
       (obj.semver = message.semver ? VersionSelectionSemver.toJSON(message.semver) : undefined);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<VersionSelection>, I>>(base?: I): VersionSelection {
+    return VersionSelection.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<VersionSelection>, I>>(object: I): VersionSelection {
@@ -978,6 +1038,12 @@ export const VersionSelectionSemver = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<VersionSelectionSemver>, I>>(
+    base?: I,
+  ): VersionSelectionSemver {
+    return VersionSelectionSemver.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<VersionSelectionSemver>, I>>(
     object: I,
   ): VersionSelectionSemver {
@@ -1040,6 +1106,12 @@ export const VersionSelectionSemverPrereleases = {
       obj.identifiers = [];
     }
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<VersionSelectionSemverPrereleases>, I>>(
+    base?: I,
+  ): VersionSelectionSemverPrereleases {
+    return VersionSelectionSemverPrereleases.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<VersionSelectionSemverPrereleases>, I>>(
@@ -1236,10 +1308,11 @@ export const KappControllerPackagesServiceGetAvailablePackageSummariesDesc: Unar
     } as any,
     responseType: {
       deserializeBinary(data: Uint8Array) {
+        const value = GetAvailablePackageSummariesResponse.decode(data);
         return {
-          ...GetAvailablePackageSummariesResponse.decode(data),
+          ...value,
           toObject() {
-            return this;
+            return value;
           },
         };
       },
@@ -1259,10 +1332,11 @@ export const KappControllerPackagesServiceGetAvailablePackageDetailDesc: UnaryMe
     } as any,
     responseType: {
       deserializeBinary(data: Uint8Array) {
+        const value = GetAvailablePackageDetailResponse.decode(data);
         return {
-          ...GetAvailablePackageDetailResponse.decode(data),
+          ...value,
           toObject() {
-            return this;
+            return value;
           },
         };
       },
@@ -1282,10 +1356,11 @@ export const KappControllerPackagesServiceGetAvailablePackageVersionsDesc: Unary
     } as any,
     responseType: {
       deserializeBinary(data: Uint8Array) {
+        const value = GetAvailablePackageVersionsResponse.decode(data);
         return {
-          ...GetAvailablePackageVersionsResponse.decode(data),
+          ...value,
           toObject() {
-            return this;
+            return value;
           },
         };
       },
@@ -1305,10 +1380,11 @@ export const KappControllerPackagesServiceGetInstalledPackageSummariesDesc: Unar
     } as any,
     responseType: {
       deserializeBinary(data: Uint8Array) {
+        const value = GetInstalledPackageSummariesResponse.decode(data);
         return {
-          ...GetInstalledPackageSummariesResponse.decode(data),
+          ...value,
           toObject() {
-            return this;
+            return value;
           },
         };
       },
@@ -1328,10 +1404,11 @@ export const KappControllerPackagesServiceGetInstalledPackageDetailDesc: UnaryMe
     } as any,
     responseType: {
       deserializeBinary(data: Uint8Array) {
+        const value = GetInstalledPackageDetailResponse.decode(data);
         return {
-          ...GetInstalledPackageDetailResponse.decode(data),
+          ...value,
           toObject() {
-            return this;
+            return value;
           },
         };
       },
@@ -1350,10 +1427,11 @@ export const KappControllerPackagesServiceCreateInstalledPackageDesc: UnaryMetho
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = CreateInstalledPackageResponse.decode(data);
       return {
-        ...CreateInstalledPackageResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1372,10 +1450,11 @@ export const KappControllerPackagesServiceUpdateInstalledPackageDesc: UnaryMetho
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = UpdateInstalledPackageResponse.decode(data);
       return {
-        ...UpdateInstalledPackageResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1394,10 +1473,11 @@ export const KappControllerPackagesServiceDeleteInstalledPackageDesc: UnaryMetho
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = DeleteInstalledPackageResponse.decode(data);
       return {
-        ...DeleteInstalledPackageResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1417,10 +1497,11 @@ export const KappControllerPackagesServiceGetInstalledPackageResourceRefsDesc: U
     } as any,
     responseType: {
       deserializeBinary(data: Uint8Array) {
+        const value = GetInstalledPackageResourceRefsResponse.decode(data);
         return {
-          ...GetInstalledPackageResourceRefsResponse.decode(data),
+          ...value,
           toObject() {
-            return this;
+            return value;
           },
         };
       },
@@ -1554,10 +1635,11 @@ export const KappControllerRepositoriesServiceAddPackageRepositoryDesc: UnaryMet
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = AddPackageRepositoryResponse.decode(data);
       return {
-        ...AddPackageRepositoryResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1577,10 +1659,11 @@ export const KappControllerRepositoriesServiceGetPackageRepositoryDetailDesc: Un
     } as any,
     responseType: {
       deserializeBinary(data: Uint8Array) {
+        const value = GetPackageRepositoryDetailResponse.decode(data);
         return {
-          ...GetPackageRepositoryDetailResponse.decode(data),
+          ...value,
           toObject() {
-            return this;
+            return value;
           },
         };
       },
@@ -1600,10 +1683,11 @@ export const KappControllerRepositoriesServiceGetPackageRepositorySummariesDesc:
     } as any,
     responseType: {
       deserializeBinary(data: Uint8Array) {
+        const value = GetPackageRepositorySummariesResponse.decode(data);
         return {
-          ...GetPackageRepositorySummariesResponse.decode(data),
+          ...value,
           toObject() {
-            return this;
+            return value;
           },
         };
       },
@@ -1623,10 +1707,11 @@ export const KappControllerRepositoriesServiceUpdatePackageRepositoryDesc: Unary
     } as any,
     responseType: {
       deserializeBinary(data: Uint8Array) {
+        const value = UpdatePackageRepositoryResponse.decode(data);
         return {
-          ...UpdatePackageRepositoryResponse.decode(data),
+          ...value,
           toObject() {
-            return this;
+            return value;
           },
         };
       },
@@ -1646,10 +1731,11 @@ export const KappControllerRepositoriesServiceDeletePackageRepositoryDesc: Unary
     } as any,
     responseType: {
       deserializeBinary(data: Uint8Array) {
+        const value = DeletePackageRepositoryResponse.decode(data);
         return {
-          ...DeletePackageRepositoryResponse.decode(data),
+          ...value,
           toObject() {
-            return this;
+            return value;
           },
         };
       },
@@ -1669,10 +1755,11 @@ export const KappControllerRepositoriesServiceGetPackageRepositoryPermissionsDes
     } as any,
     responseType: {
       deserializeBinary(data: Uint8Array) {
+        const value = GetPackageRepositoryPermissionsResponse.decode(data);
         return {
-          ...GetPackageRepositoryPermissionsResponse.decode(data),
+          ...value,
           toObject() {
-            return this;
+            return value;
           },
         };
       },
@@ -1737,7 +1824,7 @@ export class GrpcWebImpl {
         debug: this.options.debug,
         onEnd: function (response) {
           if (response.status === grpc.Code.OK) {
-            resolve(response.message);
+            resolve(response.message!.toObject());
           } else {
             const err = new GrpcWebError(
               response.statusMessage,
@@ -1751,6 +1838,25 @@ export class GrpcWebImpl {
     });
   }
 }
+
+declare var self: any | undefined;
+declare var window: any | undefined;
+declare var global: any | undefined;
+var tsProtoGlobalThis: any = (() => {
+  if (typeof globalThis !== "undefined") {
+    return globalThis;
+  }
+  if (typeof self !== "undefined") {
+    return self;
+  }
+  if (typeof window !== "undefined") {
+    return window;
+  }
+  if (typeof global !== "undefined") {
+    return global;
+  }
+  throw "Unable to locate global object";
+})();
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
@@ -1777,7 +1883,7 @@ function isSet(value: any): boolean {
   return value !== null && value !== undefined;
 }
 
-export class GrpcWebError extends Error {
+export class GrpcWebError extends tsProtoGlobalThis.Error {
   constructor(message: string, public code: grpc.Code, public metadata: grpc.Metadata) {
     super(message);
   }

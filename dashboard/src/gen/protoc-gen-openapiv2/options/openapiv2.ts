@@ -1362,6 +1362,10 @@ export const Swagger = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<Swagger>, I>>(base?: I): Swagger {
+    return Swagger.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<Swagger>, I>>(object: I): Swagger {
     const message = createBaseSwagger();
     message.swagger = object.swagger ?? "";
@@ -1455,6 +1459,12 @@ export const Swagger_ResponsesEntry = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<Swagger_ResponsesEntry>, I>>(
+    base?: I,
+  ): Swagger_ResponsesEntry {
+    return Swagger_ResponsesEntry.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<Swagger_ResponsesEntry>, I>>(
     object: I,
   ): Swagger_ResponsesEntry {
@@ -1516,6 +1526,12 @@ export const Swagger_ExtensionsEntry = {
     message.key !== undefined && (obj.key = message.key);
     message.value !== undefined && (obj.value = message.value);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Swagger_ExtensionsEntry>, I>>(
+    base?: I,
+  ): Swagger_ExtensionsEntry {
+    return Swagger_ExtensionsEntry.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<Swagger_ExtensionsEntry>, I>>(
@@ -1756,6 +1772,10 @@ export const Operation = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<Operation>, I>>(base?: I): Operation {
+    return Operation.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<Operation>, I>>(object: I): Operation {
     const message = createBaseOperation();
     message.tags = object.tags?.map(e => e) || [];
@@ -1848,6 +1868,12 @@ export const Operation_ResponsesEntry = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<Operation_ResponsesEntry>, I>>(
+    base?: I,
+  ): Operation_ResponsesEntry {
+    return Operation_ResponsesEntry.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<Operation_ResponsesEntry>, I>>(
     object: I,
   ): Operation_ResponsesEntry {
@@ -1911,6 +1937,12 @@ export const Operation_ExtensionsEntry = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<Operation_ExtensionsEntry>, I>>(
+    base?: I,
+  ): Operation_ExtensionsEntry {
+    return Operation_ExtensionsEntry.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<Operation_ExtensionsEntry>, I>>(
     object: I,
   ): Operation_ExtensionsEntry {
@@ -1967,6 +1999,10 @@ export const Parameters = {
       obj.headers = [];
     }
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Parameters>, I>>(base?: I): Parameters {
+    return Parameters.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<Parameters>, I>>(object: I): Parameters {
@@ -2048,6 +2084,10 @@ export const HeaderParameter = {
     message.format !== undefined && (obj.format = message.format);
     message.required !== undefined && (obj.required = message.required);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<HeaderParameter>, I>>(base?: I): HeaderParameter {
+    return HeaderParameter.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<HeaderParameter>, I>>(object: I): HeaderParameter {
@@ -2133,6 +2173,10 @@ export const Header = {
     message.default !== undefined && (obj.default = message.default);
     message.pattern !== undefined && (obj.pattern = message.pattern);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Header>, I>>(base?: I): Header {
+    return Header.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<Header>, I>>(object: I): Header {
@@ -2265,6 +2309,10 @@ export const Response = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<Response>, I>>(base?: I): Response {
+    return Response.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<Response>, I>>(object: I): Response {
     const message = createBaseResponse();
     message.description = object.description ?? "";
@@ -2354,6 +2402,10 @@ export const Response_HeadersEntry = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<Response_HeadersEntry>, I>>(base?: I): Response_HeadersEntry {
+    return Response_HeadersEntry.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<Response_HeadersEntry>, I>>(
     object: I,
   ): Response_HeadersEntry {
@@ -2417,6 +2469,12 @@ export const Response_ExamplesEntry = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<Response_ExamplesEntry>, I>>(
+    base?: I,
+  ): Response_ExamplesEntry {
+    return Response_ExamplesEntry.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<Response_ExamplesEntry>, I>>(
     object: I,
   ): Response_ExamplesEntry {
@@ -2475,6 +2533,12 @@ export const Response_ExtensionsEntry = {
     message.key !== undefined && (obj.key = message.key);
     message.value !== undefined && (obj.value = message.value);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Response_ExtensionsEntry>, I>>(
+    base?: I,
+  ): Response_ExtensionsEntry {
+    return Response_ExtensionsEntry.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<Response_ExtensionsEntry>, I>>(
@@ -2602,6 +2666,10 @@ export const Info = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<Info>, I>>(base?: I): Info {
+    return Info.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<Info>, I>>(object: I): Info {
     const message = createBaseInfo();
     message.title = object.title ?? "";
@@ -2679,6 +2747,10 @@ export const Info_ExtensionsEntry = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<Info_ExtensionsEntry>, I>>(base?: I): Info_ExtensionsEntry {
+    return Info_ExtensionsEntry.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<Info_ExtensionsEntry>, I>>(
     object: I,
   ): Info_ExtensionsEntry {
@@ -2747,6 +2819,10 @@ export const Contact = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<Contact>, I>>(base?: I): Contact {
+    return Contact.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<Contact>, I>>(object: I): Contact {
     const message = createBaseContact();
     message.name = object.name ?? "";
@@ -2806,6 +2882,10 @@ export const License = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<License>, I>>(base?: I): License {
+    return License.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<License>, I>>(object: I): License {
     const message = createBaseLicense();
     message.name = object.name ?? "";
@@ -2862,6 +2942,10 @@ export const ExternalDocumentation = {
     message.description !== undefined && (obj.description = message.description);
     message.url !== undefined && (obj.url = message.url);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ExternalDocumentation>, I>>(base?: I): ExternalDocumentation {
+    return ExternalDocumentation.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<ExternalDocumentation>, I>>(
@@ -2958,6 +3042,10 @@ export const Schema = {
         : undefined);
     message.example !== undefined && (obj.example = message.example);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Schema>, I>>(base?: I): Schema {
+    return Schema.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<Schema>, I>>(object: I): Schema {
@@ -3302,6 +3390,10 @@ export const JSONSchema = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<JSONSchema>, I>>(base?: I): JSONSchema {
+    return JSONSchema.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<JSONSchema>, I>>(object: I): JSONSchema {
     const message = createBaseJSONSchema();
     message.ref = object.ref ?? "";
@@ -3388,6 +3480,12 @@ export const JSONSchema_FieldConfiguration = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<JSONSchema_FieldConfiguration>, I>>(
+    base?: I,
+  ): JSONSchema_FieldConfiguration {
+    return JSONSchema_FieldConfiguration.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<JSONSchema_FieldConfiguration>, I>>(
     object: I,
   ): JSONSchema_FieldConfiguration {
@@ -3448,6 +3546,12 @@ export const JSONSchema_ExtensionsEntry = {
     message.key !== undefined && (obj.key = message.key);
     message.value !== undefined && (obj.value = message.value);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<JSONSchema_ExtensionsEntry>, I>>(
+    base?: I,
+  ): JSONSchema_ExtensionsEntry {
+    return JSONSchema_ExtensionsEntry.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<JSONSchema_ExtensionsEntry>, I>>(
@@ -3546,6 +3650,10 @@ export const Tag = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<Tag>, I>>(base?: I): Tag {
+    return Tag.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<Tag>, I>>(object: I): Tag {
     const message = createBaseTag();
     message.name = object.name ?? "";
@@ -3615,6 +3723,10 @@ export const Tag_ExtensionsEntry = {
     message.key !== undefined && (obj.key = message.key);
     message.value !== undefined && (obj.value = message.value);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Tag_ExtensionsEntry>, I>>(base?: I): Tag_ExtensionsEntry {
+    return Tag_ExtensionsEntry.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<Tag_ExtensionsEntry>, I>>(
@@ -3688,6 +3800,10 @@ export const SecurityDefinitions = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<SecurityDefinitions>, I>>(base?: I): SecurityDefinitions {
+    return SecurityDefinitions.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<SecurityDefinitions>, I>>(
     object: I,
   ): SecurityDefinitions {
@@ -3756,6 +3872,12 @@ export const SecurityDefinitions_SecurityEntry = {
     message.value !== undefined &&
       (obj.value = message.value ? SecurityScheme.toJSON(message.value) : undefined);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SecurityDefinitions_SecurityEntry>, I>>(
+    base?: I,
+  ): SecurityDefinitions_SecurityEntry {
+    return SecurityDefinitions_SecurityEntry.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<SecurityDefinitions_SecurityEntry>, I>>(
@@ -3906,6 +4028,10 @@ export const SecurityScheme = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<SecurityScheme>, I>>(base?: I): SecurityScheme {
+    return SecurityScheme.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<SecurityScheme>, I>>(object: I): SecurityScheme {
     const message = createBaseSecurityScheme();
     message.type = object.type ?? 0;
@@ -3985,6 +4111,12 @@ export const SecurityScheme_ExtensionsEntry = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<SecurityScheme_ExtensionsEntry>, I>>(
+    base?: I,
+  ): SecurityScheme_ExtensionsEntry {
+    return SecurityScheme_ExtensionsEntry.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<SecurityScheme_ExtensionsEntry>, I>>(
     object: I,
   ): SecurityScheme_ExtensionsEntry {
@@ -4058,6 +4190,10 @@ export const SecurityRequirement = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<SecurityRequirement>, I>>(base?: I): SecurityRequirement {
+    return SecurityRequirement.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<SecurityRequirement>, I>>(
     object: I,
   ): SecurityRequirement {
@@ -4122,6 +4258,12 @@ export const SecurityRequirement_SecurityRequirementValue = {
       obj.scope = [];
     }
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SecurityRequirement_SecurityRequirementValue>, I>>(
+    base?: I,
+  ): SecurityRequirement_SecurityRequirementValue {
+    return SecurityRequirement_SecurityRequirementValue.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<SecurityRequirement_SecurityRequirementValue>, I>>(
@@ -4200,6 +4342,12 @@ export const SecurityRequirement_SecurityRequirementEntry = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<SecurityRequirement_SecurityRequirementEntry>, I>>(
+    base?: I,
+  ): SecurityRequirement_SecurityRequirementEntry {
+    return SecurityRequirement_SecurityRequirementEntry.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<SecurityRequirement_SecurityRequirementEntry>, I>>(
     object: I,
   ): SecurityRequirement_SecurityRequirementEntry {
@@ -4268,6 +4416,10 @@ export const Scopes = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<Scopes>, I>>(base?: I): Scopes {
+    return Scopes.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<Scopes>, I>>(object: I): Scopes {
     const message = createBaseScopes();
     message.scope = Object.entries(object.scope ?? {}).reduce<{ [key: string]: string }>(
@@ -4333,6 +4485,10 @@ export const Scopes_ScopeEntry = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<Scopes_ScopeEntry>, I>>(base?: I): Scopes_ScopeEntry {
+    return Scopes_ScopeEntry.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<Scopes_ScopeEntry>, I>>(object: I): Scopes_ScopeEntry {
     const message = createBaseScopes_ScopeEntry();
     message.key = object.key ?? "";
@@ -4344,7 +4500,7 @@ export const Scopes_ScopeEntry = {
 declare var self: any | undefined;
 declare var window: any | undefined;
 declare var global: any | undefined;
-var globalThis: any = (() => {
+var tsProtoGlobalThis: any = (() => {
   if (typeof globalThis !== "undefined") {
     return globalThis;
   }
@@ -4379,7 +4535,7 @@ export type Exact<P, I extends P> = P extends Builtin
 
 function longToNumber(long: Long): number {
   if (long.gt(Number.MAX_SAFE_INTEGER)) {
-    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+    throw new tsProtoGlobalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
   }
   return long.toNumber();
 }

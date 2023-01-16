@@ -1,0 +1,7 @@
+# Copyright 2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
+image:
+  repository: bitnami/nginx
+  tag: "1.23.3-debian-11"
+  pullPolicy: IfNotPresent
