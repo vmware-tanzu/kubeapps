@@ -521,7 +521,7 @@ mZu9A/ivt37pOQXm/HOX6tHB
         let valid_credential: ClusterCredential = ClusterCredential {
             client_certificate_data: String::from(VALID_CERT_PEM),
             client_key_data: String::from(VALID_KEY_PEM),
-            expiration_timestamp: metav1::Time(Utc.timestamp(0, 0)),
+            expiration_timestamp: metav1::Time(Utc.timestamp_opt(0, 0).single().unwrap()),
             token: Some(String::from("")),
         };
 
@@ -623,7 +623,7 @@ mZu9A/ivt37pOQXm/HOX6tHB
                     token: Some(String::from("returned token")),
                     client_certificate_data: String::from("cert-data"),
                     client_key_data: String::from("key-data"),
-                    expiration_timestamp: metav1::Time(Utc.timestamp(0, 0)),
+                    expiration_timestamp: metav1::Time(Utc.timestamp_opt(0, 0).single().unwrap()),
                 }),
                 message: Some(String::from("some status message")),
             });
@@ -661,7 +661,7 @@ mZu9A/ivt37pOQXm/HOX6tHB
         let mut cred_data = make_token_credential_request();
         cred_data.status = Some(TokenCredentialRequestStatus {
             credential: Some(ClusterCredential {
-                expiration_timestamp: metav1::Time(Utc.timestamp(0, 0)),
+                expiration_timestamp: metav1::Time(Utc.timestamp_opt(0, 0).single().unwrap()),
                 client_certificate_data: String::from("cert data"),
                 client_key_data: String::from("key data"),
                 token: Some(String::from("token")),

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::Result;
+use base64::{engine::general_purpose, Engine as _};
 use hyper::{client::connect::HttpConnector, header::HeaderValue, Client, HeaderMap, Request};
 use hyper_tls::HttpsConnector;
 use log::debug;
@@ -89,7 +90,7 @@ pub fn get_api_server_url(request_headers: &HeaderMap<HeaderValue>) -> Result<St
 /// get_api_server_cert_auth_data returns a byte vector result containing the
 /// base64 decoded value.
 pub fn get_api_server_cert_auth_data(cacert_header: &HeaderValue) -> Result<Vec<u8>> {
-    match base64::decode(cacert_header.as_bytes()) {
+    match general_purpose::STANDARD.decode(cacert_header.as_bytes()) {
         Ok(data) => Ok(data),
         Err(e) => {
             debug!(
@@ -295,7 +296,10 @@ mod tests {
     fn test_api_server_cert_auth_data_valid() -> Result<()> {
         match get_api_server_cert_auth_data(&HeaderValue::from_static(VALID_CERT_BASE64)) {
             Ok(data) => {
-                assert_eq!(data, base64::decode(VALID_CERT_BASE64.as_bytes())?);
+                assert_eq!(
+                    data,
+                    general_purpose::STANDARD.decode(VALID_CERT_BASE64.as_bytes())?
+                );
                 Ok(())
             }
             Err(e) => anyhow::bail!("got {}, want: valid cert data", e),
@@ -319,7 +323,7 @@ mod tests {
 
     #[test]
     fn cert_for_cert_data_success() -> Result<()> {
-        match cert_for_cert_data(base64::decode(VALID_CERT_BASE64.as_bytes())?) {
+        match cert_for_cert_data(general_purpose::STANDARD.decode(VALID_CERT_BASE64.as_bytes())?) {
             Ok(_) => Ok(()),
             Err(e) => anyhow::bail!("got {}, want: valid cert", e),
         }
