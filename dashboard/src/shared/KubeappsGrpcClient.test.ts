@@ -46,7 +46,6 @@ describe("kubeapps grpc core plugin service", () => {
     jest.restoreAllMocks();
   });
 
-  const fakeEmptyTransport = new FakeTransportBuilder().withMessages([]).build();
   const fakeErrorransport = new FakeTransportBuilder()
     .withPreTrailersError(grpc.Code.Internal, "boom")
     .build();
