@@ -67,7 +67,7 @@ const allActions = [
   receiveKindsError,
 ];
 
-export type KubeAction = ActionType<typeof allActions[number]>;
+export type KubeAction = ActionType<(typeof allActions)[number]>;
 
 export function getResourceKinds(
   cluster: string,
