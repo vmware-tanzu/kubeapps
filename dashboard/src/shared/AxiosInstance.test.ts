@@ -1,6 +1,7 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { AxiosRequestHeaders } from "axios";
 import MockAdapter from "axios-mock-adapter";
 import { IAuthState } from "reducers/auth";
 import configureMockStore from "redux-mock-store";
@@ -67,7 +68,7 @@ describe("createAxiosInterceptorWithAuth", () => {
 
     await axios.get(testPath);
     const request = axiosMock.history.get[0];
-    expect(request?.headers?.Authorization).toBe(`Bearer ${authToken}`);
+    expect((request?.headers as AxiosRequestHeaders)?.Authorization).toBe(`Bearer ${authToken}`);
   });
 
   const testCases = [
