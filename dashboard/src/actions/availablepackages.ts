@@ -59,6 +59,11 @@ export const receiveSelectedAvailablePackageDetail = createAction(
 // Reset action
 export const resetSelectedAvailablePackageDetail = createAction("RESET_PACKAGE_VERSION");
 
+// Set custom defaults action
+export const setAvailablePackageDetailCustomDefaults = createAction("SET_AVAILABLE_PACKAGE_DETAIL_CUSTOM_DEFAULTS", resolve => {
+  return (customDefault: string) => resolve({ customDefault });
+});
+
 // Request action
 export const requestSelectedAvailablePackageVersions = createAction(
   "REQUEST_SELECTED_AVAILABLE_PACKAGE_VERSIONS",
@@ -91,6 +96,7 @@ const allActions = [
   resetAvailablePackageSummaries,
   requestSelectedAvailablePackageDetail,
   receiveSelectedAvailablePackageDetail,
+  setAvailablePackageDetailCustomDefaults,
   resetSelectedAvailablePackageDetail,
   requestSelectedAvailablePackageVersions,
   receiveSelectedAvailablePackageVersions,
@@ -167,3 +173,4 @@ export function fetchAndSelectAvailablePackageDetail(
     }
   };
 }
+

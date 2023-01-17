@@ -10,8 +10,9 @@ import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { IPackageState, IReceivePackagesActionPayload } from "../shared/types";
-import packageReducer from "./availablepackages";
+import packageReducer, { defaultValues } from "./availablepackages";
 import { PackagesAction } from "../actions/availablepackages";
+import { initial } from "lodash";
 
 const nextPageToken = "nextPageToken";
 const currentPageToken = "currentPageToken";
@@ -553,5 +554,86 @@ describe("packageReducer", () => {
 
       expect(state.selected.values).toEqual("default: values");
     });
+  });
+
+  describe("setAvailablePackageDetailCustomDefaults", () => {
+    it("sets the custom default", () => {
+      const packageWithCustomDefaults = {
+        ...initialState,
+        selected: {
+          ...initialState.selected,
+          availablePackageDetail: {
+            ...initialState.selected.availablePackageDetail!,
+            additionalDefaultValues: {
+              "values-custom": "custom: values",
+              "values-other": "more: customdefaultvalues",
+            },
+          },
+          values: "default: values",
+        },
+      };
+      const state = packageReducer(packageWithCustomDefaults, {
+        type: getType(actions.availablepackages.setAvailablePackageDetailCustomDefaults),
+        payload: { customDefault: "values-other" },
+      }) as any;
+
+      expect(state.selected.values).toEqual("more: customdefaultvalues");
+    })
+  });
+});
+
+describe("defaultValues", () => {
+  const packageDetail = {
+    name: "test-package",
+    defaultValues: "default: values",
+    valuesSchema: "",
+    additionalDefaultValues: {},
+  } as AvailablePackageDetail;
+
+  it("returns the only defaults when values.yaml is the only default file", () => {
+    let result = defaultValues(packageDetail);
+
+    expect(result).toEqual("default: values");
+  });
+
+  it("returns the only defaults when values.yaml is the only default file, regardless of input", () => {
+    let result = defaultValues(packageDetail, "other-default");
+
+    expect(result).toEqual("default: values");
+  });
+
+  it("returns a custom default file when there is exactly one custom default in the pkg", () => {
+    let result = defaultValues({
+      ...packageDetail,
+      additionalDefaultValues: {
+        "values-custom": "custom: values",
+      }
+    }, "other-default");
+
+    expect(result).toEqual("custom: values");
+  });
+
+  it("returns the default file when there is more than one custom default in the pkg", () => {
+    let result = defaultValues({
+      ...packageDetail,
+      additionalDefaultValues: {
+        "values-custom": "custom: values",
+        "other-custom": "other: values",
+      }
+    }, "other-default");
+
+    expect(result).toEqual("default: values");
+  });
+
+  it("returns the specific custom default file when specified", () => {
+    let result = defaultValues({
+      ...packageDetail,
+      additionalDefaultValues: {
+        "values-custom": "custom: values",
+        "other-custom": "other: values",
+      }
+    }, "other-custom");
+
+    expect(result).toEqual("other: values");
   });
 });

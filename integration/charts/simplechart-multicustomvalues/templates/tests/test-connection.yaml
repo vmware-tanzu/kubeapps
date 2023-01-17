@@ -1,0 +1,14 @@
+# Copyright 2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "simplechart.fullname" . }}-test-connection"
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['{{ include "simplechart.fullname" . }}:{{ .Values.service.port }}']
+  restartPolicy: Never
