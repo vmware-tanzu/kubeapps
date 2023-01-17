@@ -8,6 +8,7 @@ ignore: |
   **/chart/kubeapps/
   **/integration/charts/simplechart/
   **/integration/charts/simplechart-customvalues/
+  **/integration/charts/simplechart-multicustomvalues/
   **/dashboard/node_modules/
   **/devel/
   #  Ignore files

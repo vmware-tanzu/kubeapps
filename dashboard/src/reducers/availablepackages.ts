@@ -24,10 +24,17 @@ export const initialState: IPackageState = {
 
 // defaultValues determines whether the package defaults or custom default
 // values should be used.
-function defaultValues(pkg: AvailablePackageDetail) {
+export function defaultValues(pkg: AvailablePackageDetail, customDefault?: string) {
   const additionalValues = Object.values(pkg.additionalDefaultValues || []);
   if (additionalValues.length === 1) {
     return additionalValues[0];
+  }
+  if (
+    additionalValues.length > 1 &&
+    customDefault &&
+    customDefault in pkg.additionalDefaultValues
+  ) {
+    return pkg.additionalDefaultValues[customDefault];
   }
   return pkg.defaultValues || "";
 }
@@ -51,6 +58,11 @@ const selectedPackageReducer = (
           action.payload.selectedPackage.valuesSchema !== ""
             ? (JSON.parse(action.payload.selectedPackage.valuesSchema) as JSONSchemaType<any>)
             : ({} as JSONSchemaType<any>),
+      };
+    case getType(actions.availablepackages.setAvailablePackageDetailCustomDefaults):
+      return {
+        ...state,
+        values: defaultValues(state.availablePackageDetail!, action.payload.customDefault),
       };
     case getType(actions.availablepackages.receiveSelectedAvailablePackageVersions):
       return {
@@ -112,6 +124,11 @@ const packageReducer = (
       return {
         ...state,
         isFetching: true,
+        selected: selectedPackageReducer(state.selected, action),
+      };
+    case getType(actions.availablepackages.setAvailablePackageDetailCustomDefaults):
+      return {
+        ...state,
         selected: selectedPackageReducer(state.selected, action),
       };
     case getType(actions.availablepackages.resetAvailablePackageSummaries):
