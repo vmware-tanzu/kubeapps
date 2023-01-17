@@ -90,7 +90,7 @@ require (
 	k8s.io/client-go v0.25.5
 	k8s.io/klog/v2 v2.80.1
 	k8s.io/kubectl v0.25.5
-	k8s.io/kubernetes v1.25.5
+	k8s.io/kubernetes v1.26.0
 	k8s.io/utils v0.0.0-20221108210102-8e77b1f39fe2
 	oras.land/oras-go v1.2.2
 	oras.land/oras-go/v2 v2.0.0-rc.6
@@ -222,8 +222,8 @@ require (
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.13.0 // indirect
-	github.com/prometheus/client_model v0.2.0 // indirect
+	github.com/prometheus/client_golang v1.14.0 // indirect
+	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/rivo/uniseg v0.4.2 // indirect
