@@ -1,6 +1,7 @@
 // Copyright 2019-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import actions from "actions";
 import { CdsButton } from "@cds/react/button";
 import { CdsControlMessage } from "@cds/react/forms";
 import { CdsIcon } from "@cds/react/icon";
@@ -88,7 +89,7 @@ function DeploymentFormBody({
   const [isLoading, setIsLoading] = useState(true);
   const [unsavedChangesMap] = useState(new Map<string, any>());
   const [shouldSubmitForm, setShouldSubmitForm] = useState(false);
-  const [selectedDefaults, setSelectedDefaults] = useState("");
+  const [selectedDefaults] = useState("");
 
   // whenever the parsed values change (for instance, when a new pkg version is selected),
   // we need to force a new extraction of the params from the schema
@@ -176,7 +177,7 @@ function DeploymentFormBody({
   // When multiple defaults are available and one is selected.
   useEffect(() => {
     dispatch(actions.availablepackages.setAvailablePackageDetailCustomDefaults(selectedDefaults));
-  }, [selectedDefaults]);
+  }, [dispatch, selectedDefaults]);
 
   // for each unsaved change in the component state, we need to update the values,
   // so that both the table and the yaml editor get the updated values

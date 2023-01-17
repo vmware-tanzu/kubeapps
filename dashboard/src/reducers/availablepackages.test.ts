@@ -12,7 +12,6 @@ import actions from "../actions";
 import { IPackageState, IReceivePackagesActionPayload } from "../shared/types";
 import packageReducer, { defaultValues } from "./availablepackages";
 import { PackagesAction } from "../actions/availablepackages";
-import { initial } from "lodash";
 
 const nextPageToken = "nextPageToken";
 const currentPageToken = "currentPageToken";
@@ -591,19 +590,19 @@ describe("defaultValues", () => {
   } as AvailablePackageDetail;
 
   it("returns the only defaults when values.yaml is the only default file", () => {
-    let result = defaultValues(packageDetail);
+    const result = defaultValues(packageDetail);
 
     expect(result).toEqual("default: values");
   });
 
   it("returns the only defaults when values.yaml is the only default file, regardless of input", () => {
-    let result = defaultValues(packageDetail, "other-default");
+    const result = defaultValues(packageDetail, "other-default");
 
     expect(result).toEqual("default: values");
   });
 
   it("returns a custom default file when there is exactly one custom default in the pkg", () => {
-    let result = defaultValues(
+    const result = defaultValues(
       {
         ...packageDetail,
         additionalDefaultValues: {
@@ -617,7 +616,7 @@ describe("defaultValues", () => {
   });
 
   it("returns the default file when there is more than one custom default in the pkg", () => {
-    let result = defaultValues(
+    const result = defaultValues(
       {
         ...packageDetail,
         additionalDefaultValues: {
@@ -632,7 +631,7 @@ describe("defaultValues", () => {
   });
 
   it("returns the specific custom default file when specified", () => {
-    let result = defaultValues(
+    const result = defaultValues(
       {
         ...packageDetail,
         additionalDefaultValues: {
