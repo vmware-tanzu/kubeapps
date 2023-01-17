@@ -29,7 +29,11 @@ export function defaultValues(pkg: AvailablePackageDetail, customDefault?: strin
   if (additionalValues.length === 1) {
     return additionalValues[0];
   }
-  if (additionalValues.length > 1 && customDefault && customDefault in pkg.additionalDefaultValues) {
+  if (
+    additionalValues.length > 1 &&
+    customDefault &&
+    customDefault in pkg.additionalDefaultValues
+  ) {
     return pkg.additionalDefaultValues[customDefault];
   }
   return pkg.defaultValues || "";

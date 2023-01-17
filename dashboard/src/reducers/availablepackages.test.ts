@@ -578,7 +578,7 @@ describe("packageReducer", () => {
       }) as any;
 
       expect(state.selected.values).toEqual("more: customdefaultvalues");
-    })
+    });
   });
 });
 
@@ -603,36 +603,45 @@ describe("defaultValues", () => {
   });
 
   it("returns a custom default file when there is exactly one custom default in the pkg", () => {
-    let result = defaultValues({
-      ...packageDetail,
-      additionalDefaultValues: {
-        "values-custom": "custom: values",
-      }
-    }, "other-default");
+    let result = defaultValues(
+      {
+        ...packageDetail,
+        additionalDefaultValues: {
+          "values-custom": "custom: values",
+        },
+      },
+      "other-default",
+    );
 
     expect(result).toEqual("custom: values");
   });
 
   it("returns the default file when there is more than one custom default in the pkg", () => {
-    let result = defaultValues({
-      ...packageDetail,
-      additionalDefaultValues: {
-        "values-custom": "custom: values",
-        "other-custom": "other: values",
-      }
-    }, "other-default");
+    let result = defaultValues(
+      {
+        ...packageDetail,
+        additionalDefaultValues: {
+          "values-custom": "custom: values",
+          "other-custom": "other: values",
+        },
+      },
+      "other-default",
+    );
 
     expect(result).toEqual("default: values");
   });
 
   it("returns the specific custom default file when specified", () => {
-    let result = defaultValues({
-      ...packageDetail,
-      additionalDefaultValues: {
-        "values-custom": "custom: values",
-        "other-custom": "other: values",
-      }
-    }, "other-custom");
+    let result = defaultValues(
+      {
+        ...packageDetail,
+        additionalDefaultValues: {
+          "values-custom": "custom: values",
+          "other-custom": "other: values",
+        },
+      },
+      "other-custom",
+    );
 
     expect(result).toEqual("other: values");
   });
