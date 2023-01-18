@@ -69,7 +69,6 @@ export default function DeploymentForm() {
   const additionalDefaultValuesNames = Object.keys(
     selectedPackage.availablePackageDetail?.additionalDefaultValues || {},
   );
-  console.log(`availablePackageDetail: ${JSON.stringify(selectedPackage.availablePackageDetail)}`);
 
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
 
