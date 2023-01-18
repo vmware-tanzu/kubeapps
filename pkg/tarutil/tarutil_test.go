@@ -203,6 +203,7 @@ func Test_FetchChartDetailFromTarball(t *testing.T) {
 				{Name: path.Join(pkgName, "values.schema.json"), Body: "{}"},
 				{Name: path.Join(pkgName, "Chart.yaml"), Body: "Name: wordpress"},
 				{Name: path.Join(pkgName, "values-production.yaml"), Body: "foo: prod-bar"},
+				{Name: path.Join(pkgName, "values-scenario-a.yaml"), Body: "scenario: a"},
 			},
 			want: map[string]string{
 				chart.ChartYamlKey:     "Name: wordpress",
@@ -210,6 +211,7 @@ func Test_FetchChartDetailFromTarball(t *testing.T) {
 				chart.SchemaKey:        "{}",
 				chart.DefaultValuesKey: "foo: bar",
 				"values-production":    "foo: prod-bar",
+				"values-scenario-a":    "scenario: a",
 			},
 		},
 	}

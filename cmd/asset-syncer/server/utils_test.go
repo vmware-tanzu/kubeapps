@@ -989,6 +989,39 @@ version: 1.0.0
 			false,
 		},
 		{
+			"Retrieve additional values files with more hyphens",
+			"kubeapps",
+			[]tartest.TarballFile{
+				{Name: "README.md", Body: "chart readme"},
+				{Name: "values.yaml", Body: "chart values"},
+				{Name: "values-scenario-a.yaml", Body: "scenario a values"},
+				{Name: "values-scenario-b.yaml", Body: "scenario b values"},
+				{Name: "values.schema.json", Body: "chart schema"},
+			},
+			[]string{"1.0.0"},
+			[]models.Chart{
+				{
+					ID:          "test/kubeapps",
+					Name:        "kubeapps",
+					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/test"},
+					Maintainers: []chart.Maintainer{},
+					ChartVersions: []models.ChartVersion{
+						{
+							Digest:        "123",
+							Readme:        "chart readme",
+							DefaultValues: "chart values",
+							Schema:        "chart schema",
+							AdditionalDefaultValues: map[string]string{
+								"values-scenario-a": "scenario a values",
+								"values-scenario-b": "scenario b values",
+							},
+						},
+					},
+				},
+			},
+			false,
+		},
+		{
 			"A chart with a /",
 			"repo/kubeapps",
 			[]tartest.TarballFile{

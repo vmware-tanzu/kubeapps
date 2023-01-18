@@ -1,7 +1,6 @@
 // Copyright 2019-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import actions from "actions";
 import { CdsButton } from "@cds/react/button";
 import { CdsControlMessage } from "@cds/react/forms";
 import { CdsIcon } from "@cds/react/icon";
@@ -12,7 +11,7 @@ import LoadingWrapper from "components/LoadingWrapper";
 import Tabs from "components/Tabs";
 import { isEmpty } from "lodash";
 import { FormEvent, RefObject, useCallback, useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import {
   retrieveBasicFormParams,
   schemaToObject,
@@ -64,8 +63,6 @@ function DeploymentFormBody({
     config: { featureFlags },
   } = useSelector((state: IStoreState) => state);
 
-  const dispatch = useDispatch();
-
   // Component state
   const [paramsFromComponentState, setParamsFromComponentState] = useState([] as IBasicFormParam[]);
   const [valuesFromTheAvailablePackageNodes, setValuesFromTheAvailablePackageNodes] = useState(
@@ -89,7 +86,6 @@ function DeploymentFormBody({
   const [isLoading, setIsLoading] = useState(true);
   const [unsavedChangesMap] = useState(new Map<string, any>());
   const [shouldSubmitForm, setShouldSubmitForm] = useState(false);
-  const [selectedDefaults] = useState("");
 
   // whenever the parsed values change (for instance, when a new pkg version is selected),
   // we need to force a new extraction of the params from the schema
@@ -173,11 +169,6 @@ function DeploymentFormBody({
       setShouldSubmitForm(false);
     }
   }, [formRef, shouldSubmitForm]);
-
-  // When multiple defaults are available and one is selected.
-  useEffect(() => {
-    dispatch(actions.availablepackages.setAvailablePackageDetailCustomDefaults(selectedDefaults));
-  }, [dispatch, selectedDefaults]);
 
   // for each unsaved change in the component state, we need to update the values,
   // so that both the table and the yaml editor get the updated values

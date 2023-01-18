@@ -65,7 +65,7 @@ func FetchChartDetailFromTarball(reader io.Reader) (map[string]string, error) {
 	// Optionally search for files matching a regular expression, using the
 	// template to provide the key.
 	regexes := map[string]*regexp.Regexp{
-		chart.DefaultValuesKey + "-$valuesType": regexp.MustCompile(`values-(?P<valuesType>\w+)\.yaml`),
+		chart.DefaultValuesKey + "-$valuesType": regexp.MustCompile(`values-(?P<valuesType>[\w-]+)\.yaml`),
 	}
 
 	return ExtractFilesFromTarball(filenames, regexes, tarf)

@@ -18,7 +18,7 @@ import {
   ReconciliationOptions,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router-dom";
 import { Action } from "redux";
@@ -65,6 +65,10 @@ export default function DeploymentForm() {
   const formRef = useRef<HTMLFormElement>(null);
 
   const error = apps.error || selectedPackage.error;
+
+  const additionalDefaultValuesNames = Object.keys(
+    selectedPackage.availablePackageDetail?.additionalDefaultValues || {},
+  );
 
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
 
@@ -170,6 +174,12 @@ export default function DeploymentForm() {
     );
   };
 
+  const onChangeAdditionalDefaultValues = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    dispatch(
+      actions.availablepackages.setAvailablePackageDetailCustomDefaults(e.currentTarget.value),
+    );
+  };
+
   if (error?.constructor === FetchError) {
     return (
       error && (
@@ -257,6 +267,26 @@ export default function DeploymentForm() {
                     <></>
                   )
                 }
+                {additionalDefaultValuesNames.length >= 2 ? (
+                  <>
+                    <CdsSelect layout="horizontal" id="defaultValues-selector">
+                      <label>Custom default values</label>
+                      <select onChange={onChangeAdditionalDefaultValues}>
+                        <option key=""></option>
+                        {additionalDefaultValuesNames.map(o => (
+                          <option key={o} value={o}>
+                            {o}
+                          </option>
+                        ))}
+                      </select>
+                      <CdsControlMessage error="valueMissing">
+                        The name of the additional default values to use with this application.
+                      </CdsControlMessage>
+                    </CdsSelect>
+                  </>
+                ) : (
+                  <></>
+                )}
               </CdsFormGroup>
               <DeploymentFormBody
                 deploymentEvent="install"
