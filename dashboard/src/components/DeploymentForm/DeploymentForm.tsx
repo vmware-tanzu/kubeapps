@@ -69,6 +69,7 @@ export default function DeploymentForm() {
   const additionalDefaultValuesNames = Object.keys(
     selectedPackage.availablePackageDetail?.additionalDefaultValues || {},
   );
+  console.log(`availablePackageDetail: ${JSON.stringify(selectedPackage.availablePackageDetail)}`);
 
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
 
@@ -270,9 +271,9 @@ export default function DeploymentForm() {
                 {additionalDefaultValuesNames.length >= 2 ? (
                   <>
                     <CdsSelect layout="horizontal" id="defaultValues-selector">
-                      <label>Custom default values</label>
+                      <label>Default values to use</label>
                       <select onChange={onChangeAdditionalDefaultValues}>
-                        <option key=""></option>
+                        <option key="">Package's values.yaml</option>
                         {additionalDefaultValuesNames.map(o => (
                           <option key={o} value={o}>
                             {o}
@@ -280,7 +281,8 @@ export default function DeploymentForm() {
                         ))}
                       </select>
                       <CdsControlMessage error="valueMissing">
-                        The name of the additional default values to use with this application.
+                        This package has multiple default value files to choose from. Select the
+                        defaults that you would like to use.
                       </CdsControlMessage>
                     </CdsSelect>
                   </>

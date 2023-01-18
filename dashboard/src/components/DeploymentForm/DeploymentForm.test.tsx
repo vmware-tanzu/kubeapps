@@ -20,7 +20,7 @@ import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
 import { MemoryRouter, Route, Router } from "react-router-dom";
 import { Kube } from "shared/Kube";
-import { getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IStoreState, PluginNames } from "shared/types";
 import DeploymentForm from "./DeploymentForm";
 import DeploymentFormBody from "./DeploymentFormBody";
@@ -141,6 +141,74 @@ describe("default values", () => {
     );
 
     expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("package: defaults");
+  });
+
+  it("displays the default value selections if the package has multiple", () => {
+    const state = {
+      ...initialState,
+      packages: {
+        selected: {
+          ...defaultSelectedPkg,
+          availablePackageDetail: {
+            ...defaultSelectedPkg.availablePackageDetail,
+            additionalDefaultValues: {
+              "values-custom": "custom: values",
+              "values-other": "other: values",
+            },
+          },
+        },
+      },
+    };
+
+    const wrapper = mountWrapper(
+      getStore(state),
+      <Router history={history}>
+        <Route path={routePath}>
+          <DeploymentForm />
+        </Route>
+      </Router>,
+    );
+
+    const saSelect = wrapper
+      .find(CdsSelect)
+      .findWhere(a => a.prop("id") === "defaultValues-selector");
+
+    expect(saSelect).toExist();
+    expect(saSelect.find("option").at(0)).not.toHaveProperty("value");
+    expect(saSelect.find("option").at(1)).toHaveProp("value", "values-custom");
+    expect(saSelect.find("option").at(2)).toHaveProp("value", "values-other");
+  });
+
+  it("does not display the default value selections if the package has a single custom values", () => {
+    const state = {
+      ...initialState,
+      packages: {
+        selected: {
+          ...defaultSelectedPkg,
+          availablePackageDetail: {
+            ...defaultSelectedPkg.availablePackageDetail,
+            additionalDefaultValues: {
+              "values-custom": "custom: values",
+            },
+          },
+        },
+      },
+    };
+
+    const wrapper = mountWrapper(
+      getStore(state),
+      <Router history={history}>
+        <Route path={routePath}>
+          <DeploymentForm />
+        </Route>
+      </Router>,
+    );
+
+    const saSelect = wrapper
+      .find(CdsSelect)
+      .findWhere(a => a.prop("id") === "defaultValues-selector");
+
+    expect(saSelect).not.toExist();
   });
 });
 
