@@ -32,7 +32,7 @@ import {
   NotFoundNetworkError,
 } from "shared/types";
 import { getPluginsSupportingRollback } from "shared/utils";
-import { parseToString } from "shared/yamlUtils";
+import { parseToString, parseToJS } from "shared/yamlUtils";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import * as url from "../../shared/url";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
@@ -402,7 +402,9 @@ export default function AppView() {
                   />
                 </div>
                 <div className="appview-separator">
-                  <AppValues values={parseToString(selectedInstalledPkg.valuesApplied)} />
+                  <AppValues
+                    values={parseToString(parseToJS(selectedInstalledPkg.valuesApplied))}
+                  />
                 </div>
               </Column>
             </Row>
