@@ -54,7 +54,7 @@
     "react-copy-to-clipboard": "^5.1.0",
     "react-helmet": "^6.1.0",
     "react-intl": "^6.2.1",
-    "react-markdown": "^8.0.3",
+    "react-markdown": "^8.0.5",
     "react-minimal-pie-chart": "^8.4.0",
     "react-monaco-editor": "^0.51.0",
     "react-redux": "^7.2.9",
