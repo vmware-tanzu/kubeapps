@@ -318,6 +318,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		chart, err = s.manager.GetChartVersion(namespace, unescapedChartID, version)
 	}
 	if err != nil {
+		log.Errorf("Failed to request chart '%s' in ns '%s': %v", unescapedChartID, namespace, err)
 		return nil, status.Errorf(codes.Internal, "Unable to retrieve chart: %v", err)
 	}
 
