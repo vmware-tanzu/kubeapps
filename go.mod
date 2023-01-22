@@ -90,7 +90,7 @@ require (
 	k8s.io/client-go v0.26.0
 	k8s.io/klog/v2 v2.80.1
 	k8s.io/kubectl v0.26.0
-	k8s.io/kubernetes v1.25.5
+	k8s.io/kubernetes v1.26.1
 	k8s.io/utils v0.0.0-20221108210102-8e77b1f39fe2
 	oras.land/oras-go v1.2.2
 	oras.land/oras-go/v2 v2.0.0
