@@ -1801,10 +1801,10 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@paciolan/remote-component@^2.12.1":
-  version "2.12.1"
-  resolved "https://registry.yarnpkg.com/@paciolan/remote-component/-/remote-component-2.12.1.tgz#5d286349f3796cc10e0d4ee54de19e410643749b"
-  integrity sha512-UPU2ApOo2nYaFE9+uPJQXLzQizMGPcwP559c7iK5tJaaI5SHKtfBqh45bFWsQzJB8mOKxUv+REZe8qxa4eqcYw==
+"@paciolan/remote-component@^2.13.0":
+  version "2.13.0"
+  resolved "https://registry.yarnpkg.com/@paciolan/remote-component/-/remote-component-2.13.0.tgz#36a9cba17e466dd5564d62cc0784fa60c1c69968"
+  integrity sha512-VESHSqjYf3kpDmqpc1Fx9e5Ccnyc1fbCVrBGSp5yRw1+6oRwzoFlDGc27u8Af3vDl1RJD/4aldaeMZ8f2Btojg==
   dependencies:
     "@paciolan/remote-module-loader" "^3.0.2"
 
