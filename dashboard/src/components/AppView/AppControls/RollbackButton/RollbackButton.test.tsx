@@ -13,7 +13,7 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
-import ReactTooltip from "react-tooltip";
+import { Tooltip as ReactTooltip } from "react-tooltip";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IInstalledPackageState, RollbackError } from "shared/types";
 import RollbackButton from "./RollbackButton";

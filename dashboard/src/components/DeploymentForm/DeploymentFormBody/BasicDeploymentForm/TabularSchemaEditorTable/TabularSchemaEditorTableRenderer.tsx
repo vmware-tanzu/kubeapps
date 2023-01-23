@@ -3,7 +3,7 @@
 
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
-import ReactTooltip from "react-tooltip";
+import { Tooltip } from "react-tooltip";
 import { IBasicFormParam } from "shared/types";
 import ArrayParam from "./Params/ArrayParam";
 import BooleanParam from "./Params/BooleanParam";
@@ -40,7 +40,7 @@ function renderCellWithTooltipBase(
     return (
       <span className={className}>
         <p data-tip={stringValue}>{trimmedString}</p>
-        <ReactTooltip />
+        <Tooltip />
       </span>
     );
   } else {

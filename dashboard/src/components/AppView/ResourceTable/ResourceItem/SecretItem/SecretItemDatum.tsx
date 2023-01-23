@@ -6,7 +6,7 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import React, { useEffect, useRef } from "react";
 import CopyToClipboard from "react-copy-to-clipboard";
-import ReactTooltip from "react-tooltip";
+import { Tooltip } from "react-tooltip";
 import "./SecretItemDatum.css";
 
 interface ISecretItemDatumProps {
@@ -81,9 +81,7 @@ function SecretItemDatum({ name, value }: ISecretItemDatumProps) {
           </div>
         </button>
         <div style={{ opacity: copied ? "1" : "0" }}>
-          <ReactTooltip id="app-status" effect="solid">
-            Copied
-          </ReactTooltip>
+          <Tooltip id="app-status">Copied</Tooltip>
         </div>
       </Column>
     </Row>
