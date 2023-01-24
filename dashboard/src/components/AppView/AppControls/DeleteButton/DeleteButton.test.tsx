@@ -12,7 +12,7 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
-import ReactTooltip from "react-tooltip";
+import { Tooltip as ReactTooltip } from "react-tooltip";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { DeleteError, IInstalledPackageState, IStoreState } from "shared/types";
 import DeleteButton from "./DeleteButton";

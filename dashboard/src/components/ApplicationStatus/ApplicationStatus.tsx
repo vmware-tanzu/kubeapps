@@ -12,7 +12,7 @@ import {
 import { flatten, get } from "lodash";
 import { useEffect, useState } from "react";
 import { PieChart } from "react-minimal-pie-chart";
-import ReactTooltip from "react-tooltip";
+import { Tooltip } from "react-tooltip";
 import { IK8sList, IKubeItem, IResource } from "../../shared/types";
 import "./ApplicationStatus.css";
 
@@ -183,7 +183,7 @@ export default function ApplicationStatus({
           <p className="application-status-pie-chart-text">Pod{readyPods > 1 ? "s" : ""}</p>
         </div>
       </div>
-      <ReactTooltip id="application-status" className="extraClass" effect="solid" place="right">
+      <Tooltip id="application-status" className="extraClass" place="right">
         <table className="application-status-table">
           <thead>
             <tr>
@@ -204,7 +204,7 @@ export default function ApplicationStatus({
             })}
           </tbody>
         </table>
-      </ReactTooltip>
+      </Tooltip>
     </section>
   );
 }

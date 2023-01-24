@@ -6,7 +6,7 @@ import {
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import ReactTooltip from "react-tooltip";
+import { Tooltip } from "react-tooltip";
 
 export interface IStatusAwareButtonProps {
   id: string;
@@ -55,9 +55,9 @@ export default function StatusAwareButton<T extends IStatusAwareButtonProps>(pro
     <>
       <CdsButton {...otherProps} disabled={isDisabled} data-for={id} data-tip={true} />
       {tooltip && (
-        <ReactTooltip id={id} effect="solid" place="bottom">
+        <Tooltip id={id} place="bottom">
           {tooltip}
-        </ReactTooltip>
+        </Tooltip>
       )}
     </>
   );
