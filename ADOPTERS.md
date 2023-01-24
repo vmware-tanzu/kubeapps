@@ -12,6 +12,8 @@ If you're using Kubeapps and want to add your organization to this list, follow 
 
 <a href="https://otomi.io/" border="0" target="_blank"><img alt="Otomi" src="./site/content/docs/latest/img/adopters/otomi.jpg" height="70"></a>
 
+<a href="https://www.oyorooms.com/" border="0" target="_blank"><img alt="OYO" src="./site/content/docs/latest/img/adopters/oyo.jpg" height="70"></a>
+
 <a href="https://www.sap.com/" border="0" target="_blank"><img alt="SAP" src="./site/content/docs/latest/img/adopters/sap.jpg" height="80"></a>
 
 <a href="https://www.terasky.com/" border="0" target="_blank"><img alt="Terasky" src="./site/content/docs/latest/img/adopters/terasky.jpg" height="50"></a>
@@ -35,6 +37,10 @@ Kubeapps eases the deployment of our internal Helm charts for everybody, includi
 **[Otomi](https://otomi.io/)**
 
 As part of their PaaS offering, Otomi has integrated KubeApps with their Harbor chart museum repository. It also comes preconfigured with both Bitnami's extensive app catalog, as well as [OperatorHub's](https://operatorhub.io) extensive offering of kubernetes operators.
+
+**[OYO](https://www.oyorooms.com/)**
+
+We use KubeApps to manage our production workloads which are deployed using Helm. All the configurations like environment variables or resource requirements are handled via Kubeapps. We have a few webhooks in place so that if any change is made via Kubeapps, we'll have a log of it.
 
 **[SAP](https://www.sap.com/)** - Teapots team
 
