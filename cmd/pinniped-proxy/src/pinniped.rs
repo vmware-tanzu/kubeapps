@@ -115,7 +115,10 @@ pub struct TokenCredentialRequestStatus {
 ///
 /// The cache takes care of pruning expired tokens whenever a write lock is
 /// acquired to set a new value.
-pub type CredentialCache = Arc<PruningCache<TokenCredentialRequest, TokenCredentialRequest>>;
+/// The Cache key is a 2-tuple of the api endpoint url and the
+/// TokenCredentialRequest.
+pub type CredentialCache =
+    Arc<PruningCache<(String, TokenCredentialRequest), TokenCredentialRequest>>;
 
 /// Return a new CredentialCache.
 pub fn new_credential_cache() -> CredentialCache {
@@ -258,7 +261,7 @@ async fn prepare_and_call_pinniped_exchange(
 
     // If the credential already exists in the cache (the cache handles expired
     // creds), then return that.
-    match credential_cache.get(&cred_data) {
+    match credential_cache.get(&(k8s_api_server_url.into(), cred_data.clone())) {
         Some(cached_cred) => Ok(cached_cred),
         None => {
             let client = get_client_config(
@@ -267,7 +270,7 @@ async fn prepare_and_call_pinniped_exchange(
                 pinniped_namespace.clone(),
             )?;
             let cred = call_pinniped(pinniped_namespace, client, cred_data.clone()).await?;
-            credential_cache.insert(cred_data, cred.clone());
+            credential_cache.insert((k8s_api_server_url.into(), cred_data), cred.clone());
             Ok(cred)
         }
     }
@@ -690,6 +693,8 @@ mZu9A/ivt37pOQXm/HOX6tHB
         Ok(())
     }
 
+    const KUBEAPPS_LOCAL: &str = "https://kubeapps.local";
+
     #[test]
     fn test_credential_cache_cannot_add_expired_token() {
         let cc = new_credential_cache();
@@ -697,7 +702,7 @@ mZu9A/ivt37pOQXm/HOX6tHB
         let key_tcr = make_token_credential_request();
         assert!(key_tcr.is_expired());
 
-        cc.insert(key_tcr.clone(), key_tcr);
+        cc.insert((KUBEAPPS_LOCAL.into(), key_tcr.clone()), key_tcr);
 
         assert_eq!(cc.len(), 0);
     }
@@ -719,10 +724,45 @@ mZu9A/ivt37pOQXm/HOX6tHB
         });
         assert!(!val_tcr.is_expired());
 
-        cc.insert(key_tcr.clone(), val_tcr.clone());
+        cc.insert((KUBEAPPS_LOCAL.into(), key_tcr.clone()), val_tcr.clone());
 
         assert_eq!(cc.len(), 1);
-        assert_eq!(cc.get(&key_tcr), Some(val_tcr));
+        assert_eq!(cc.get(&(KUBEAPPS_LOCAL.into(), key_tcr)), Some(val_tcr));
+    }
+
+    #[test]
+    fn test_credential_cache_key_includes_api_server_url() {
+        // More for documentation given that the key is whatever we define
+        // it to be, but to document https://github.com/vmware-tanzu/kubeapps/issues/5912
+        let cc = new_credential_cache();
+
+        let key_tcr = make_token_credential_request();
+        let mut val_tcr = key_tcr.clone();
+        val_tcr.status = Some(TokenCredentialRequestStatus {
+            credential: Some(ClusterCredential {
+                expiration_timestamp: metav1::Time(Utc::now() + Duration::days(1)),
+                client_certificate_data: String::from("cert data"),
+                client_key_data: String::from("key data"),
+                token: Some(String::from("token")),
+            }),
+            message: None,
+        });
+        assert!(!val_tcr.is_expired());
+
+        // Adding the same key twice does not result in two cached values:
+        cc.insert((KUBEAPPS_LOCAL.into(), key_tcr.clone()), val_tcr.clone());
+        cc.insert((KUBEAPPS_LOCAL.into(), key_tcr.clone()), val_tcr.clone());
+
+        assert_eq!(cc.len(), 1);
+
+        // Adding the same TCR with a different k8s api url *does* result in a
+        // separately cached value:
+        cc.insert(
+            ("https://172.168.0.3:6443".into(), key_tcr.clone()),
+            val_tcr.clone(),
+        );
+
+        assert_eq!(cc.len(), 2);
     }
 
     #[test]
@@ -741,7 +781,7 @@ mZu9A/ivt37pOQXm/HOX6tHB
             }),
             message: None,
         });
-        cc.insert(key_tcr.clone(), val_tcr.clone());
+        cc.insert((KUBEAPPS_LOCAL.into(), key_tcr.clone()), val_tcr.clone());
 
         assert!(!val_tcr.is_expired());
         assert_eq!(cc.len(), 1);
@@ -751,7 +791,7 @@ mZu9A/ivt37pOQXm/HOX6tHB
         // Now the credential will still be present (as there hasn't been a write
         // operation), but will not be returned as it has expired.
         assert_eq!(cc.len(), 1);
-        assert_eq!(cc.get(&key_tcr), None);
+        assert_eq!(cc.get(&(KUBEAPPS_LOCAL.into(), key_tcr.clone())), None);
 
         // But if we update the cache (where a write lock will be used) the expired
         // one will be removed.
@@ -772,10 +812,13 @@ mZu9A/ivt37pOQXm/HOX6tHB
             }),
             message: None,
         });
-        cc.insert(key_tcr_2.clone(), val_tcr_2.clone());
+        cc.insert(
+            (KUBEAPPS_LOCAL.into(), key_tcr_2.clone()),
+            val_tcr_2.clone(),
+        );
 
         assert_eq!(cc.len(), 1);
-        assert_eq!(cc.get(&key_tcr), None);
-        assert_eq!(cc.get(&key_tcr_2), Some(val_tcr_2));
+        assert_eq!(cc.get(&(KUBEAPPS_LOCAL.into(), key_tcr)), None);
+        assert_eq!(cc.get(&(KUBEAPPS_LOCAL.into(), key_tcr_2)), Some(val_tcr_2));
     }
 }
