@@ -12,7 +12,7 @@ If you're using Kubeapps and want to add your organization to this list, follow 
 
 <a href="https://otomi.io/" border="0" target="_blank"><img alt="Otomi" src="./site/content/docs/latest/img/adopters/otomi.jpg" height="70"></a>
 
-<a href="https://www.oyorooms.com/" border="0" target="_blank"><img alt="OYO" src="./site/content/docs/latest/img/adopters/oyo.jpg" height="70"></a>
+<a href="https://www.oyorooms.com/" border="0" target="_blank"><img alt="OYO" src="./site/content/docs/latest/img/adopters/OYO.jpg" height="70"></a>
 
 <a href="https://www.sap.com/" border="0" target="_blank"><img alt="SAP" src="./site/content/docs/latest/img/adopters/sap.jpg" height="80"></a>
 
