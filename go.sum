@@ -681,8 +681,9 @@ github.com/mattn/go-isatty v0.0.10/go.mod h1:qgIWMr58cqv1PHHyhnkY9lrL7etaEgOFcME
 github.com/mattn/go-isatty v0.0.11/go.mod h1:PhnuNfih5lzO57/f3n+odYbM4JtupLOxQOAqxQCu2WE=
 github.com/mattn/go-isatty v0.0.12/go.mod h1:cbi8OIDigv2wuxKPP5vlRcQ1OAZbq2CE4Kysco4FUpU=
 github.com/mattn/go-isatty v0.0.14/go.mod h1:7GGIvUiUoEMVVmxf/4nioHXj79iQHKdU27kJ6hsGG94=
-github.com/mattn/go-isatty v0.0.16 h1:bq3VjFmv/sOjHtdEhmkEV4x1AJtvUvOJ2PFAZ5+peKQ=
 github.com/mattn/go-isatty v0.0.16/go.mod h1:kYGgaQfpe5nmfYZH+SKPsOc2e4SrIfOl2e/yFXSvRLM=
+github.com/mattn/go-isatty v0.0.17 h1:BTarxUcIeDqL27Mc+vyvdWYSL28zpIhv3RoTdsLMPng=
+github.com/mattn/go-isatty v0.0.17/go.mod h1:kYGgaQfpe5nmfYZH+SKPsOc2e4SrIfOl2e/yFXSvRLM=
 github.com/mattn/go-oci8 v0.1.1/go.mod h1:wjDx6Xm9q7dFtHJvIlrI99JytznLw5wQ4R+9mNXJwGI=
 github.com/mattn/go-runewidth v0.0.2/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
 github.com/mattn/go-runewidth v0.0.9/go.mod h1:H031xJmbD/WCDINGzjvQ9THkh0rPKHF+m2gUSrubnMI=
@@ -968,8 +969,8 @@ github.com/vmware-tanzu/carvel-kapp v0.54.2 h1:Ud8UokXLM8dmNfPoLUJlFGp/RHeOvg1Zi
 github.com/vmware-tanzu/carvel-kapp v0.54.2/go.mod h1:L2uun5dGcA7zRgVtyw+/i+ITKToflGo0/gGrhKIGajo=
 github.com/vmware-tanzu/carvel-kapp-controller v0.44.1 h1:wtlopLEmsEbbsghsXrWzpjdcMt7opavcDT0bGQV4foM=
 github.com/vmware-tanzu/carvel-kapp-controller v0.44.1/go.mod h1:+drZFlRx8ppIl2LRNWb0X/ohWwrfdA9nXGmPKGzvTXs=
-github.com/vmware-tanzu/carvel-vendir v0.32.2 h1:50FSQYAadlFx9V6QN5oln1OPkDL5Re+vlr89h9ODpG4=
-github.com/vmware-tanzu/carvel-vendir v0.32.2/go.mod h1:L+zp/OUkJgmLy2fAYtBDoXnchbfnVnryXCzElYq7toc=
+github.com/vmware-tanzu/carvel-vendir v0.32.4 h1:KN1eDHzlv9NkPOmiHscvIgVeHpx5PWrLFarm5saQ7Ig=
+github.com/vmware-tanzu/carvel-vendir v0.32.4/go.mod h1:vm+UyWuXhLrMqFHVBJ9E5mSQdra5lH3pGGj5ux3DXuU=
 github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f/go.mod h1:N2zxlSyiKSe5eX1tZViRH5QA0qijqEDrYZiPEAiq3wU=
 github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb h1:zGWFAtiMcyryUHoUjUJX0/lt1H2+i2Ka2n+D3DImSNo=
 github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb/go.mod h1:N2zxlSyiKSe5eX1tZViRH5QA0qijqEDrYZiPEAiq3wU=
