@@ -196,8 +196,6 @@ func newClientGetter(configGetter core.KubernetesConfigGetter, useServiceAccount
 	return clientProvider, nil
 }
 
-// Why does this function even exist? It appears to do nothing if
-// useServiceAccount is false - so why call it.
 func setupRestConfigForCluster(restConfig *rest.Config, cluster string, clustersConfig kube.ClustersConfig) error {
 	// Override client config with the service token for additional cluster
 	// Added from #5034 after deprecation of "kubeops"
