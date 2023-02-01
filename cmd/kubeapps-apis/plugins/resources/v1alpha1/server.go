@@ -7,11 +7,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"sync"
+
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/resources/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
-	"os"
-	"sync"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -125,6 +126,9 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 		log.Fatalf("%s", err)
 	}
 
+	// TODO(absoludity): The use of this service account should be audited. Ideally it would
+	// not be possible to use this outside of the request for namespaces, but the code now
+	// allows this to be used in other contexts, which could lead to a privilege escalation.
 	clusterServiceAccountClientGetter, err := newClientGetter(configGetter, true, clustersConfig)
 	if err != nil {
 		log.Fatalf("%s", err)
@@ -162,12 +166,25 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 func newClientGetter(configGetter core.KubernetesConfigGetter, useServiceAccount bool, clustersConfig kube.ClustersConfig) (clientgetter.ClientProviderInterface, error) {
 
 	customConfigGetter := func(ctx context.Context, cluster string) (*rest.Config, error) {
+		if useServiceAccount {
+			// If a service account client getter has been requested, the service account
+			// to use depends on which cluster is targeted.
+			restConfig, err := rest.InClusterConfig()
+			if err != nil {
+				return nil, status.Errorf(codes.FailedPrecondition, "unable to get config : %v", err.Error())
+			}
+			err = setupRestConfigForCluster(restConfig, cluster, clustersConfig)
+			if err != nil {
+				return nil, status.Errorf(codes.FailedPrecondition, "unable to setup config for cluster : %v", err.Error())
+			}
+			return restConfig, nil
+		}
+		// Rest config for a *user* created here - must already have token? So
+		// it is at this point where we should *not* pass the user credential /
+		// token if it is not needed?
 		restConfig, err := configGetter(ctx, cluster)
 		if err != nil {
 			return nil, status.Errorf(codes.FailedPrecondition, "unable to get config : %v", err.Error())
-		}
-		if err := setupRestConfigForCluster(restConfig, cluster, useServiceAccount, clustersConfig); err != nil {
-			return nil, err
 		}
 		return restConfig, nil
 	}
@@ -179,17 +196,21 @@ func newClientGetter(configGetter core.KubernetesConfigGetter, useServiceAccount
 	return clientProvider, nil
 }
 
-func setupRestConfigForCluster(restConfig *rest.Config, cluster string, useServiceAccount bool, clustersConfig kube.ClustersConfig) error {
+// Why does this function even exist? It appears to do nothing if
+// useServiceAccount is false - so why call it.
+func setupRestConfigForCluster(restConfig *rest.Config, cluster string, clustersConfig kube.ClustersConfig) error {
 	// Override client config with the service token for additional cluster
 	// Added from #5034 after deprecation of "kubeops"
-	if cluster != clustersConfig.KubeappsClusterName && useServiceAccount {
+	if cluster == clustersConfig.KubeappsClusterName {
+		log.Errorf("Kubeapps cluster, should already have correct token for service acc: %q\n%q", restConfig.BearerToken, restConfig.BearerTokenFile)
+	} else {
 		additionalCluster, ok := clustersConfig.Clusters[cluster]
 		if !ok {
 			return status.Errorf(codes.Internal, "cluster %q has no configuration", cluster)
 		}
-		if additionalCluster.ServiceToken != "" {
-			restConfig.BearerToken = additionalCluster.ServiceToken
-		}
+		// We *always* overwrite the token, even if it was configured empty.
+		restConfig.BearerToken = additionalCluster.ServiceToken
+		restConfig.BearerTokenFile = ""
 	}
 	return nil
 }

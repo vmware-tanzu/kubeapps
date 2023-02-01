@@ -7,10 +7,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"k8s.io/client-go/rest"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"k8s.io/client-go/rest"
 )
 
 const (
@@ -85,8 +86,8 @@ type ClustersConfig struct {
 	Clusters                 map[string]ClusterConfig
 }
 
-// NewClusterConfig returns a copy of an in-cluster config with a user token (leave blank for
-// when configuring a service account). and/or custom cluster host
+// NewClusterConfig returns a copy of an in-cluster config with a user token
+// and/or custom cluster host
 func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster string, clustersConfig ClustersConfig) (*rest.Config, error) {
 	config := rest.CopyConfig(inClusterConfig)
 	config.BearerToken = userToken

@@ -4,6 +4,9 @@
 package resources
 
 import (
+	"math"
+	"sync"
+
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
@@ -14,8 +17,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
-	"math"
-	"sync"
 )
 
 type checkNSJob struct {
@@ -28,10 +29,10 @@ type checkNSResult struct {
 	Error   error
 }
 
-// FindAccessibleNamespaces return the raw list of namespaces that the user has permission to access
+// FindAccessibleNamespaces returns the raw list of namespaces that the user has permission to access
 // Not filtered by any status (e.g. Active), but actual access is checked.
-func FindAccessibleNamespaces(clusterTypedClientGetter clientgetter.TypedClientFunc, inClusterClientGetter clientgetter.TypedClientFunc, maxWorkers int) ([]corev1.Namespace, error) {
-	typedClient, err := clusterTypedClientGetter()
+func FindAccessibleNamespaces(userClientGetter clientgetter.TypedClientFunc, serviceAccountClientGetter clientgetter.TypedClientFunc, maxWorkers int) ([]corev1.Namespace, error) {
+	userClient, err := userClientGetter()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
@@ -39,16 +40,21 @@ func FindAccessibleNamespaces(clusterTypedClientGetter clientgetter.TypedClientF
 	backgroundCtx := context.Background()
 
 	// Try to list namespaces first with the user token
-	namespaces, err := typedClient.CoreV1().Namespaces().List(backgroundCtx, metav1.ListOptions{})
+	namespaces, err := userClient.CoreV1().Namespaces().List(backgroundCtx, metav1.ListOptions{})
 	if err != nil {
 		if k8sErrors.IsForbidden(err) {
-			// The user doesn't have permissions to list namespaces, then use the current pod's service account
-			inClusterClient, err := inClusterClientGetter()
+			// The user doesn't have permissions to list namespaces, then use
+			// the provided service account client. This client will have been configured
+			// with either the current pod's service account, if the target
+			// cluster is the same one on which Kubeapps is installed, or with
+			// the cluster config service account otherwise.
+			serviceAccountClient, err := serviceAccountClientGetter()
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "unable to get the in-cluster k8s client: '%v'", err)
 			}
-			namespaces, err = inClusterClient.CoreV1().Namespaces().List(backgroundCtx, metav1.ListOptions{})
+			namespaces, err = serviceAccountClient.CoreV1().Namespaces().List(backgroundCtx, metav1.ListOptions{})
 			if err != nil && k8sErrors.IsForbidden(err) {
+				log.Errorf("Returning a forbidden error because: %+v", err)
 				// Not even the configured kubeapps-apis service account has permission
 				return nil, err
 			}
@@ -57,7 +63,7 @@ func FindAccessibleNamespaces(clusterTypedClientGetter clientgetter.TypedClientF
 		}
 
 		// Filter namespaces in which the user has permissions to write (secrets) only
-		if namespaceList, err := filterAllowedNamespaces(typedClient, maxWorkers, namespaces.Items); err != nil {
+		if namespaceList, err := filterAllowedNamespaces(userClient, maxWorkers, namespaces.Items); err != nil {
 			return nil, err
 		} else {
 			return namespaceList, nil
