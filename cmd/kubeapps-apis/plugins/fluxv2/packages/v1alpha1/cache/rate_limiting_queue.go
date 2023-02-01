@@ -121,9 +121,9 @@ func newQueue(name string, verbose bool) *Type {
 	return &Type{
 		name:       name,
 		verbose:    verbose,
-		expected:   sets.String{},
-		dirty:      sets.String{},
-		processing: sets.String{},
+		expected:   sets.Set[string]{},
+		dirty:      sets.Set[string]{},
+		processing: sets.Set[string]{},
 		cond:       sync.NewCond(&sync.Mutex{}),
 	}
 }
@@ -147,16 +147,16 @@ type Type struct {
 	// in unit tests, where an item is added to the queue and then the test code
 	// needs to wait until its been processed before taking further action
 	// Used in unit tests only
-	expected sets.String
+	expected sets.Set[string]
 
 	// dirty defines all of the items that need to be processed.
-	dirty sets.String
+	dirty sets.Set[string]
 
 	// Things that are currently being processed are in the processing set.
 	// These things may be simultaneously in the dirty set. When we finish
 	// processing something and remove it from this set, we'll check if
 	// it's in the dirty set, and if so, add it to the queue.
-	processing sets.String
+	processing sets.Set[string]
 
 	cond *sync.Cond
 
@@ -379,8 +379,8 @@ func (q *Type) reset() {
 	defer q.cond.L.Unlock()
 
 	q.queue = []string{}
-	q.dirty = sets.String{}
-	q.processing = sets.String{}
+	q.dirty = sets.Set[string]{}
+	q.processing = sets.Set[string]{}
 	// we are intentionally not resetting q.expected as we don't want to lose
 	// those across resync's
 }
@@ -388,9 +388,9 @@ func (q *Type) reset() {
 // for easier reading of debug output
 func (q *Type) prettyPrintAll() string {
 	return fmt.Sprintf("\n\texpected: %s\n\tdirty: %s\n\tprocessing: %s\n\tqueue: %s",
-		printOneItemPerLine(q.expected.List()),
-		printOneItemPerLine(q.dirty.List()),
-		printOneItemPerLine(q.processing.List()),
+		printOneItemPerLine(q.expected.UnsortedList()),
+		printOneItemPerLine(q.dirty.UnsortedList()),
+		printOneItemPerLine(q.processing.UnsortedList()),
 		printOneItemPerLine(q.queue))
 }
 

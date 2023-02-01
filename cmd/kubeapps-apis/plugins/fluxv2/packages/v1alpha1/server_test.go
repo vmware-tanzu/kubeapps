@@ -445,8 +445,8 @@ func seedChartCacheWithCharts(t *testing.T,
 
 	var chartCache *cache.ChartCache
 	var err error
-	cachedChartKeys := sets.String{}
-	cachedChartIds := sets.String{}
+	cachedChartKeys := sets.Set[string]{}
+	cachedChartIds := sets.Set[string]{}
 
 	if charts != nil {
 		chartCache, err = cache.NewChartCache("chartCacheTest", redisCli, stopCh)

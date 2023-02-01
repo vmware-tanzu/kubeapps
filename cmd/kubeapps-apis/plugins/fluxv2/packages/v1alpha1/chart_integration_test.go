@@ -74,7 +74,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 	const MAX_REPOS_NEVER = 100
 	var totalRepos = 0
 	// ref https://stackoverflow.com/questions/32840687/timeout-for-waitgroup-wait
-	evictedRepos := sets.String{}
+	evictedRepos := sets.Set[string]{}
 
 	// do this part in a func so we can defer subscribe.Close
 	func() {
@@ -233,7 +233,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 
 	// we need to make sure that response contains packages from all existing repositories
 	// regardless whether they're in the cache or not
-	expected := sets.String{}
+	expected := sets.Set[string]{}
 	for i := 0; i < totalRepos; i++ {
 		repo := fmt.Sprintf("bitnami-%d", i)
 		expected.Insert(repo)
@@ -245,7 +245,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 
 	if expected.Len() != 0 {
 		t.Fatalf("Expected to get packages from these repositories: %s, but did not get any",
-			expected.List())
+			expected.UnsortedList())
 	}
 }
 

@@ -1039,7 +1039,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 
 		// we need to make sure that response contains packages from all existing repositories
 		// regardless whether they're in the cache or not
-		expected := sets.String{}
+		expected := sets.Set[string]{}
 		for i := 0; i < len(repos); i++ {
 			repo := fmt.Sprintf("bitnami-%d", i)
 			expected.Insert(repo)
@@ -1051,7 +1051,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 
 		if expected.Len() != 0 {
 			t.Fatalf("Expected to get packages from these repositories: %s, but did not get any",
-				expected.List())
+				expected.UnsortedList())
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
@@ -1152,7 +1152,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 
 		// we need to make sure that response contains packages from all existing repositories
 		// regardless whether they're in the cache or not
-		expected := sets.String{}
+		expected := sets.Set[string]{}
 		expected.Insert(repoName)
 		for _, s := range resp.AvailablePackageSummaries {
 			id := strings.Split(s.AvailablePackageRef.Identifier, "/")
@@ -1161,7 +1161,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 
 		if expected.Len() != 0 {
 			t.Fatalf("Expected to get packages from these repositories: %s, but did not get any",
-				expected.List())
+				expected.UnsortedList())
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
@@ -2515,7 +2515,7 @@ func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, s
 // does a series of mock.ExpectGet(...)
 func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...sourcev1.HelmRepository) error {
 	mapVals := make(map[string][]byte)
-	ociRepoKeys := sets.String{}
+	ociRepoKeys := sets.Set[string]{}
 	for _, r := range repos {
 		key, bytes, err := s.redisKeyValueForRepo(r)
 		if err != nil {
