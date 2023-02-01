@@ -72,6 +72,10 @@ func (w *withWatchWrapper) List(ctx context.Context, list client.ObjectList, opt
 	}
 }
 
+func (w *withWatchWrapper) SubResource(subResource string) client.SubResourceClient {
+	return w.delegate.SubResource(subResource)
+}
+
 func (w *withWatchWrapper) Delete(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
 	return w.delegate.Delete(ctx, obj, opts...)
 }
