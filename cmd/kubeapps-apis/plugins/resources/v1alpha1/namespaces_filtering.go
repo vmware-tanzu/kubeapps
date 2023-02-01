@@ -4,14 +4,16 @@ package main
 
 import (
 	"context"
+	"regexp"
+	"strings"
+
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resources"
+	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 	"google.golang.org/grpc/metadata"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
-	"regexp"
-	"strings"
 )
 
 func (s *Server) MaxWorkers() int {
@@ -25,15 +27,29 @@ func (s *Server) GetAccessibleNamespaces(ctx context.Context, cluster string, tr
 	if len(trustedNamespaces) > 0 {
 		namespaceList = append(namespaceList, trustedNamespaces...)
 	} else {
-		clusterTypedClientFunc := func() (kubernetes.Interface, error) {
-			return s.clusterServiceAccountClientGetter.Typed(ctx, cluster)
+		userTypedClientFunc := func() (kubernetes.Interface, error) {
+			return s.clientGetter.Typed(ctx, cluster)
 		}
-		inClusterTypedClientFunc := func() (kubernetes.Interface, error) {
-			return s.localServiceAccountClientGetter.Typed(context.Background())
+
+		// The service account client returned for fetching namespaces depends on whether
+		// the target cluster is the same one Kubeapps is running on (in which case,
+		// we use the pod's token which will have been configured for access) or the
+		// token from the clusters config (if it exists).
+		var serviceAccountTypedClientFunc func() (kubernetes.Interface, error)
+		if kube.IsKubeappsClusterRef(cluster) {
+			serviceAccountTypedClientFunc = func() (kubernetes.Interface, error) {
+				// Not using ctx here so that we can't inadvertently send the user
+				// creds.
+				return s.localServiceAccountClientGetter.Typed(context.Background())
+			}
+		} else {
+			serviceAccountTypedClientFunc = func() (kubernetes.Interface, error) {
+				return s.clusterServiceAccountClientGetter.Typed(ctx, cluster)
+			}
 		}
 
 		var err error
-		namespaceList, err = resources.FindAccessibleNamespaces(clusterTypedClientFunc, inClusterTypedClientFunc, s.MaxWorkers())
+		namespaceList, err = resources.FindAccessibleNamespaces(userTypedClientFunc, serviceAccountTypedClientFunc, s.MaxWorkers())
 		if err != nil {
 			return nil, err
 		}
