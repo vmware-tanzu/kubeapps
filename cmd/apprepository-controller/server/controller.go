@@ -151,7 +151,7 @@ func NewController(
 		},
 	})
 	if err != nil {
-		return nil
+		log.Warningf("Error adding AppRepository event handler: %v", err)
 	}
 
 	// Set up an event handler for when CronJob resources get deleted. This
@@ -165,7 +165,7 @@ func NewController(
 		DeleteFunc: controller.handleObject,
 	})
 	if err != nil {
-		return nil
+		log.Warningf("Error adding CronJob event handler: %v", err)
 	}
 
 	return controller
