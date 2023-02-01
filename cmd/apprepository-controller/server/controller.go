@@ -134,7 +134,7 @@ func NewController(
 
 	log.Info("Setting up event handlers")
 	// Set up an event handler for when AppRepository resources change
-	apprepoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err = apprepoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: controller.enqueueAppRepo,
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			oldApp := oldObj.(*apprepov1alpha1.AppRepository)
@@ -150,6 +150,9 @@ func NewController(
 			}
 		},
 	})
+	if err != nil {
+		log.Warningf("Error adding AppRepository event handler: %v", err)
+	}
 
 	// Set up an event handler for when CronJob resources get deleted. This
 	// handler will lookup the owner of the given CronJob, and if it is owned by a
@@ -158,9 +161,12 @@ func NewController(
 	// to implement custom logic for handling CronJob resources. More info on this
 	// pattern:
 	// https://github.com/kubernetes/community/blob/8cafef897a22026d42f5e5bb3f104febe7e29830/contributors/devel/controllers.md
-	cronjobInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err = cronjobInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		DeleteFunc: controller.handleObject,
 	})
+	if err != nil {
+		log.Warningf("Error adding CronJob event handler: %v", err)
+	}
 
 	return controller
 }

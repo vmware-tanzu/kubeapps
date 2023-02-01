@@ -1249,7 +1249,7 @@ func newRedisClientForIntegrationTest(t *testing.T) (*redis.Client, error) {
 	return redisCli, nil
 }
 
-func redisReceiveNotificationsLoop(t *testing.T, ch <-chan *redis.Message, sem *semaphore.Weighted, evictedRepos *sets.String) {
+func redisReceiveNotificationsLoop(t *testing.T, ch <-chan *redis.Message, sem *semaphore.Weighted, evictedRepos *sets.Set[string]) {
 	if totalBitnamiCharts == -1 {
 		t.Errorf("Error: unexpected state: number of charts in bitnami catalog is not initialized")
 		t.Fail()
@@ -1258,7 +1258,7 @@ func redisReceiveNotificationsLoop(t *testing.T, ch <-chan *redis.Message, sem *
 	// this for loop running in the background will signal to the main goroutine
 	// when it is okay to proceed to load the next repo
 	t.Logf("Listening for events from redis in the background...")
-	reposAdded := sets.String{}
+	reposAdded := sets.Set[string]{}
 	var chartsLeftToSync = 0
 	for {
 		event, ok := <-ch

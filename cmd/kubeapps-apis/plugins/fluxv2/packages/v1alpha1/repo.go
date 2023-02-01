@@ -8,10 +8,11 @@ import (
 	"context"
 	"encoding/gob"
 	"fmt"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
 
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
@@ -69,11 +70,11 @@ func (s *Server) listReposInNamespace(ctx context.Context, ns string) ([]sourcev
 		return nil, statuserror.FromK8sError("list", "HelmRepository", "", err)
 	} else {
 		// filter out those repos the caller has no access to
-		namespaces := sets.String{}
+		namespaces := sets.Set[string]{}
 		for _, item := range repoList.Items {
 			namespaces.Insert(item.GetNamespace())
 		}
-		allowedNamespaces := sets.String{}
+		allowedNamespaces := sets.Set[string]{}
 		gvr := common.GetRepositoriesGvr()
 		for ns := range namespaces {
 			if ok, err := s.hasAccessToNamespace(ctx, gvr, ns); err == nil && ok {
@@ -110,12 +111,12 @@ func (s *Server) getRepoInCluster(ctx context.Context, key types.NamespacedName)
 }
 
 // regexp expressions are used for matching actual names against expected patters
-func (s *Server) filterReadyReposByName(repoList []sourcev1.HelmRepository, match []string) (sets.String, error) {
+func (s *Server) filterReadyReposByName(repoList []sourcev1.HelmRepository, match []string) (sets.Set[string], error) {
 	if s.repoCache == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
 	}
 
-	resultKeys := sets.String{}
+	resultKeys := sets.Set[string]{}
 	for r := range repoList {
 		repo := repoList[r] // avoid implicit memory aliasing
 		// first check if repo is in ready state

@@ -265,7 +265,7 @@ func (c *ChartCache) processNextWorkItem(workerName string) bool {
 
 // will clear out the cache of charts for a given repo except the charts specified by
 // keepThese argument, which may be nil.
-func (c *ChartCache) deleteChartsHelper(repo *types.NamespacedName, keepThese sets.String) error {
+func (c *ChartCache) deleteChartsHelper(repo *types.NamespacedName, keepThese sets.Set[string]) error {
 	// need to get a list of all charts/versions for this repo that are either:
 	//   a. already in the cache OR
 	//   b. being processed
@@ -279,7 +279,7 @@ func (c *ChartCache) deleteChartsHelper(repo *types.NamespacedName, keepThese se
 		KeySegmentsSeparator,
 		repo.Name,
 		KeySegmentsSeparator)
-	redisKeysToDelete := sets.String{}
+	redisKeysToDelete := sets.Set[string]{}
 	// https://redis.io/commands/scan An iteration starts when the cursor is set to 0,
 	// and terminates when the cursor returned by the server is 0
 	cursor := uint64(0)
@@ -337,7 +337,7 @@ func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
 	log.Infof("+DeleteChartsForRepo(%s)", repo)
 	defer log.Infof("-DeleteChartsForRepo(%s)", repo)
 
-	return c.deleteChartsHelper(repo, sets.String{})
+	return c.deleteChartsHelper(repo, sets.Set[string]{})
 }
 
 // this function is called when re-importing charts after an update to the repo,
@@ -347,7 +347,7 @@ func (c *ChartCache) PurgeObsoleteChartVersions(keepThese []models.Chart) error 
 	log.Infof("+PurgeObsoleteChartVersions()")
 	defer log.Infof("-PurgeObsoleteChartVersions")
 
-	repos := map[types.NamespacedName]sets.String{}
+	repos := map[types.NamespacedName]sets.Set[string]{}
 	for _, ch := range keepThese {
 		if ch.Repo == nil {
 			// shouldn't happen
@@ -360,7 +360,7 @@ func (c *ChartCache) PurgeObsoleteChartVersions(keepThese []models.Chart) error 
 		}
 		a, ok := repos[n]
 		if a == nil || !ok {
-			a = sets.String{}
+			a = sets.Set[string]{}
 		}
 		for _, cv := range ch.ChartVersions {
 			if key, err := c.KeyFor(ch.Repo.Namespace, ch.ID, cv.Version); err != nil {

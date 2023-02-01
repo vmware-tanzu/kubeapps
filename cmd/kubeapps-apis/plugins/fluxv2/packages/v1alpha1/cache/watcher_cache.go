@@ -698,7 +698,7 @@ func (c *NamespacedResourceWatcherCache) fetch(key string) (interface{}, error) 
 // parallelize the process of value retrieval because fetch() calls
 // c.config.onGet() which will de-code the data from bytes into expected struct, which
 // may be computationally expensive and thus benefit from multiple threads of execution
-func (c *NamespacedResourceWatcherCache) fetchMultiple(keys sets.String) (map[string]interface{}, error) {
+func (c *NamespacedResourceWatcherCache) fetchMultiple(keys sets.Set[string]) (map[string]interface{}, error) {
 	response := make(map[string]interface{})
 
 	type fetchValueJob struct {
@@ -763,7 +763,7 @@ func (c *NamespacedResourceWatcherCache) fetchMultiple(keys sets.String) (map[st
 // it's value will be returned,
 // whereas 'fetchMultiple' does not guarantee that.
 // The keys are expected to be in the format of the cache (the caller does that)
-func (c *NamespacedResourceWatcherCache) GetMultiple(keys sets.String) (map[string]interface{}, error) {
+func (c *NamespacedResourceWatcherCache) GetMultiple(keys sets.Set[string]) (map[string]interface{}, error) {
 	c.resyncCond.L.(*sync.RWMutex).RLock()
 	defer c.resyncCond.L.(*sync.RWMutex).RUnlock()
 
@@ -779,7 +779,7 @@ func (c *NamespacedResourceWatcherCache) GetMultiple(keys sets.String) (map[stri
 	}
 
 	// now, re-compute and fetch the ones that are left over from the previous operation
-	keysLeft := sets.String{}
+	keysLeft := sets.Set[string]{}
 
 	for key, value := range chartsUntyped {
 		if value == nil {
@@ -822,7 +822,7 @@ func (c *NamespacedResourceWatcherCache) populateWith(items []ctrlclient.Object)
 		return status.Errorf(codes.Internal, "Invalid state of the cache in populateWith()")
 	}
 
-	keys := sets.String{}
+	keys := sets.Set[string]{}
 	for _, item := range items {
 		if key, err := c.keyFor(item); err != nil {
 			return status.Errorf(codes.Internal, "%v", err)
@@ -836,7 +836,7 @@ func (c *NamespacedResourceWatcherCache) populateWith(items []ctrlclient.Object)
 	return nil
 }
 
-func (c *NamespacedResourceWatcherCache) computeValuesForKeys(keys sets.String) {
+func (c *NamespacedResourceWatcherCache) computeValuesForKeys(keys sets.Set[string]) {
 	var wg sync.WaitGroup
 	numWorkers := int(math.Min(float64(len(keys)), float64(maxWorkers)))
 	requestChan := make(chan string, numWorkers)
@@ -866,7 +866,7 @@ func (c *NamespacedResourceWatcherCache) computeValuesForKeys(keys sets.String) 
 	wg.Wait()
 }
 
-func (c *NamespacedResourceWatcherCache) computeAndFetchValuesForKeys(keys sets.String) (map[string]interface{}, error) {
+func (c *NamespacedResourceWatcherCache) computeAndFetchValuesForKeys(keys sets.Set[string]) (map[string]interface{}, error) {
 	type computeValueJob struct {
 		key string
 	}
