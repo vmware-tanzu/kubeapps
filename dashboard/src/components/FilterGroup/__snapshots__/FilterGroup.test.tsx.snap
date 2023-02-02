@@ -146,9 +146,7 @@ exports[`renders a multicheckbox 1`] = `
                   <CdsCheckbox
                     _$Gl={null}
                   >
-                    <cds-checkbox
-                      _$Gl={null}
-                    >
+                    <cds-checkbox>
                       <label
                         htmlFor="test-0"
                       >
@@ -173,9 +171,7 @@ exports[`renders a multicheckbox 1`] = `
                   <CdsCheckbox
                     _$Gl={null}
                   >
-                    <cds-checkbox
-                      _$Gl={null}
-                    >
+                    <cds-checkbox>
                       <label
                         htmlFor="test-1"
                       >
