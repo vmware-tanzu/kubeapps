@@ -1281,10 +1281,10 @@
   dependencies:
     "@floating-ui/core" "^1.1.0"
 
-"@formatjs/cli@^5.1.12":
-  version "5.1.13"
-  resolved "https://registry.yarnpkg.com/@formatjs/cli/-/cli-5.1.13.tgz#322b9a49ab31aff7ae74f3a27d468d970126d34d"
-  integrity sha512-9rFWFCHEFeIUDqgMy4szoHXK7Iz29sNhY3n+N44m9VNPxjy2uWYqBEijk8bsBYhu4OLaDhHpwVbcHVJi848dHg==
+"@formatjs/cli@^6.0.0":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@formatjs/cli/-/cli-6.0.0.tgz#4e4305d985c8c34786ab66a497fd774a96295181"
+  integrity sha512-/JNpXMxU1Z5qy90FZo+2bSogxHEX+FjuPq4GfEl34XOANtf03yoxkLKZ7HTu1NuObnUcRTczcITVeD+Hwn9LIw==
 
 "@formatjs/ecma402-abstract@1.14.3":
   version "1.14.3"
