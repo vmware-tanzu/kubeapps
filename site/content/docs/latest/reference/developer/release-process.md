@@ -14,7 +14,7 @@ For building the [development container images](https://hub.docker.com/u/kubeapp
 - The [dashboard/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/dashboard/Dockerfile) uses:
   - [bitnami/node](https://hub.docker.com/r/bitnami/node/tags) for building the static files for production.
   - [bitnami/nginx](https://hub.docker.com/r/bitnami/nginx/tags) for serving the HTML and JS files as a simple web server.
-- Those services written in Golang use the same [bitnami/golang](https://hub.docker.com/r/bitnami/golang) image for building the binary, but then a [scratch](https://hub.docker.com/_/scratch) image is used for actually running it. These Dockerfiles are:
+- Those services written in Golang use the same [bitnami/golang](https://hub.docker.com/r/bitnami/golang/tags) image for building the binary, but then a [scratch](https://hub.docker.com/_/scratch) image is used for actually running it. These Dockerfiles are:
   - [apprepository-controller/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/apprepository-controller/Dockerfile).
   - [asset-syncer/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/asset-syncer/Dockerfile).
   - [kubeapps-apis/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/kubeapps-apis/Dockerfile).
@@ -58,7 +58,6 @@ The versions used there _must_ match the ones used for building the container im
 
 Besides, the `GKE_STABLE_VERSION` and the `GKE_REGULAR_VERSION` might have to be updated if the _Stable_ and _Regular_ Kubernetes versions in GKE have changed. Check this information on [this GKE release notes website](https://cloud.google.com/kubernetes-engine/docs/release-notes).
 
-> **NOTE**: at least one of those `GKE_STABLE_VERSION` or `GKE_REGULAR_VERSION` versions _must_ match the Kubernetes-related dependencies in [Go](https://github.com/vmware-tanzu/kubeapps/blob/main/go.mod) and [Rust](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/pinniped-proxy/Cargo.toml).
 > As part of this release process, these variables _must_ be updated accordingly. Other variable changes _should_ be tracked in a separate PR.
 
 #### 0.2.2 - CI integration image and dependencies
