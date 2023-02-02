@@ -76,7 +76,7 @@ require (
 	github.com/vmware-tanzu/carvel-vendir v0.32.5
 	golang.org/x/net v0.5.0
 	golang.org/x/sync v0.1.0
-	google.golang.org/genproto v0.0.0-20230112194545-e10362b5ecf9
+	google.golang.org/genproto v0.0.0-20230202175211-008b39050e57
 	google.golang.org/grpc v1.53.0-dev
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
 	google.golang.org/protobuf v1.28.1
@@ -91,7 +91,7 @@ require (
 	k8s.io/klog/v2 v2.90.0
 	k8s.io/kubectl v0.26.1
 	k8s.io/kubernetes v1.26.1
-	k8s.io/utils v0.0.0-20230115233650-391b47cb4029
+	k8s.io/utils v0.0.0-20230202215443-34013725500c
 	oras.land/oras-go v1.2.2
 	oras.land/oras-go/v2 v2.0.0
 	sigs.k8s.io/controller-runtime v0.14.2
