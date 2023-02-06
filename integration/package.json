@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@playwright/test": "^1.30.0",
-    "axios": "^1.3.1"
+    "axios": "^1.3.2"
   },
   "devDependencies": {
     "prettier": "^2.8.3"
