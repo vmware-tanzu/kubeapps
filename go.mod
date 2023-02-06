@@ -94,7 +94,7 @@ require (
 	k8s.io/utils v0.0.0-20230202215443-34013725500c
 	oras.land/oras-go v1.2.2
 	oras.land/oras-go/v2 v2.0.0
-	sigs.k8s.io/controller-runtime v0.14.2
+	sigs.k8s.io/controller-runtime v0.14.4
 	sigs.k8s.io/yaml v1.3.0
 )
 
