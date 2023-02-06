@@ -206,6 +206,10 @@ Even though we have a thorough test suite in our repository, we still _must_ per
 
 Next, create a tag for the aforementioned commit and push it to the remote repository. Please note that the tag name will be used as the release name.
 
+> When a new tag is detected, Bitnami will automatically build a set of container images based on the tagged commit. They later will be published in [the Bitnami Dockerhub image registry](https://hub.docker.com/search?q=bitnami%2Fkubeapps&type=image).
+> Please note that this workflow is run outside the control of the Kubeapps release process.
+> Please note also that the Bitnami Catalog will publish a version of the chart whenever one (single) image is published, which means that we need to be careful if any Kubeapps component updates are interdependent, perhaps requesting the Kubeapps chart publishing be paused until all images are published.
+
 For doing so, run the following commands:
 
 ```bash
@@ -225,9 +229,6 @@ A new tag pushed to the repository will trigger, apart from the usual test and b
 An example of the triggered workflow is depicted below:
 
 ![CI workflow after pushing a new tag](../../img/ci-workflow-release.png "CI workflow after pushing a new tag")
-
-> When a new tag is detected, Bitnami will automatically build a set of container images based on the tagged commit. They later will be published in [the Bitnami Dockerhub image registry](https://hub.docker.com/search?q=bitnami%2Fkubeapps&type=image).
-> Please note that this workflow is run outside the control of the Kubeapps release process
 
 ## 3 - Complete the GitHub release notes
 
