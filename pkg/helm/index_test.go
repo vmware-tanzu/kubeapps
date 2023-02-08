@@ -14,6 +14,9 @@ import (
 var validRepoIndexYAMLBytes, _ = os.ReadFile("testdata/valid-index.yaml")
 var validRepoIndexYAML = string(validRepoIndexYAMLBytes)
 
+var validRepoIndexHarborUnifiedYAMLBytes, _ = os.ReadFile("testdata/valid-index-harbor-unified.yaml")
+var validRepoIndexHarborUnifiedYAML = string(validRepoIndexHarborUnifiedYAMLBytes)
+
 func Test_parseRepoIndex(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -50,6 +53,16 @@ func Test_chartsFromIndex(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, len(charts), 2, "number of charts")
 	assert.Equal(t, len(charts[1].ChartVersions), 2, "number of versions")
+}
+
+func Test_chartsFromIndexHarborUnified(t *testing.T) {
+	r := &models.Repo{Name: "test", URL: "http://testrepo.com"}
+	charts, err := ChartsFromIndex([]byte(validRepoIndexHarborUnifiedYAML), r, false)
+	assert.NoError(t, err)
+	assert.Equal(t, len(charts), 2, "number of charts")
+
+	assert.Equal(t, charts[0].Name, "project1%2Facs-engine-autoscaler")
+	assert.Equal(t, charts[1].Name, "project2%2Fwordpress")
 }
 
 func Test_shallowChartsFromIndex(t *testing.T) {
