@@ -1376,6 +1376,21 @@ func TestUnescapeChartsData(t *testing.T) {
 				{Name: "foo#bar.bar"},
 			},
 		},
+		{
+			"slashes in the chart name are not unescaped",
+			[]models.Chart{
+				{
+					ID:   "repo-name/project1%2Ffoo%20bar",
+					Name: "project1%2Ffoo%20bar",
+				},
+			},
+			[]models.Chart{
+				{
+					ID:   "repo-name/project1%2Ffoo bar",
+					Name: "project1%2Ffoo bar",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
