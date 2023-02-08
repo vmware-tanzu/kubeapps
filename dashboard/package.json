@@ -74,7 +74,7 @@
   },
   "devDependencies": {
     "@craco/craco": "^7.0.0",
-    "@formatjs/cli": "^6.0.0",
+    "@formatjs/cli": "^6.0.1",
     "@improbable-eng/grpc-web-fake-transport": "^0.15.0",
     "@testing-library/react": "^12.1.5",
     "@types/enzyme": "^3.10.12",
