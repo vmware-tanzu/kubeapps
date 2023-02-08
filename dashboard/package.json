@@ -30,7 +30,7 @@
     "@cds/city": "^1.1.0",
     "@cds/core": "^6.2.0",
     "@cds/react": "^6.2.0",
-    "@clr/ui": "^13.11.3",
+    "@clr/ui": "^13.13.0",
     "@improbable-eng/grpc-web": "^0.15.0",
     "@paciolan/remote-component": "^2.13.0",
     "@tanstack/match-sorter-utils": "^8.7.6",
