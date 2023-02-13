@@ -155,7 +155,7 @@ func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, rel helmv2.
 					// E.g. http://source-controller.flux-system.svc.cluster.local./helmchart/default/redis-j6wtx/redis-latest.tgz
 					// Flux does the hard work of pulling the bits from remote repo
 					// based on secretRef associated with HelmRepository, if applicable
-					chartDetail, err := tarutil.FetchChartDetailFromTarballUrl(chartID, tarUrl, "", "", httpclient.New())
+					chartDetail, err := tarutil.FetchChartDetailFromTarballUrl(tarUrl, "", "", httpclient.New())
 					if err != nil {
 						return nil, err
 					}
