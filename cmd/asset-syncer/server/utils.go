@@ -441,11 +441,11 @@ func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPull
 	}
 
 	// Encode repository names to store them in the database.
-	encodedAppName := url.PathEscape(appName)
+	encodedAppNameForID := url.PathEscape(appName)
 
 	return &models.Chart{
-		ID:            path.Join(r.Name, encodedAppName),
-		Name:          encodedAppName,
+		ID:            path.Join(r.Name, encodedAppNameForID),
+		Name:          chartMetadata.Name,
 		Repo:          &models.Repo{Namespace: r.Namespace, Name: r.Name, URL: r.URL, Type: r.Type},
 		Description:   chartMetadata.Description,
 		Home:          chartMetadata.Home,
@@ -578,7 +578,7 @@ func (r *OCIRegistry) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 			log.V(4).Infof("received chart %s from channel", ch.ID)
 			if r, ok := result[ch.ID]; ok {
 				// Chart already exists, append version
-				r.ChartVersions = append(result[ch.ID].ChartVersions, ch.ChartVersions...)
+				r.ChartVersions = append(r.ChartVersions, ch.ChartVersions...)
 			} else {
 				result[ch.ID] = ch
 			}
@@ -752,7 +752,7 @@ func (f *fileImporter) importWorker(wg *sync.WaitGroup, icons <-chan models.Char
 
 func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal, userAgent string, passCredentials bool) error {
 	if c.Icon == "" {
-		log.Info("icon not found, name=%s", c.Name)
+		log.Infof("icon not found, name=%s", c.Name)
 		return nil
 	}
 

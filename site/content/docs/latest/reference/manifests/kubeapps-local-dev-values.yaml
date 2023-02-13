@@ -19,6 +19,13 @@ postgresql:
       enabled: false
 kubeappsapis:
   replicaCount: 1
+  image:
+    tag: dev8
+apprepository:
+  image:
+    tag: dev1
+  syncImage:
+    tag: dev1
 ingress:
   enabled: true
   hostname: localhost

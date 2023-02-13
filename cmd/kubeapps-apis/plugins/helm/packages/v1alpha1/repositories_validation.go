@@ -6,13 +6,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/vmware-tanzu/kubeapps/pkg/helm"
 	"io"
-	log "k8s.io/klog/v2"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
+
+	"github.com/vmware-tanzu/kubeapps/pkg/helm"
+	log "k8s.io/klog/v2"
 
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
@@ -47,6 +48,7 @@ func (s *Server) ValidateRepository(appRepo *apprepov1alpha1.AppRepository, secr
 	if err != nil {
 		return err
 	} else if resp.Code >= 400 {
+		log.Errorf("Failed validation: %+v", resp)
 		return status.Errorf(codes.FailedPrecondition, "Failed repository validation: %v", resp)
 	} else {
 		return nil

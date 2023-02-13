@@ -931,6 +931,7 @@ version: 1.0.0
 			"Retrieve standard files",
 			"kubeapps",
 			[]tartest.TarballFile{
+				{Name: "Chart.yaml", Body: chartYAML},
 				{Name: "README.md", Body: "chart readme"},
 				{Name: "values.yaml", Body: "chart values"},
 				{Name: "values.schema.json", Body: "chart schema"},
@@ -941,9 +942,18 @@ version: 1.0.0
 					ID:          "test/kubeapps",
 					Name:        "kubeapps",
 					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/test"},
-					Maintainers: []chart.Maintainer{},
+					Description: "chart description",
+					Home:        "https://kubeapps.com",
+					Keywords:    []string{"helm"},
+					Maintainers: []chart.Maintainer{{Name: "Bitnami", Email: "containers@bitnami.com"}},
+					Sources:     []string{"https://github.com/vmware-tanzu/kubeapps"},
+					Icon:        "https://logo.png",
+					Category:    "Infrastructure",
 					ChartVersions: []models.ChartVersion{
 						{
+							Version:                 "1.0.0",
+							AppVersion:              "2.0.0",
+							URLs:                    []string{"https://github.com/vmware-tanzu/kubeapps"},
 							Digest:                  "123",
 							Readme:                  "chart readme",
 							DefaultValues:           "chart values",
@@ -959,6 +969,7 @@ version: 1.0.0
 			"Retrieve additional values files",
 			"kubeapps",
 			[]tartest.TarballFile{
+				{Name: "Chart.yaml", Body: chartYAML},
 				{Name: "README.md", Body: "chart readme"},
 				{Name: "values.yaml", Body: "chart values"},
 				{Name: "values-production.yaml", Body: "chart prod values"},
@@ -971,9 +982,18 @@ version: 1.0.0
 					ID:          "test/kubeapps",
 					Name:        "kubeapps",
 					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/test"},
-					Maintainers: []chart.Maintainer{},
+					Description: "chart description",
+					Home:        "https://kubeapps.com",
+					Keywords:    []string{"helm"},
+					Maintainers: []chart.Maintainer{{Name: "Bitnami", Email: "containers@bitnami.com"}},
+					Sources:     []string{"https://github.com/vmware-tanzu/kubeapps"},
+					Icon:        "https://logo.png",
+					Category:    "Infrastructure",
 					ChartVersions: []models.ChartVersion{
 						{
+							Version:       "1.0.0",
+							AppVersion:    "2.0.0",
+							URLs:          []string{"https://github.com/vmware-tanzu/kubeapps"},
 							Digest:        "123",
 							Readme:        "chart readme",
 							DefaultValues: "chart values",
@@ -992,6 +1012,7 @@ version: 1.0.0
 			"Retrieve additional values files with more hyphens",
 			"kubeapps",
 			[]tartest.TarballFile{
+				{Name: "Chart.yaml", Body: chartYAML},
 				{Name: "README.md", Body: "chart readme"},
 				{Name: "values.yaml", Body: "chart values"},
 				{Name: "values-scenario-a.yaml", Body: "scenario a values"},
@@ -1004,9 +1025,18 @@ version: 1.0.0
 					ID:          "test/kubeapps",
 					Name:        "kubeapps",
 					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/test"},
-					Maintainers: []chart.Maintainer{},
+					Description: "chart description",
+					Home:        "https://kubeapps.com",
+					Keywords:    []string{"helm"},
+					Maintainers: []chart.Maintainer{{Name: "Bitnami", Email: "containers@bitnami.com"}},
+					Sources:     []string{"https://github.com/vmware-tanzu/kubeapps"},
+					Icon:        "https://logo.png",
+					Category:    "Infrastructure",
 					ChartVersions: []models.ChartVersion{
 						{
+							Version:       "1.0.0",
+							AppVersion:    "2.0.0",
+							URLs:          []string{"https://github.com/vmware-tanzu/kubeapps"},
 							Digest:        "123",
 							Readme:        "chart readme",
 							DefaultValues: "chart values",
@@ -1025,6 +1055,7 @@ version: 1.0.0
 			"A chart with a /",
 			"repo/kubeapps",
 			[]tartest.TarballFile{
+				{Name: "Chart.yaml", Body: chartYAML},
 				{Name: "README.md", Body: "chart readme"},
 				{Name: "values.yaml", Body: "chart values"},
 				{Name: "values.schema.json", Body: "chart schema"},
@@ -1033,11 +1064,20 @@ version: 1.0.0
 			[]models.Chart{
 				{
 					ID:          "test/repo%2Fkubeapps",
-					Name:        "repo%2Fkubeapps",
+					Name:        "kubeapps",
 					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/"},
-					Maintainers: []chart.Maintainer{},
+					Description: "chart description",
+					Home:        "https://kubeapps.com",
+					Keywords:    []string{"helm"},
+					Maintainers: []chart.Maintainer{{Name: "Bitnami", Email: "containers@bitnami.com"}},
+					Sources:     []string{"https://github.com/vmware-tanzu/kubeapps"},
+					Icon:        "https://logo.png",
+					Category:    "Infrastructure",
 					ChartVersions: []models.ChartVersion{
 						{
+							Version:                 "1.0.0",
+							AppVersion:              "2.0.0",
+							URLs:                    []string{"https://github.com/vmware-tanzu/kubeapps"},
 							Digest:                  "123",
 							Readme:                  "chart readme",
 							DefaultValues:           "chart values",
@@ -1053,6 +1093,7 @@ version: 1.0.0
 			"Multiple chart versions",
 			"repo/kubeapps",
 			[]tartest.TarballFile{
+				{Name: "Chart.yaml", Body: chartYAML},
 				{Name: "README.md", Body: "chart readme"},
 				{Name: "values.yaml", Body: "chart values"},
 				{Name: "values.schema.json", Body: "chart schema"},
@@ -1061,11 +1102,20 @@ version: 1.0.0
 			[]models.Chart{
 				{
 					ID:          "test/repo%2Fkubeapps",
-					Name:        "repo%2Fkubeapps",
+					Name:        "kubeapps",
 					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/"},
-					Maintainers: []chart.Maintainer{},
+					Description: "chart description",
+					Home:        "https://kubeapps.com",
+					Keywords:    []string{"helm"},
+					Maintainers: []chart.Maintainer{{Name: "Bitnami", Email: "containers@bitnami.com"}},
+					Sources:     []string{"https://github.com/vmware-tanzu/kubeapps"},
+					Icon:        "https://logo.png",
+					Category:    "Infrastructure",
 					ChartVersions: []models.ChartVersion{
 						{
+							Version:                 "1.0.0",
+							AppVersion:              "2.0.0",
+							URLs:                    []string{"https://github.com/vmware-tanzu/kubeapps"},
 							Digest:                  "123",
 							Readme:                  "chart readme",
 							DefaultValues:           "chart values",
@@ -1073,6 +1123,11 @@ version: 1.0.0
 							Schema:                  "chart schema",
 						},
 						{
+							// The test passes the one yaml file for both tags,
+							// hence the same version number here.
+							Version:                 "1.0.0",
+							AppVersion:              "2.0.0",
+							URLs:                    []string{"https://github.com/vmware-tanzu/kubeapps"},
 							Digest:                  "123",
 							Readme:                  "chart readme",
 							DefaultValues:           "chart values",
@@ -1088,6 +1143,7 @@ version: 1.0.0
 			"Single chart version for a shallow run",
 			"repo/kubeapps",
 			[]tartest.TarballFile{
+				{Name: "Chart.yaml", Body: chartYAML},
 				{Name: "README.md", Body: "chart readme"},
 				{Name: "values.yaml", Body: "chart values"},
 				{Name: "values.schema.json", Body: "chart schema"},
@@ -1096,11 +1152,20 @@ version: 1.0.0
 			[]models.Chart{
 				{
 					ID:          "test/repo%2Fkubeapps",
-					Name:        "repo%2Fkubeapps",
+					Name:        "kubeapps",
 					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/"},
-					Maintainers: []chart.Maintainer{},
+					Description: "chart description",
+					Home:        "https://kubeapps.com",
+					Keywords:    []string{"helm"},
+					Maintainers: []chart.Maintainer{{Name: "Bitnami", Email: "containers@bitnami.com"}},
+					Sources:     []string{"https://github.com/vmware-tanzu/kubeapps"},
+					Icon:        "https://logo.png",
+					Category:    "Infrastructure",
 					ChartVersions: []models.ChartVersion{
 						{
+							Version:                 "1.0.0",
+							AppVersion:              "2.0.0",
+							URLs:                    []string{"https://github.com/vmware-tanzu/kubeapps"},
 							Digest:                  "123",
 							Readme:                  "chart readme",
 							DefaultValues:           "chart values",

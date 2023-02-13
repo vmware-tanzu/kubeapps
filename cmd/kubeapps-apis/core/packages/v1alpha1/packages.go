@@ -106,6 +106,8 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 func (s packagesServer) GetAvailablePackageDetail(ctx context.Context, request *packages.GetAvailablePackageDetailRequest) (*packages.GetAvailablePackageDetailResponse, error) {
 	log.InfoS("+core GetAvailablePackageDetail", "cluster", request.GetAvailablePackageRef().GetContext().GetCluster(), "namespace", request.GetAvailablePackageRef().GetContext().GetNamespace())
 
+	log.Errorf("Requested available package detail: %+v", request)
+
 	if request.GetAvailablePackageRef().GetPlugin() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing AvailablePackageRef.Plugin)")
 	}
