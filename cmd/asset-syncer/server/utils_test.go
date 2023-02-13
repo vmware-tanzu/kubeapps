@@ -529,7 +529,7 @@ func (r *fakeRepo) Charts(shallow bool) ([]models.Chart, error) {
 	return r.charts, nil
 }
 
-func (r *fakeRepo) FetchFiles(name string, cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
+func (r *fakeRepo) FetchFiles(cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
 	return map[string]string{
 		models.DefaultValuesKey: r.chartFiles.DefaultValues,
 		models.ReadmeKey:        r.chartFiles.Readme,
@@ -605,7 +605,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 			RepoInternal: repo,
 			netClient:    netClient,
 		}
-		err := fImporter.fetchAndImportFiles(charts[0].Name, helmRepo, chartVersion, "my-user-agent", false)
+		err := fImporter.fetchAndImportFiles(chartID, helmRepo, chartVersion, "my-user-agent", false)
 		assert.NoError(t, err)
 	})
 
@@ -631,7 +631,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 			content:      []byte{},
 			netClient:    netClient,
 		}
-		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, chartVersion, "my-user-agent", true)
+		err := fImporter.fetchAndImportFiles(chartID, repo, chartVersion, "my-user-agent", true)
 		assert.NoError(t, err)
 	})
 
@@ -649,7 +649,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		netClient := &goodTarballClient{c: charts[0]}
 		fImporter := fileImporter{pgManager, netClient}
 
-		err := fImporter.fetchAndImportFiles(charts[0].Name, fRepo, chartVersion, "my-user-agent", false)
+		err := fImporter.fetchAndImportFiles(chartID, fRepo, chartVersion, "my-user-agent", false)
 		assert.NoError(t, err)
 	})
 
@@ -662,7 +662,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 			WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(`true`))
 
 		fImporter := fileImporter{pgManager, &goodHTTPClient{}}
-		err := fImporter.fetchAndImportFiles(charts[0].Name, fRepo, chartVersion, "my-user-agent", false)
+		err := fImporter.fetchAndImportFiles(chartID, fRepo, chartVersion, "my-user-agent", false)
 		assert.NoError(t, err)
 	})
 }
@@ -931,6 +931,7 @@ version: 1.0.0
 			"Retrieve standard files",
 			"kubeapps",
 			[]tartest.TarballFile{
+				{Name: "Chart.yaml", Body: chartYAML},
 				{Name: "README.md", Body: "chart readme"},
 				{Name: "values.yaml", Body: "chart values"},
 				{Name: "values.schema.json", Body: "chart schema"},
@@ -941,9 +942,18 @@ version: 1.0.0
 					ID:          "test/kubeapps",
 					Name:        "kubeapps",
 					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/test"},
-					Maintainers: []chart.Maintainer{},
+					Description: "chart description",
+					Home:        "https://kubeapps.com",
+					Keywords:    []string{"helm"},
+					Maintainers: []chart.Maintainer{{Name: "Bitnami", Email: "containers@bitnami.com"}},
+					Sources:     []string{"https://github.com/vmware-tanzu/kubeapps"},
+					Icon:        "https://logo.png",
+					Category:    "Infrastructure",
 					ChartVersions: []models.ChartVersion{
 						{
+							Version:                 "1.0.0",
+							AppVersion:              "2.0.0",
+							URLs:                    []string{"https://github.com/vmware-tanzu/kubeapps"},
 							Digest:                  "123",
 							Readme:                  "chart readme",
 							DefaultValues:           "chart values",
@@ -959,6 +969,7 @@ version: 1.0.0
 			"Retrieve additional values files",
 			"kubeapps",
 			[]tartest.TarballFile{
+				{Name: "Chart.yaml", Body: chartYAML},
 				{Name: "README.md", Body: "chart readme"},
 				{Name: "values.yaml", Body: "chart values"},
 				{Name: "values-production.yaml", Body: "chart prod values"},
@@ -971,9 +982,18 @@ version: 1.0.0
 					ID:          "test/kubeapps",
 					Name:        "kubeapps",
 					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/test"},
-					Maintainers: []chart.Maintainer{},
+					Description: "chart description",
+					Home:        "https://kubeapps.com",
+					Keywords:    []string{"helm"},
+					Maintainers: []chart.Maintainer{{Name: "Bitnami", Email: "containers@bitnami.com"}},
+					Sources:     []string{"https://github.com/vmware-tanzu/kubeapps"},
+					Icon:        "https://logo.png",
+					Category:    "Infrastructure",
 					ChartVersions: []models.ChartVersion{
 						{
+							Version:       "1.0.0",
+							AppVersion:    "2.0.0",
+							URLs:          []string{"https://github.com/vmware-tanzu/kubeapps"},
 							Digest:        "123",
 							Readme:        "chart readme",
 							DefaultValues: "chart values",
@@ -992,6 +1012,7 @@ version: 1.0.0
 			"Retrieve additional values files with more hyphens",
 			"kubeapps",
 			[]tartest.TarballFile{
+				{Name: "Chart.yaml", Body: chartYAML},
 				{Name: "README.md", Body: "chart readme"},
 				{Name: "values.yaml", Body: "chart values"},
 				{Name: "values-scenario-a.yaml", Body: "scenario a values"},
@@ -1004,9 +1025,18 @@ version: 1.0.0
 					ID:          "test/kubeapps",
 					Name:        "kubeapps",
 					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/test"},
-					Maintainers: []chart.Maintainer{},
+					Description: "chart description",
+					Home:        "https://kubeapps.com",
+					Keywords:    []string{"helm"},
+					Maintainers: []chart.Maintainer{{Name: "Bitnami", Email: "containers@bitnami.com"}},
+					Sources:     []string{"https://github.com/vmware-tanzu/kubeapps"},
+					Icon:        "https://logo.png",
+					Category:    "Infrastructure",
 					ChartVersions: []models.ChartVersion{
 						{
+							Version:       "1.0.0",
+							AppVersion:    "2.0.0",
+							URLs:          []string{"https://github.com/vmware-tanzu/kubeapps"},
 							Digest:        "123",
 							Readme:        "chart readme",
 							DefaultValues: "chart values",
@@ -1025,6 +1055,7 @@ version: 1.0.0
 			"A chart with a /",
 			"repo/kubeapps",
 			[]tartest.TarballFile{
+				{Name: "Chart.yaml", Body: chartYAML},
 				{Name: "README.md", Body: "chart readme"},
 				{Name: "values.yaml", Body: "chart values"},
 				{Name: "values.schema.json", Body: "chart schema"},
@@ -1033,11 +1064,20 @@ version: 1.0.0
 			[]models.Chart{
 				{
 					ID:          "test/repo%2Fkubeapps",
-					Name:        "repo%2Fkubeapps",
+					Name:        "kubeapps",
 					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/"},
-					Maintainers: []chart.Maintainer{},
+					Description: "chart description",
+					Home:        "https://kubeapps.com",
+					Keywords:    []string{"helm"},
+					Maintainers: []chart.Maintainer{{Name: "Bitnami", Email: "containers@bitnami.com"}},
+					Sources:     []string{"https://github.com/vmware-tanzu/kubeapps"},
+					Icon:        "https://logo.png",
+					Category:    "Infrastructure",
 					ChartVersions: []models.ChartVersion{
 						{
+							Version:                 "1.0.0",
+							AppVersion:              "2.0.0",
+							URLs:                    []string{"https://github.com/vmware-tanzu/kubeapps"},
 							Digest:                  "123",
 							Readme:                  "chart readme",
 							DefaultValues:           "chart values",
@@ -1053,6 +1093,7 @@ version: 1.0.0
 			"Multiple chart versions",
 			"repo/kubeapps",
 			[]tartest.TarballFile{
+				{Name: "Chart.yaml", Body: chartYAML},
 				{Name: "README.md", Body: "chart readme"},
 				{Name: "values.yaml", Body: "chart values"},
 				{Name: "values.schema.json", Body: "chart schema"},
@@ -1061,11 +1102,20 @@ version: 1.0.0
 			[]models.Chart{
 				{
 					ID:          "test/repo%2Fkubeapps",
-					Name:        "repo%2Fkubeapps",
+					Name:        "kubeapps",
 					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/"},
-					Maintainers: []chart.Maintainer{},
+					Description: "chart description",
+					Home:        "https://kubeapps.com",
+					Keywords:    []string{"helm"},
+					Maintainers: []chart.Maintainer{{Name: "Bitnami", Email: "containers@bitnami.com"}},
+					Sources:     []string{"https://github.com/vmware-tanzu/kubeapps"},
+					Icon:        "https://logo.png",
+					Category:    "Infrastructure",
 					ChartVersions: []models.ChartVersion{
 						{
+							Version:                 "1.0.0",
+							AppVersion:              "2.0.0",
+							URLs:                    []string{"https://github.com/vmware-tanzu/kubeapps"},
 							Digest:                  "123",
 							Readme:                  "chart readme",
 							DefaultValues:           "chart values",
@@ -1073,6 +1123,11 @@ version: 1.0.0
 							Schema:                  "chart schema",
 						},
 						{
+							// The test passes the one yaml file for both tags,
+							// hence the same version number here.
+							Version:                 "1.0.0",
+							AppVersion:              "2.0.0",
+							URLs:                    []string{"https://github.com/vmware-tanzu/kubeapps"},
 							Digest:                  "123",
 							Readme:                  "chart readme",
 							DefaultValues:           "chart values",
@@ -1088,6 +1143,7 @@ version: 1.0.0
 			"Single chart version for a shallow run",
 			"repo/kubeapps",
 			[]tartest.TarballFile{
+				{Name: "Chart.yaml", Body: chartYAML},
 				{Name: "README.md", Body: "chart readme"},
 				{Name: "values.yaml", Body: "chart values"},
 				{Name: "values.schema.json", Body: "chart schema"},
@@ -1096,11 +1152,20 @@ version: 1.0.0
 			[]models.Chart{
 				{
 					ID:          "test/repo%2Fkubeapps",
-					Name:        "repo%2Fkubeapps",
+					Name:        "kubeapps",
 					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/"},
-					Maintainers: []chart.Maintainer{},
+					Description: "chart description",
+					Home:        "https://kubeapps.com",
+					Keywords:    []string{"helm"},
+					Maintainers: []chart.Maintainer{{Name: "Bitnami", Email: "containers@bitnami.com"}},
+					Sources:     []string{"https://github.com/vmware-tanzu/kubeapps"},
+					Icon:        "https://logo.png",
+					Category:    "Infrastructure",
 					ChartVersions: []models.ChartVersion{
 						{
+							Version:                 "1.0.0",
+							AppVersion:              "2.0.0",
+							URLs:                    []string{"https://github.com/vmware-tanzu/kubeapps"},
 							Digest:                  "123",
 							Readme:                  "chart readme",
 							DefaultValues:           "chart values",
@@ -1163,7 +1228,7 @@ version: 1.0.0
 			models.SchemaKey:        "schema text",
 		}
 		repo := OCIRegistry{}
-		result, err := repo.FetchFiles("", models.ChartVersion{
+		result, err := repo.FetchFiles(models.ChartVersion{
 			DefaultValues: files[models.DefaultValuesKey],
 			Readme:        files[models.ReadmeKey],
 			Schema:        files[models.SchemaKey],

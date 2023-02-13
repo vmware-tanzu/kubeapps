@@ -620,7 +620,10 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 
 	// Check for a chart matching the installed package.
 	cq := utils.ChartQuery{
-		Namespace:  release.Namespace,
+		Namespace: release.Namespace,
+		// For OCI charts, the name is *not* just the chart name from the release,
+		// but includes the repo and project: `test-oci/kubeapps%2Fsimplechart`
+		// UPTOHERE: Investigate what happened in kubeops when this last worked perhaps?
 		ChartName:  release.Chart.Metadata.Name,
 		Version:    release.Chart.Metadata.Version,
 		AppVersion: release.Chart.Metadata.AppVersion,
@@ -629,6 +632,8 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Error while fetching related chart: %v", err)
 	}
+	// Getting zero charts here
+
 	// TODO(agamez): deal with multiple matches, perhaps returning []AvailablePackageRef ?
 	// Example: global + namespaced repo including an overlapping subset of packages.
 	if len(charts) > 0 {
