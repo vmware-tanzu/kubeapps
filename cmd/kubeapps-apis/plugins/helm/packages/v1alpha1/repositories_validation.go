@@ -48,7 +48,7 @@ func (s *Server) ValidateRepository(appRepo *apprepov1alpha1.AppRepository, secr
 	if err != nil {
 		return err
 	} else if resp.Code >= 400 {
-		log.Errorf("Failed validation: %+v", resp)
+		log.Errorf("Failed repository validation validation: %+v", resp)
 		return status.Errorf(codes.FailedPrecondition, "Failed repository validation: %v", resp)
 	} else {
 		return nil

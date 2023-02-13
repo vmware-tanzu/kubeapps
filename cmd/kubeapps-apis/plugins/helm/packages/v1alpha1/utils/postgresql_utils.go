@@ -12,7 +12,6 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
-	log "k8s.io/klog/v2"
 )
 
 const AllNamespaces = "_all"
@@ -259,7 +258,6 @@ func (m *PostgresAssetManager) GenerateWhereClause(cq ChartQuery) (string, []int
 		whereQuery = "WHERE " + strings.Join(whereClauses, " AND ")
 	}
 
-	log.Errorf("whereQuery: %q\nwhereQueryParams: %q", whereQuery, whereQueryParams)
 	return whereQuery, whereQueryParams, nil
 }
 

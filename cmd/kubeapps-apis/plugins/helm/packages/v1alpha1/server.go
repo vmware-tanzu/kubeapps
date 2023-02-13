@@ -283,8 +283,6 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
 	log.InfoS("+helm GetAvailablePackageDetail", "cluster", request.GetAvailablePackageRef().GetContext().GetCluster(), "namespace", request.GetAvailablePackageRef().GetContext().GetNamespace())
 
-	log.Errorf("Requested available package detail: %+v", request)
-
 	if request.GetAvailablePackageRef().GetContext() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "No request AvailablePackageRef.Context provided")
 	}
@@ -630,7 +628,6 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 		Version:    release.Chart.Metadata.Version,
 		AppVersion: release.Chart.Metadata.AppVersion,
 	}
-	log.Errorf("cq is: %+v", cq)
 	charts, err := s.manager.GetPaginatedChartListWithFilters(cq, 0, 0)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Error while fetching related chart: %v", err)
@@ -639,7 +636,6 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 
 	// TODO(agamez): deal with multiple matches, perhaps returning []AvailablePackageRef ?
 	// Example: global + namespaced repo including an overlapping subset of packages.
-	log.Errorf("charts: %+v", charts)
 	if len(charts) > 0 {
 		installedPkgDetail.AvailablePackageRef = &corev1.AvailablePackageReference{
 			Identifier: charts[0].ID,
@@ -660,7 +656,6 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 		}
 	}
 
-	log.Errorf("Retrieved installed package detail: %+v", installedPkgDetail)
 	return &corev1.GetInstalledPackageDetailResponse{
 		InstalledPackageDetail: installedPkgDetail,
 	}, nil
