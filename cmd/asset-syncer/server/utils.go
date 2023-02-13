@@ -61,7 +61,7 @@ type Config struct {
 }
 
 type importChartFilesJob struct {
-	Name         string
+	ID           string
 	Repo         *models.Repo
 	ChartVersion models.ChartVersion
 }
@@ -124,7 +124,7 @@ type Repo interface {
 	Repo() *models.RepoInternal
 	FilterIndex()
 	Charts(fetchLatestOnly bool) ([]models.Chart, error)
-	FetchFiles(name string, cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error)
+	FetchFiles(cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error)
 }
 
 // HelmRepo implements the Repo interface for chartmuseum-like repositories
@@ -266,7 +266,7 @@ func (r *HelmRepo) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 }
 
 // FetchFiles retrieves the important files of a chart and version from the repo
-func (r *HelmRepo) FetchFiles(name string, cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
+func (r *HelmRepo) FetchFiles(cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
 	authorizationHeader := ""
 	chartTarballURL := chartTarballURL(r.RepoInternal, cv)
 
@@ -275,7 +275,6 @@ func (r *HelmRepo) FetchFiles(name string, cv models.ChartVersion, userAgent str
 	}
 
 	return tarutil.FetchChartDetailFromTarballUrl(
-		name,
 		chartTarballURL,
 		userAgent,
 		authorizationHeader,
@@ -595,7 +594,7 @@ func (r *OCIRegistry) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 }
 
 // FetchFiles do nothing for the OCI case since they have been already fetched in the Charts() method
-func (r *OCIRegistry) FetchFiles(name string, cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
+func (r *OCIRegistry) FetchFiles(cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
 	return map[string]string{
 		models.DefaultValuesKey: cv.DefaultValues,
 		models.ReadmeKey:        cv.Readme,
@@ -716,9 +715,11 @@ func (f *fileImporter) fetchFiles(charts []models.Chart, repo Repo, userAgent st
 	// enqueued later
 	var toEnqueue []importChartFilesJob
 	for _, c := range charts {
-		chartFilesJobs <- importChartFilesJob{c.Name, c.Repo, c.ChartVersions[0]}
+		// TODO: Should we use the chart id, chart name with prefix, or helm chart name here? The database actually stores the chart ID so we could
+		// pass that in instead? Why don't we?
+		chartFilesJobs <- importChartFilesJob{c.ID, c.Repo, c.ChartVersions[0]}
 		for _, cv := range c.ChartVersions[1:] {
-			toEnqueue = append(toEnqueue, importChartFilesJob{c.Name, c.Repo, cv})
+			toEnqueue = append(toEnqueue, importChartFilesJob{c.ID, c.Repo, cv})
 		}
 	}
 
@@ -743,9 +744,9 @@ func (f *fileImporter) importWorker(wg *sync.WaitGroup, icons <-chan models.Char
 		}
 	}
 	for j := range chartFiles {
-		log.V(4).Infof("importing readme and values, name=%s, version=%s", j.Name, j.ChartVersion.Version)
-		if err := f.fetchAndImportFiles(j.Name, repo, j.ChartVersion, userAgent, passCredentials); err != nil {
-			log.Errorf("failed to import files, name=%s, version=%s: %v", j.Name, j.ChartVersion.Version, err)
+		log.V(4).Infof("importing readme and values, ID=%s, version=%s", j.ID, j.ChartVersion.Version)
+		if err := f.fetchAndImportFiles(j.ID, repo, j.ChartVersion, userAgent, passCredentials); err != nil {
+			log.Errorf("failed to import files, ID=%s, version=%s: %v", j.ID, j.ChartVersion.Version, err)
 		}
 	}
 }
@@ -806,19 +807,18 @@ func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal
 	return f.manager.updateIcon(models.Repo{Namespace: r.Namespace, Name: r.Name}, b, contentType, c.ID)
 }
 
-func (f *fileImporter) fetchAndImportFiles(name string, repo Repo, cv models.ChartVersion, userAgent string, passCredentials bool) error {
+func (f *fileImporter) fetchAndImportFiles(chartID string, repo Repo, cv models.ChartVersion, userAgent string, passCredentials bool) error {
 	r := repo.Repo()
-	chartID := fmt.Sprintf("%s/%s", r.Name, name)
 	chartFilesID := fmt.Sprintf("%s-%s", chartID, cv.Version)
 
 	// Check if we already have indexed files for this chart version and digest
 	if f.manager.filesExist(models.Repo{Namespace: r.Namespace, Name: r.Name}, chartFilesID, cv.Digest) {
-		log.V(4).Infof("skipping existing files, name: %s, version: %s", name, cv.Version)
+		log.V(4).Infof("skipping existing files, id: %s, version: %s", chartID, cv.Version)
 		return nil
 	}
-	log.V(4).Infof("fetching files, name=%s, version=%s", name, cv.Version)
+	log.V(4).Infof("fetching files, id=%s, version=%s", chartID, cv.Version)
 
-	files, err := repo.FetchFiles(name, cv, userAgent, passCredentials)
+	files, err := repo.FetchFiles(cv, userAgent, passCredentials)
 	if err != nil {
 		return err
 	}
@@ -827,17 +827,17 @@ func (f *fileImporter) fetchAndImportFiles(name string, repo Repo, cv models.Cha
 	if v, ok := files[models.ReadmeKey]; ok {
 		chartFiles.Readme = v
 	} else {
-		log.Info("README.md not found, name=%s, version=%s", name, cv.Version)
+		log.Infof("README.md not found, id=%s, version=%s", chartID, cv.Version)
 	}
 	if v, ok := files[models.DefaultValuesKey]; ok {
 		chartFiles.DefaultValues = v
 	} else {
-		log.Info("values.yaml not found, name=%s, version=%s", name, cv.Version)
+		log.Infof("values.yaml not found, id=%s, version=%s", chartID, cv.Version)
 	}
 	if v, ok := files[models.SchemaKey]; ok {
 		chartFiles.Schema = v
 	} else {
-		log.Info("values.schema.json not found, name=%s, version=%s", name, cv.Version)
+		log.Infof("values.schema.json not found, id=%s, version=%s", chartID, cv.Version)
 	}
 	chartFiles.AdditionalDefaultValues = additional_default_values_from_files(files)
 
