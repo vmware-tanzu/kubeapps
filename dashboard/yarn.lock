@@ -1274,7 +1274,7 @@
   resolved "https://registry.yarnpkg.com/@floating-ui/core/-/core-1.1.1.tgz#cf8b4cdd8987c687329a6099561764d8a16f2f22"
   integrity sha512-PL7g3dhA4dHgZfujkuD8Q+tfJJynEtnNQSPzmucCnxMvkxf4cLBJw/ZYqZUn4HCh33U3WHrAfv2R2tbi9UCSmw==
 
-"@floating-ui/dom@^1.0.4":
+"@floating-ui/dom@1.1.1":
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/@floating-ui/dom/-/dom-1.1.1.tgz#66aa747e15894910869bf9144fc54fc7d6e9f975"
   integrity sha512-TpIO93+DIujg3g7SykEAGZMDtbJRrmnYRCNYSjJlvIbGhBjRSNTLVbNeDQBrzy9qDgUbiWdc7KA0uZHZ2tJmiw==
@@ -11414,12 +11414,12 @@ react-test-renderer@^17.0.0, react-test-renderer@^17.0.2:
     react-shallow-renderer "^16.13.1"
     scheduler "^0.20.2"
 
-react-tooltip@^5.7.4:
-  version "5.7.4"
-  resolved "https://registry.yarnpkg.com/react-tooltip/-/react-tooltip-5.7.4.tgz#246269b89f55de031e3c964125443e41d3799500"
-  integrity sha512-Eocnm5Dl6numT52CXLVecX5p93W4ifU3TIbhGqrNfFw2KY7ES2tZDPQHH5yQ1OSWhAcxWZImuFRcUwe+W/vTig==
+react-tooltip@^5.8.1:
+  version "5.8.1"
+  resolved "https://registry.yarnpkg.com/react-tooltip/-/react-tooltip-5.8.1.tgz#2b1ea9f5cb24578964a5c0a7ce9b183f5cb7dfd9"
+  integrity sha512-q30ARh/WwtcwNiZpzfYWFUmgZl6acRas/n7uhK6pXDiIWG6Xcklic0WFzHQLlvIGNeYbCY//h/RFdyBemfhZyQ==
   dependencies:
-    "@floating-ui/dom" "^1.0.4"
+    "@floating-ui/dom" "1.1.1"
     classnames "^2.3.2"
 
 react-transition-group@^4.4.5:
