@@ -4,13 +4,16 @@
 package v1alpha1
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
 	"testing/fstest"
+	"text/template"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -21,6 +24,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/yaml"
 )
 
 var ignoreUnexported = cmpopts.IgnoreUnexported(
@@ -410,7 +414,7 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 			}
 			configGetter, err := createConfigGetterWithParams(inClusterConfig, serveOpts, clustersConfig)
 			if err != nil {
-				t.Fatalf("in %s: fail creating the configGetter:  %+v", tc.name, err)
+				t.Fatalf("%+v", err)
 			}
 
 			restConfig, err := configGetter(ctx, tc.cluster)
@@ -419,7 +423,7 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 					t.Errorf("in %s: mismatch (-want +got):\n%s", tc.name, cmp.Diff(want, got))
 				}
 			} else if err != nil {
-				t.Fatalf("in %s: %+v", tc.name, err)
+				t.Fatalf("%+v", err)
 			}
 
 			if tc.expectedErrMsg == nil {
@@ -428,6 +432,116 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 				} else if got, want := restConfig.Host, tc.expectedAPIHost; got != want {
 					t.Errorf("got: %q, want: %q", got, want)
 				}
+			}
+		})
+	}
+
+	// allow comparisons of unexported fields on teh headerAdder for this test.
+	allowUnexported := cmp.AllowUnexported(headerAdder{})
+	headerTestCases := []struct {
+		name             string
+		ForwardedHeaders string
+		metadata         map[string][]string
+		expectedHeaders  map[string][]string
+	}{
+		{
+			name: "it does not create a transport wrapper when no headers are configured",
+		},
+		{
+			name:             "it does creates a transport wrapper when headers are configured",
+			ForwardedHeaders: "[X-Consumer-Username, X-Consumer-Permissions]",
+			metadata: map[string][]string{
+				"x-consumer-username":    {"person1"},
+				"x-consumer-permissions": {"perm1", "perm2"},
+			},
+			expectedHeaders: map[string][]string{
+				"X-Consumer-Username":    {"person1"},
+				"X-Consumer-Permissions": {"perm1", "perm2"},
+			},
+		},
+		{
+			name:             "it does creates a transport wrapper when headers are configured but only for matching headers",
+			ForwardedHeaders: "[X-Consumer-Username, X-Consumer-Permissions]",
+			metadata: map[string][]string{
+				"x-consumer-username":       {"person1"},
+				"x-consumer-notpermissions": {"perm1", "perm2"},
+			},
+			expectedHeaders: map[string][]string{
+				"X-Consumer-Username": {"person1"},
+			},
+		},
+	}
+	for _, tc := range headerTestCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Ensure there is authorization metadata.
+			md := map[string][]string{
+				"authorization": {"Bearer abc"},
+			}
+			for k, vv := range tc.metadata {
+				md[k] = vv
+			}
+			ctx := metadata.NewIncomingContext(context.Background(), md)
+
+			// Create the test plugin config file
+			file, err := os.CreateTemp("", "pluginconfig")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer os.Remove(file.Name())
+			tmpl, err := template.New("test").Parse(`
+resources:
+  packages:
+    v1alpha1:
+      forwardedHeaders: {{.ForwardedHeaders}}
+`)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var yamlConfig bytes.Buffer
+			err = tmpl.Execute(&yamlConfig, tc)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			jsonConfig, err := yaml.YAMLToJSON(yamlConfig.Bytes())
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			_, err = file.Write(jsonConfig)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			serveOpts := core.ServeOptions{
+				PluginConfigPath:   file.Name(),
+				ClustersConfigPath: "/config.yaml",
+				PinnipedProxyURL:   "http://example.com",
+			}
+			configGetter, err := createConfigGetterWithParams(inClusterConfig, serveOpts, clustersConfig)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			restConfig, err := configGetter(ctx, "default")
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			// Actually test the transport wrapper function:
+			transportWrapper := restConfig.WrapTransport
+			if transportWrapper == nil {
+				if len(tc.expectedHeaders) > 0 {
+					t.Fatalf("got: nil, wanted a function")
+				} else {
+					return
+				}
+			}
+
+			roundTripper := transportWrapper(nil)
+			want := &headerAdder{tc.expectedHeaders, nil}
+			if got := roundTripper; !cmp.Equal(got, want, allowUnexported) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, allowUnexported))
 			}
 		})
 	}

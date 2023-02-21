@@ -11,6 +11,7 @@ import (
 
 type ResourcesPluginConfig struct {
 	TrustedNamespaces TrustedNamespaces
+	ForwardedHeaders  []string
 }
 
 type TrustedNamespaces struct {
@@ -35,6 +36,7 @@ func ParsePluginConfig(pluginConfigPath string) (*ResourcesPluginConfig, error) 
 						HeaderName    string `json:"headerName"`
 						HeaderPattern string `json:"headerPattern"`
 					} `json:"trustedNamespaces"`
+					ForwardedHeaders []string `json:"forwardedHeaders"`
 				} `json:"v1alpha1"`
 			} `json:"packages"`
 		} `json:"resources"`
@@ -57,5 +59,6 @@ func ParsePluginConfig(pluginConfigPath string) (*ResourcesPluginConfig, error) 
 			HeaderName:    config.Resources.Packages.V1alpha1.TrustedNamespaces.HeaderName,
 			HeaderPattern: config.Resources.Packages.V1alpha1.TrustedNamespaces.HeaderPattern,
 		},
+		ForwardedHeaders: config.Resources.Packages.V1alpha1.ForwardedHeaders,
 	}, nil
 }

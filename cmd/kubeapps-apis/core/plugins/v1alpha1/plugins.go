@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -18,6 +19,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/resources/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -312,6 +314,15 @@ func createConfigGetter(serveOpts core.ServeOptions, clustersConfig kube.Cluster
 // createClientGetter takes the required params and returns the closure function.
 // it's split for testing this fn separately
 func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.ServeOptions, clustersConfig kube.ClustersConfig) (core.KubernetesConfigGetter, error) {
+	forwardedHeaders := []string{}
+	if serveOpts.PluginConfigPath != "" {
+		resourcesConfig, err := common.ParsePluginConfig(serveOpts.PluginConfigPath)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "invalid plugin config: %v", err)
+		}
+		forwardedHeaders = resourcesConfig.ForwardedHeaders
+	}
+
 	// return the closure function that takes the context, but preserving the required scope,
 	// 'inClusterConfig' and 'config'
 	return func(ctx context.Context, cluster string) (*rest.Config, error) {
@@ -343,6 +354,30 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.S
 			config.Burst = serveOpts.Burst
 		}
 
+		// If there are forwarded headers configured, and those headers are
+		// present in the gRPC metadata of the context, then we add a transport
+		// wrapper that adds the extra headers as outlined at
+		// https://github.com/kubernetes/client-go/issues/407#issuecomment-389690436
+		if len(forwardedHeaders) > 0 {
+			headersToForward, err := extractHeaders(ctx, forwardedHeaders)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "unable to extract headers: %v", err)
+			}
+
+			if len(headersToForward) > 0 {
+				wt := config.WrapTransport
+				config.WrapTransport = func(rt http.RoundTripper) http.RoundTripper {
+					if wt != nil {
+						rt = wt(rt)
+					}
+					return &headerAdder{
+						headers: headersToForward,
+						rt:      rt,
+					}
+				}
+			}
+		}
+
 		return config, nil
 	}, nil
 }
@@ -372,6 +407,24 @@ func extractToken(ctx context.Context) (string, error) {
 	}
 }
 
+// extractHeaders returns the list of header values included in the gRPC request
+// metadata matching the configured forwarded headers.
+func extractHeaders(ctx context.Context, headersToForward []string) (map[string][]string, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing metadata from context")
+	}
+
+	headers := map[string][]string{}
+	for _, h := range headersToForward {
+		// metadata is always lowercased
+		if vv, ok := md[strings.ToLower(h)]; ok {
+			headers[h] = vv
+		}
+	}
+	return headers, nil
+}
+
 // getClustersConfigFromServeOpts get the serveOptions and calls parseClusterConfig with the proper values
 // returning a kube.ClustersConfig
 func getClustersConfigFromServeOpts(serveOpts core.ServeOptions) (kube.ClustersConfig, error) {
@@ -392,4 +445,21 @@ func getClustersConfigFromServeOpts(serveOpts core.ServeOptions) (kube.ClustersC
 	config.GlobalPackagingNamespace = serveOpts.GlobalHelmReposNamespace
 	defer cleanupCAFiles()
 	return config, nil
+}
+
+// headerAdder is an http.RoundTripper that adds additional headers to the request
+// From https://github.com/kubernetes/client-go/issues/407#issuecomment-389690436
+type headerAdder struct {
+	headers map[string][]string
+
+	rt http.RoundTripper
+}
+
+func (h *headerAdder) RoundTrip(req *http.Request) (*http.Response, error) {
+	for k, vv := range h.headers {
+		for _, v := range vv {
+			req.Header.Add(k, v)
+		}
+	}
+	return h.rt.RoundTrip(req)
 }

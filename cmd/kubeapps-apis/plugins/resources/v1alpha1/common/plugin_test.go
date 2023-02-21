@@ -3,15 +3,15 @@
 package common
 
 import (
+	"os"
+	"runtime"
+	"strings"
+	"testing"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	log "k8s.io/klog/v2"
-	"os"
-	"runtime"
 	"sigs.k8s.io/yaml"
-	"strings"
-	"testing"
 )
 
 func TestParsePluginConfig(t *testing.T) {
@@ -57,6 +57,23 @@ resources:
 			},
 			expectedError: "",
 		},
+		{
+			name: "parses forwarded headers config",
+			pluginYAMLConf: []byte(`
+resources:
+  packages:
+    v1alpha1:
+      - X-Consumer-Username
+      - X-Consumer-Permissions
+`),
+			expectedConfig: &ResourcesPluginConfig{
+				ForwardedHeaders: []string{
+					"X-Consumer-Username",
+					"X-Consumer-Permissions",
+				},
+			},
+			expectedError: "",
+		},
 	}
 	opts := cmpopts.IgnoreUnexported(pkgutils.VersionsInSummary{})
 	for _, tc := range testCases {
@@ -69,18 +86,18 @@ resources:
 			if tc.pluginYAMLConf != nil {
 				pluginJSONConf, err := yaml.YAMLToJSON(tc.pluginYAMLConf)
 				if err != nil {
-					log.Fatalf("%s", err)
+					t.Fatalf("%s", err)
 				}
 				f, err := os.CreateTemp(".", "plugin_json_conf")
 				if err != nil {
-					log.Fatalf("%s", err)
+					t.Fatalf("%s", err)
 				}
 				defer os.Remove(f.Name()) // clean up
 				if _, err := f.Write(pluginJSONConf); err != nil {
-					log.Fatalf("%s", err)
+					t.Fatalf("%s", err)
 				}
 				if err := f.Close(); err != nil {
-					log.Fatalf("%s", err)
+					t.Fatalf("%s", err)
 				}
 				filename = f.Name()
 			}
