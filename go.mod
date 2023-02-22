@@ -49,7 +49,7 @@ require (
 	github.com/docker/cli v23.0.1+incompatible
 	github.com/fluxcd/helm-controller/api v0.30.0
 	github.com/fluxcd/pkg/apis/meta v0.19.0
-	github.com/fluxcd/pkg/oci v0.19.1
+	github.com/fluxcd/pkg/oci v0.20.0
 	github.com/fluxcd/pkg/version v0.2.1
 	github.com/fluxcd/source-controller/api v0.35.1
 	github.com/go-redis/redis/v8 v8.11.5
