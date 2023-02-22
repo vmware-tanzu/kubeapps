@@ -1561,7 +1561,7 @@ kubeappsapis:
             ## headerPattern: namespace:^([\w-]+):\w+$
             ##
             headerPattern: ""
-          ## @param kubeappsapis.pluginConfig.core.packages.v1alpha1.forwardedHeaders Optional list of headers that should be forwarded from the incoming gRPC-Web request to the k8s API server.
+          ## @param kubeappsapis.pluginConfig.resources.packages.v1alpha1.forwardedHeaders Optional list of headers that should be forwarded from the incoming gRPC-Web request to the k8s API server.
           forwardedHeaders: []
   ## Bitnami Kubeapps-APIs image
   ## ref: https://hub.docker.com/r/bitnami/kubeapps-apis/tags/

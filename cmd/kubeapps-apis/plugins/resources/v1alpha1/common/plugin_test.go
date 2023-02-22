@@ -24,7 +24,7 @@ func TestParsePluginConfig(t *testing.T) {
 		{
 			name:           "non existing plugin-config file",
 			pluginYAMLConf: nil,
-			expectedConfig: &ResourcesPluginConfig{},
+			expectedConfig: nil,
 			expectedError:  "",
 		},
 		{
@@ -63,6 +63,7 @@ resources:
 resources:
   packages:
     v1alpha1:
+      forwardedHeaders:
       - X-Consumer-Username
       - X-Consumer-Permissions
 `),
@@ -104,7 +105,7 @@ resources:
 			pluginConfig, err := ParsePluginConfig(filename)
 			if err != nil && !strings.Contains(err.Error(), tc.expectedError) {
 				t.Errorf("err got %q, want to find %q", err.Error(), tc.expectedError)
-			} else if pluginConfig != nil {
+			} else if tc.expectedConfig != nil {
 				if got, want := pluginConfig, tc.expectedConfig; !cmp.Equal(want, got, opts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 				}

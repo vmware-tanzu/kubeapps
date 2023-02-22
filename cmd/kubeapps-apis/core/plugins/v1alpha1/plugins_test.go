@@ -436,7 +436,7 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 		})
 	}
 
-	// allow comparisons of unexported fields on teh headerAdder for this test.
+	// allow comparisons of unexported fields on the headerAdder for this test.
 	allowUnexported := cmp.AllowUnexported(headerAdder{})
 	headerTestCases := []struct {
 		name             string
