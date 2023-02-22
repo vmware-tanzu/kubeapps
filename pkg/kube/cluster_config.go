@@ -137,7 +137,10 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 		return config, nil
 	}
 
-	if cluster == clustersConfig.KubeappsClusterName {
+	// We cannot assume that if the cluster is the kubeapps cluster that we simply return
+	// the incluster config, because some users set proxies in front of their clusters in
+	// which case the incluster kubernetes.default will skip the proxy.
+	if cluster == clustersConfig.KubeappsClusterName && clusterConfig.APIServiceURL == "" {
 		return config, nil
 	}
 
