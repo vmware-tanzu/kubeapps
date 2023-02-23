@@ -45,6 +45,39 @@ func TestNewClusterConfig(t *testing.T) {
 			},
 		},
 		{
+			name:      "returns a cluster config with explicit apiServiceURL and cert even for the kubeapps default cluster, when specified",
+			userToken: "token-1",
+			cluster:   "default",
+			clustersConfig: ClustersConfig{
+				KubeappsClusterName: "default",
+				Clusters: map[string]ClusterConfig{
+					"default": {
+						APIServiceURL:                   "https://proxy.example.com:7890",
+						CertificateAuthorityData:        "Y2EtZmlsZS1kYXRhCg==",
+						CertificateAuthorityDataDecoded: "ca-file-data",
+						CAFile:                          "/tmp/ca-file-data",
+					},
+				},
+			},
+			inClusterConfig: &rest.Config{
+				Host:            "https://something-else.example.com:6443",
+				BearerToken:     "something-else",
+				BearerTokenFile: "/foo/bar",
+				TLSClientConfig: rest.TLSClientConfig{
+					CAFile: "/var/run/whatever/ca.crt",
+				},
+			},
+			expectedConfig: &rest.Config{
+				Host:            "https://proxy.example.com:7890",
+				BearerToken:     "token-1",
+				BearerTokenFile: "",
+				TLSClientConfig: rest.TLSClientConfig{
+					CAData: []byte("ca-file-data"),
+					CAFile: "/tmp/ca-file-data",
+				},
+			},
+		},
+		{
 			name:      "returns an in-cluster config when the global packaging cluster token is specified",
 			userToken: "token-1",
 			cluster:   KUBEAPPS_GLOBAL_PACKAGING_CLUSTER_TOKEN,
