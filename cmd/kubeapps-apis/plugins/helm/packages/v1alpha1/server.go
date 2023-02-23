@@ -104,8 +104,9 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 	// If no config is provided, we default to the existing values for backwards
 	// compatibility.
 	pluginConfig := common.NewDefaultPluginConfig()
+	var err error
 	if pluginConfigPath != "" {
-		pluginConfig, err := common.ParsePluginConfig(pluginConfigPath)
+		pluginConfig, err = common.ParsePluginConfig(pluginConfigPath)
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
