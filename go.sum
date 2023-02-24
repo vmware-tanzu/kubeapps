@@ -284,8 +284,8 @@ github.com/fluxcd/pkg/apis/kustomize v0.8.0 h1:A6aLolxPV2Sll44SOHiX96lbXXmRZmS5B
 github.com/fluxcd/pkg/apis/kustomize v0.8.0/go.mod h1:9DPEVSfVIkiC2H3Dk6Ght4YJkswhYIaufXla4tB5Y84=
 github.com/fluxcd/pkg/apis/meta v0.19.0 h1:CX75e/eaRWZDTzNdMSWomY1InlssLKcS8GQDSg/aopI=
 github.com/fluxcd/pkg/apis/meta v0.19.0/go.mod h1:7b6prDPsViyAzoY7eRfSPS0/MbXpGGsOMvRq2QrTKa4=
-github.com/fluxcd/pkg/oci v0.19.1 h1:18wiQDhp7OIx3+adezYX5nFTUb19tBe1r2E98ADBvwM=
-github.com/fluxcd/pkg/oci v0.19.1/go.mod h1:R0uT66o2ZSiwGSrXBpakVhheG4Y+Xz68A6QoMFh7JU4=
+github.com/fluxcd/pkg/oci v0.20.0 h1:VuM9fevraRHf/i1fStEO8UpsJTpO1wP316QrBRIvWGI=
+github.com/fluxcd/pkg/oci v0.20.0/go.mod h1:w9BnVniT5/fk1ZsZ5IfD7A3p9AgEvyAp5mFuaj/R6jY=
 github.com/fluxcd/pkg/version v0.2.1 h1:RRH7+6qiWHdTvRNwpoBmilnubJ2C4FZYGgy5wTDVKVc=
 github.com/fluxcd/pkg/version v0.2.1/go.mod h1:UmUYHDz4BxHQMesMUx3gYVrT2Wf66H49JpTg/PW+/OY=
 github.com/fluxcd/source-controller/api v0.35.1 h1:IHlbN7giz5kY4z9oWZ9QLNKtHAaxHdk9RbIurUPS1aI=
