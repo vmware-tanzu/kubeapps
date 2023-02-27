@@ -396,6 +396,9 @@ func (c *Controller) ensureCronJob(apprepo *apprepov1alpha1.AppRepository) (meta
 
 		// The AppRepository has changed, launch a manual Job
 		_, err = c.kubeclientset.BatchV1().Jobs(c.conf.KubeappsNamespace).Create(context.TODO(), newSyncJob(apprepo, c.conf), metav1.CreateOptions{})
+		if err != nil {
+			return nil, err
+		}
 	}
 	return cronjob, nil
 }
@@ -671,8 +674,6 @@ func newCleanupJob(kubeappsNamespace, repoNamespace, name string, config Config)
 		Spec: cleanupJobSpec(repoNamespace, name, config),
 	}
 }
-
-// Just provide conversion, since for our purposes, the objects are the same
 
 // cleanupJobSpec returns a batchv1.JobSpec for running the chart-repo delete job
 func cleanupJobSpec(namespace, name string, config Config) batchv1.JobSpec {
