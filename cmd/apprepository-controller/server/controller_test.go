@@ -591,6 +591,21 @@ func Test_newCronJob(t *testing.T) {
 			}
 		})
 	}
+
+	// Test or v1beta1 cronjobs too.
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := makeDefaultConfig()
+			config.V1Beta1CronJobs = true
+			config.Crontab = tt.crontab
+			config.UserAgentComment = tt.userAgentComment
+
+			result := newCronJob(tt.apprepo, config)
+			if got, want := tt.expected, *result; !cmp.Equal(want, got) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+			}
+		})
+	}
 }
 
 func Test_newSyncJob(t *testing.T) {
