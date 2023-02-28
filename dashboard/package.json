@@ -27,6 +27,9 @@
   },
   "dependencies": {
     "@babel/parser": "^7.20.15",
+    "@bufbuild/connect": "^0.8.1",
+    "@bufbuild/connect-web": "^0.8.1",
+    "@bufbuild/protobuf": "^1.0.0",
     "@cds/city": "^1.1.0",
     "@cds/core": "^6.2.0",
     "@cds/react": "^6.2.0",
@@ -73,6 +76,9 @@
     "yaml": "^2.2.1"
   },
   "devDependencies": {
+    "@bufbuild/buf": "^1.14.0-1",
+    "@bufbuild/protoc-gen-connect-es": "^0.8.1",
+    "@bufbuild/protoc-gen-es": "^1.0.0",
     "@craco/craco": "^7.0.0",
     "@formatjs/cli": "^6.0.1",
     "@improbable-eng/grpc-web-fake-transport": "^0.15.0",

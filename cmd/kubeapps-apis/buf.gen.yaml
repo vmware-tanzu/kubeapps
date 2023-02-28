@@ -51,3 +51,11 @@ plugins:
       - outputClientImpl=grpc-web # client implementation it generates
       - esModuleInterop=true # use imports as required in modern ts setups
       - useOptionals=messages # use optional TypeScript properties instead of undefined
+  - name: es
+    opt: target=ts
+    out: ../../dashboard/src/gen
+    path: ../../dashboard/node_modules/.bin/protoc-gen-es
+  - name: connect-es
+    out: ../../dashboard/src/gen
+    opt: target=ts
+    path: ../../dashboard/node_modules/.bin/protoc-gen-connect-es
