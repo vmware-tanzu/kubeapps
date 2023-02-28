@@ -1,67 +1,67 @@
 // Copyright 2021-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
+import { useMemo } from "react";
+import { ServiceType } from "@bufbuild/protobuf";
+import {
+  createGrpcWebTransport,
+} from "@bufbuild/connect-web";
+import {
+  createPromiseClient,
+  Interceptor,
+  PromiseClient,
+  Transport,
+} from "@bufbuild/connect";
+import { PackagesService } from "gen/kubeappsapis/core/packages/v1alpha1/packages_connect";
+import { RepositoriesService } from "gen/kubeappsapis/core/packages/v1alpha1/repositories_connect";
+import { PluginsService } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_connect";
+import { ResourcesService } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources_connect";
+import { HelmPackagesService, HelmRepositoriesService } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_connect";
+import { KappControllerPackagesService, KappControllerRepositoriesService } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller_connect";
+import { FluxV2PackagesService, FluxV2RepositoriesService } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2_connect";
 
-import { grpc } from "@improbable-eng/grpc-web";
-import { PackagesServiceClientImpl } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { RepositoriesServiceClientImpl } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
-import { PluginsServiceClientImpl } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import {
-  FluxV2PackagesServiceClientImpl,
-  FluxV2RepositoriesServiceClientImpl,
-} from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2";
-import {
-  HelmPackagesServiceClientImpl,
-  HelmRepositoriesServiceClientImpl,
-} from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
-import {
-  KappControllerPackagesServiceClientImpl,
-  KappControllerRepositoriesServiceClientImpl,
-} from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
-import {
-  GrpcWebImpl,
-  ResourcesServiceClientImpl,
-} from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
 import { Auth } from "./Auth";
 import * as URL from "./url";
 
 export class KubeappsGrpcClient {
-  private transport: grpc.TransportFactory;
+  private transport: Transport;
 
-  constructor(transport?: grpc.TransportFactory) {
-    this.transport = transport ?? grpc.CrossBrowserHttpTransport({});
+  // Creates a client with a transport, ensuring the transport includes the auth header.
+  constructor(transport?: Transport, token?: string) {
+    const auth: Interceptor = (next) => async (req) => {
+      let t = token ? token : Auth.getAuthToken();
+      if (t) {
+        req.header.set("Authorization", t);
+      }
+      return await next(req);
+    };
+    this.transport = transport ?? createGrpcWebTransport({
+      baseUrl: `/${URL.api.kubeappsapis}`,
+      interceptors: [auth],
+    });
   }
 
   // getClientMetadata, if using token authentication, creates grpc metadata
   // and the token in the 'authorization' field
   public getClientMetadata(token?: string) {
-    if (token) {
-      return new grpc.Metadata({ authorization: `Bearer ${token}` });
-    }
-
-    return Auth.getAuthToken()
-      ? new grpc.Metadata({ authorization: `Bearer ${Auth.getAuthToken()}` })
-      : undefined;
+    let t = token ? token : Auth.getAuthToken();
+    return t ? new Headers({ "Authorization": `Bearer ${t}` }) : undefined;
   }
 
-  // getGrpcClient returns a grpc client
-  public getGrpcClient = (token?: string) => {
-    return new GrpcWebImpl(URL.api.kubeappsapis, {
-      transport: this.transport,
-      metadata: this.getClientMetadata(token),
-    });
-  };
+  public getGrpcClient = <T extends ServiceType>(service: T): PromiseClient<T> => {
+    return useMemo(() => createPromiseClient(service, this.transport), [service]);
+  }
 
   // Core APIs
   public getPackagesServiceClientImpl() {
-    return new PackagesServiceClientImpl(this.getGrpcClient());
+    return this.getGrpcClient(PackagesService);
   }
 
   public getRepositoriesServiceClientImpl() {
-    return new RepositoriesServiceClientImpl(this.getGrpcClient());
+    return this.getGrpcClient(RepositoriesService);
   }
 
   public getPluginsServiceClientImpl() {
-    return new PluginsServiceClientImpl(this.getGrpcClient());
+    return this.getGrpcClient(PluginsService);
   }
 
   // Resources API
@@ -69,8 +69,9 @@ export class KubeappsGrpcClient {
   // The resources API client implementation takes an optional token
   // only because it is used to validate token authentication before
   // the token is stored.
+  // TODO: investigate the token here.
   public getResourcesServiceClientImpl(token?: string) {
-    return new ResourcesServiceClientImpl(this.getGrpcClient(token));
+    return this.getGrpcClient(ResourcesService);
   }
 
   // Plugins (packages/repositories) APIs
@@ -78,25 +79,25 @@ export class KubeappsGrpcClient {
 
   // Helm
   public getHelmPackagesServiceClientImpl() {
-    return new HelmPackagesServiceClientImpl(this.getGrpcClient());
+    return this.getGrpcClient(HelmPackagesService);
   }
   public getHelmRepositoriesServiceClientImpl() {
-    return new HelmRepositoriesServiceClientImpl(this.getGrpcClient());
+    return this.getGrpcClient(HelmRepositoriesService);
   }
 
   // KappController
   public getKappControllerPackagesServiceClientImpl() {
-    return new KappControllerPackagesServiceClientImpl(this.getGrpcClient());
+    return this.getGrpcClient(KappControllerPackagesService);
   }
   public getKappControllerRepositoriesServiceClientImpl() {
-    return new KappControllerRepositoriesServiceClientImpl(this.getGrpcClient());
+    return this.getGrpcClient(KappControllerRepositoriesService);
   }
   // Fluxv2
   public getFluxv2PackagesServiceClientImpl() {
-    return new FluxV2PackagesServiceClientImpl(this.getGrpcClient());
+    return this.getGrpcClient(FluxV2PackagesService);
   }
   public getFluxV2RepositoriesServiceClientImpl() {
-    return new FluxV2RepositoriesServiceClientImpl(this.getGrpcClient());
+    return this.getGrpcClient(FluxV2RepositoriesService);
   }
 }
 
