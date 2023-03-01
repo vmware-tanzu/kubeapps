@@ -37,6 +37,7 @@ type Config struct {
 	CustomLabels             []string
 	ParsedCustomAnnotations  map[string]string
 	ParsedCustomLabels       map[string]string
+	V1Beta1CronJobs          bool
 }
 
 func Serve(serveOpts Config) error {
