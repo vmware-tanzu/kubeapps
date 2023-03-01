@@ -57,5 +57,7 @@ plugins:
     path: ../../dashboard/node_modules/.bin/protoc-gen-es
   - name: connect-es
     out: ../../dashboard/src/gen
-    opt: target=ts
+    opt:
+      - target=ts
+      - import_extension=none
     path: ../../dashboard/node_modules/.bin/protoc-gen-connect-es
