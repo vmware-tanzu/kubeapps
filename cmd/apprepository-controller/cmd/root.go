@@ -91,6 +91,7 @@ func setFlags(c *cobra.Command) {
 	c.Flags().StringVar(&serveOpts.TTLSecondsAfterFinished, "ttl-lifetime-afterfinished-job", "3600", "Lifetime limit after which the resource Jobs are deleted expressed in seconds by default is 3600 (1h) ")
 	c.Flags().StringSliceVar(&serveOpts.CustomAnnotations, "custom-annotations", []string{""}, "optional annotations to be passed to the generated CronJobs, Jobs and Pods objects. For example: my/annotation=foo")
 	c.Flags().StringSliceVar(&serveOpts.CustomLabels, "custom-labels", []string{""}, "optional labels to be passed to the generated CronJobs, Jobs and Pods objects. For example: my/label=foo")
+	c.Flags().BoolVar(&serveOpts.V1Beta1CronJobs, "v1-beta1-cron-jobs", false, "Defaults to false and so using the v1 cronjobs.")
 }
 
 // initConfig reads in config file and ENV variables if set.
