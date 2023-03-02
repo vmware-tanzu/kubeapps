@@ -15,12 +15,12 @@ import {
   PackageRepositoriesPermissions,
   PackageRepositoryReference,
   PackageRepositorySummary,
-} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
 import qs from "qs";
 import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation } from "react-router-dom";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { IStoreState } from "shared/types";
 import { app } from "shared/url";
 import { getPluginName } from "shared/utils";
@@ -60,11 +60,11 @@ function PkgRepoList() {
     ) {
       // All Namespaces. Global namespace or other cluster, show global repos only
       dispatch(actions.repos.fetchRepoSummaries(""));
-      return () => {};
+      return () => { };
     }
     // In other case, fetch global and namespace repos
     dispatch(actions.repos.fetchRepoSummaries(namespace, true));
-    return () => {};
+    return () => { };
   }, [dispatch, supportedCluster, namespace, helmGlobalNamespace, carvelGlobalNamespace]);
 
   useEffect(() => {
@@ -75,7 +75,7 @@ function PkgRepoList() {
     if (supportedCluster) {
       dispatch(actions.repos.fetchReposPermissions(kubeappsCluster, namespace));
     }
-    return () => {};
+    return () => { };
   }, [dispatch, supportedCluster, kubeappsCluster, namespace]);
 
   useEffect(() => {

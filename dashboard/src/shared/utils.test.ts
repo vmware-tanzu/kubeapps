@@ -1,8 +1,9 @@
 // Copyright 2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { InstalledPackageStatus_StatusReason } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { PackageRepositoryAuth_PackageRepositoryAuthType } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import { InstalledPackageStatus_StatusReason } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import { PackageRepositoryAuth_PackageRepositoryAuthType } from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import carvelIcon from "icons/carvel.svg";
 import fluxIcon from "icons/flux.svg";
 import helmIcon from "icons/helm.svg";
@@ -84,9 +85,9 @@ it("getPluginIcon", () => {
   expect(getPluginIcon("helm")).toBe(helmIcon);
   expect(getPluginIcon("operator")).toBe(olmIcon);
   expect(getPluginIcon("fluflu")).toBe(placeholder);
-  expect(getPluginIcon({ name: PluginNames.PACKAGES_HELM, version: "" })).toBe(helmIcon);
-  expect(getPluginIcon({ name: PluginNames.PACKAGES_FLUX, version: "" })).toBe(fluxIcon);
-  expect(getPluginIcon({ name: PluginNames.PACKAGES_KAPP, version: "" })).toBe(carvelIcon);
+  expect(getPluginIcon(new Plugin({ name: PluginNames.PACKAGES_HELM, version: "" }))).toBe(helmIcon);
+  expect(getPluginIcon(new Plugin({ name: PluginNames.PACKAGES_FLUX, version: "" }))).toBe(fluxIcon);
+  expect(getPluginIcon(new Plugin({ name: PluginNames.PACKAGES_KAPP, version: "" }))).toBe(carvelIcon);
 });
 
 it("getPluginName", () => {
@@ -94,9 +95,9 @@ it("getPluginName", () => {
   expect(getPluginName("helm")).toBe("Helm");
   expect(getPluginName("operator")).toBe("Operator");
   expect(getPluginName("fluflu")).toBe("unknown plugin");
-  expect(getPluginName({ name: PluginNames.PACKAGES_HELM, version: "" })).toBe("Helm");
-  expect(getPluginName({ name: PluginNames.PACKAGES_FLUX, version: "" })).toBe("Flux");
-  expect(getPluginName({ name: PluginNames.PACKAGES_KAPP, version: "" })).toBe("Carvel");
+  expect(getPluginName(new Plugin({ name: PluginNames.PACKAGES_HELM, version: "" }))).toBe("Helm");
+  expect(getPluginName(new Plugin({ name: PluginNames.PACKAGES_FLUX, version: "" }))).toBe("Flux");
+  expect(getPluginName(new Plugin({ name: PluginNames.PACKAGES_KAPP, version: "" }))).toBe("Carvel");
 });
 
 it("getPluginPackageName", () => {
@@ -104,24 +105,24 @@ it("getPluginPackageName", () => {
   expect(getPluginPackageName("helm")).toBe("Helm Chart");
   expect(getPluginPackageName("operator")).toBe("Operator");
   expect(getPluginPackageName("fluflu")).toBe("unknown plugin package");
-  expect(getPluginPackageName({ name: PluginNames.PACKAGES_HELM, version: "" })).toBe("Helm Chart");
-  expect(getPluginPackageName({ name: PluginNames.PACKAGES_FLUX, version: "" })).toBe(
+  expect(getPluginPackageName(new Plugin({ name: PluginNames.PACKAGES_HELM, version: "" }))).toBe("Helm Chart");
+  expect(getPluginPackageName(new Plugin({ name: PluginNames.PACKAGES_FLUX, version: "" }))).toBe(
     "Helm Chart via Flux",
   );
-  expect(getPluginPackageName({ name: PluginNames.PACKAGES_KAPP, version: "" })).toBe(
+  expect(getPluginPackageName(new Plugin({ name: PluginNames.PACKAGES_KAPP, version: "" }))).toBe(
     "Carvel Package",
   );
   expect(getPluginPackageName("chart", true)).toBe("Helm Charts");
   expect(getPluginPackageName("helm", true)).toBe("Helm Charts");
   expect(getPluginPackageName("operator", true)).toBe("Operators");
   expect(getPluginPackageName("fluflu", true)).toBe("unknown plugin packages");
-  expect(getPluginPackageName({ name: PluginNames.PACKAGES_HELM, version: "" }, true)).toBe(
+  expect(getPluginPackageName(new Plugin({ name: PluginNames.PACKAGES_HELM, version: "" }), true)).toBe(
     "Helm Charts",
   );
-  expect(getPluginPackageName({ name: PluginNames.PACKAGES_FLUX, version: "" }, true)).toBe(
+  expect(getPluginPackageName(new Plugin({ name: PluginNames.PACKAGES_FLUX, version: "" }), true)).toBe(
     "Helm Charts via Flux",
   );
-  expect(getPluginPackageName({ name: PluginNames.PACKAGES_KAPP, version: "" }, true)).toBe(
+  expect(getPluginPackageName(new Plugin({ name: PluginNames.PACKAGES_KAPP, version: "" }), true)).toBe(
     "Carvel Packages",
   );
 });
@@ -161,155 +162,154 @@ it("getPluginsSupportingRollback", () => {
 });
 
 it("getAppStatusLabel", () => {
-  expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.STATUS_REASON_UNSPECIFIED)).toBe(
+  expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.UNSPECIFIED)).toBe(
     "unspecified",
   );
-  expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.STATUS_REASON_FAILED)).toBe(
+  expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.FAILED)).toBe(
     "failed",
   );
-  expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED)).toBe(
+  expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.INSTALLED)).toBe(
     "installed",
   );
-  expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING)).toBe(
+  expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.PENDING)).toBe(
     "pending",
   );
-  expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.STATUS_REASON_UNINSTALLED)).toBe(
+  expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.UNINSTALLED)).toBe(
     "uninstalled",
   );
-  expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.UNRECOGNIZED)).toBe("unrecognized");
 });
 
 it("getSupportedPackageRepositoryAuthTypes", () => {
   expect(
-    getSupportedPackageRepositoryAuthTypes({
+    getSupportedPackageRepositoryAuthTypes(new Plugin({
       name: PluginNames.PACKAGES_HELM,
       version: "",
-    }).toString(),
+    })).toString(),
   ).toBe(
     [
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+      PackageRepositoryAuth_PackageRepositoryAuthType.AUTHORIZATION_HEADER,
+      PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+      PackageRepositoryAuth_PackageRepositoryAuthType.BEARER,
+      PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON,
     ].toString(),
   );
   expect(
     getSupportedPackageRepositoryAuthTypes(
-      { name: PluginNames.PACKAGES_HELM, version: "" },
+      new Plugin({ name: PluginNames.PACKAGES_HELM, version: "" }),
       RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM,
     ).toString(),
   ).toBe(
     [
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+      PackageRepositoryAuth_PackageRepositoryAuthType.AUTHORIZATION_HEADER,
+      PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+      PackageRepositoryAuth_PackageRepositoryAuthType.BEARER,
+      PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON,
     ].toString(),
   );
   expect(
     getSupportedPackageRepositoryAuthTypes(
-      { name: PluginNames.PACKAGES_HELM, version: "" },
+      new Plugin({ name: PluginNames.PACKAGES_HELM, version: "" }),
       RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
     ).toString(),
   ).toBe(
     [
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+      PackageRepositoryAuth_PackageRepositoryAuthType.AUTHORIZATION_HEADER,
+      PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+      PackageRepositoryAuth_PackageRepositoryAuthType.BEARER,
+      PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON,
     ].toString(),
   );
   expect(
-    getSupportedPackageRepositoryAuthTypes({
+    getSupportedPackageRepositoryAuthTypes(new Plugin({
       name: PluginNames.PACKAGES_FLUX,
       version: "",
-    }).toString(),
+    })).toString(),
   ).toBe(
     [
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+      PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+      PackageRepositoryAuth_PackageRepositoryAuthType.TLS,
     ].toString(),
   );
   expect(
     getSupportedPackageRepositoryAuthTypes(
-      { name: PluginNames.PACKAGES_FLUX, version: "" },
+      new Plugin({ name: PluginNames.PACKAGES_FLUX, version: "" }),
       RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM,
     ).toString(),
   ).toBe(
     [
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+      PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+      PackageRepositoryAuth_PackageRepositoryAuthType.TLS,
     ].toString(),
   );
   expect(
     getSupportedPackageRepositoryAuthTypes(
-      { name: PluginNames.PACKAGES_FLUX, version: "" },
+      new Plugin({ name: PluginNames.PACKAGES_FLUX, version: "" }),
       RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
     ).toString(),
   ).toBe(
     [
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+      PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+      PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON,
     ].toString(),
   );
   expect(
-    getSupportedPackageRepositoryAuthTypes({
+    getSupportedPackageRepositoryAuthTypes(new Plugin({
       name: PluginNames.PACKAGES_KAPP,
       version: "",
-    }).toString(),
+    })).toString(),
   ).toBe([].toString());
   expect(
     getSupportedPackageRepositoryAuthTypes(
-      { name: PluginNames.PACKAGES_KAPP, version: "" },
+      new Plugin({ name: PluginNames.PACKAGES_KAPP, version: "" }),
       RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT,
     ).toString(),
   ).toBe(
     [
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
+      PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+      PackageRepositoryAuth_PackageRepositoryAuthType.SSH,
     ].toString(),
   );
   expect(
     getSupportedPackageRepositoryAuthTypes(
-      { name: PluginNames.PACKAGES_KAPP, version: "" },
+      new Plugin({ name: PluginNames.PACKAGES_KAPP, version: "" }),
       RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP,
     ).toString(),
   ).toBe(
     [
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+      PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
     ].toString(),
   );
   expect(
     getSupportedPackageRepositoryAuthTypes(
-      { name: PluginNames.PACKAGES_KAPP, version: "" },
+      new Plugin({ name: PluginNames.PACKAGES_KAPP, version: "" }),
       RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE,
     ).toString(),
   ).toBe(
     [
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+      PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+      PackageRepositoryAuth_PackageRepositoryAuthType.BEARER,
+      PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON,
     ].toString(),
   );
   expect(
     getSupportedPackageRepositoryAuthTypes(
-      { name: PluginNames.PACKAGES_KAPP, version: "" },
+      new Plugin({ name: PluginNames.PACKAGES_KAPP, version: "" }),
       RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE,
     ).toString(),
   ).toBe(
     [
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+      PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+      PackageRepositoryAuth_PackageRepositoryAuthType.BEARER,
+      PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON,
     ].toString(),
   );
   expect(
     getSupportedPackageRepositoryAuthTypes(
-      { name: PluginNames.PACKAGES_KAPP, version: "" },
+      new Plugin({ name: PluginNames.PACKAGES_KAPP, version: "" }),
       RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE,
     ).toString(),
   ).toBe([].toString());
-  expect(getSupportedPackageRepositoryAuthTypes({ name: "foo", version: "" }).toString()).toBe(
+  expect(getSupportedPackageRepositoryAuthTypes(new Plugin({ name: "foo", version: "" })).toString()).toBe(
     [].toString(),
   );
 });

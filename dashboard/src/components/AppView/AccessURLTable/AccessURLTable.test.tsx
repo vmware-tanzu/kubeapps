@@ -4,7 +4,7 @@
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import context from "jest-plugin-context";
 import { keyForResourceRef } from "shared/ResourceRef";
-import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IIngressSpec, IResource, IServiceSpec, IServiceStatus } from "shared/types";
 import AccessURLTable from "./AccessURLTable";

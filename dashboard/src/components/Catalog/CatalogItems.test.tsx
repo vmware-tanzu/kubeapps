@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import InfoCard from "components/InfoCard";
-import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IClusterServiceVersion, PluginNames } from "shared/types";
 import CatalogItem from "./CatalogItem";

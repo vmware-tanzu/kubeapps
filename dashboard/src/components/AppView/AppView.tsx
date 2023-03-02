@@ -13,8 +13,8 @@ import { push } from "connected-react-router";
 import {
   InstalledPackageReference,
   ResourceRef,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import placeholder from "icons/placeholder.svg";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -229,17 +229,17 @@ export default function AppView() {
 
   useEffect(() => {
     if (resourceRefs.length === 0) {
-      return () => {};
+      return () => { };
     }
 
     const parsedRefs = parseResources(resourceRefs);
     setAppViewResourceRefs(parsedRefs);
-    return () => {};
+    return () => { };
   }, [resourceRefs]);
 
   useEffect(() => {
     if (!selectedInstalledPkg?.installedPackageRef) {
-      return () => {};
+      return () => { };
     }
     const installedPackageRef = selectedInstalledPkg.installedPackageRef;
     // Watch Deployments, StatefulSets, DaemonSets, Ingresses and Services.
@@ -260,7 +260,7 @@ export default function AppView() {
         dispatch(actions.kube.closeRequestResources(installedPackageRef));
       };
     }
-    return () => {};
+    return () => { };
   }, [dispatch, selectedInstalledPkg?.installedPackageRef, appViewResourceRefs]);
 
   const forceRetry = () => {

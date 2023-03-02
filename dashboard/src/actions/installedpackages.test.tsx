@@ -11,8 +11,8 @@ import {
   InstalledPackageSummary,
   ReconciliationOptions,
   VersionReference,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { InstalledPackage } from "shared/InstalledPackage";
 import { getStore, initialState } from "shared/specs/mountWrapper";
 import { IStoreState, PluginNames, UnprocessableEntityError, UpgradeError } from "shared/types";
@@ -55,9 +55,9 @@ describe("fetches installed packages", () => {
   beforeEach(() => {
     requestInstalledPackageListMock = jest.fn(
       () =>
-        ({
-          installedPackageSummaries,
-        } as GetInstalledPackageSummariesResponse),
+      ({
+        installedPackageSummaries,
+      } as GetInstalledPackageSummariesResponse),
     );
     InstalledPackage.GetInstalledPackageSummaries = requestInstalledPackageListMock;
   });

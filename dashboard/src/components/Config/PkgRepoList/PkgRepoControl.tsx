@@ -5,7 +5,7 @@ import { CdsButton } from "@cds/react/button";
 import {
   PackageRepositoryReference,
   PackageRepositorySummary,
-} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { Action } from "redux";

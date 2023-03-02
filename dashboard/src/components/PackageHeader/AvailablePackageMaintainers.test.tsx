@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { shallow } from "enzyme";
-import { Maintainer } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Maintainer } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import AvailablePackageMaintainers from "./AvailablePackageMaintainers";
 
 const tests: Array<{
@@ -11,29 +11,29 @@ const tests: Array<{
   maintainers: Maintainer[];
   name: string;
 }> = [
-  {
-    expectedLinks: [null],
-    maintainers: [{ name: "Test Author", email: "" }],
-    name: "with no email",
-  },
-  {
-    expectedLinks: [null, "mailto:test@example.com"],
-    maintainers: [
-      { name: "Test Author", email: "" },
-      { name: "Test Author 2", email: "test@example.com" },
-    ],
-    name: "with email",
-  },
-  {
-    expectedLinks: ["https://github.com/test1", "https://github.com/test2"],
-    githubIDAsNames: true,
-    maintainers: [
-      { name: "test1", email: "" },
-      { name: "test2", email: "test@example.com" },
-    ],
-    name: "with github ids",
-  },
-];
+    {
+      expectedLinks: [null],
+      maintainers: [{ name: "Test Author", email: "" }],
+      name: "with no email",
+    },
+    {
+      expectedLinks: [null, "mailto:test@example.com"],
+      maintainers: [
+        { name: "Test Author", email: "" },
+        { name: "Test Author 2", email: "test@example.com" },
+      ],
+      name: "with email",
+    },
+    {
+      expectedLinks: ["https://github.com/test1", "https://github.com/test2"],
+      githubIDAsNames: true,
+      maintainers: [
+        { name: "test1", email: "" },
+        { name: "test2", email: "test@example.com" },
+      ],
+      name: "with github ids",
+    },
+  ];
 
 for (const t of tests) {
   it(`it renders the maintainers list ${t.name}`, () => {

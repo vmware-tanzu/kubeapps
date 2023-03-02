@@ -4,7 +4,7 @@
 import LoadingWrapper from "components/LoadingWrapper";
 import { isEmpty } from "lodash";
 import { useSelector } from "react-redux";
-import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { ISecret, IStoreState } from "shared/types";
 import SecretItemDatum from "../ResourceTable/ResourceItem/SecretItem/SecretItemDatum";
 import "./AppSecrets.css";

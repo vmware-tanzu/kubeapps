@@ -1,7 +1,7 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AvailablePackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { AvailablePackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import OperatorCatalogItem from "./OperatorCatalogItem";
 import PackageCatalogItem from "./PackageCatalogItem";
 

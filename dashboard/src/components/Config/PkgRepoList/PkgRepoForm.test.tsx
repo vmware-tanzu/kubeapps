@@ -10,10 +10,10 @@ import {
   PackageRepositoryDetail,
   PackageRepositoryReference,
   PackageRepositorySummary,
-} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2";
-import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
+import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2_pb";
+import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { IPackageRepositoryState } from "reducers/repos";

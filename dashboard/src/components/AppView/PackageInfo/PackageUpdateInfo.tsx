@@ -3,7 +3,7 @@
 
 import { CdsIcon } from "@cds/react/icon";
 import Alert from "components/js/Alert";
-import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Link } from "react-router-dom";
 import { app as appURL } from "shared/url";
 interface IPackageUpdateInfoProps {
@@ -16,7 +16,7 @@ export default function PackageUpdateInfo({ installedPackageDetail }: IPackageUp
     installedPackageDetail.latestVersion?.appVersion &&
     installedPackageDetail.currentVersion?.appVersion &&
     installedPackageDetail.currentVersion?.appVersion !==
-      installedPackageDetail.latestVersion?.appVersion
+    installedPackageDetail.latestVersion?.appVersion
   ) {
     // There is a new application version
     alertContent = (
@@ -29,7 +29,7 @@ export default function PackageUpdateInfo({ installedPackageDetail }: IPackageUp
     installedPackageDetail.latestVersion?.pkgVersion &&
     installedPackageDetail.currentVersion?.pkgVersion &&
     installedPackageDetail.latestVersion?.pkgVersion !==
-      installedPackageDetail.currentVersion?.pkgVersion
+    installedPackageDetail.currentVersion?.pkgVersion
   ) {
     // There is a new package version
     alertContent = (

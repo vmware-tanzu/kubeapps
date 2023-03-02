@@ -9,13 +9,13 @@ import Tooltip from "components/js/Tooltip";
 import {
   PackageRepositoriesPermissions,
   PackageRepositorySummary,
-} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { Link } from "react-router-dom";
 import { IPackageRepositoryState } from "reducers/repos";
 import { Kube } from "shared/Kube";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { IStoreState, PluginNames } from "shared/types";
 import { PkgRepoControl } from "./PkgRepoControl";

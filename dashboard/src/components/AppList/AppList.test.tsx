@@ -13,8 +13,8 @@ import {
   InstalledPackageSummary,
   PackageAppVersion,
   VersionReference,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import context from "jest-plugin-context";
 import qs from "qs";
 import React from "react";

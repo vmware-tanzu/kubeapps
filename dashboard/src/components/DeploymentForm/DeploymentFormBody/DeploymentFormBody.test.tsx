@@ -6,7 +6,7 @@ import { JSONSchemaType } from "ajv";
 import {
   AvailablePackageDetail,
   PackageAppVersion,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { act } from "react-dom/test-utils";
 import { MonacoDiffEditor } from "react-monaco-editor";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";

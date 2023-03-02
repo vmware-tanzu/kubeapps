@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Code } from "@bufbuild/connect";
+import { proto3 } from "@bufbuild/protobuf";
 import {
   InstalledPackageStatus_StatusReason,
-  installedPackageStatus_StatusReasonToJSON,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { PackageRepositoryAuth_PackageRepositoryAuthType } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import { PackageRepositoryAuth_PackageRepositoryAuthType } from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import carvelIcon from "icons/carvel.svg";
 import fluxIcon from "icons/flux.svg";
 import helmIcon from "icons/helm.svg";
@@ -233,12 +233,10 @@ export function getPluginsSupportingRollback(): string[] {
 }
 
 export function getAppStatusLabel(
-  statusReason: InstalledPackageStatus_StatusReason = InstalledPackageStatus_StatusReason.STATUS_REASON_UNSPECIFIED,
+  statusReason: InstalledPackageStatus_StatusReason = InstalledPackageStatus_StatusReason.UNSPECIFIED,
 ): string {
-  // The JSON versions of the reasons are forced to follow the standard
-  // pattern STATUS_REASON_<reason> by buf.
-  const jsonReason = installedPackageStatus_StatusReasonToJSON(statusReason);
-  return jsonReason.replace("STATUS_REASON_", "").toLowerCase();
+  let statusReasonName = proto3.getEnumType(InstalledPackageStatus_StatusReason).findNumber(statusReason)!.name;
+  return statusReasonName.toString().replace("STATUS_REASON_", "").toLowerCase();
 }
 
 export function getSupportedPackageRepositoryAuthTypes(
@@ -248,27 +246,27 @@ export function getSupportedPackageRepositoryAuthTypes(
   switch (plugin.name) {
     case PluginNames.PACKAGES_HELM:
       return [
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+        PackageRepositoryAuth_PackageRepositoryAuthType.AUTHORIZATION_HEADER,
+        PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+        PackageRepositoryAuth_PackageRepositoryAuthType.BEARER,
+        PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON,
       ];
     case PluginNames.PACKAGES_FLUX:
       switch (type) {
         case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM:
           return [
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+            PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.TLS,
           ];
         case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI:
           return [
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+            PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON,
           ];
         default:
           return [
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+            PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.TLS,
           ];
       }
     case PluginNames.PACKAGES_KAPP:
@@ -280,27 +278,27 @@ export function getSupportedPackageRepositoryAuthTypes(
         // "Secret with auth details. allowed keys: ssh-privatekey, ssh-knownhosts, username, password"
         case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT:
           return [
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.SSH,
           ];
         // "Secret may include one or more keys: username, password"
         case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP:
           return [
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
           ];
         // "Secret may include one or more keys: username, password, token"
         case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE:
           return [
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+            PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.BEARER,
+            PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON,
           ];
         // "Secret may include one or more keys: username, password, token"
         case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE:
           return [
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+            PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.BEARER,
+            PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON,
           ];
         // inline is not supported for write
         case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE:

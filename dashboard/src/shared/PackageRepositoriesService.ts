@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Any } from "gen/google/protobuf/any";
-import { Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import {
   AddPackageRepositoryRequest,
   DeletePackageRepositoryResponse,
@@ -19,21 +19,21 @@ import {
   TlsCertKey,
   UpdatePackageRepositoryRequest,
   UsernamePassword,
-} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
-import { GetConfiguredPluginsResponse } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
+import { GetConfiguredPluginsResponse } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import {
   HelmPackageRepositoryCustomDetail,
   protobufPackage as helmProtobufPackage,
   ProxyOptions,
-} from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+} from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
 import {
   KappControllerPackageRepositoryCustomDetail,
   protobufPackage as kappControllerProtobufPackage,
-} from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
+} from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller_pb";
 import {
   FluxPackageRepositoryCustomDetail,
   protobufPackage as fluxv2ProtobufPackage,
-} from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2";
+} from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2_pb";
 import KubeappsGrpcClient from "./KubeappsGrpcClient";
 import { IPkgRepoFormData, PluginNames } from "./types";
 import { convertGrpcAuthError } from "./utils";
@@ -48,7 +48,7 @@ export class PackageRepositoriesService {
     context: Context,
   ): Promise<GetPackageRepositorySummariesResponse> {
     return await this.coreRepositoriesClient()
-      .GetPackageRepositorySummaries({ context })
+      .getPackageRepositorySummaries({ context })
       .catch((e: any) => {
         throw convertGrpcAuthError(e);
       });
@@ -58,7 +58,7 @@ export class PackageRepositoriesService {
     packageRepoRef: PackageRepositoryReference,
   ): Promise<GetPackageRepositoryDetailResponse> {
     return await this.coreRepositoriesClient()
-      .GetPackageRepositoryDetail({ packageRepoRef })
+      .getPackageRepositoryDetail({ packageRepoRef })
       .catch((e: any) => {
         throw convertGrpcAuthError(e);
       });
@@ -73,7 +73,7 @@ export class PackageRepositoriesService {
     );
 
     return await this.coreRepositoriesClient()
-      .AddPackageRepository(addPackageRepositoryRequest)
+      .addPackageRepository(addPackageRepositoryRequest)
       .catch((e: any) => {
         throw convertGrpcAuthError(e);
       });
@@ -88,7 +88,7 @@ export class PackageRepositoriesService {
     );
 
     return await this.coreRepositoriesClient()
-      .UpdatePackageRepository(updatePackageRepositoryRequest)
+      .updatePackageRepository(updatePackageRepositoryRequest)
       .catch((e: any) => {
         throw convertGrpcAuthError(e);
       });
@@ -98,7 +98,7 @@ export class PackageRepositoriesService {
     packageRepoRef: PackageRepositoryReference,
   ): Promise<DeletePackageRepositoryResponse> {
     return await this.coreRepositoriesClient()
-      .DeletePackageRepository({
+      .deletePackageRepository({
         packageRepoRef,
       })
       .catch((e: any) => {
@@ -135,8 +135,8 @@ export class PackageRepositoriesService {
     // auth/tls - user entered
     if (!request.isUserManaged) {
       switch (request.authMethod) {
-        case (PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER):
+        case (PackageRepositoryAuth_PackageRepositoryAuthType.AUTHORIZATION_HEADER,
+          PackageRepositoryAuth_PackageRepositoryAuthType.BEARER):
           if (request.authHeader) {
             addPackageRepositoryRequest.auth = {
               ...addPackageRepositoryRequest.auth,
@@ -144,7 +144,7 @@ export class PackageRepositoriesService {
             } as PackageRepositoryAuth;
           }
           break;
-        case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
+        case PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH:
           if (Object.values(request.basicAuth).some(e => !!e)) {
             addPackageRepositoryRequest.auth = {
               ...addPackageRepositoryRequest.auth,
@@ -155,7 +155,7 @@ export class PackageRepositoriesService {
             } as PackageRepositoryAuth;
           }
           break;
-        case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
+        case PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON:
           if (Object.values(request.dockerRegCreds).some(e => !!e)) {
             addPackageRepositoryRequest.auth = {
               ...addPackageRepositoryRequest.auth,
@@ -163,7 +163,7 @@ export class PackageRepositoriesService {
             } as PackageRepositoryAuth;
           }
           break;
-        case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH:
+        case PackageRepositoryAuth_PackageRepositoryAuthType.SSH:
           if (Object.values(request.sshCreds).some(e => !!e)) {
             addPackageRepositoryRequest.auth = {
               ...addPackageRepositoryRequest.auth,
@@ -173,7 +173,7 @@ export class PackageRepositoriesService {
             } as PackageRepositoryAuth;
           }
           break;
-        case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS:
+        case PackageRepositoryAuth_PackageRepositoryAuthType.TLS:
           if (Object.values(request.tlsCertKey).some(e => !!e)) {
             addPackageRepositoryRequest.auth = {
               ...addPackageRepositoryRequest.auth,
@@ -181,7 +181,7 @@ export class PackageRepositoriesService {
             } as PackageRepositoryAuth;
           }
           break;
-        case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE:
+        case PackageRepositoryAuth_PackageRepositoryAuthType.OPAQUE:
           if (Object.values(request.opaqueCreds.data).some(e => !!e)) {
             addPackageRepositoryRequest.auth = {
               ...addPackageRepositoryRequest.auth,
@@ -211,7 +211,7 @@ export class PackageRepositoriesService {
       }
       if (
         request.authMethod !==
-          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED &&
+        PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED &&
         request.secretAuthName
       ) {
         addPackageRepositoryRequest.auth = {
@@ -327,14 +327,14 @@ export class PackageRepositoriesService {
 
   public static async getConfiguredPlugins(): Promise<GetConfiguredPluginsResponse> {
     return await this.pluginsServiceClientImpl()
-      .GetConfiguredPlugins({})
+      .getConfiguredPlugins({})
       .catch((e: any) => {
         throw convertGrpcAuthError(e);
       });
   }
 
   public static async getRepositoriesPermissions(cluster: string, namespace: string) {
-    const resp = await this.coreRepositoriesClient().GetPackageRepositoryPermissions({
+    const resp = await this.coreRepositoriesClient().getPackageRepositoryPermissions({
       context: {
         cluster: cluster,
         namespace: namespace,

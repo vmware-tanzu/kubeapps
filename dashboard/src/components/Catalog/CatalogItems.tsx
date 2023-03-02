@@ -1,7 +1,7 @@
 // Copyright 2020-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AvailablePackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { AvailablePackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { useMemo } from "react";
 import { getIcon } from "shared/Operators";
 import { IClusterServiceVersion } from "shared/types";
@@ -79,14 +79,14 @@ export default function CatalogItems({
     !hasLoadedFirstPage && isFirstPage
       ? []
       : packageItems
-          .concat(crdItems)
-          .sort((a, b) =>
-            a.item.name.toLowerCase() > b.item.name.toLowerCase()
-              ? 1
-              : b.item.name.toLowerCase() > a.item.name.toLowerCase()
+        .concat(crdItems)
+        .sort((a, b) =>
+          a.item.name.toLowerCase() > b.item.name.toLowerCase()
+            ? 1
+            : b.item.name.toLowerCase() > a.item.name.toLowerCase()
               ? -1
               : 0,
-          );
+        );
 
   if (hasFinishedFetching && sortedItems.length === 0) {
     return <p>No application matches the current filter.</p>;

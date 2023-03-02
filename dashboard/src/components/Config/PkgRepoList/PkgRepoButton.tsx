@@ -5,7 +5,7 @@ import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import { CdsModal, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import actions from "actions";
-import { PackageRepositoryReference } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import { PackageRepositoryReference } from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { Action } from "redux";

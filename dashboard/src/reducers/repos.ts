@@ -6,13 +6,13 @@ import {
   PackageRepositoriesPermissions,
   PackageRepositoryDetail,
   PackageRepositorySummary,
-} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
-import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2";
-import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
+import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2_pb";
+import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
 import {
   KappControllerPackageRepositoryCustomDetail,
   PackageRepositoryFetch,
-} from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
+} from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller_pb";
 import { PluginNames } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
@@ -143,15 +143,15 @@ const reposReducer = (
           a.name.toLowerCase() > b.name.toLowerCase()
             ? 1
             : b.name.toLowerCase() > a.name.toLowerCase()
-            ? -1
-            : 0,
+              ? -1
+              : 0,
         ),
       };
     case getType(actions.repos.repoUpdated): {
       const updatedRepo = action.payload;
       const repos = state.reposSummaries.map(r =>
         r.name === updatedRepo.name &&
-        r.packageRepoRef?.context?.namespace === updatedRepo.packageRepoRef?.context?.namespace
+          r.packageRepoRef?.context?.namespace === updatedRepo.packageRepoRef?.context?.namespace
           ? updatedRepo
           : r,
       );

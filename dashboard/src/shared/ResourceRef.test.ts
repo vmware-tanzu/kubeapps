@@ -3,7 +3,7 @@
 
 import ResourceRef, { fromCRD } from "./ResourceRef";
 import { IClusterServiceVersionCRDResource } from "./types";
-import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 
 const clusterName = "cluster-name";
 

@@ -5,7 +5,7 @@ import Table from "components/js/Table";
 import Tooltip from "components/js/Tooltip";
 import { get } from "lodash";
 import { useSelector } from "react-redux";
-import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { IK8sList, IKubeItem, IResource, IServiceSpec, IStoreState } from "shared/types";
 import LoadingWrapper from "../../../components/LoadingWrapper/LoadingWrapper";
 import isSomeResourceLoading from "../helpers";
@@ -173,10 +173,10 @@ export default function AccessURLTable({ ingressRefs, serviceRefs }: IAccessURLT
           return {
             url: ingress.item
               ? GetURLItemFromIngress(ingress.item).URLs.map(
-                  // check whether each URL is, indeed, a valid URL.
-                  // If so, render the <a>, othersiwe, render a simple <span>
-                  url => (ShouldGenerateLink(url) ? getAnchor(url) : getSpan(url)),
-                )
+                // check whether each URL is, indeed, a valid URL.
+                // If so, render the <a>, othersiwe, render a simple <span>
+                url => (ShouldGenerateLink(url) ? getAnchor(url) : getSpan(url)),
+              )
               : [getUnknown(index.toString())], // render a simple span with "unknown"
             type: "Ingress",
             notes: ingress.error ? (
