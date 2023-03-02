@@ -4,7 +4,6 @@
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 
 describe("kubeapps grpc client creation", () => {
-
   it("should create a kubeapps grpc client", async () => {
     const kubeappsGrpcClient = new KubeappsGrpcClient();
     expect(kubeappsGrpcClient).not.toBeNull();
