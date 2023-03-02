@@ -136,7 +136,7 @@ export class PackageRepositoriesService {
     if (!request.isUserManaged) {
       switch (request.authMethod) {
         case (PackageRepositoryAuth_PackageRepositoryAuthType.AUTHORIZATION_HEADER,
-          PackageRepositoryAuth_PackageRepositoryAuthType.BEARER):
+        PackageRepositoryAuth_PackageRepositoryAuthType.BEARER):
           if (request.authHeader) {
             addPackageRepositoryRequest.auth = {
               ...addPackageRepositoryRequest.auth,
@@ -210,8 +210,7 @@ export class PackageRepositoriesService {
         } as PackageRepositoryTlsConfig;
       }
       if (
-        request.authMethod !==
-        PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED &&
+        request.authMethod !== PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED &&
         request.secretAuthName
       ) {
         addPackageRepositoryRequest.auth = {

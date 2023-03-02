@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { keyForResourceRef } from "shared/ResourceRef";
-import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { IKubeState } from "shared/types";
 
 // Takes a set of ResourceRefs and the resources from the Redux state and

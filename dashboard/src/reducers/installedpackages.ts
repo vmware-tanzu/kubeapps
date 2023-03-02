@@ -33,7 +33,9 @@ const installedPackagesReducer = (
     case getType(actions.installedpackages.selectInstalledPackage): {
       let revision: number;
       try {
-        revision = InstalledPackageDetailCustomDataHelm.fromBinary(action.payload.pkg!.customDetail!.value).releaseRevision;
+        revision = InstalledPackageDetailCustomDataHelm.fromBinary(
+          action.payload.pkg!.customDetail!.value,
+        ).releaseRevision;
       } catch (error) {
         // If the decoding fails, ignore it and just fall back to "no revisions"
         revision = 0;

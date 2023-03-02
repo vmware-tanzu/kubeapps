@@ -3,9 +3,7 @@
 
 import { Code } from "@bufbuild/connect";
 import { proto3 } from "@bufbuild/protobuf";
-import {
-  InstalledPackageStatus_StatusReason,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import { InstalledPackageStatus_StatusReason } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { PackageRepositoryAuth_PackageRepositoryAuthType } from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import carvelIcon from "icons/carvel.svg";
@@ -235,7 +233,9 @@ export function getPluginsSupportingRollback(): string[] {
 export function getAppStatusLabel(
   statusReason: InstalledPackageStatus_StatusReason = InstalledPackageStatus_StatusReason.UNSPECIFIED,
 ): string {
-  let statusReasonName = proto3.getEnumType(InstalledPackageStatus_StatusReason).findNumber(statusReason)!.name;
+  let statusReasonName = proto3
+    .getEnumType(InstalledPackageStatus_StatusReason)
+    .findNumber(statusReason)!.name;
   return statusReasonName.toString().replace("STATUS_REASON_", "").toLowerCase();
 }
 
@@ -283,9 +283,7 @@ export function getSupportedPackageRepositoryAuthTypes(
           ];
         // "Secret may include one or more keys: username, password"
         case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP:
-          return [
-            PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
-          ];
+          return [PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH];
         // "Secret may include one or more keys: username, password, token"
         case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE:
           return [

@@ -5,8 +5,8 @@ import {
   AvailablePackageDetail,
   AvailablePackageSummary,
   Context,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { IPackageState, IReceivePackagesActionPayload } from "../shared/types";

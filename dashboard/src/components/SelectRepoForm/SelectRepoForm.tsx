@@ -48,11 +48,11 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
     ) {
       // All Namespaces. Global namespace or other cluster, show global repos only
       dispatch(actions.repos.fetchRepoSummaries(""));
-      return () => { };
+      return () => {};
     }
     // In other case, fetch global and namespace repos
     dispatch(actions.repos.fetchRepoSummaries(namespace, true));
-    return () => { };
+    return () => {};
   }, [
     dispatch,
     namespace,

@@ -4,7 +4,7 @@
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
-import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";

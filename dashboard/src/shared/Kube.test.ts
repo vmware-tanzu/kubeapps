@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import MockAdapter from "axios-mock-adapter";
-import { CanIRequest, CanIResponse } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
+import {
+  CanIRequest,
+  CanIResponse,
+} from "gen/kubeappsapis/plugins/resources/v1alpha1/resources_pb";
 import { axiosWithAuth } from "./AxiosInstance";
 import { Kube } from "./Kube";
 import KubeappsGrpcClient from "./KubeappsGrpcClient";

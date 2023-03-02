@@ -7,7 +7,10 @@ import FilterGroup from "components/FilterGroup/FilterGroup";
 import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
-import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import {
+  AvailablePackageSummary,
+  Context,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import {
   PackageRepositoryDetail,
   PackageRepositorySummary,

@@ -173,10 +173,10 @@ export default function AccessURLTable({ ingressRefs, serviceRefs }: IAccessURLT
           return {
             url: ingress.item
               ? GetURLItemFromIngress(ingress.item).URLs.map(
-                // check whether each URL is, indeed, a valid URL.
-                // If so, render the <a>, othersiwe, render a simple <span>
-                url => (ShouldGenerateLink(url) ? getAnchor(url) : getSpan(url)),
-              )
+                  // check whether each URL is, indeed, a valid URL.
+                  // If so, render the <a>, othersiwe, render a simple <span>
+                  url => (ShouldGenerateLink(url) ? getAnchor(url) : getSpan(url)),
+                )
               : [getUnknown(index.toString())], // render a simple span with "unknown"
             type: "Ingress",
             notes: ingress.error ? (

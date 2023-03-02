@@ -11,10 +11,10 @@ import {
   PackageRepositoryAuth_PackageRepositoryAuthType,
   PackageRepositoryReference,
   UpdatePackageRepositoryResponse,
-} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
-import { KappControllerPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
+import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
+import { KappControllerPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller_pb";
 import KubeappsGrpcClient from "./KubeappsGrpcClient";
 import { PackageRepositoriesService } from "./PackageRepositoriesService";
 import { IPkgRepoFormData, PluginNames, RepositoryStorageTypes } from "./types";

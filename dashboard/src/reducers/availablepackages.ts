@@ -8,7 +8,7 @@ import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { PackagesAction } from "../actions/availablepackages";
 import { NamespaceAction } from "../actions/namespace";
-import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 
 export const initialState: IPackageState = {
   isFetching: false,

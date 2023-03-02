@@ -5,7 +5,7 @@ import {
   AvailablePackageDetail,
   InstalledPackageDetail,
   InstalledPackageStatus_StatusReason,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import PackageUpdateInfo from "./PackageUpdateInfo";
 import { getAppStatusLabel } from "shared/utils";
 

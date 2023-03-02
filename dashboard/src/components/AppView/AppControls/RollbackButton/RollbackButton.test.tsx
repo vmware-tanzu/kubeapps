@@ -88,7 +88,7 @@ it("should render a deactivated button if when passing an in-progress status", a
     ...defaultProps,
     releaseStatus: {
       ready: false,
-      reason: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
+      reason: InstalledPackageStatus_StatusReason.PENDING,
       userReason: "Pending",
     } as InstalledPackageStatus,
   };

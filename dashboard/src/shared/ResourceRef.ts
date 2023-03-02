@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { IClusterServiceVersionCRDResource, IKind } from "./types";
-import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 
 export function fromCRD(
   r: IClusterServiceVersionCRDResource,

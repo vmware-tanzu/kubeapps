@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import axios from "axios";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import * as url from "shared/url";
 import { PackageRepositoriesService } from "./PackageRepositoriesService";
 

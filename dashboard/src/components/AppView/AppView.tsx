@@ -229,17 +229,17 @@ export default function AppView() {
 
   useEffect(() => {
     if (resourceRefs.length === 0) {
-      return () => { };
+      return () => {};
     }
 
     const parsedRefs = parseResources(resourceRefs);
     setAppViewResourceRefs(parsedRefs);
-    return () => { };
+    return () => {};
   }, [resourceRefs]);
 
   useEffect(() => {
     if (!selectedInstalledPkg?.installedPackageRef) {
-      return () => { };
+      return () => {};
     }
     const installedPackageRef = selectedInstalledPkg.installedPackageRef;
     // Watch Deployments, StatefulSets, DaemonSets, Ingresses and Services.
@@ -260,7 +260,7 @@ export default function AppView() {
         dispatch(actions.kube.closeRequestResources(installedPackageRef));
       };
     }
-    return () => { };
+    return () => {};
   }, [dispatch, selectedInstalledPkg?.installedPackageRef, appViewResourceRefs]);
 
   const forceRetry = () => {

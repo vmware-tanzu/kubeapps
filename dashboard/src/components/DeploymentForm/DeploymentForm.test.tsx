@@ -11,9 +11,9 @@ import {
   AvailablePackageReference,
   PackageAppVersion,
   ReconciliationOptions,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { GetServiceAccountNamesResponse } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
+import { GetServiceAccountNamesResponse } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources_pb";
 import { createMemoryHistory } from "history";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";

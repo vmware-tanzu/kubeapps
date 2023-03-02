@@ -5,7 +5,7 @@ import { CdsButton } from "@cds/react/button";
 import {
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Tooltip as ReactTooltip } from "react-tooltip";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import StatusAwareButton, { IStatusAwareButtonProps } from "./StatusAwareButton";

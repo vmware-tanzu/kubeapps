@@ -3,7 +3,7 @@
 
 import { Code } from "@bufbuild/connect";
 import { AxiosResponse } from "axios";
-import { CheckNamespaceExistsRequest } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
+import { CheckNamespaceExistsRequest } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources_pb";
 import jwt from "jsonwebtoken";
 import { Auth } from "./Auth";
 import { SupportedThemes } from "./Config";

@@ -85,9 +85,15 @@ it("getPluginIcon", () => {
   expect(getPluginIcon("helm")).toBe(helmIcon);
   expect(getPluginIcon("operator")).toBe(olmIcon);
   expect(getPluginIcon("fluflu")).toBe(placeholder);
-  expect(getPluginIcon(new Plugin({ name: PluginNames.PACKAGES_HELM, version: "" }))).toBe(helmIcon);
-  expect(getPluginIcon(new Plugin({ name: PluginNames.PACKAGES_FLUX, version: "" }))).toBe(fluxIcon);
-  expect(getPluginIcon(new Plugin({ name: PluginNames.PACKAGES_KAPP, version: "" }))).toBe(carvelIcon);
+  expect(getPluginIcon(new Plugin({ name: PluginNames.PACKAGES_HELM, version: "" }))).toBe(
+    helmIcon,
+  );
+  expect(getPluginIcon(new Plugin({ name: PluginNames.PACKAGES_FLUX, version: "" }))).toBe(
+    fluxIcon,
+  );
+  expect(getPluginIcon(new Plugin({ name: PluginNames.PACKAGES_KAPP, version: "" }))).toBe(
+    carvelIcon,
+  );
 });
 
 it("getPluginName", () => {
@@ -97,7 +103,9 @@ it("getPluginName", () => {
   expect(getPluginName("fluflu")).toBe("unknown plugin");
   expect(getPluginName(new Plugin({ name: PluginNames.PACKAGES_HELM, version: "" }))).toBe("Helm");
   expect(getPluginName(new Plugin({ name: PluginNames.PACKAGES_FLUX, version: "" }))).toBe("Flux");
-  expect(getPluginName(new Plugin({ name: PluginNames.PACKAGES_KAPP, version: "" }))).toBe("Carvel");
+  expect(getPluginName(new Plugin({ name: PluginNames.PACKAGES_KAPP, version: "" }))).toBe(
+    "Carvel",
+  );
 });
 
 it("getPluginPackageName", () => {
@@ -105,7 +113,9 @@ it("getPluginPackageName", () => {
   expect(getPluginPackageName("helm")).toBe("Helm Chart");
   expect(getPluginPackageName("operator")).toBe("Operator");
   expect(getPluginPackageName("fluflu")).toBe("unknown plugin package");
-  expect(getPluginPackageName(new Plugin({ name: PluginNames.PACKAGES_HELM, version: "" }))).toBe("Helm Chart");
+  expect(getPluginPackageName(new Plugin({ name: PluginNames.PACKAGES_HELM, version: "" }))).toBe(
+    "Helm Chart",
+  );
   expect(getPluginPackageName(new Plugin({ name: PluginNames.PACKAGES_FLUX, version: "" }))).toBe(
     "Helm Chart via Flux",
   );
@@ -116,15 +126,15 @@ it("getPluginPackageName", () => {
   expect(getPluginPackageName("helm", true)).toBe("Helm Charts");
   expect(getPluginPackageName("operator", true)).toBe("Operators");
   expect(getPluginPackageName("fluflu", true)).toBe("unknown plugin packages");
-  expect(getPluginPackageName(new Plugin({ name: PluginNames.PACKAGES_HELM, version: "" }), true)).toBe(
-    "Helm Charts",
-  );
-  expect(getPluginPackageName(new Plugin({ name: PluginNames.PACKAGES_FLUX, version: "" }), true)).toBe(
-    "Helm Charts via Flux",
-  );
-  expect(getPluginPackageName(new Plugin({ name: PluginNames.PACKAGES_KAPP, version: "" }), true)).toBe(
-    "Carvel Packages",
-  );
+  expect(
+    getPluginPackageName(new Plugin({ name: PluginNames.PACKAGES_HELM, version: "" }), true),
+  ).toBe("Helm Charts");
+  expect(
+    getPluginPackageName(new Plugin({ name: PluginNames.PACKAGES_FLUX, version: "" }), true),
+  ).toBe("Helm Charts via Flux");
+  expect(
+    getPluginPackageName(new Plugin({ name: PluginNames.PACKAGES_KAPP, version: "" }), true),
+  ).toBe("Carvel Packages");
 });
 
 it("getPluginByName", () => {
@@ -162,29 +172,21 @@ it("getPluginsSupportingRollback", () => {
 });
 
 it("getAppStatusLabel", () => {
-  expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.UNSPECIFIED)).toBe(
-    "unspecified",
-  );
-  expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.FAILED)).toBe(
-    "failed",
-  );
-  expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.INSTALLED)).toBe(
-    "installed",
-  );
-  expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.PENDING)).toBe(
-    "pending",
-  );
-  expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.UNINSTALLED)).toBe(
-    "uninstalled",
-  );
+  expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.UNSPECIFIED)).toBe("unspecified");
+  expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.FAILED)).toBe("failed");
+  expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.INSTALLED)).toBe("installed");
+  expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.PENDING)).toBe("pending");
+  expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.UNINSTALLED)).toBe("uninstalled");
 });
 
 it("getSupportedPackageRepositoryAuthTypes", () => {
   expect(
-    getSupportedPackageRepositoryAuthTypes(new Plugin({
-      name: PluginNames.PACKAGES_HELM,
-      version: "",
-    })).toString(),
+    getSupportedPackageRepositoryAuthTypes(
+      new Plugin({
+        name: PluginNames.PACKAGES_HELM,
+        version: "",
+      }),
+    ).toString(),
   ).toBe(
     [
       PackageRepositoryAuth_PackageRepositoryAuthType.AUTHORIZATION_HEADER,
@@ -220,10 +222,12 @@ it("getSupportedPackageRepositoryAuthTypes", () => {
     ].toString(),
   );
   expect(
-    getSupportedPackageRepositoryAuthTypes(new Plugin({
-      name: PluginNames.PACKAGES_FLUX,
-      version: "",
-    })).toString(),
+    getSupportedPackageRepositoryAuthTypes(
+      new Plugin({
+        name: PluginNames.PACKAGES_FLUX,
+        version: "",
+      }),
+    ).toString(),
   ).toBe(
     [
       PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
@@ -253,10 +257,12 @@ it("getSupportedPackageRepositoryAuthTypes", () => {
     ].toString(),
   );
   expect(
-    getSupportedPackageRepositoryAuthTypes(new Plugin({
-      name: PluginNames.PACKAGES_KAPP,
-      version: "",
-    })).toString(),
+    getSupportedPackageRepositoryAuthTypes(
+      new Plugin({
+        name: PluginNames.PACKAGES_KAPP,
+        version: "",
+      }),
+    ).toString(),
   ).toBe([].toString());
   expect(
     getSupportedPackageRepositoryAuthTypes(
@@ -274,11 +280,7 @@ it("getSupportedPackageRepositoryAuthTypes", () => {
       new Plugin({ name: PluginNames.PACKAGES_KAPP, version: "" }),
       RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP,
     ).toString(),
-  ).toBe(
-    [
-      PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
-    ].toString(),
-  );
+  ).toBe([PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH].toString());
   expect(
     getSupportedPackageRepositoryAuthTypes(
       new Plugin({ name: PluginNames.PACKAGES_KAPP, version: "" }),
@@ -309,9 +311,9 @@ it("getSupportedPackageRepositoryAuthTypes", () => {
       RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE,
     ).toString(),
   ).toBe([].toString());
-  expect(getSupportedPackageRepositoryAuthTypes(new Plugin({ name: "foo", version: "" })).toString()).toBe(
-    [].toString(),
-  );
+  expect(
+    getSupportedPackageRepositoryAuthTypes(new Plugin({ name: "foo", version: "" })).toString(),
+  ).toBe([].toString());
 });
 
 it("isGlobalNamespace", () => {

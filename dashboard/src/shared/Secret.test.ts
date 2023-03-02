@@ -6,7 +6,7 @@ import {
   CreateSecretResponse,
   GetSecretNamesResponse,
   SecretType,
-} from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
+} from "gen/kubeappsapis/plugins/resources/v1alpha1/resources_pb";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import Secret from "./Secret";
 

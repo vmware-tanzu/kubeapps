@@ -5,7 +5,7 @@ import {
   AvailablePackageReference,
   Context,
   InstalledPackageDetail,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import {
   AddPackageRepositoryResponse,
   DeletePackageRepositoryResponse,
@@ -17,9 +17,9 @@ import {
   PackageRepositoryReference,
   PackageRepositorySummary,
   UpdatePackageRepositoryResponse,
-} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
+import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
 import context from "jest-plugin-context";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";

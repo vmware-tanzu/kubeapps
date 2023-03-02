@@ -143,15 +143,15 @@ const reposReducer = (
           a.name.toLowerCase() > b.name.toLowerCase()
             ? 1
             : b.name.toLowerCase() > a.name.toLowerCase()
-              ? -1
-              : 0,
+            ? -1
+            : 0,
         ),
       };
     case getType(actions.repos.repoUpdated): {
       const updatedRepo = action.payload;
       const repos = state.reposSummaries.map(r =>
         r.name === updatedRepo.name &&
-          r.packageRepoRef?.context?.namespace === updatedRepo.packageRepoRef?.context?.namespace
+        r.packageRepoRef?.context?.namespace === updatedRepo.packageRepoRef?.context?.namespace
           ? updatedRepo
           : r,
       );

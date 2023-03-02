@@ -5,13 +5,13 @@ import {
   PackageRepositoriesPermissions,
   PackageRepositoryDetail,
   PackageRepositorySummary,
-} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import reposReducer, { IPackageRepositoryState } from "./repos";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { PluginNames } from "shared/types";
-import { Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 
 describe("reposReducer", () => {
   let initialState: IPackageRepositoryState;
