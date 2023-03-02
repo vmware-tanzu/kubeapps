@@ -1,7 +1,7 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { grpc } from "@improbable-eng/grpc-web";
+import { Code } from "@bufbuild/connect";
 import { AxiosResponse } from "axios";
 import jwt from "jsonwebtoken";
 import { get } from "lodash";
@@ -57,7 +57,7 @@ export class Auth {
       // Trimming the b64 padding character ("=") as it is not accepted by k8s
       // https://github.com/kubernetes/apiserver/blob/release-1.22/pkg/authentication/request/websocket/protocol.go#L38
       "base64url.bearer.authorization.k8s.io." +
-        Buffer.from(token).toString("base64").replaceAll("=", ""),
+      Buffer.from(token).toString("base64").replaceAll("=", ""),
       "binary.k8s.io",
     ];
   }
@@ -73,11 +73,11 @@ export class Auth {
   // Throws an error if the token is invalid
   public static async validateToken(cluster: string, token: string) {
     try {
-      await this.resourcesServiceClient(token).CheckNamespaceExists({
+      await this.resourcesServiceClient(token).checkNamespaceExists({
         context: { cluster, namespace: "default" },
       });
     } catch (e: any) {
-      if (e.code === grpc.Code.Unauthenticated) {
+      if (e.code === Code.Unauthenticated) {
         throw new UnauthorizedNetworkError("invalid token");
       }
       // https://kubernetes.io/docs/reference/access-authn-authz/authentication/#anonymous-requests
@@ -86,11 +86,11 @@ export class Auth {
       // don't make any assumptions over RBAC for the requested namespace or
       // other required authz permissions until operations on those resources
       // are attempted (though we may want to revisit this in the future).
-      if (e.code !== grpc.Code.PermissionDenied) {
-        if (e.code === grpc.Code.NotFound) {
+      if (e.code !== Code.PermissionDenied) {
+        if (e.code === Code.NotFound) {
           throw new NotFoundNetworkError("not found");
         }
-        if (e.code === grpc.Code.Internal) {
+        if (e.code === Code.Internal) {
           throw new InternalServerNetworkError("internal error");
         }
         throw new InternalServerNetworkError(`${e.code}: ${e.message}`);
@@ -151,14 +151,14 @@ export class Auth {
   // it could potentially return a false positive.
   public static async isAuthenticatedWithCookie(cluster: string): Promise<boolean> {
     try {
-      await this.resourcesServiceClient().CheckNamespaceExists({
+      await this.resourcesServiceClient().checkNamespaceExists({
         context: { cluster, namespace: "default" },
       });
     } catch (e: any) {
       // The only error response which can possibly mean we did authenticate is
       // a 403 from the k8s api server (ie. we got through to k8s api server
       // but RBAC doesn't authorize us).
-      if (e.code !== grpc.Code.PermissionDenied) {
+      if (e.code !== Code.PermissionDenied) {
         return false;
       }
 

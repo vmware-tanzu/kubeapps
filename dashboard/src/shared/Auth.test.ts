@@ -1,7 +1,7 @@
 // Copyright 2019-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { grpc } from "@improbable-eng/grpc-web";
+import { Code } from "@bufbuild/connect";
 import { AxiosResponse } from "axios";
 import { CheckNamespaceExistsRequest } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
 import jwt from "jsonwebtoken";
@@ -13,13 +13,13 @@ import { initialState } from "./specs/mountWrapper";
 describe("Auth", () => {
   // Create a real client, but we'll stub out the function we're interested in.
   const client = new KubeappsGrpcClient().getResourcesServiceClientImpl();
-  let mockClientCheckNamespaceExists: jest.MockedFunction<typeof client.CheckNamespaceExists>;
+  let mockClientCheckNamespaceExists: jest.MockedFunction<typeof client.checkNamespaceExists>;
 
   beforeEach(() => {
     mockClientCheckNamespaceExists = jest
       .fn()
       .mockImplementation(() => Promise.resolve({ exists: true } as CheckNamespaceExistsRequest));
-    jest.spyOn(client, "CheckNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
+    jest.spyOn(client, "checkNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
     jest.spyOn(Auth, "resourcesServiceClient").mockImplementation(() => client);
   });
   afterEach(() => {
@@ -41,8 +41,8 @@ describe("Auth", () => {
   it("should return without error when the endpoint returns PermissionDenied with the given token", async () => {
     mockClientCheckNamespaceExists = jest
       .fn()
-      .mockImplementation(() => Promise.reject({ code: grpc.Code.PermissionDenied }));
-    jest.spyOn(client, "CheckNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
+      .mockImplementation(() => Promise.reject({ code: Code.PermissionDenied }));
+    jest.spyOn(client, "checkNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
     await Auth.validateToken("othercluster", "foo");
 
     expect(Auth.resourcesServiceClient).toHaveBeenCalledWith("foo");
@@ -59,17 +59,17 @@ describe("Auth", () => {
       {
         name: "should throw an invalid token error for 401 responses",
         response: { status: 401, data: "ignored anyway" },
-        grpcCode: grpc.Code.Unauthenticated,
+        grpcCode: Code.Unauthenticated,
         expectedError: new Error("invalid token"),
       },
       {
         name: "should throw a standard error for a 404 response",
-        grpcCode: grpc.Code.NotFound,
+        grpcCode: Code.NotFound,
         expectedError: new Error("not found"),
       },
       {
         name: "should throw a standard error for a 500 response",
-        grpcCode: grpc.Code.Internal,
+        grpcCode: Code.Internal,
         expectedError: new Error("internal error"),
       },
     ].forEach(testCase => {
@@ -78,7 +78,7 @@ describe("Auth", () => {
           .fn()
           .mockImplementation(() => Promise.reject({ code: testCase.grpcCode }));
         jest
-          .spyOn(client, "CheckNamespaceExists")
+          .spyOn(client, "checkNamespaceExists")
           .mockImplementation(mockClientCheckNamespaceExists);
 
         await expect(Auth.validateToken("default", "foo")).rejects.toThrow(testCase.expectedError);
@@ -103,7 +103,7 @@ describe("Auth", () => {
     it("returns false if the request results in a non-grpc-web response", async () => {
       mockClientCheckNamespaceExists = jest.fn().mockImplementation(() =>
         Promise.reject({
-          code: grpc.Code.PermissionDenied,
+          code: Code.PermissionDenied,
           metadata: {
             headersMap: {
               "content-type": ["not-grpc-content-type"],
@@ -111,7 +111,7 @@ describe("Auth", () => {
           },
         }),
       );
-      jest.spyOn(client, "CheckNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
+      jest.spyOn(client, "checkNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
 
       const isAuthed = await Auth.isAuthenticatedWithCookie("somecluster");
 
@@ -121,7 +121,7 @@ describe("Auth", () => {
     it("returns true if the request to api root results in a 403", async () => {
       mockClientCheckNamespaceExists = jest.fn().mockImplementation(() =>
         Promise.reject({
-          code: grpc.Code.PermissionDenied,
+          code: Code.PermissionDenied,
           metadata: {
             headersMap: {
               "content-type": ["application/grpc-web+proto"],
@@ -129,7 +129,7 @@ describe("Auth", () => {
           },
         }),
       );
-      jest.spyOn(client, "CheckNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
+      jest.spyOn(client, "checkNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
 
       const isAuthed = await Auth.isAuthenticatedWithCookie("somecluster");
 
@@ -139,7 +139,7 @@ describe("Auth", () => {
     it("returns true if the request to api root results in a 403 with another grpc protocol", async () => {
       mockClientCheckNamespaceExists = jest.fn().mockImplementation(() =>
         Promise.reject({
-          code: grpc.Code.PermissionDenied,
+          code: Code.PermissionDenied,
           metadata: {
             headersMap: {
               "content-type": ["application/grpc-web+thrift"],
@@ -147,7 +147,7 @@ describe("Auth", () => {
           },
         }),
       );
-      jest.spyOn(client, "CheckNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
+      jest.spyOn(client, "checkNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
 
       const isAuthed = await Auth.isAuthenticatedWithCookie("somecluster");
 
@@ -156,7 +156,7 @@ describe("Auth", () => {
     it("returns false if the request results in a 401", async () => {
       mockClientCheckNamespaceExists = jest.fn().mockImplementation(() =>
         Promise.reject({
-          code: grpc.Code.Unauthenticated,
+          code: Code.Unauthenticated,
           metadata: {
             headersMap: {
               "content-type": ["not-grpc-content-type"],
@@ -164,7 +164,7 @@ describe("Auth", () => {
           },
         }),
       );
-      jest.spyOn(client, "CheckNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
+      jest.spyOn(client, "checkNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
 
       const isAuthed = await Auth.isAuthenticatedWithCookie("somecluster");
 

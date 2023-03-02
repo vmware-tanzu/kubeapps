@@ -1,6 +1,5 @@
 // Copyright 2021-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
-import { useMemo } from "react";
 import { ServiceType } from "@bufbuild/protobuf";
 import {
   createGrpcWebTransport,
@@ -48,7 +47,7 @@ export class KubeappsGrpcClient {
   }
 
   public getGrpcClient = <T extends ServiceType>(service: T): PromiseClient<T> => {
-    return useMemo(() => createPromiseClient(service, this.transport), [service]);
+    return createPromiseClient(service, this.transport);
   }
 
   // Core APIs
