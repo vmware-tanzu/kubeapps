@@ -29,7 +29,7 @@ export class KubeappsGrpcClient {
   // Creates a client with a transport, ensuring the transport includes the auth header.
   constructor(transport?: Transport, token?: string) {
     const auth: Interceptor = next => async req => {
-      let t = token ? token : Auth.getAuthToken();
+      const t = token ? token : Auth.getAuthToken();
       if (t) {
         req.header.set("Authorization", t);
       }
@@ -46,7 +46,7 @@ export class KubeappsGrpcClient {
   // getClientMetadata, if using token authentication, creates grpc metadata
   // and the token in the 'authorization' field
   public getClientMetadata(token?: string) {
-    let t = token ? token : Auth.getAuthToken();
+    const t = token ? token : Auth.getAuthToken();
     return t ? new Headers({ Authorization: `Bearer ${t}` }) : undefined;
   }
 

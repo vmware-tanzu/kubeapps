@@ -23,17 +23,10 @@ import {
 import { GetConfiguredPluginsResponse } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import {
   HelmPackageRepositoryCustomDetail,
-  protobufPackage as helmProtobufPackage,
   ProxyOptions,
 } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
-import {
-  KappControllerPackageRepositoryCustomDetail,
-  protobufPackage as kappControllerProtobufPackage,
-} from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller_pb";
-import {
-  FluxPackageRepositoryCustomDetail,
-  protobufPackage as fluxv2ProtobufPackage,
-} from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2_pb";
+import { KappControllerPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller_pb";
+import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2_pb";
 import KubeappsGrpcClient from "./KubeappsGrpcClient";
 import { IPkgRepoFormData, PluginNames } from "./types";
 import { convertGrpcAuthError } from "./utils";
@@ -258,6 +251,7 @@ export class PackageRepositoriesService {
   private static buildEncodedCustomDetail(request: IPkgRepoFormData) {
     // if using a plugin with customDetail, encode its custom fields,
     // otherwise skip it
+    console.log(`customDetail: ${JSON.stringify(request.customDetail)}`);
     if (!request.customDetail) {
       return;
     }
@@ -267,7 +261,7 @@ export class PackageRepositoriesService {
     switch (request.plugin?.name) {
       case PluginNames.PACKAGES_HELM: {
         const detail = request.customDetail as HelmPackageRepositoryCustomDetail;
-        const helmCustomDetail = {
+        const helmCustomDetail = new HelmPackageRepositoryCustomDetail({
           // populate the non-optional fields
           ociRepositories: detail?.ociRepositories || [],
           performValidation: !!detail?.performValidation,
@@ -277,47 +271,47 @@ export class PackageRepositoriesService {
           securityContext: {
             supplementalGroups: [],
           },
-        } as HelmPackageRepositoryCustomDetail;
+        });
 
         // populate the imagesPullSecret if it's not empty
+        // UPTOHERE: Not sure why can't use the OneOf below.
+        console.log(`imagePullSecret: ${JSON.stringify(detail.imagesPullSecret)}`);
         if (
-          detail?.imagesPullSecret?.secretRef ||
-          (detail?.imagesPullSecret?.credentials &&
-            Object.values((detail?.imagesPullSecret?.credentials || {}) as DockerCredentials).some(
-              e => !!e,
-            ))
+          detail?.imagesPullSecret?.dockerRegistryCredentialOneOf?.case == "secretRef" ||
+          (detail?.imagesPullSecret?.dockerRegistryCredentialOneOf?.case == "credentials" &&
+            Object.values(
+              (detail?.imagesPullSecret?.dockerRegistryCredentialOneOf?.value ||
+                {}) as DockerCredentials,
+            ).some(e => !!e))
         ) {
           helmCustomDetail.imagesPullSecret = detail.imagesPullSecret;
         }
+        helmCustomDetail.imagesPullSecret?.fromJsonString(JSON.stringify(detail.imagesPullSecret));
 
         // populate the proxyOptions if it's not empty
         if (Object.values((detail?.proxyOptions || {}) as ProxyOptions).some(e => !!e)) {
-          helmCustomDetail.proxyOptions = {
+          helmCustomDetail.proxyOptions = new ProxyOptions({
             enabled: detail.proxyOptions?.enabled || false,
             httpProxy: detail.proxyOptions?.httpProxy || "",
             httpsProxy: detail.proxyOptions?.httpsProxy || "",
             noProxy: detail.proxyOptions?.noProxy || "",
-          };
+          });
         }
 
         return {
-          typeUrl: `${helmProtobufPackage}.HelmPackageRepositoryCustomDetail`,
-          value: HelmPackageRepositoryCustomDetail.encode(helmCustomDetail).finish(),
+          typeUrl: HelmPackageRepositoryCustomDetail.typeName,
+          value: helmCustomDetail.toBinary(),
         } as Any;
       }
       case PluginNames.PACKAGES_KAPP:
         return {
-          typeUrl: `${kappControllerProtobufPackage}.KappControllerPackageRepositoryCustomDetail`,
-          value: KappControllerPackageRepositoryCustomDetail.encode(
-            request.customDetail as KappControllerPackageRepositoryCustomDetail,
-          ).finish(),
+          typeUrl: KappControllerPackageRepositoryCustomDetail.typeName,
+          value: request.customDetail,
         } as Any;
       case PluginNames.PACKAGES_FLUX:
         return {
-          typeUrl: `${fluxv2ProtobufPackage}.FluxPackageRepositoryCustomDetail`,
-          value: FluxPackageRepositoryCustomDetail.encode(
-            request.customDetail as FluxPackageRepositoryCustomDetail,
-          ).finish(),
+          typeUrl: FluxPackageRepositoryCustomDetail.typeName,
+          value: request.customDetail,
         } as Any;
       default:
         return;

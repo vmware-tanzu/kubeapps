@@ -6,7 +6,7 @@ import actions from "actions";
 import {
   InstalledPackageReference,
   InstalledPackageStatus,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";

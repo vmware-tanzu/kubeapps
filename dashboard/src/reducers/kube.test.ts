@@ -8,7 +8,7 @@ import kubeReducer, { initialKinds } from "./kube";
 import {
   Context,
   InstalledPackageReference,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Kube } from "shared/Kube";
 
 describe("kubeReducer", () => {

@@ -6,10 +6,16 @@ import { waitFor } from "@testing-library/react";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import {
+  DockerCredentials,
+  OpaqueCredentials,
   PackageRepositoryAuth_PackageRepositoryAuthType,
   PackageRepositoryDetail,
   PackageRepositoryReference,
   PackageRepositorySummary,
+  PackageRepositoryTlsConfig,
+  SshCredentials,
+  TlsCertKey,
+  UsernamePassword,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2_pb";
@@ -42,8 +48,7 @@ const defaultState = {
 const pkgRepoFormData = {
   plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" } as Plugin,
   authHeader: "",
-  authMethod:
-    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+  authMethod: PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED,
   isUserManaged: false,
   basicAuth: {
     password: "",
@@ -763,10 +768,15 @@ describe("when the repository info is already populated", () => {
 
   describe("when there is a kubeapps-handled secret associated to the repo", () => {
     it("should parse the existing CA cert", async () => {
-      const testRepo = {
+      const testRepo = new PackageRepositoryDetail({
         ...repo,
-        tlsConfig: { certAuthority: "fooCA" },
-      } as PackageRepositoryDetail;
+        tlsConfig: new PackageRepositoryTlsConfig({
+          packageRepoTlsConfigOneOf: {
+            case: "certAuthority",
+            value: "fooCA",
+          },
+        }),
+      });
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
@@ -782,13 +792,16 @@ describe("when the repository info is already populated", () => {
     });
 
     it("should parse the existing auth header", async () => {
-      const testRepo = {
+      const testRepo = new PackageRepositoryDetail({
         ...repo,
         auth: {
-          type: PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
-          header: "fooHeader",
+          type: PackageRepositoryAuth_PackageRepositoryAuthType.AUTHORIZATION_HEADER,
+          packageRepoAuthOneOf: {
+            case: "header",
+            value: "fooHeader",
+          },
         },
-      } as PackageRepositoryDetail;
+      });
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
@@ -807,13 +820,19 @@ describe("when the repository info is already populated", () => {
     });
 
     it("should parse the existing basic auth", async () => {
-      const testRepo = {
+      const testRepo = new PackageRepositoryDetail({
         ...repo,
         auth: {
-          type: PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-          usernamePassword: { username: "foo", password: "bar" },
+          type: PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+          packageRepoAuthOneOf: {
+            case: "usernamePassword",
+            value: new UsernamePassword({
+              username: "foo",
+              password: "bar",
+            }),
+          },
         },
-      } as PackageRepositoryDetail;
+      });
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
@@ -833,13 +852,16 @@ describe("when the repository info is already populated", () => {
     });
 
     it("should parse a bearer token", async () => {
-      const testRepo = {
+      const testRepo = new PackageRepositoryDetail({
         ...repo,
         auth: {
-          type: PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-          header: "Bearer fooToken",
+          type: PackageRepositoryAuth_PackageRepositoryAuthType.BEARER,
+          packageRepoAuthOneOf: {
+            case: "header",
+            value: "Bearer fooToken",
+          },
         },
-      } as PackageRepositoryDetail;
+      });
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
@@ -858,18 +880,21 @@ describe("when the repository info is already populated", () => {
     });
 
     it("should select a docker secret as auth mechanism", async () => {
-      const testRepo = {
+      const testRepo = new PackageRepositoryDetail({
         ...repo,
         auth: {
-          type: PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
-          dockerCreds: {
-            email: "foo@foo.foo",
-            password: "bar",
-            server: "foobar",
-            username: "foo",
+          type: PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON,
+          packageRepoAuthOneOf: {
+            case: "dockerCreds",
+            value: new DockerCredentials({
+              email: "foo@foo.foo",
+              password: "bar",
+              server: "foobar",
+              username: "foo",
+            }),
           },
         },
-      } as PackageRepositoryDetail;
+      });
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
@@ -891,15 +916,18 @@ describe("when the repository info is already populated", () => {
     });
 
     it("should select a opaque as auth mechanism", async () => {
-      const testRepo = {
+      const testRepo = new PackageRepositoryDetail({
         ...repo,
         auth: {
-          type: PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE,
-          opaqueCreds: {
-            data: {},
+          type: PackageRepositoryAuth_PackageRepositoryAuthType.OPAQUE,
+          packageRepoAuthOneOf: {
+            case: "opaqueCreds",
+            value: new OpaqueCredentials({
+              data: {},
+            }),
           },
         },
-      } as PackageRepositoryDetail;
+      });
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
@@ -918,16 +946,19 @@ describe("when the repository info is already populated", () => {
     });
 
     it("should select a ssh as auth mechanism", async () => {
-      const testRepo = {
+      const testRepo = new PackageRepositoryDetail({
         ...repo,
         auth: {
-          type: PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
-          sshCreds: {
-            knownHosts: "foo",
-            privateKey: "bar",
+          type: PackageRepositoryAuth_PackageRepositoryAuthType.SSH,
+          packageRepoAuthOneOf: {
+            case: "sshCreds",
+            value: new SshCredentials({
+              knownHosts: "foo",
+              privateKey: "bar",
+            }),
           },
         },
-      } as PackageRepositoryDetail;
+      });
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
@@ -947,16 +978,19 @@ describe("when the repository info is already populated", () => {
     });
 
     it("should select a tls as auth mechanism", async () => {
-      const testRepo = {
+      const testRepo = new PackageRepositoryDetail({
         ...repo,
         auth: {
-          type: PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
-          tlsCertKey: {
-            cert: "foo",
-            key: "bar",
+          type: PackageRepositoryAuth_PackageRepositoryAuthType.TLS,
+          packageRepoAuthOneOf: {
+            case: "tlsCertKey",
+            value: new TlsCertKey({
+              cert: "foo",
+              key: "bar",
+            }),
           },
         },
-      } as PackageRepositoryDetail;
+      });
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(

@@ -6,7 +6,7 @@ import {
   GetAvailablePackageDetailResponse,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageVersionsResponse,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import { convertGrpcAuthError } from "./utils";
 

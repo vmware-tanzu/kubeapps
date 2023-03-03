@@ -6,7 +6,7 @@ import { push } from "connected-react-router";
 import {
   AvailablePackageDetail,
   InstalledPackageDetail,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { CustomComponent } from "RemoteComponent";

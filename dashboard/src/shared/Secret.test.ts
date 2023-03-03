@@ -12,13 +12,13 @@ import Secret from "./Secret";
 
 describe("getSecretNames", () => {
   const expectedSecretNames = {
-    "secret-one": SecretType.SECRET_TYPE_DOCKER_CONFIG_JSON,
-    "secret-two": SecretType.SECRET_TYPE_OPAQUE_UNSPECIFIED,
-    "secret-three": SecretType.SECRET_TYPE_DOCKER_CONFIG_JSON,
+    "secret-one": SecretType.DOCKER_CONFIG_JSON,
+    "secret-two": SecretType.OPAQUE_UNSPECIFIED,
+    "secret-three": SecretType.DOCKER_CONFIG_JSON,
   };
   // Create a real client, but we'll stub out the function we're interested in.
   const client = new KubeappsGrpcClient().getResourcesServiceClientImpl();
-  let mockClientGetSecretNames: jest.MockedFunction<typeof client.GetSecretNames>;
+  let mockClientGetSecretNames: jest.MockedFunction<typeof client.getSecretNames>;
   beforeEach(() => {
     mockClientGetSecretNames = jest.fn().mockImplementation(() =>
       Promise.resolve({
@@ -26,7 +26,7 @@ describe("getSecretNames", () => {
       } as GetSecretNamesResponse),
     );
 
-    jest.spyOn(client, "GetSecretNames").mockImplementation(mockClientGetSecretNames);
+    jest.spyOn(client, "getSecretNames").mockImplementation(mockClientGetSecretNames);
     jest.spyOn(Secret, "resourcesServiceClient").mockImplementation(() => client);
   });
   afterEach(() => {
@@ -49,7 +49,7 @@ describe("createSecret", () => {
       .fn()
       .mockImplementation(() => Promise.resolve({} as CreateSecretResponse));
 
-    jest.spyOn(client, "CreateSecret").mockImplementation(mockClientCreateSecret);
+    jest.spyOn(client, "createSecret").mockImplementation(mockClientCreateSecret);
     jest.spyOn(Secret, "resourcesServiceClient").mockImplementation(() => client);
   });
   afterEach(() => {

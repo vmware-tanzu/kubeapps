@@ -5,7 +5,7 @@ import {
   AvailablePackageDetail,
   AvailablePackageReference,
   GetAvailablePackageVersionsResponse,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { ThunkAction } from "redux-thunk";
 import { ActionType, deprecated } from "typesafe-actions";
 import PackagesService from "../shared/PackagesService";

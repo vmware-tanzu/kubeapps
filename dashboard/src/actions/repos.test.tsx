@@ -137,8 +137,7 @@ interface ITestCase {
 const pkgRepoFormData = {
   plugin: plugin,
   authHeader: "",
-  authMethod:
-    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+  authMethod: PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED,
   basicAuth: {
     password: "",
     username: "",

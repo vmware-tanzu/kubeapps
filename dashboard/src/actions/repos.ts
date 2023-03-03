@@ -5,13 +5,13 @@ import {
   AvailablePackageReference,
   Context,
   InstalledPackageDetail,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import {
   PackageRepositoriesPermissions,
   PackageRepositoryDetail,
   PackageRepositoryReference,
   PackageRepositorySummary,
-} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
 import { uniqBy } from "lodash";
 import { ThunkAction } from "redux-thunk";
 import { PackageRepositoriesService } from "shared/PackageRepositoriesService";

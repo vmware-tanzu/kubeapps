@@ -4,11 +4,11 @@
 import {
   InstalledPackageReference,
   ResourceRef,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import {
   GetServiceAccountNamesRequest,
   GetServiceAccountNamesResponse,
-} from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
+} from "gen/kubeappsapis/plugins/resources/v1alpha1/resources_pb";
 import * as url from "shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";

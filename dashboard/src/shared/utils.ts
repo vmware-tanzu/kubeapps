@@ -233,7 +233,7 @@ export function getPluginsSupportingRollback(): string[] {
 export function getAppStatusLabel(
   statusReason: InstalledPackageStatus_StatusReason = InstalledPackageStatus_StatusReason.UNSPECIFIED,
 ): string {
-  let statusReasonName = proto3
+  const statusReasonName = proto3
     .getEnumType(InstalledPackageStatus_StatusReason)
     .findNumber(statusReason)!.name;
   return statusReasonName.toString().replace("STATUS_REASON_", "").toLowerCase();

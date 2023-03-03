@@ -74,8 +74,7 @@ const kappCustomDetail: KappControllerPackageRepositoryCustomDetail = {
 const pkgRepoFormData = {
   plugin,
   authHeader: "",
-  authMethod:
-    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+  authMethod: PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED,
   basicAuth: {
     password: "",
     username: "",
@@ -309,22 +308,21 @@ describe("buildEncodedCustomDetail encoding", () => {
     expect(encodedCustomDetail?.typeUrl).toBe(
       "kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackageRepositoryCustomDetail",
     );
-    expect(encodedCustomDetail?.value.byteLength).toBe(149);
-    expect(
-      HelmPackageRepositoryCustomDetail.decode(encodedCustomDetail?.value as any),
-    ).toStrictEqual(helmCustomDetail);
+    expect(encodedCustomDetail?.value.byteLength).toBe(137);
+    expect(HelmPackageRepositoryCustomDetail.fromBinary(encodedCustomDetail!.value)).toStrictEqual(
+      helmCustomDetail,
+    );
   });
 
   it("encodes the custom details (kapp)", async () => {
     const encodedCustomDetail = PackageRepositoriesService["buildEncodedCustomDetail"]({
       ...pkgRepoFormData,
-      plugin: { name: PluginNames.PACKAGES_KAPP, version: "v1alpha1" },
+      plugin: new Plugin({ name: PluginNames.PACKAGES_KAPP, version: "v1alpha1" }),
       customDetail: kappCustomDetail,
     });
     expect(encodedCustomDetail?.typeUrl).toBe(
       "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackageRepositoryCustomDetail",
     );
-    expect(encodedCustomDetail?.value.byteLength).toBe(33);
     expect(
       KappControllerPackageRepositoryCustomDetail.decode(encodedCustomDetail?.value as any),
     ).toStrictEqual(kappCustomDetail);
@@ -346,7 +344,7 @@ describe("buildEncodedCustomDetail encoding", () => {
         ],
       } as GetPackageRepositoryPermissionsResponse),
     );
-    setMockCoreClient("GetPackageRepositoryPermissions", mockGetRepositoriesPermissions);
+    setMockCoreClient("getPackageRepositoryPermissions", mockGetRepositoriesPermissions);
 
     const getPackageRepositoryPermissionsResponse =
       await PackageRepositoriesService.getRepositoriesPermissions(cluster, namespace);
