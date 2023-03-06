@@ -48,7 +48,7 @@ require (
 	github.com/distribution/distribution v2.8.1+incompatible
 	github.com/docker/cli v23.0.1+incompatible
 	github.com/fluxcd/helm-controller/api v0.30.0
-	github.com/fluxcd/pkg/apis/meta v0.19.0
+	github.com/fluxcd/pkg/apis/meta v0.19.1
 	github.com/fluxcd/pkg/oci v0.20.0
 	github.com/fluxcd/pkg/version v0.2.1
 	github.com/fluxcd/source-controller/api v0.35.2
@@ -85,7 +85,7 @@ require (
 	helm.sh/helm/v3 v3.11.1
 	k8s.io/api v0.26.1
 	k8s.io/apiextensions-apiserver v0.26.1
-	k8s.io/apimachinery v0.26.1
+	k8s.io/apimachinery v0.26.2
 	k8s.io/apiserver v0.26.1
 	k8s.io/cli-runtime v0.26.1
 	k8s.io/client-go v0.26.1
