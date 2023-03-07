@@ -81,7 +81,7 @@ it("should render an enabled button and tooltip if when passing a pending status
     ...defaultProps,
     releaseStatus: {
       ready: false,
-      reason: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
+      reason: InstalledPackageStatus_StatusReason.PENDING,
       userReason: "Pending",
     } as InstalledPackageStatus,
   };
@@ -96,7 +96,7 @@ it("should render a deactivated button if when passing a uninstalled status", as
     ...defaultProps,
     releaseStatus: {
       ready: false,
-      reason: InstalledPackageStatus_StatusReason.STATUS_REASON_UNINSTALLED,
+      reason: InstalledPackageStatus_StatusReason.UNINSTALLED,
       userReason: "Uninstalling",
     } as InstalledPackageStatus,
   };

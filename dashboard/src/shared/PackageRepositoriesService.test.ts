@@ -12,8 +12,15 @@ import {
   PackageRepositoryReference,
   UpdatePackageRepositoryResponse,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
+import { Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
-import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
+import {
+  HelmPackageRepositoryCustomDetail,
+  ImagesPullSecret,
+  PodSecurityContext,
+  ProxyOptions,
+  RepositoryFilterRule,
+} from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
 import { KappControllerPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller_pb";
 import KubeappsGrpcClient from "./KubeappsGrpcClient";
 import { PackageRepositoriesService } from "./PackageRepositoriesService";
@@ -21,36 +28,38 @@ import { IPkgRepoFormData, PluginNames, RepositoryStorageTypes } from "./types";
 
 const cluster = "cluster";
 const namespace = "namespace";
-const plugin: Plugin = { name: "my.plugin", version: "0.0.1" };
+const plugin: Plugin = new Plugin({ name: "my.plugin", version: "0.0.1" });
 
-const helmCustomDetail: HelmPackageRepositoryCustomDetail = {
-  imagesPullSecret: {
-    secretRef: "test-1",
-    credentials: undefined,
-  },
+const helmCustomDetail: HelmPackageRepositoryCustomDetail = new HelmPackageRepositoryCustomDetail({
+  imagesPullSecret: new ImagesPullSecret({
+    dockerRegistryCredentialOneOf: {
+      case: "secretRef",
+      value: "test-1",
+    },
+  }),
   ociRepositories: ["apache", "jenkins"],
   performValidation: true,
-  filterRule: {
+  filterRule: new RepositoryFilterRule({
     jq: ".name == $var0 or .name == $var1",
     variables: { $var0: "nginx", $var1: "wordpress" },
-  },
-  proxyOptions: {
+  }),
+  proxyOptions: new ProxyOptions({
     enabled: true,
     httpProxy: "http://proxy",
     httpsProxy: "https://proxy",
     noProxy: "localhost",
-  },
+  }),
   // these options are not used by the UI
   tolerations: [],
   nodeSelector: {},
-  securityContext: {
+  securityContext: new PodSecurityContext({
     supplementalGroups: [],
     fSGroup: undefined,
     runAsGroup: undefined,
     runAsNonRoot: undefined,
     runAsUser: undefined,
-  },
-};
+  }),
+});
 
 const kappCustomDetail: KappControllerPackageRepositoryCustomDetail = {
   fetch: {
@@ -131,13 +140,15 @@ describe("RepositoriesService", () => {
         ],
       } as GetPackageRepositorySummariesResponse),
     );
-    setMockCoreClient("GetPackageRepositorySummaries", mockGetPackageRepositorySummaries);
+    setMockCoreClient("getPackageRepositorySummaries", mockGetPackageRepositorySummaries);
 
     const getPackageRepositorySummariesResponse =
-      await PackageRepositoriesService.getPackageRepositorySummaries({
-        cluster,
-        namespace,
-      });
+      await PackageRepositoriesService.getPackageRepositorySummaries(
+        new Context({
+          cluster,
+          namespace,
+        }),
+      );
     expect(getPackageRepositorySummariesResponse).toStrictEqual({
       packageRepositorySummaries: [
         { name: "repo1", packageRepoRef },
@@ -155,7 +166,7 @@ describe("RepositoriesService", () => {
         detail: { name: "repo1", packageRepoRef },
       } as GetPackageRepositoryDetailResponse),
     );
-    setMockCoreClient("GetPackageRepositoryDetail", mockGetPackageRepositoryDetail);
+    setMockCoreClient("getPackageRepositoryDetail", mockGetPackageRepositoryDetail);
 
     const getPackageRepositoryDetailResponse =
       await PackageRepositoriesService.getPackageRepositoryDetail(packageRepoRef);
@@ -175,7 +186,7 @@ describe("RepositoriesService", () => {
         } as PackageRepositoryReference,
       } as AddPackageRepositoryResponse),
     );
-    setMockCoreClient("AddPackageRepository", mockAddPackageRepository);
+    setMockCoreClient("addPackageRepository", mockAddPackageRepository);
 
     const addPackageRepositoryResponse = await PackageRepositoriesService.addPackageRepository(
       cluster,
@@ -210,7 +221,7 @@ describe("RepositoriesService", () => {
         } as PackageRepositoryReference,
       } as UpdatePackageRepositoryResponse),
     );
-    setMockCoreClient("UpdatePackageRepository", mockUpdatePackageRepository);
+    setMockCoreClient("updatePackageRepository", mockUpdatePackageRepository);
 
     const updatePackageRepositoryResponse =
       await PackageRepositoriesService.updatePackageRepository(cluster, pkgRepoFormData);
@@ -238,15 +249,17 @@ describe("RepositoriesService", () => {
 
   it("deletePackageRepository", async () => {
     const mockDeletePackageRepository = jest.fn().mockImplementation(() =>
-      Promise.resolve({
-        packageRepoRef: {
-          identifier: pkgRepoFormData.name,
-          context: { cluster, namespace },
-          plugin,
-        } as PackageRepositoryReference,
-      } as DeletePackageRepositoryResponse),
+      Promise.resolve(
+        new DeletePackageRepositoryResponse({
+          packageRepoRef: {
+            identifier: pkgRepoFormData.name,
+            context: { cluster, namespace },
+            plugin,
+          } as PackageRepositoryReference,
+        }),
+      ),
     );
-    setMockCoreClient("DeletePackageRepository", mockDeletePackageRepository);
+    setMockCoreClient("deletePackageRepository", mockDeletePackageRepository);
 
     const deletePackageRepositoryResponse =
       await PackageRepositoriesService.deletePackageRepository({
@@ -254,13 +267,15 @@ describe("RepositoriesService", () => {
         context: { cluster, namespace },
         plugin,
       } as PackageRepositoryReference);
-    expect(deletePackageRepositoryResponse).toStrictEqual({
-      packageRepoRef: {
-        identifier: pkgRepoFormData.name,
-        context: { cluster, namespace },
-        plugin,
-      } as PackageRepositoryReference,
-    } as DeletePackageRepositoryResponse);
+    expect(deletePackageRepositoryResponse).toStrictEqual(
+      new DeletePackageRepositoryResponse({
+        packageRepoRef: new PackageRepositoryReference({
+          identifier: pkgRepoFormData.name,
+          context: { cluster, namespace },
+          plugin,
+        }),
+      }),
+    );
     expect(mockDeletePackageRepository).toHaveBeenCalledWith({
       packageRepoRef: {
         context: { cluster, namespace },
@@ -302,13 +317,13 @@ describe("buildEncodedCustomDetail encoding", () => {
   it("encodes the custom details (helm)", async () => {
     const encodedCustomDetail = PackageRepositoriesService["buildEncodedCustomDetail"]({
       ...pkgRepoFormData,
-      plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
+      plugin: new Plugin({ name: PluginNames.PACKAGES_HELM, version: "v1alpha1" }),
       customDetail: helmCustomDetail,
     });
     expect(encodedCustomDetail?.typeUrl).toBe(
       "kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackageRepositoryCustomDetail",
     );
-    expect(encodedCustomDetail?.value.byteLength).toBe(137);
+    expect(encodedCustomDetail?.value.byteLength).toBe(147);
     expect(HelmPackageRepositoryCustomDetail.fromBinary(encodedCustomDetail!.value)).toStrictEqual(
       helmCustomDetail,
     );
@@ -323,9 +338,7 @@ describe("buildEncodedCustomDetail encoding", () => {
     expect(encodedCustomDetail?.typeUrl).toBe(
       "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackageRepositoryCustomDetail",
     );
-    expect(
-      KappControllerPackageRepositoryCustomDetail.decode(encodedCustomDetail?.value as any),
-    ).toStrictEqual(kappCustomDetail);
+    expect(encodedCustomDetail?.value).toStrictEqual(kappCustomDetail);
   });
 
   it("getRepositoriesPermissions", async () => {

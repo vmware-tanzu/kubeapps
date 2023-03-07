@@ -166,7 +166,7 @@ describe("Kube", () => {
       mockClientCanI = jest
         .fn()
         .mockImplementation(() => Promise.resolve({ allowed: true } as CanIResponse));
-      jest.spyOn(client, "CanI").mockImplementation(mockClientCanI);
+      jest.spyOn(client, "canI").mockImplementation(mockClientCanI);
       jest.spyOn(Kube, "resourcesServiceClient").mockImplementation(() => client);
 
       const allowed = await Kube.canI(clusterName, "v1", "namespaces", "create", "");
@@ -195,7 +195,7 @@ describe("Kube", () => {
             throw new Error("error");
           }),
       );
-      jest.spyOn(client, "CanI").mockImplementation(mockClientCanI);
+      jest.spyOn(client, "canI").mockImplementation(mockClientCanI);
       jest.spyOn(Kube, "resourcesServiceClient").mockImplementation(() => client);
 
       const allowed = await Kube.canI(clusterName, "v1", "secrets", "list", "");

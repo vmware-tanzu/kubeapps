@@ -22,15 +22,14 @@ const defaultProps = {
   app: {
     name: "foo",
     pkgDisplayName: "foo",
-    installedPackageRef: {
+    installedPackageRef: new InstalledPackageReference({
       identifier: "foo",
-      pkgVersion: "1.0.0",
       context: { cluster: "default", namespace: "package-namespace" } as Context,
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-    } as InstalledPackageReference,
+    }),
     status: {
       ready: true,
-      reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+      reason: InstalledPackageStatus_StatusReason.INSTALLED,
       userReason: "deployed",
     } as InstalledPackageStatus,
     latestMatchingVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,

@@ -333,16 +333,16 @@ describe("rollbackInstalledPackage", () => {
   );
 
   it("success and re-request apps info", async () => {
-    const installedPackageDetail = {
+    const installedPackageDetail = new InstalledPackageDetail({
       availablePackageRef: {
         context: { cluster: "default", namespace: "my-ns" },
         identifier: "test",
         plugin: { name: PluginNames.PACKAGES_HELM, version: "0.0.1" } as Plugin,
       },
       currentVersion: { appVersion: "4.5.6", pkgVersion: "1.2.3" },
-    } as InstalledPackageDetail;
+    });
 
-    const availablePackageDetail = { name: "test" } as AvailablePackageDetail;
+    const availablePackageDetail = new AvailablePackageDetail({ name: "test" });
 
     InstalledPackage.RollbackInstalledPackage = jest.fn().mockImplementationOnce(() => true);
     InstalledPackage.GetInstalledPackageDetail = jest.fn().mockReturnValue({
@@ -352,7 +352,7 @@ describe("rollbackInstalledPackage", () => {
     expect(res).toBe(true);
 
     const selectCMD = actions.installedpackages.selectInstalledPackage(
-      installedPackageDetail as any,
+      installedPackageDetail,
       availablePackageDetail,
     );
     const res2 = await store.dispatch(selectCMD);
@@ -410,7 +410,7 @@ describe("getInstalledPkgStatus", () => {
       plugin: { name: "bad-plugin", version: "0.0.1" } as Plugin,
     } as InstalledPackageReference;
     const status = {
-      reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+      reason: InstalledPackageStatus_StatusReason.INSTALLED,
     } as InstalledPackageStatus;
     const installedPackageDetail = { status } as InstalledPackageDetail;
     InstalledPackage.GetInstalledPackageDetail = jest.fn().mockReturnValue({

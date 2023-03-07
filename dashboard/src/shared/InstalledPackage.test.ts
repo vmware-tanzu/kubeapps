@@ -46,7 +46,7 @@ describe("InstalledPackage", () => {
             } as InstalledPackageReference,
           } as CreateInstalledPackageResponse),
         );
-        setMockCoreClient("CreateInstalledPackage", mockCreateInstalledPackage);
+        setMockCoreClient("createInstalledPackage", mockCreateInstalledPackage);
 
         const availablePackageSummaries = await InstalledPackage.CreateInstalledPackage(
           t.args.targetContext,
@@ -94,7 +94,7 @@ describe("InstalledPackage", () => {
             } as InstalledPackageReference,
           } as UpdateInstalledPackageResponse),
         );
-        setMockCoreClient("UpdateInstalledPackage", mockUpdateInstalledPackage);
+        setMockCoreClient("updateInstalledPackage", mockUpdateInstalledPackage);
 
         const availablePackageSummaries = await InstalledPackage.UpdateInstalledPackage(
           t.args.installedPackageRef,
@@ -160,7 +160,7 @@ describe("InstalledPackage", () => {
         const mockRollbackInstalledPackage = jest
           .fn()
           .mockImplementation(() => Promise.resolve({} as RollbackInstalledPackageResponse));
-        setMockHelmClient("RollbackInstalledPackage", mockRollbackInstalledPackage);
+        setMockHelmClient("rollbackInstalledPackage", mockRollbackInstalledPackage);
 
         const res = await InstalledPackage.RollbackInstalledPackage(
           t.args.installedPackageRef,
@@ -186,7 +186,7 @@ describe("InstalledPackage", () => {
         .mockImplementation(() => Promise.resolve({} as GetInstalledPackageResourceRefsResponse));
 
       setMockCoreClient(
-        "GetInstalledPackageResourceRefs",
+        "getInstalledPackageResourceRefs",
         mockClientGetInstalledPackageResourceRefs,
       );
 

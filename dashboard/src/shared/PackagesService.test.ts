@@ -107,7 +107,7 @@ describe("App", () => {
         // Create a real client, but we'll stub out the function we're interested in.
         const mockClient = new KubeappsGrpcClient().getPackagesServiceClientImpl();
         jest
-          .spyOn(mockClient, "GetAvailablePackageSummaries")
+          .spyOn(mockClient, "getAvailablePackageSummaries")
           .mockImplementation(mockClientGetAvailablePackageSummaries);
         jest.spyOn(PackagesService, "packagesServiceClient").mockImplementation(() => mockClient);
         const availablePackageSummaries = await PackagesService.getAvailablePackageSummaries(

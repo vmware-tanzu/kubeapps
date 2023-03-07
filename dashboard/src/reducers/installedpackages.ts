@@ -3,7 +3,7 @@
 
 import { LocationChangeAction, LOCATION_CHANGE } from "connected-react-router";
 import { InstalledPackageDetailCustomDataHelm } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
-import { IInstalledPackageState } from "shared/types";
+import { CustomInstalledPackageDetail, IInstalledPackageState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { InstalledPackagesAction } from "../actions/installedpackages";
@@ -47,7 +47,7 @@ const installedPackagesReducer = (
           ...action.payload.pkg,
           // TODO(agamez): remove it once we have a core mechanism for rolling back
           revision: revision,
-        },
+        } as CustomInstalledPackageDetail,
         selectedDetails: action.payload.details,
       };
     }

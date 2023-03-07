@@ -27,14 +27,12 @@ export default function StatusAwareButton<T extends IStatusAwareButtonProps>(pro
   } = props;
 
   const defaultStatusesToDeactivate = [
-    InstalledPackageStatus_StatusReason.STATUS_REASON_UNINSTALLED,
-    InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
+    InstalledPackageStatus_StatusReason.UNINSTALLED,
+    InstalledPackageStatus_StatusReason.PENDING,
   ];
   const defaultStatusesToDeactivateTooltips = {
-    [InstalledPackageStatus_StatusReason.STATUS_REASON_UNINSTALLED]:
-      "The application is being deleted.",
-    [InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING]:
-      "The application is pending installation.",
+    [InstalledPackageStatus_StatusReason.UNINSTALLED]: "The application is being deleted.",
+    [InstalledPackageStatus_StatusReason.PENDING]: "The application is pending installation.",
   };
 
   // allow buttons to override the default statuses to deactivate
