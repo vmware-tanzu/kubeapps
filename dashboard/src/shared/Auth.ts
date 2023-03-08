@@ -17,7 +17,7 @@ const AuthTokenOIDCKey = "kubeapps_auth_token_oidc";
 
 export class Auth {
   public static resourcesServiceClient = (token?: string) =>
-    new KubeappsGrpcClient().getResourcesServiceClientImpl(token);
+    new KubeappsGrpcClient(token).getResourcesServiceClientImpl();
 
   public static getAuthToken() {
     return localStorage.getItem(AuthTokenKey);

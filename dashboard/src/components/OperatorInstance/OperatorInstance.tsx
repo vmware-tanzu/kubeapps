@@ -58,6 +58,21 @@ function parseResource(
   if (crd.resources) {
     crd.resources?.forEach(r => {
       switch (r.kind) {
+        // So there is confusion here because, for the operator functionality,
+        // we have extra info on the resource ref (eg. filter for
+        // ownerreference), which we don't use for the normal, non-operator
+        // functionality. Yet, we're using the same components (ResourceTabs
+        // etc.) which expect the normal resource type. Hence
+        // IAppViewResourceRefs is defined with the normal type, but fromCRD
+        // returns the marked-up type.
+        // TODO: What if the internal ResourceRef extended the normal one? Could
+        // we then pass it happily? Or other option is to check whether the filter object
+        // owner reference is actually used (doesn't appear to be used)?
+        // CustomAppView appears to use `namespaced` in tests (but doesn't appear to need to)
+        // Similarly, Kube.test.ts appears to use `namespaced` unnecessarily.
+        // What about initial resources... where else is `namespaced` actually used?
+        // The test "updates the state with the CRD resources" fails if using normal
+        // resourcerefs here, because of the missing filter. But where is this filter used?
         case "Deployment":
           result.deployments.push(fromCRD(r, kind, cluster, namespace, ownerRef));
           break;

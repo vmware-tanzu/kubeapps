@@ -400,8 +400,6 @@ export function convertGrpcAuthError(e: any): CustomError | any {
       return new InternalServerNetworkError(msg);
     case Code.Canceled:
       return new RequestTimeoutNetworkError(msg);
-    case Code.OK:
-      return undefined;
     default:
       return e;
   }

@@ -21,9 +21,11 @@ describe("getSecretNames", () => {
   let mockClientGetSecretNames: jest.MockedFunction<typeof client.getSecretNames>;
   beforeEach(() => {
     mockClientGetSecretNames = jest.fn().mockImplementation(() =>
-      Promise.resolve({
-        secretNames: expectedSecretNames,
-      } as GetSecretNamesResponse),
+      Promise.resolve(
+        new GetSecretNamesResponse({
+          secretNames: expectedSecretNames,
+        }),
+      ),
     );
 
     jest.spyOn(client, "getSecretNames").mockImplementation(mockClientGetSecretNames);
@@ -43,7 +45,7 @@ describe("getSecretNames", () => {
 describe("createSecret", () => {
   // Create a real client, but we'll stub out the function we're interested in.
   const client = new KubeappsGrpcClient().getResourcesServiceClientImpl();
-  let mockClientCreateSecret: jest.MockedFunction<typeof client.CreateSecret>;
+  let mockClientCreateSecret: jest.MockedFunction<typeof client.createSecret>;
   beforeEach(() => {
     mockClientCreateSecret = jest
       .fn()
@@ -67,17 +69,19 @@ describe("createSecret", () => {
 
     await Secret.createPullSecret("default", name, user, password, email, server, namespace);
 
-    expect(mockClientCreateSecret).toHaveBeenCalledWith({
-      context: {
-        cluster,
-        namespace,
-      },
-      name,
-      stringData: {
-        ".dockerconfigjson":
-          '{"auths":{"docker.io":{"username":"foo","password":"pass","email":"foo@bar.com","auth":"Zm9vOnBhc3M="}}}',
-      },
-      type: SecretType.SECRET_TYPE_DOCKER_CONFIG_JSON,
-    } as CreateSecretRequest);
+    expect(mockClientCreateSecret).toHaveBeenCalledWith(
+      new CreateSecretRequest({
+        context: {
+          cluster,
+          namespace,
+        },
+        name,
+        stringData: {
+          ".dockerconfigjson":
+            '{"auths":{"docker.io":{"username":"foo","password":"pass","email":"foo@bar.com","auth":"Zm9vOnBhc3M="}}}',
+        },
+        type: SecretType.DOCKER_CONFIG_JSON,
+      }),
+    );
   });
 });

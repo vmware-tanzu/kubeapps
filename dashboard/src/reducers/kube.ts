@@ -153,32 +153,23 @@ const kubeReducer = (
       return { ...state, items: { ...state.items, ...erroredItem } };
     }
     case getType(actions.kube.requestResources): {
-      const { pkg, refs, handler, watch, onError, onComplete } = action.payload;
-      const observable = Kube.getResources(pkg, refs, watch);
-      const subscription = observable.subscribe({
-        next(r) {
-          handler(r);
-        },
-        error(e) {
-          onError(e);
-        },
-        complete() {
-          onComplete();
-        },
-      });
-      // We only record the subscription if watching the result, since otherwise
-      // the call is terminated by the server automatically once results are
-      // returned and we don't need any book-keeping.
-      if (watch) {
-        const key = `${pkg.context?.cluster}/${pkg.context?.namespace}/${pkg.identifier}`;
-        return {
-          ...state,
-          subscriptions: {
-            ...state.subscriptions,
-            [key]: subscription,
-          },
-        };
-      }
+      const { pkg, refs, handler, watch } = action.payload;
+      const asyncResponses = Kube.getResources(pkg, refs, watch);
+
+      // With the change from improbable's grpc-web, which used a subscription
+      // to the connect grpc-web, which uses an async iterator, we'll no longer
+      // need to handle neither the subscription state nor the errors.
+      // TODO(absoludity): Remove the subscription state as well as the extra
+      // args passed in for error handling and completion.
+      // Existing tests only tested the subscription state, so add tests for the actual
+      // content state (of responses).
+      let processResponses = async () => {
+        for await (const response of asyncResponses) {
+          handler(response);
+        }
+      };
+      processResponses();
+
       return state;
     }
     case getType(actions.kube.closeRequestResources): {

@@ -27,7 +27,7 @@ export class KubeappsGrpcClient {
   private transport: Transport;
 
   // Creates a client with a transport, ensuring the transport includes the auth header.
-  constructor(transport?: Transport, token?: string) {
+  constructor(token?: string) {
     const auth: Interceptor = next => async req => {
       const t = token ? token : Auth.getAuthToken();
       if (t) {
@@ -35,12 +35,10 @@ export class KubeappsGrpcClient {
       }
       return await next(req);
     };
-    this.transport =
-      transport ??
-      createGrpcWebTransport({
-        baseUrl: `/${URL.api.kubeappsapis}`,
-        interceptors: [auth],
-      });
+    this.transport = createGrpcWebTransport({
+      baseUrl: `/${URL.api.kubeappsapis}`,
+      interceptors: [auth],
+    });
   }
 
   // getClientMetadata, if using token authentication, creates grpc metadata
@@ -73,7 +71,7 @@ export class KubeappsGrpcClient {
   // only because it is used to validate token authentication before
   // the token is stored.
   // TODO: investigate the token here.
-  public getResourcesServiceClientImpl(token?: string) {
+  public getResourcesServiceClientImpl() {
     return this.getGrpcClient(ResourcesService);
   }
 

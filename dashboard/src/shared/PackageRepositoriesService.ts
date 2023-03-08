@@ -131,87 +131,114 @@ export class PackageRepositoriesService {
         case (PackageRepositoryAuth_PackageRepositoryAuthType.AUTHORIZATION_HEADER,
         PackageRepositoryAuth_PackageRepositoryAuthType.BEARER):
           if (request.authHeader) {
-            addPackageRepositoryRequest.auth = {
+            addPackageRepositoryRequest.auth = new PackageRepositoryAuth({
               ...addPackageRepositoryRequest.auth,
-              header: request.authHeader,
-            } as PackageRepositoryAuth;
+              packageRepoAuthOneOf: {
+                case: "header",
+                value: request.authHeader,
+              },
+            });
           }
           break;
         case PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH:
           if (Object.values(request.basicAuth).some(e => !!e)) {
-            addPackageRepositoryRequest.auth = {
+            addPackageRepositoryRequest.auth = new PackageRepositoryAuth({
               ...addPackageRepositoryRequest.auth,
-              usernamePassword: {
-                username: request.basicAuth.username,
-                password: request.basicAuth.password,
-              } as UsernamePassword,
-            } as PackageRepositoryAuth;
+              packageRepoAuthOneOf: {
+                case: "usernamePassword",
+                value: {
+                  username: request.basicAuth.username,
+                  password: request.basicAuth.password,
+                } as UsernamePassword,
+              },
+            });
           }
           break;
         case PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON:
           if (Object.values(request.dockerRegCreds).some(e => !!e)) {
-            addPackageRepositoryRequest.auth = {
+            addPackageRepositoryRequest.auth = new PackageRepositoryAuth({
               ...addPackageRepositoryRequest.auth,
-              dockerCreds: { ...request.dockerRegCreds } as DockerCredentials,
-            } as PackageRepositoryAuth;
+              packageRepoAuthOneOf: {
+                case: "dockerCreds",
+                value: { ...request.dockerRegCreds } as DockerCredentials,
+              },
+            });
           }
           break;
         case PackageRepositoryAuth_PackageRepositoryAuthType.SSH:
           if (Object.values(request.sshCreds).some(e => !!e)) {
-            addPackageRepositoryRequest.auth = {
+            addPackageRepositoryRequest.auth = new PackageRepositoryAuth({
               ...addPackageRepositoryRequest.auth,
-              sshCreds: {
-                ...request.sshCreds,
-              } as SshCredentials,
-            } as PackageRepositoryAuth;
+              packageRepoAuthOneOf: {
+                case: "sshCreds",
+                value: {
+                  ...request.sshCreds,
+                } as SshCredentials,
+              },
+            });
           }
           break;
         case PackageRepositoryAuth_PackageRepositoryAuthType.TLS:
           if (Object.values(request.tlsCertKey).some(e => !!e)) {
-            addPackageRepositoryRequest.auth = {
+            addPackageRepositoryRequest.auth = new PackageRepositoryAuth({
               ...addPackageRepositoryRequest.auth,
-              tlsCertKey: { ...request.tlsCertKey } as TlsCertKey,
-            } as PackageRepositoryAuth;
+              packageRepoAuthOneOf: {
+                case: "tlsCertKey",
+                value: { ...request.tlsCertKey } as TlsCertKey,
+              },
+            });
           }
           break;
         case PackageRepositoryAuth_PackageRepositoryAuthType.OPAQUE:
           if (Object.values(request.opaqueCreds.data).some(e => !!e)) {
-            addPackageRepositoryRequest.auth = {
+            addPackageRepositoryRequest.auth = new PackageRepositoryAuth({
               ...addPackageRepositoryRequest.auth,
-              opaqueCreds: { ...request.opaqueCreds } as OpaqueCredentials,
-            } as PackageRepositoryAuth;
+              packageRepoAuthOneOf: {
+                case: "opaqueCreds",
+                value: { ...request.opaqueCreds } as OpaqueCredentials,
+              },
+            });
           }
           break;
       }
 
       if (request.customCA) {
-        addPackageRepositoryRequest.tlsConfig = {
+        addPackageRepositoryRequest.tlsConfig = new PackageRepositoryTlsConfig({
           ...addPackageRepositoryRequest.tlsConfig,
-          certAuthority: request.customCA,
-        } as PackageRepositoryTlsConfig;
+          packageRepoTlsConfigOneOf: {
+            case: "certAuthority",
+            value: request.customCA,
+          },
+        });
       }
     }
 
     // auth/tls - user managed
     if (request.isUserManaged) {
       if (request.secretTLSName) {
-        addPackageRepositoryRequest.tlsConfig = {
+        addPackageRepositoryRequest.tlsConfig = new PackageRepositoryTlsConfig({
           ...addPackageRepositoryRequest.tlsConfig,
-          secretRef: {
-            name: request.secretTLSName,
-          } as SecretKeyReference,
-        } as PackageRepositoryTlsConfig;
+          packageRepoTlsConfigOneOf: {
+            case: "secretRef",
+            value: {
+              name: request.secretTLSName,
+            },
+          },
+        });
       }
       if (
         request.authMethod !== PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED &&
         request.secretAuthName
       ) {
-        addPackageRepositoryRequest.auth = {
+        addPackageRepositoryRequest.auth = new PackageRepositoryAuth({
           ...addPackageRepositoryRequest.auth,
-          secretRef: {
-            name: request.secretAuthName,
-          } as SecretKeyReference,
-        } as PackageRepositoryAuth;
+          packageRepoAuthOneOf: {
+            case: "secretRef",
+            value: new SecretKeyReference({
+              name: request.secretAuthName,
+            }),
+          },
+        });
       }
     }
 
@@ -230,19 +257,20 @@ export class PackageRepositoriesService {
     }
 
     if (isUpdate) {
-      const updatePackageRepositoryRequest: UpdatePackageRepositoryRequest = {
-        description: addPackageRepositoryRequest.description,
-        interval: addPackageRepositoryRequest.interval,
-        url: addPackageRepositoryRequest.url,
-        auth: addPackageRepositoryRequest.auth,
-        customDetail: addPackageRepositoryRequest.customDetail,
-        tlsConfig: addPackageRepositoryRequest.tlsConfig,
-        packageRepoRef: {
-          identifier: addPackageRepositoryRequest.name,
-          context: addPackageRepositoryRequest.context,
-          plugin: addPackageRepositoryRequest.plugin,
-        },
-      };
+      const updatePackageRepositoryRequest: UpdatePackageRepositoryRequest =
+        new UpdatePackageRepositoryRequest({
+          description: addPackageRepositoryRequest.description,
+          interval: addPackageRepositoryRequest.interval,
+          url: addPackageRepositoryRequest.url,
+          auth: addPackageRepositoryRequest.auth,
+          customDetail: addPackageRepositoryRequest.customDetail,
+          tlsConfig: addPackageRepositoryRequest.tlsConfig,
+          packageRepoRef: new PackageRepositoryReference({
+            identifier: addPackageRepositoryRequest.name,
+            context: addPackageRepositoryRequest.context,
+            plugin: addPackageRepositoryRequest.plugin,
+          }),
+        });
       return updatePackageRepositoryRequest;
     }
     return addPackageRepositoryRequest;

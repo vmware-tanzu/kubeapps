@@ -3,7 +3,7 @@
 
 import { Code } from "@bufbuild/connect";
 import { AxiosResponse } from "axios";
-import { CheckNamespaceExistsRequest } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources_pb";
+import { CheckNamespaceExistsResponse } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources_pb";
 import jwt from "jsonwebtoken";
 import { Auth } from "./Auth";
 import { SupportedThemes } from "./Config";
@@ -18,7 +18,9 @@ describe("Auth", () => {
   beforeEach(() => {
     mockClientCheckNamespaceExists = jest
       .fn()
-      .mockImplementation(() => Promise.resolve({ exists: true } as CheckNamespaceExistsRequest));
+      .mockImplementation(() =>
+        Promise.resolve(new CheckNamespaceExistsResponse({ exists: true })),
+      );
     jest.spyOn(client, "checkNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
     jest.spyOn(Auth, "resourcesServiceClient").mockImplementation(() => client);
   });

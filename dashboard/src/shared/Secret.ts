@@ -55,17 +55,19 @@ export default class Secret {
       },
     };
     await this.resourcesServiceClient()
-      .createSecret({
-        context: {
-          cluster,
-          namespace,
-        },
-        name,
-        type: SecretType.SECRET_TYPE_DOCKER_CONFIG_JSON,
-        stringData: {
-          ".dockerconfigjson": JSON.stringify(dockercfg),
-        },
-      } as CreateSecretRequest)
+      .createSecret(
+        new CreateSecretRequest({
+          context: {
+            cluster,
+            namespace,
+          },
+          name,
+          type: SecretType.DOCKER_CONFIG_JSON,
+          stringData: {
+            ".dockerconfigjson": JSON.stringify(dockercfg),
+          },
+        }),
+      )
       .catch((e: any) => {
         throw convertGrpcAuthError(e);
       });

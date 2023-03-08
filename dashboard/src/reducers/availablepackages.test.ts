@@ -3,8 +3,11 @@
 
 import {
   AvailablePackageDetail,
+  AvailablePackageReference,
   AvailablePackageSummary,
   Context,
+  GetAvailablePackageSummariesResponse,
+  PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { getType } from "typesafe-actions";
@@ -18,33 +21,33 @@ const currentPageToken = "currentPageToken";
 
 describe("packageReducer", () => {
   let initialState: IPackageState;
-  const availablePackageSummary1: AvailablePackageSummary = {
+  const availablePackageSummary1 = new AvailablePackageSummary({
     name: "foo",
     categories: [""],
     displayName: "foo",
     iconUrl: "",
-    latestVersion: { appVersion: "v1.0.0", pkgVersion: "" },
+    latestVersion: new PackageAppVersion({ appVersion: "v1.0.0", pkgVersion: "" }),
     shortDescription: "",
-    availablePackageRef: {
+    availablePackageRef: new AvailablePackageReference({
       identifier: "foo/foo",
       context: { cluster: "", namespace: "package-namespace" } as Context,
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-    },
-  };
+    }),
+  });
 
-  const availablePackageSummary2: AvailablePackageSummary = {
+  const availablePackageSummary2 = new AvailablePackageSummary({
     name: "bar",
     categories: ["Database"],
     displayName: "bar",
     iconUrl: "",
-    latestVersion: { appVersion: "v2.0.0", pkgVersion: "" },
+    latestVersion: new PackageAppVersion({ appVersion: "v2.0.0", pkgVersion: "" }),
     shortDescription: "",
-    availablePackageRef: {
+    availablePackageRef: new AvailablePackageReference({
       identifier: "bar/bar",
       context: { cluster: "", namespace: "package-namespace" } as Context,
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-    },
-  };
+    }),
+  });
 
   beforeEach(() => {
     initialState = {
@@ -432,11 +435,11 @@ describe("packageReducer", () => {
     const state2 = packageReducer(state1, {
       type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
       payload: {
-        response: {
+        response: new GetAvailablePackageSummariesResponse({
           availablePackageSummaries: [],
           nextPageToken,
           categories: ["foo"],
-        },
+        }),
         paginationToken: currentPageToken,
       } as IReceivePackagesActionPayload,
     });
@@ -525,12 +528,12 @@ describe("packageReducer", () => {
       const state = packageReducer(initialState, {
         type: getType(actions.availablepackages.receiveSelectedAvailablePackageDetail) as any,
         payload: {
-          selectedPackage: {
+          selectedPackage: new AvailablePackageDetail({
             ...packageDetail,
             additionalDefaultValues: {
               "values-custom": "custom: values",
             },
-          } as AvailablePackageDetail,
+          }),
         },
       });
 
@@ -541,13 +544,13 @@ describe("packageReducer", () => {
       const state = packageReducer(initialState, {
         type: getType(actions.availablepackages.receiveSelectedAvailablePackageDetail) as any,
         payload: {
-          selectedPackage: {
+          selectedPackage: new AvailablePackageDetail({
             ...packageDetail,
             additionalDefaultValues: {
               "values-custom": "custom: values",
               "values-other": "more: customdefaultvalues",
             },
-          } as AvailablePackageDetail,
+          }),
         },
       });
 
@@ -561,13 +564,13 @@ describe("packageReducer", () => {
         ...initialState,
         selected: {
           ...initialState.selected,
-          availablePackageDetail: {
+          availablePackageDetail: new AvailablePackageDetail({
             ...initialState.selected.availablePackageDetail!,
             additionalDefaultValues: {
               "values-custom": "custom: values",
               "values-other": "more: customdefaultvalues",
             },
-          },
+          }),
           values: "default: values",
         },
       };
@@ -603,12 +606,12 @@ describe("defaultValues", () => {
 
   it("returns a custom default file when there is exactly one custom default in the pkg", () => {
     const result = defaultValues(
-      {
+      new AvailablePackageDetail({
         ...packageDetail,
         additionalDefaultValues: {
           "values-custom": "custom: values",
         },
-      },
+      }),
       "other-default",
     );
 
@@ -617,13 +620,13 @@ describe("defaultValues", () => {
 
   it("returns the default file when there is more than one custom default in the pkg", () => {
     const result = defaultValues(
-      {
+      new AvailablePackageDetail({
         ...packageDetail,
         additionalDefaultValues: {
           "values-custom": "custom: values",
           "other-custom": "other: values",
         },
-      },
+      }),
       "other-default",
     );
 
@@ -632,13 +635,13 @@ describe("defaultValues", () => {
 
   it("returns the specific custom default file when specified", () => {
     const result = defaultValues(
-      {
+      new AvailablePackageDetail({
         ...packageDetail,
         additionalDefaultValues: {
           "values-custom": "custom: values",
           "other-custom": "other: values",
         },
-      },
+      }),
       "other-custom",
     );
 

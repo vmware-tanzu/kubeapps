@@ -155,7 +155,7 @@ describe("Kube", () => {
   describe("canI", () => {
     // Create a real client, but we'll stub out the function we're interested in.
     const client = new KubeappsGrpcClient().getResourcesServiceClientImpl();
-    let mockClientCanI: jest.MockedFunction<typeof client.CanI>;
+    let mockClientCanI: jest.MockedFunction<typeof client.canI>;
 
     beforeEach(() => {});
     afterEach(() => {

@@ -59,7 +59,7 @@ const installedPackagesReducer = (
             ...state.selected!,
             revision: state.selected!.revision,
             status: action.payload,
-          },
+          } as CustomInstalledPackageDetail,
         };
       }
       return state;

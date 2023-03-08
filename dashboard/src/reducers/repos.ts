@@ -39,9 +39,12 @@ export const initialState: IPackageRepositoryState = {
   reposPermissions: [] as PackageRepositoriesPermissions[],
 };
 
-const helmPackageRepositoryCustomDetail = {
+const helmPackageRepositoryCustomDetail = new HelmPackageRepositoryCustomDetail({
   imagesPullSecret: {
-    secretRef: "",
+    dockerRegistryCredentialOneOf: {
+      case: "secretRef",
+      value: "",
+    },
   },
   ociRepositories: [],
   performValidation: false,
@@ -56,7 +59,7 @@ const helmPackageRepositoryCustomDetail = {
     httpsProxy: "",
     noProxy: "",
   },
-} as HelmPackageRepositoryCustomDetail;
+});
 
 const kappPackageRepositoryCustomDetail = {
   fetch: {} as PackageRepositoryFetch,
@@ -88,9 +91,7 @@ const reposReducer = (
           case PluginNames.PACKAGES_HELM:
             customDetail = helmPackageRepositoryCustomDetail;
             try {
-              customDetail = HelmPackageRepositoryCustomDetail.decode(
-                action.payload.customDetail.value,
-              );
+              customDetail = action.payload.customDetail.value;
               repoWithCustomDetail = { ...action.payload, customDetail };
             } catch (error) {
               repoWithCustomDetail = { ...action.payload };
@@ -99,9 +100,7 @@ const reposReducer = (
           case PluginNames.PACKAGES_KAPP:
             customDetail = kappPackageRepositoryCustomDetail;
             try {
-              customDetail = KappControllerPackageRepositoryCustomDetail.decode(
-                action.payload.customDetail.value,
-              );
+              customDetail = action.payload.customDetail.value;
               repoWithCustomDetail = { ...action.payload, customDetail };
             } catch (error) {
               repoWithCustomDetail = { ...action.payload };
@@ -110,9 +109,7 @@ const reposReducer = (
           case PluginNames.PACKAGES_FLUX:
             customDetail = fluxPackageRepositoryCustomDetail;
             try {
-              customDetail = FluxPackageRepositoryCustomDetail.decode(
-                action.payload.customDetail.value,
-              );
+              customDetail = action.payload.customDetail.value;
               repoWithCustomDetail = { ...action.payload, customDetail };
             } catch (error) {
               repoWithCustomDetail = { ...action.payload };
@@ -126,7 +123,7 @@ const reposReducer = (
       return {
         ...state,
         isFetching: false,
-        repoDetail: repoWithCustomDetail,
+        repoDetail: new PackageRepositoryDetail(repoWithCustomDetail),
         errors: {},
       };
     }

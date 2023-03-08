@@ -34,12 +34,12 @@ const defaultProps = {
   plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
 };
 
-const testVersion: PackageAppVersion = {
+const testVersion = new PackageAppVersion({
   pkgVersion: "1.2.3",
   appVersion: "4.5.6",
-};
+});
 
-const defaultAvailablePkgDetail: AvailablePackageDetail = {
+const defaultAvailablePkgDetail = new AvailablePackageDetail({
   name: "foo",
   categories: [""],
   displayName: "foo",
@@ -49,11 +49,11 @@ const defaultAvailablePkgDetail: AvailablePackageDetail = {
   sourceUrls: ["test"],
   shortDescription: "test",
   longDescription: "test",
-  availablePackageRef: {
+  availablePackageRef: new AvailablePackageReference({
     identifier: "foo/foo",
     context: { cluster: "", namespace: "package-namespace" } as Context,
     plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-  },
+  }),
   valuesSchema: "test",
   defaultValues: "test",
   additionalDefaultValues: {},
@@ -63,7 +63,7 @@ const defaultAvailablePkgDetail: AvailablePackageDetail = {
     appVersion: testVersion.appVersion,
     pkgVersion: testVersion.pkgVersion,
   } as PackageAppVersion,
-};
+});
 
 const defaultPackageState = {
   isFetching: false,
@@ -285,30 +285,30 @@ describe("AvailablePackageMaintainers githubIDAsNames prop value", () => {
     repoURL: string;
     maintainers: Array<{ name: string; email?: string }>;
   }> = [
-    {
-      expected: true,
-      name: "the stable Helm repo uses github IDs",
-      maintainers: [{ name: "Bitnami" }],
-      repoURL: "https://kubernetes-charts.storage.googleapis.com",
-    },
-    {
-      expected: true,
-      name: "the incubator Helm repo uses github IDs",
-      maintainers: [{ name: "Bitnami", email: "email: containers@bitnami.com" }],
-      repoURL: "https://kubernetes-charts-incubator.storage.googleapis.com",
-    },
-    {
-      expected: false,
-      name: "a random Helm repo does not use github IDs as names",
-      maintainers: [{ name: "Bitnami" }],
-      repoURL: "https://examplerepo.com",
-    },
-  ];
+      {
+        expected: true,
+        name: "the stable Helm repo uses github IDs",
+        maintainers: [{ name: "Bitnami" }],
+        repoURL: "https://kubernetes-charts.storage.googleapis.com",
+      },
+      {
+        expected: true,
+        name: "the incubator Helm repo uses github IDs",
+        maintainers: [{ name: "Bitnami", email: "email: containers@bitnami.com" }],
+        repoURL: "https://kubernetes-charts-incubator.storage.googleapis.com",
+      },
+      {
+        expected: false,
+        name: "a random Helm repo does not use github IDs as names",
+        maintainers: [{ name: "Bitnami" }],
+        repoURL: "https://examplerepo.com",
+      },
+    ];
 
   for (const t of tests) {
     it(`for ${t.name}`, () => {
       const myAvailablePkgDetail = defaultAvailablePkgDetail;
-      myAvailablePkgDetail.maintainers = [{ name: "John Smith", email: "john@example.com" }];
+      myAvailablePkgDetail.maintainers = [new Maintainer({ name: "John Smith", email: "john@example.com" })];
       myAvailablePkgDetail.repoUrl = t.repoURL;
 
       const wrapper = mountWrapper(

@@ -21,7 +21,14 @@ import {
   ProxyOptions,
   RepositoryFilterRule,
 } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
-import { KappControllerPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller_pb";
+import {
+  KappControllerPackageRepositoryCustomDetail,
+  PackageRepositoryFetch,
+  PackageRepositoryImgpkg,
+  VersionSelection,
+  VersionSelectionSemver,
+  VersionSelectionSemverPrereleases,
+} from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller_pb";
 import KubeappsGrpcClient from "./KubeappsGrpcClient";
 import { PackageRepositoriesService } from "./PackageRepositoriesService";
 import { IPkgRepoFormData, PluginNames, RepositoryStorageTypes } from "./types";
@@ -61,24 +68,24 @@ const helmCustomDetail: HelmPackageRepositoryCustomDetail = new HelmPackageRepos
   }),
 });
 
-const kappCustomDetail: KappControllerPackageRepositoryCustomDetail = {
-  fetch: {
-    imgpkgBundle: {
-      tagSelection: {
-        semver: {
+const kappCustomDetail = new KappControllerPackageRepositoryCustomDetail({
+  fetch: new PackageRepositoryFetch({
+    imgpkgBundle: new PackageRepositoryImgpkg({
+      tagSelection: new VersionSelection({
+        semver: new VersionSelectionSemver({
           constraints: ">= 1.0.0",
-          prereleases: {
+          prereleases: new VersionSelectionSemverPrereleases({
             identifiers: ["alpha", "beta"],
-          },
-        },
-      },
-    },
+          }),
+        }),
+      }),
+    }),
     git: undefined,
     http: undefined,
     image: undefined,
     inline: undefined,
-  },
-};
+  }),
+});
 
 const pkgRepoFormData = {
   plugin,
@@ -290,7 +297,7 @@ describe("buildEncodedCustomDetail encoding", () => {
   it("returns undefined if the plugin is not supported)", async () => {
     const encodedCustomDetail = PackageRepositoriesService["buildEncodedCustomDetail"]({
       ...pkgRepoFormData,
-      plugin: { name: "my.plugin", version: "0.0.1" },
+      plugin: new Plugin({ name: "my.plugin", version: "0.0.1" }),
       customDetail: undefined,
     });
     expect(encodedCustomDetail).toStrictEqual(undefined);
@@ -299,7 +306,7 @@ describe("buildEncodedCustomDetail encoding", () => {
   it("returns undefined if no custom details (helm)", async () => {
     const encodedCustomDetail = PackageRepositoriesService["buildEncodedCustomDetail"]({
       ...pkgRepoFormData,
-      plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
+      plugin: new Plugin({ name: PluginNames.PACKAGES_HELM, version: "v1alpha1" }),
       customDetail: undefined,
     });
     expect(encodedCustomDetail).toBe(undefined);
@@ -308,7 +315,7 @@ describe("buildEncodedCustomDetail encoding", () => {
   it("returns encoded empty value if no custom details (kapp)", async () => {
     const encodedCustomDetail = PackageRepositoriesService["buildEncodedCustomDetail"]({
       ...pkgRepoFormData,
-      plugin: { name: PluginNames.PACKAGES_KAPP, version: "v1alpha1" },
+      plugin: new Plugin({ name: PluginNames.PACKAGES_KAPP, version: "v1alpha1" }),
       customDetail: undefined,
     });
     expect(encodedCustomDetail).toBe(undefined);
@@ -345,7 +352,7 @@ describe("buildEncodedCustomDetail encoding", () => {
     const mockGetRepositoriesPermissions = jest.fn().mockImplementation(() =>
       Promise.resolve({
         permissions: [
-          {
+          new PackageRepositoriesPermissions({
             plugin: plugin,
             global: {
               create: true,
@@ -353,7 +360,7 @@ describe("buildEncodedCustomDetail encoding", () => {
             namespace: {
               list: true,
             },
-          },
+          }),
         ],
       } as GetPackageRepositoryPermissionsResponse),
     );
@@ -362,7 +369,7 @@ describe("buildEncodedCustomDetail encoding", () => {
     const getPackageRepositoryPermissionsResponse =
       await PackageRepositoriesService.getRepositoriesPermissions(cluster, namespace);
     expect(getPackageRepositoryPermissionsResponse).toStrictEqual([
-      {
+      new PackageRepositoriesPermissions({
         plugin: plugin,
         global: {
           create: true,
@@ -370,7 +377,7 @@ describe("buildEncodedCustomDetail encoding", () => {
         namespace: {
           list: true,
         },
-      },
+      }),
     ] as PackageRepositoriesPermissions[]);
     expect(mockGetRepositoriesPermissions).toHaveBeenCalledWith({
       context: { cluster, namespace },

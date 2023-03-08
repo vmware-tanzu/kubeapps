@@ -10,7 +10,7 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import PackageHeader, { IPackageHeaderProps } from "./PackageHeader";
 const testProps: IPackageHeaderProps = {
-  availablePackageDetail: {
+  availablePackageDetail: new AvailablePackageDetail({
     shortDescription: "A Test Package",
     name: "foo",
     categories: [""],
@@ -34,7 +34,7 @@ const testProps: IPackageHeaderProps = {
       pkgVersion: "1.2.3",
       appVersion: "4.5.6",
     },
-  } as AvailablePackageDetail,
+  }),
   versions: [
     {
       pkgVersion: "0.1.2",
@@ -64,14 +64,14 @@ it("uses the icon", () => {
 
 it("uses the first version as default in the select input", () => {
   const versions: PackageAppVersion[] = [
-    {
+    new PackageAppVersion({
       pkgVersion: "1.2.3",
       appVersion: "10.0.0",
-    },
-    {
+    }),
+    new PackageAppVersion({
       pkgVersion: "1.2.4",
       appVersion: "10.0.0",
-    },
+    }),
   ];
   const wrapper = mount(<PackageHeader {...testProps} versions={versions} />);
   expect(wrapper.find("select").prop("value")).toBe("1.2.3");
@@ -79,14 +79,14 @@ it("uses the first version as default in the select input", () => {
 
 it("uses the current version as default in the select input", () => {
   const versions: PackageAppVersion[] = [
-    {
+    new PackageAppVersion({
       pkgVersion: "1.2.3",
       appVersion: "10.0.0",
-    },
-    {
+    }),
+    new PackageAppVersion({
       pkgVersion: "1.2.4",
       appVersion: "10.0.0",
-    },
+    }),
   ];
   const wrapper = mount(
     <PackageHeader {...testProps} versions={versions} currentVersion="1.2.4" />,
