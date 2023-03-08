@@ -80,7 +80,7 @@
     "@bufbuild/protoc-gen-connect-es": "^0.8.1",
     "@bufbuild/protoc-gen-es": "^1.0.0",
     "@craco/craco": "^7.0.0",
-    "@formatjs/cli": "^6.0.1",
+    "@formatjs/cli": "^6.0.4",
     "@improbable-eng/grpc-web-fake-transport": "^0.15.0",
     "@testing-library/react": "^12.1.5",
     "@types/enzyme": "^3.10.12",
