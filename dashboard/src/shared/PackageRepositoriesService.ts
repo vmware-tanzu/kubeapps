@@ -251,7 +251,6 @@ export class PackageRepositoriesService {
   private static buildEncodedCustomDetail(request: IPkgRepoFormData) {
     // if using a plugin with customDetail, encode its custom fields,
     // otherwise skip it
-    console.log(`customDetail: ${JSON.stringify(request.customDetail)}`);
     if (!request.customDetail) {
       return;
     }
@@ -274,11 +273,9 @@ export class PackageRepositoriesService {
         });
 
         // populate the imagesPullSecret if it's not empty
-        // UPTOHERE: Not sure why can't use the OneOf below.
-        console.log(`imagePullSecret: ${JSON.stringify(detail.imagesPullSecret)}`);
         if (
-          detail?.imagesPullSecret?.dockerRegistryCredentialOneOf?.case == "secretRef" ||
-          (detail?.imagesPullSecret?.dockerRegistryCredentialOneOf?.case == "credentials" &&
+          detail?.imagesPullSecret?.dockerRegistryCredentialOneOf?.case === "secretRef" ||
+          (detail?.imagesPullSecret?.dockerRegistryCredentialOneOf?.case === "credentials" &&
             Object.values(
               (detail?.imagesPullSecret?.dockerRegistryCredentialOneOf?.value ||
                 {}) as DockerCredentials,

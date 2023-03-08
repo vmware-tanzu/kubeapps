@@ -206,88 +206,88 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
       setPassCredentials(!!repo.auth?.passCredentials);
       setSyncInterval(repo.interval);
       setCustomCA(
-        repo.tlsConfig?.packageRepoTlsConfigOneOf?.case == "certAuthority"
+        repo.tlsConfig?.packageRepoTlsConfigOneOf?.case === "certAuthority"
           ? repo.tlsConfig?.packageRepoTlsConfigOneOf?.value
           : "",
       );
       setAuthCustomHeader(
-        repo.auth?.packageRepoAuthOneOf?.case == "header"
+        repo.auth?.packageRepoAuthOneOf?.case === "header"
           ? repo.auth?.packageRepoAuthOneOf?.value
           : "",
       );
       setBearerToken(
-        repo.auth?.packageRepoAuthOneOf?.case == "header"
+        repo.auth?.packageRepoAuthOneOf?.case === "header"
           ? repo.auth?.packageRepoAuthOneOf?.value
           : "",
       );
       setBasicPassword(
-        repo.auth?.packageRepoAuthOneOf?.case == "usernamePassword"
+        repo.auth?.packageRepoAuthOneOf?.case === "usernamePassword"
           ? repo.auth?.packageRepoAuthOneOf?.value.password
           : "",
       );
       setBasicUser(
-        repo.auth?.packageRepoAuthOneOf?.case == "usernamePassword"
+        repo.auth?.packageRepoAuthOneOf?.case === "usernamePassword"
           ? repo.auth?.packageRepoAuthOneOf?.value.username
           : "",
       );
       setSecretEmail(
-        repo.auth?.packageRepoAuthOneOf?.case == "dockerCreds"
+        repo.auth?.packageRepoAuthOneOf?.case === "dockerCreds"
           ? repo.auth?.packageRepoAuthOneOf?.value.email
           : "",
       );
       setSecretPassword(
-        repo.auth?.packageRepoAuthOneOf?.case == "dockerCreds"
+        repo.auth?.packageRepoAuthOneOf?.case === "dockerCreds"
           ? repo.auth?.packageRepoAuthOneOf?.value.password
           : "",
       );
       setSecretServer(
-        repo.auth?.packageRepoAuthOneOf?.case == "dockerCreds"
+        repo.auth?.packageRepoAuthOneOf?.case === "dockerCreds"
           ? repo.auth?.packageRepoAuthOneOf?.value.server
           : "",
       );
       setSecretUser(
-        repo.auth?.packageRepoAuthOneOf?.case == "dockerCreds"
+        repo.auth?.packageRepoAuthOneOf?.case === "dockerCreds"
           ? repo.auth?.packageRepoAuthOneOf?.value.username
           : "",
       );
       setSshKnownHosts(
-        repo.auth?.packageRepoAuthOneOf?.case == "sshCreds"
+        repo.auth?.packageRepoAuthOneOf?.case === "sshCreds"
           ? repo.auth?.packageRepoAuthOneOf?.value.knownHosts
           : "",
       );
       setSshPrivateKey(
-        repo.auth?.packageRepoAuthOneOf?.case == "sshCreds"
+        repo.auth?.packageRepoAuthOneOf?.case === "sshCreds"
           ? repo.auth?.packageRepoAuthOneOf?.value.privateKey
           : "",
       );
       setTlsAuthCert(
-        repo.auth?.packageRepoAuthOneOf?.case == "tlsCertKey"
+        repo.auth?.packageRepoAuthOneOf?.case === "tlsCertKey"
           ? repo.auth?.packageRepoAuthOneOf?.value.cert
           : "",
       );
       setTlsAuthKey(
-        repo.auth?.packageRepoAuthOneOf?.case == "tlsCertKey"
+        repo.auth?.packageRepoAuthOneOf?.case === "tlsCertKey"
           ? repo.auth?.packageRepoAuthOneOf?.value.key
           : "",
       );
       setOpaqueData(
-        repo.auth?.packageRepoAuthOneOf?.case == "opaqueCreds"
+        repo.auth?.packageRepoAuthOneOf?.case === "opaqueCreds"
           ? JSON.stringify(repo.auth?.packageRepoAuthOneOf?.value.data)
           : "",
       );
       setAuthMethod(repo.auth?.type || PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED);
       setSecretAuthName(
-        repo.auth?.packageRepoAuthOneOf?.case == "secretRef"
+        repo.auth?.packageRepoAuthOneOf?.case === "secretRef"
           ? repo.auth?.packageRepoAuthOneOf?.value.name
           : "",
       );
       setSecretTLSName(
-        repo.tlsConfig?.packageRepoTlsConfigOneOf?.case == "secretRef"
+        repo.tlsConfig?.packageRepoTlsConfigOneOf?.case === "secretRef"
           ? repo.tlsConfig?.packageRepoTlsConfigOneOf?.value.name
           : "",
       );
-      setIsUserManagedSecret(!!(repo.auth?.packageRepoAuthOneOf?.case == "secretRef"));
-      setIsUserManagedCASecret(!!(repo.tlsConfig?.packageRepoTlsConfigOneOf?.case == "secretRef"));
+      setIsUserManagedSecret(!!(repo.auth?.packageRepoAuthOneOf?.case === "secretRef"));
+      setIsUserManagedCASecret(!!(repo.tlsConfig?.packageRepoTlsConfigOneOf?.case === "secretRef"));
 
       // setting custom details for the Helm plugin
       if (repo.packageRepoRef?.plugin?.name === PluginNames.PACKAGES_HELM) {
@@ -309,49 +309,49 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
         }
         if (
           helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
-            ?.case == "secretRef" ||
+            ?.case === "secretRef" ||
           helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
-            ?.case == "credentials"
+            ?.case === "credentials"
         ) {
           setUseSameAuthCreds(false);
           setIsUserManagedPSSecret(
             !!(
               helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
-                ?.case == "secretRef"
+                ?.case === "secretRef"
             ),
           );
           setHelmPsAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON);
           setSecretPSName(
             helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
-              ?.case == "secretRef"
+              ?.case === "secretRef"
               ? helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
                   ?.value
               : "",
           );
           setPullSecretEmail(
             helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
-              ?.case == "credentials"
+              ?.case === "credentials"
               ? helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
                   ?.value.email
               : "",
           );
           setPullSecretUser(
             helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
-              ?.case == "credentials"
+              ?.case === "credentials"
               ? helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
                   ?.value.username
               : "",
           );
           setPullSecretPassword(
             helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
-              ?.case == "credentials"
+              ?.case === "credentials"
               ? helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
                   ?.value.password
               : "",
           );
           setPullSecretServer(
             helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
-              ?.case == "credentials"
+              ?.case === "credentials"
               ? helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
                   ?.value.server
               : "",

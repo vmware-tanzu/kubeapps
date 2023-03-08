@@ -1,6 +1,6 @@
 // Copyright 2021-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
-import { ServiceType } from "@bufbuild/protobuf";
+import type { ServiceType } from "@bufbuild/protobuf";
 import { createGrpcWebTransport } from "@bufbuild/connect-web";
 import { createPromiseClient, Interceptor, PromiseClient, Transport } from "@bufbuild/connect";
 import { PackagesService } from "gen/kubeappsapis/core/packages/v1alpha1/packages_connect";
