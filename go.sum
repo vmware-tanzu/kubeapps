@@ -151,6 +151,8 @@ github.com/buger/jsonparser v1.1.1/go.mod h1:6RYKKt7H4d4+iWqouImQ9R2FZql3VbhNgx2
 github.com/bugsnag/bugsnag-go v0.0.0-20141110184014-b1d153021fcd h1:rFt+Y/IK1aEZkEHchZRSq9OQbsSzIT/OrI8YFFmRIng=
 github.com/bugsnag/osext v0.0.0-20130617224835-0dd3f918b21b h1:otBG+dV+YK+Soembjv71DPz3uX/V/6MMlSyD9JBQ6kQ=
 github.com/bugsnag/panicwrap v0.0.0-20151223152923-e2c28503fcd0 h1:nvj0OLI3YqYXer/kZD8Ri1aaunCxIEsOst1BVJswV0o=
+github.com/carvel-dev/semver/v4 v4.0.1-0.20230221220520-8090ce423695 h1:naCDnpJeqQq5OHOYR6j01yIVVUk3WI5MuSHpDTy+M1A=
+github.com/carvel-dev/semver/v4 v4.0.1-0.20230221220520-8090ce423695/go.mod h1:4cFTBLAr/U11ykiEEQMccu4uJ1i0GS+atJmeETHCFtI=
 github.com/casbin/casbin/v2 v2.1.2/go.mod h1:YcPU1XXisHhLzuxH9coDNf2FbKpjGlbCg3n9yuLkIJQ=
 github.com/cenkalti/backoff v2.2.1+incompatible/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=
 github.com/cenkalti/backoff/v4 v4.1.1/go.mod h1:scbssz8iZGpm3xbr14ovlUdkxfGXNInqkPWOWmG2CLw=
@@ -952,8 +954,8 @@ github.com/vmware-tanzu/carvel-kapp v0.55.0 h1:pKLs93bSeDI06ZWCf++lKoz6JnJk/HALC
 github.com/vmware-tanzu/carvel-kapp v0.55.0/go.mod h1:q0U7ex5ylElAw6YiPhjR/7gH+8iUczZh+DXz4zHc6u8=
 github.com/vmware-tanzu/carvel-kapp-controller v0.44.6 h1:OsoZbKK+Ya7R4YKdnHVFB/INIEsmexklv2HEdeWt2Vw=
 github.com/vmware-tanzu/carvel-kapp-controller v0.44.6/go.mod h1:+drZFlRx8ppIl2LRNWb0X/ohWwrfdA9nXGmPKGzvTXs=
-github.com/vmware-tanzu/carvel-vendir v0.32.5 h1:WXbUqnAjAqCN1c6iaEvt3q1UqvfbdGDmLFaoLlZ6BfI=
-github.com/vmware-tanzu/carvel-vendir v0.32.5/go.mod h1:RxEkFL8TfI1L1C1N/2M5BbtYIJ7x1T51hp394CBNg4k=
+github.com/vmware-tanzu/carvel-vendir v0.33.1 h1:5wzx0aRyEiorkWwrpGvACJOpFcgvmCeVqhIY9TPuLvk=
+github.com/vmware-tanzu/carvel-vendir v0.33.1/go.mod h1:cZEa46rwzPt/ROdAuIgrCXLDJ+LqxNZaNxbz8MLtwWc=
 github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f/go.mod h1:N2zxlSyiKSe5eX1tZViRH5QA0qijqEDrYZiPEAiq3wU=
 github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb h1:zGWFAtiMcyryUHoUjUJX0/lt1H2+i2Ka2n+D3DImSNo=
 github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb/go.mod h1:N2zxlSyiKSe5eX1tZViRH5QA0qijqEDrYZiPEAiq3wU=

@@ -74,7 +74,7 @@ require (
 	github.com/stretchr/testify v1.8.2
 	github.com/vmware-tanzu/carvel-kapp v0.55.0
 	github.com/vmware-tanzu/carvel-kapp-controller v0.44.6
-	github.com/vmware-tanzu/carvel-vendir v0.32.5
+	github.com/vmware-tanzu/carvel-vendir v0.33.1
 	golang.org/x/net v0.8.0
 	golang.org/x/sync v0.1.0
 	google.golang.org/genproto v0.0.0-20230223222841-637eb2293923
@@ -126,6 +126,7 @@ require (
 	github.com/aws/smithy-go v1.13.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
+	github.com/carvel-dev/semver/v4 v4.0.1-0.20230221220520-8090ce423695 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
