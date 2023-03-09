@@ -12,7 +12,10 @@ export function fromCRD(
   namespace: string,
   ownerReference: any,
 ) {
-  const ref = new ResourceRef(cluster, kind.plural, kind.namespaced, namespace, { apiVersion: kind.apiVersion, kind: r.kind });
+  const ref = new ResourceRef(cluster, kind.plural, kind.namespaced, namespace, {
+    apiVersion: kind.apiVersion,
+    kind: r.kind,
+  });
   ref.filter = {
     metadata: { ownerReferences: [ownerReference] },
   };
@@ -35,7 +38,13 @@ class ResourceRef extends APIResourceRef {
   // Creates a new ResourceRef instance from an existing IResource. Provide
   // defaultNamespace to set if the IResource doesn't specify a namespace.
   //constructor(data?: PartialMessage<ResourceRef>) {
-  constructor(cluster: string, plural: string, namespaced: boolean, releaseNamespace: string, data?: PartialMessage<APIResourceRef>) {
+  constructor(
+    cluster: string,
+    plural: string,
+    namespaced: boolean,
+    releaseNamespace: string,
+    data?: PartialMessage<APIResourceRef>,
+  ) {
     data = data || {};
     data.namespace = namespaced ? data.namespace || releaseNamespace || "" : "";
     super(data);

@@ -285,30 +285,32 @@ describe("AvailablePackageMaintainers githubIDAsNames prop value", () => {
     repoURL: string;
     maintainers: Array<{ name: string; email?: string }>;
   }> = [
-      {
-        expected: true,
-        name: "the stable Helm repo uses github IDs",
-        maintainers: [{ name: "Bitnami" }],
-        repoURL: "https://kubernetes-charts.storage.googleapis.com",
-      },
-      {
-        expected: true,
-        name: "the incubator Helm repo uses github IDs",
-        maintainers: [{ name: "Bitnami", email: "email: containers@bitnami.com" }],
-        repoURL: "https://kubernetes-charts-incubator.storage.googleapis.com",
-      },
-      {
-        expected: false,
-        name: "a random Helm repo does not use github IDs as names",
-        maintainers: [{ name: "Bitnami" }],
-        repoURL: "https://examplerepo.com",
-      },
-    ];
+    {
+      expected: true,
+      name: "the stable Helm repo uses github IDs",
+      maintainers: [{ name: "Bitnami" }],
+      repoURL: "https://kubernetes-charts.storage.googleapis.com",
+    },
+    {
+      expected: true,
+      name: "the incubator Helm repo uses github IDs",
+      maintainers: [{ name: "Bitnami", email: "email: containers@bitnami.com" }],
+      repoURL: "https://kubernetes-charts-incubator.storage.googleapis.com",
+    },
+    {
+      expected: false,
+      name: "a random Helm repo does not use github IDs as names",
+      maintainers: [{ name: "Bitnami" }],
+      repoURL: "https://examplerepo.com",
+    },
+  ];
 
   for (const t of tests) {
     it(`for ${t.name}`, () => {
       const myAvailablePkgDetail = defaultAvailablePkgDetail;
-      myAvailablePkgDetail.maintainers = [new Maintainer({ name: "John Smith", email: "john@example.com" })];
+      myAvailablePkgDetail.maintainers = [
+        new Maintainer({ name: "John Smith", email: "john@example.com" }),
+      ];
       myAvailablePkgDetail.repoUrl = t.repoURL;
 
       const wrapper = mountWrapper(

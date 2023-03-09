@@ -25,7 +25,10 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2_pb";
-import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
+import {
+  HelmPackageRepositoryCustomDetail,
+  ImagesPullSecret,
+} from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
@@ -290,11 +293,13 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
       setIsUserManagedCASecret(!!(repo.tlsConfig?.packageRepoTlsConfigOneOf?.case === "secretRef"));
 
       // setting custom details for the Helm plugin
-      if (repo.packageRepoRef?.plugin?.name === PluginNames.PACKAGES_HELM) {
-        const helmPackageRepositoryCustomDetail =
-          repo.customDetail as Partial<HelmPackageRepositoryCustomDetail>;
+      if (repo.packageRepoRef?.plugin?.name === PluginNames.PACKAGES_HELM && repo.customDetail) {
+        const helmPackageRepositoryCustomDetail = HelmPackageRepositoryCustomDetail.fromBinary(
+          repo.customDetail.value,
+        );
         setOCIRepositories(helmPackageRepositoryCustomDetail?.ociRepositories?.join(", ") || "");
         setPerformValidation(helmPackageRepositoryCustomDetail?.performValidation || false);
+        console.log(`helm custom detail: ${JSON.stringify(helmPackageRepositoryCustomDetail)}`);
         if (helmPackageRepositoryCustomDetail?.filterRule?.jq) {
           const { names, regex, exclude } = toParams(helmPackageRepositoryCustomDetail.filterRule!);
           setFilterRegex(regex);
@@ -361,8 +366,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
 
       // setting custom details for the Flux plugin
       if (repo.packageRepoRef?.plugin?.name === PluginNames.PACKAGES_FLUX && repo.customDetail) {
-        const fluxPackageRepositoryCustomDetail =
-          repo.customDetail as Partial<FluxPackageRepositoryCustomDetail>;
+        const fluxPackageRepositoryCustomDetail = FluxPackageRepositoryCustomDetail.fromBinary(
+          repo.customDetail.value,
+        );
         setAuthProvider(fluxPackageRepositoryCustomDetail?.provider || "");
       }
     }
@@ -481,33 +487,37 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     // enrich the request object with the corresponding plugin's custom details
     switch (plugin?.name) {
       case PluginNames.PACKAGES_HELM:
-        request.customDetail = {
+        let imagesPullSecret: ImagesPullSecret | undefined;
+        if (
+          helmPSAuthMethod === PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON
+        ) {
+          if (isUserManagedPSSecret) {
+            imagesPullSecret = new ImagesPullSecret({
+              dockerRegistryCredentialOneOf: {
+                case: "secretRef",
+                value: useSameAuthCreds ? secretAuthName : secretPSName,
+              },
+            });
+          } else {
+            imagesPullSecret = new ImagesPullSecret({
+              dockerRegistryCredentialOneOf: {
+                case: "credentials",
+                value: {
+                  email: useSameAuthCreds ? secretEmail : pullSecretEmail,
+                  username: useSameAuthCreds ? secretUser : pullSecretUser,
+                  password: useSameAuthCreds ? secretPassword : pullSecretPassword,
+                  server: useSameAuthCreds ? secretServer : pullSecretServer,
+                },
+              },
+            });
+          }
+        }
+        request.customDetail = new HelmPackageRepositoryCustomDetail({
           ociRepositories: ociRepoList,
           performValidation,
           filterRule: filter,
-          imagesPullSecret: {
-            // if using the same credentials toggle is set, use the repo auth's creds instead
-            secretRef:
-              helmPSAuthMethod ===
-                PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON &&
-              isUserManagedPSSecret
-                ? useSameAuthCreds
-                  ? secretAuthName
-                  : secretPSName
-                : "",
-            credentials:
-              helmPSAuthMethod ===
-                PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON &&
-              !isUserManagedPSSecret
-                ? {
-                    email: useSameAuthCreds ? secretEmail : pullSecretEmail,
-                    username: useSameAuthCreds ? secretUser : pullSecretUser,
-                    password: useSameAuthCreds ? secretPassword : pullSecretPassword,
-                    server: useSameAuthCreds ? secretServer : pullSecretServer,
-                  }
-                : undefined,
-          },
-        } as HelmPackageRepositoryCustomDetail;
+          imagesPullSecret,
+        });
         break;
       //TODO(agamez): add it once other PRs get merged
       // case PluginNames.PACKAGES_KAPP:
@@ -1650,8 +1660,12 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             disabled={
                               !!repo.name &&
                               ["aws", "azure", "gcp"].includes(
-                                (repo.customDetail as Partial<FluxPackageRepositoryCustomDetail>)
-                                  ?.provider || "",
+                                (repo.customDetail
+                                  ? FluxPackageRepositoryCustomDetail.fromBinary(
+                                      repo.customDetail?.value,
+                                    )
+                                  : undefined
+                                )?.provider || "",
                               )
                             }
                           >
@@ -1753,12 +1767,13 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       >
                         {authMethod ===
                           PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON &&
-                          !(
-                            !!(repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>)
-                              ?.imagesPullSecret?.credentials ||
-                            !!(repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>)
-                              ?.imagesPullSecret?.secretRef
-                          ) && (
+                          !!!(
+                            repo.customDetail
+                              ? HelmPackageRepositoryCustomDetail.fromBinary(
+                                  repo.customDetail?.value,
+                                )
+                              : undefined
+                          )?.imagesPullSecret?.dockerRegistryCredentialOneOf.value && (
                             <CdsToggleGroup className="flex-v-center">
                               <CdsToggle>
                                 {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
@@ -1792,11 +1807,12 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                                   checked={isUserManagedPSSecret}
                                   disabled={
                                     !!(
-                                      repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>
-                                    )?.imagesPullSecret?.credentials ||
-                                    !!(
-                                      repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>
-                                    )?.imagesPullSecret?.secretRef
+                                      repo.customDetail
+                                        ? HelmPackageRepositoryCustomDetail.fromBinary(
+                                            repo.customDetail?.value,
+                                          )
+                                        : undefined
+                                    )?.imagesPullSecret?.dockerRegistryCredentialOneOf.value
                                   }
                                 />
                               </CdsToggle>
@@ -2054,8 +2070,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           checked={isUserManagedCASecret}
                           disabled={
                             skipTLS ||
-                            (!!repo?.name &&
-                              (!!repo?.tlsConfig?.certAuthority || !!repo?.tlsConfig?.secretRef))
+                            (!!repo?.name && !!repo?.tlsConfig?.packageRepoTlsConfigOneOf.value)
                           }
                         />
                       </CdsToggle>

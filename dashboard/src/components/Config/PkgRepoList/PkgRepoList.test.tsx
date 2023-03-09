@@ -78,12 +78,12 @@ it("fetches repos from all namespaces", () => {
       ...initialState,
       repos: {
         reposPermissions: [
-          {
+          new PackageRepositoriesPermissions({
             global: {
               list: true,
             },
             namespace: {},
-          },
+          }),
         ] as PackageRepositoriesPermissions[],
       },
     } as Partial<IStoreState>),
@@ -215,7 +215,7 @@ describe("global and namespaced repositories", () => {
 
   it("shows the global repositories with the buttons enabled based on permissions", async () => {
     const permissions = [
-      {
+      new PackageRepositoriesPermissions({
         plugin: plugin,
         global: {
           create: true,
@@ -229,7 +229,7 @@ describe("global and namespaced repositories", () => {
           list: true,
           update: true,
         },
-      },
+      }),
     ] as PackageRepositoriesPermissions[];
 
     let wrapper: any;
@@ -315,12 +315,12 @@ describe("global and namespaced repositories", () => {
         repos: {
           reposSummaries: [namespacedRepo],
           reposPermissions: [
-            {
+            new PackageRepositoriesPermissions({
               global: {
                 list: true,
               },
               namespace: {},
-            },
+            }),
           ] as PackageRepositoriesPermissions[],
         } as IPackageRepositoryState,
       } as Partial<IStoreState>),
@@ -339,12 +339,12 @@ describe("global and namespaced repositories", () => {
         repos: {
           reposSummaries: [namespacedRepo],
           reposPermissions: [
-            {
+            new PackageRepositoriesPermissions({
               global: {
                 list: true,
               },
               namespace: {},
-            },
+            }),
           ] as PackageRepositoriesPermissions[],
         } as IPackageRepositoryState,
       } as Partial<IStoreState>),

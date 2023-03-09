@@ -62,7 +62,6 @@ function parseResource(
         // here instead, then remove the shared/ResourceRef with the extra fields.
         // https://github.com/vmware-tanzu/kubeapps/issues/6062
         case "Deployment":
-          // eslint-disable-next-line @typescript-eslint/TS2322
           result.deployments.push(fromCRD(r, kind, cluster, namespace, ownerRef));
           break;
         case "StatefulSet":

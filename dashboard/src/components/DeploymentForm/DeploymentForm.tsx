@@ -73,10 +73,12 @@ export default function DeploymentForm() {
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
 
   const onChangeSA = (e: React.FormEvent<HTMLSelectElement>) => {
-    setReconciliationOptions({
-      ...reconciliationOptions,
-      serviceAccountName: e.currentTarget.value,
-    });
+    setReconciliationOptions(
+      new ReconciliationOptions({
+        ...reconciliationOptions,
+        serviceAccountName: e.currentTarget.value,
+      }),
+    );
   };
 
   const [packageReference] = useState({
