@@ -85,10 +85,12 @@ export const fetchRepoSummaries = (
     } = getState();
     try {
       dispatch(requestRepoSummaries(namespace));
-      const repos = await PackageRepositoriesService.getPackageRepositorySummaries({
-        cluster: namespace ? currentCluster : kubeappsCluster,
-        namespace: namespace,
-      });
+      const repos = await PackageRepositoriesService.getPackageRepositorySummaries(
+        new Context({
+          cluster: namespace ? currentCluster : kubeappsCluster,
+          namespace: namespace,
+        }),
+      );
       if (!listGlobal || [helmGlobalNamespace, carvelGlobalNamespace].includes(namespace)) {
         dispatch(receiveRepoSummaries(repos.packageRepositorySummaries));
       } else {
@@ -98,10 +100,12 @@ export const fetchRepoSummaries = (
         let totalRepos = repos.packageRepositorySummaries;
         dispatch(requestRepoSummaries(""));
         // Global repos are only related to the Kubeapps cluster
-        const globalRepos = await PackageRepositoriesService.getPackageRepositorySummaries({
-          cluster: kubeappsCluster,
-          namespace: "",
-        });
+        const globalRepos = await PackageRepositoriesService.getPackageRepositorySummaries(
+          new Context({
+            cluster: kubeappsCluster,
+            namespace: "",
+          }),
+        );
         // Avoid adding duplicated repos: if two repos have the same uid, filter out
         totalRepos = uniqBy(
           totalRepos.concat(globalRepos.packageRepositorySummaries),
@@ -267,11 +271,13 @@ export const findPackageInRepo = (
     // Check if we have enough data to retrieve the package manually (instead of using its own availablePackageRef)
     if (app?.availablePackageRef?.identifier && app?.availablePackageRef?.plugin) {
       const getPackageRepositoryDetailResponse =
-        await PackageRepositoriesService.getPackageRepositoryDetail({
-          identifier: repoName,
-          context: { cluster, namespace: repoNamespace },
-          plugin: app.availablePackageRef.plugin,
-        });
+        await PackageRepositoriesService.getPackageRepositoryDetail(
+          new PackageRepositoryReference({
+            identifier: repoName,
+            context: new Context({ cluster, namespace: repoNamespace }),
+            plugin: app.availablePackageRef.plugin,
+          }),
+        );
       try {
         await PackagesService.getAvailablePackageVersions({
           context: { cluster: cluster, namespace: repoNamespace },
@@ -342,7 +348,7 @@ export const fetchReposPermissions = (
 export const convertPkgRepoDetailToSummary = (
   repoDetail: PackageRepositoryDetail,
 ): PackageRepositorySummary => {
-  const repoSummary: PackageRepositorySummary = {
+  const repoSummary = new PackageRepositorySummary({
     description: repoDetail.description,
     name: repoDetail.name,
     type: repoDetail.type,
@@ -351,6 +357,6 @@ export const convertPkgRepoDetailToSummary = (
     requiresAuth: !!repoDetail.auth,
     packageRepoRef: repoDetail.packageRepoRef,
     status: repoDetail.status,
-  };
+  });
   return repoSummary;
 };

@@ -29,6 +29,7 @@ import { InstalledPackage } from "shared/InstalledPackage";
 import PackagesService from "shared/PackagesService";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import {
+  CustomInstalledPackageDetail,
   DeleteError,
   FetchError,
   IInstalledPackageState,
@@ -55,7 +56,7 @@ const routeParams = {
 const routePathParam = `/c/${routeParams.cluster}/ns/${routeParams.namespace}/apps/${routeParams.plugin.name}/${routeParams.plugin.version}/${routeParams.releaseName}`;
 const routePath = "/c/:cluster/ns/:namespace/apps/:pluginName/:pluginVersion/:releaseName";
 
-const installedPackage = {
+const installedPackage = new InstalledPackageDetail({
   name: "test",
   postInstallationNotes: "test",
   valuesApplied: "test",
@@ -65,24 +66,23 @@ const installedPackage = {
     context: { cluster: "", namespace: "chart-namespace" } as Context,
   } as AvailablePackageReference,
   currentVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
-  installedPackageRef: {
+  installedPackageRef: new InstalledPackageReference({
     identifier: "apache/1",
-    pkgVersion: "1.0.0",
     context: { cluster: "", namespace: "package-namespace" } as Context,
     plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-  } as InstalledPackageReference,
+  }),
   latestMatchingVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
   latestVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
   pkgVersionReference: { version: "1" } as VersionReference,
   reconciliationOptions: {},
   status: {
     ready: true,
-    reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+    reason: InstalledPackageStatus_StatusReason.INSTALLED,
     userReason: "deployed",
   } as InstalledPackageStatus,
-} as InstalledPackageDetail;
+});
 
-const availablePackageDetail = {
+const availablePackageDetail = new AvailablePackageDetail({
   displayName: "my-cool-package-1",
   availablePackageRef: {
     identifier: "apache/1",
@@ -90,47 +90,45 @@ const availablePackageDetail = {
     context: { cluster: "", namespace: "chart-namespace" } as Context,
   } as AvailablePackageReference,
   version: { appVersion: "4.5.6", pkgVersion: "1.2.3" },
-} as AvailablePackageDetail;
+});
 
 const resourceRefs = {
-  configMap: { apiVersion: "v1", kind: "ConfigMap", name: "cm-one" } as ResourceRef,
-  deployment: {
+  configMap: new ResourceRef({ apiVersion: "v1", kind: "ConfigMap", name: "cm-one" }),
+  deployment: new ResourceRef({
     apiVersion: "apps/v1",
     kind: "Deployment",
     name: "deployment-one",
-  } as ResourceRef,
-  service: { apiVersion: "v1", kind: "Service", name: "svc-one" } as ResourceRef,
-  ingress: {
+  }),
+  service: new ResourceRef({ apiVersion: "v1", kind: "Service", name: "svc-one" }),
+  ingress: new ResourceRef({
     apiVersion: "extensions/v1",
     kind: "Ingress",
     name: "ingress-one",
-  } as ResourceRef,
-  secret: {
+  }),
+  secret: new ResourceRef({
     apiVersion: "v1",
     kind: "Secret",
     name: "secret-one",
-  } as ResourceRef,
-  daemonset: {
+  }),
+  daemonset: new ResourceRef({
     apiVersion: "apps/v1",
     kind: "DaemonSet",
     name: "daemonset-one",
-  } as ResourceRef,
-  statefulset: {
+  }),
+  statefulset: new ResourceRef({
     apiVersion: "apps/v1",
     kind: "StatefulSet",
     name: "statefulset-one",
-  } as ResourceRef,
+  }),
 };
 
 const validState = {
   apps: {
     isFetching: false,
     items: [installedPackage],
-    selected: {
+    selected: new CustomInstalledPackageDetail(1, {
       ...installedPackage,
-      resourceRefs: [resourceRefs.configMap] as ResourceRef[],
-      revision: 1,
-    },
+    }),
   } as IInstalledPackageState,
 };
 
@@ -138,7 +136,7 @@ beforeEach(() => {
   InstalledPackage.GetInstalledPackageResourceRefs = jest
     .fn()
     .mockReturnValue(
-      Promise.resolve({ resourceRefs: [] } as GetInstalledPackageResourceRefsResponse),
+      Promise.resolve(new GetInstalledPackageResourceRefsResponse({ resourceRefs: [] })),
     );
   InstalledPackage.GetInstalledPackageDetail = jest.fn().mockReturnValue(
     Promise.resolve({

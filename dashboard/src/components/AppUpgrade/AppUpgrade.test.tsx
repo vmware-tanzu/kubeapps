@@ -57,19 +57,18 @@ const installedPackage1 = {
     plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   } as AvailablePackageReference,
   currentVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
-  installedPackageRef: {
+  installedPackageRef: new InstalledPackageReference({
     identifier: "stable/bar",
-    pkgVersion: "1.0.0",
     context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace } as Context,
     plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-  } as InstalledPackageReference,
+  }),
   latestMatchingVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
   latestVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
   pkgVersionReference: { version: "1" } as VersionReference,
   reconciliationOptions: {},
   status: {
     ready: true,
-    reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+    reason: InstalledPackageStatus_StatusReason.INSTALLED,
     userReason: "deployed",
   } as InstalledPackageStatus,
 } as CustomInstalledPackageDetail;

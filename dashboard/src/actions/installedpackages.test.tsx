@@ -3,6 +3,7 @@
 
 import {
   AvailablePackageDetail,
+  Context,
   GetInstalledPackageSummariesResponse,
   InstalledPackageDetail,
   InstalledPackageReference,
@@ -40,16 +41,16 @@ beforeEach(() => {
 });
 
 describe("fetches installed packages", () => {
-  const validInstalledPackageSummary: InstalledPackageSummary = {
-    installedPackageRef: {
-      context: { cluster: "second-cluster", namespace: "my-ns" },
+  const validInstalledPackageSummary = new InstalledPackageSummary({
+    installedPackageRef: new InstalledPackageReference({
+      context: new Context({ cluster: "second-cluster", namespace: "my-ns" }),
       identifier: "some-name",
-    },
+    }),
     iconUrl: "",
     name: "foo",
     pkgDisplayName: "foo",
     shortDescription: "some description",
-  };
+  });
   let requestInstalledPackageListMock: jest.Mock;
   const installedPackageSummaries: InstalledPackageSummary[] = [validInstalledPackageSummary];
   beforeEach(() => {

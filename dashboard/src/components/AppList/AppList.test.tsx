@@ -227,15 +227,14 @@ context("when apps available", () => {
     state.apps.listOverview = [
       {
         name: "foo",
-        installedPackageRef: {
+        installedPackageRef: new InstalledPackageReference({
           identifier: "bar/foo",
-          pkgVersion: "1.0.0",
           context: { cluster: "", namespace: "foobar" } as Context,
           plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-        } as InstalledPackageReference,
+        }),
         status: {
           ready: true,
-          reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+          reason: InstalledPackageStatus_StatusReason.INSTALLED,
           userReason: "deployed",
         } as InstalledPackageStatus,
         latestMatchingVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
@@ -260,15 +259,14 @@ context("when apps available", () => {
     state.apps.listOverview = [
       {
         name: "foo",
-        installedPackageRef: {
+        installedPackageRef: new InstalledPackageReference({
           identifier: "foo/bar",
-          pkgVersion: "1.0.0",
           context: { cluster: "", namespace: "fooNs" } as Context,
           plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-        } as InstalledPackageReference,
+        }),
         status: {
           ready: true,
-          reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+          reason: InstalledPackageStatus_StatusReason.INSTALLED,
           userReason: "deployed",
         } as InstalledPackageStatus,
         latestMatchingVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
@@ -278,15 +276,14 @@ context("when apps available", () => {
       } as InstalledPackageSummary,
       {
         name: "bar",
-        installedPackageRef: {
+        installedPackageRef: new InstalledPackageReference({
           identifier: "foobar/bar",
-          pkgVersion: "1.0.0",
           context: { cluster: "", namespace: "fooNs" } as Context,
           plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-        } as InstalledPackageReference,
+        }),
         status: {
           ready: true,
-          reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+          reason: InstalledPackageStatus_StatusReason.INSTALLED,
           userReason: "deployed",
         } as InstalledPackageStatus,
         latestMatchingVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
@@ -311,15 +308,14 @@ context("when apps available", () => {
     state.apps.listOverview = [
       {
         name: "foo",
-        installedPackageRef: {
+        installedPackageRef: new InstalledPackageReference({
           identifier: "foo/bar",
-          pkgVersion: "1.0.0",
           context: { cluster: "", namespace: "fooNs" } as Context,
           plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-        } as InstalledPackageReference,
+        }),
         status: {
           ready: true,
-          reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+          reason: InstalledPackageStatus_StatusReason.INSTALLED,
           userReason: "deployed",
         } as InstalledPackageStatus,
         latestMatchingVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
@@ -329,15 +325,14 @@ context("when apps available", () => {
       } as InstalledPackageSummary,
       {
         name: "bar",
-        installedPackageRef: {
+        installedPackageRef: new InstalledPackageReference({
           identifier: "foobar/bar",
-          pkgVersion: "1.0.0",
           context: { cluster: "", namespace: "fooNs" } as Context,
           plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-        } as InstalledPackageReference,
+        }),
         status: {
           ready: true,
-          reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+          reason: InstalledPackageStatus_StatusReason.INSTALLED,
           userReason: "deployed",
         } as InstalledPackageStatus,
         latestMatchingVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,
@@ -347,15 +342,14 @@ context("when apps available", () => {
       } as InstalledPackageSummary,
       {
         name: "bar",
-        installedPackageRef: {
+        installedPackageRef: new InstalledPackageReference({
           identifier: "foobar/bar",
-          pkgVersion: "1.0.0",
           context: { cluster: "", namespace: "barNs" } as Context,
           plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-        } as InstalledPackageReference,
+        }),
         status: {
           ready: true,
-          reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+          reason: InstalledPackageStatus_StatusReason.INSTALLED,
           userReason: "deployed",
         } as InstalledPackageStatus,
         latestMatchingVersion: { appVersion: "0.1.0", pkgVersion: "1.0.0" } as PackageAppVersion,

@@ -40,7 +40,7 @@ const defaultProps = {
     pkgVersionReference: { version: "1" } as VersionReference,
     status: {
       ready: true,
-      reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+      reason: InstalledPackageStatus_StatusReason.INSTALLED,
       userReason: "deployed",
     } as InstalledPackageStatus,
   } as InstalledPackageDetail,
@@ -58,10 +58,13 @@ it("renders an app item", () => {
 
 context("PackageUpdateInfo: when information about updates is available", () => {
   it("renders an up to date message if there are no updates", () => {
-    const appWithoutUpdates = {
+    const appWithoutUpdates = new InstalledPackageDetail({
       ...defaultProps.installedPackageDetail,
-      updateInfo: { upToDate: true },
-    } as InstalledPackageDetail;
+      latestVersion: {
+        pkgVersion: "1.0.0",
+        appVersion: "10.0.0",
+      },
+    });
     const wrapper = mountWrapper(
       defaultStore,
       <PackageInfo {...defaultProps} installedPackageDetail={appWithoutUpdates} />,

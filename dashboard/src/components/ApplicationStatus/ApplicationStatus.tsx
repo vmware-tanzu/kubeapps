@@ -51,7 +51,6 @@ function codeToString(status: InstalledPackageStatus | null | undefined) {
     [InstalledPackageStatus_StatusReason.UNINSTALLED]: "Deleted",
     [InstalledPackageStatus_StatusReason.FAILED]: "Failed",
     [InstalledPackageStatus_StatusReason.PENDING]: "Pending",
-    [InstalledPackageStatus_StatusReason.UNRECOGNIZED]: "Unknown",
   };
   let msg = codes[0];
   if (status && status.reason) {

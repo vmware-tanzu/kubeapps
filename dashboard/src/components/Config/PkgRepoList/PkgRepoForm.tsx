@@ -1170,7 +1170,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         value="flux-auth-provider"
                         checked={
                           authMethod ===
-                            PackageRepositoryAuth_PackageRepositoryAuthType.UNRECOGNIZED &&
+                            PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED &&
                           showAuthProviderDetails
                         }
                         onChange={handleFluxAuthProviderAuthChange}
