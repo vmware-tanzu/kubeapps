@@ -1,7 +1,7 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { PartialMessage } from "@bufbuild/protobuf";
+import type { PartialMessage } from "@bufbuild/protobuf";
 import { JSONSchemaType, ErrorObject } from "ajv";
 import { RouterState } from "connected-react-router";
 import {

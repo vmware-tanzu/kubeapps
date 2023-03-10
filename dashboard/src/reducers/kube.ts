@@ -163,7 +163,7 @@ const kubeReducer = (
       // args passed in for error handling and completion.
       // Existing tests only tested the subscription state, so add tests for the actual
       // content state (of responses).
-      let processResponses = async () => {
+      const processResponses = async () => {
         for await (const response of asyncResponses) {
           handler(response);
         }
