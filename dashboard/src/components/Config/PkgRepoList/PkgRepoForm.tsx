@@ -484,9 +484,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     } as IPkgRepoFormData;
 
     // enrich the request object with the corresponding plugin's custom details
+    let imagesPullSecret: ImagesPullSecret | undefined;
     switch (plugin?.name) {
       case PluginNames.PACKAGES_HELM:
-        let imagesPullSecret: ImagesPullSecret | undefined;
         if (
           helmPSAuthMethod === PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON
         ) {
