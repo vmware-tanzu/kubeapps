@@ -106,11 +106,9 @@ describe("Auth", () => {
       mockClientCheckNamespaceExists = jest.fn().mockImplementation(() =>
         Promise.reject({
           code: Code.PermissionDenied,
-          metadata: {
-            headersMap: {
-              "content-type": ["not-grpc-content-type"],
-            },
-          },
+          metadata: new Headers({
+            "content-type": "not-grpc-content-type",
+          }),
         }),
       );
       jest.spyOn(client, "checkNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
@@ -124,11 +122,9 @@ describe("Auth", () => {
       mockClientCheckNamespaceExists = jest.fn().mockImplementation(() =>
         Promise.reject({
           code: Code.PermissionDenied,
-          metadata: {
-            headersMap: {
-              "content-type": ["application/grpc-web+proto"],
-            },
-          },
+          metadata: new Headers({
+            "content-type": "application/grpc-web+proto",
+          }),
         }),
       );
       jest.spyOn(client, "checkNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
@@ -142,11 +138,9 @@ describe("Auth", () => {
       mockClientCheckNamespaceExists = jest.fn().mockImplementation(() =>
         Promise.reject({
           code: Code.PermissionDenied,
-          metadata: {
-            headersMap: {
-              "content-type": ["application/grpc-web+thrift"],
-            },
-          },
+          metadata: new Headers({
+            "content-type": "application/grpc-web+thrift",
+          }),
         }),
       );
       jest.spyOn(client, "checkNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
@@ -159,11 +153,9 @@ describe("Auth", () => {
       mockClientCheckNamespaceExists = jest.fn().mockImplementation(() =>
         Promise.reject({
           code: Code.Unauthenticated,
-          metadata: {
-            headersMap: {
-              "content-type": ["not-grpc-content-type"],
-            },
-          },
+          metadata: new Headers({
+            "content-type": "not-grpc-content-type",
+          }),
         }),
       );
       jest.spyOn(client, "checkNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);

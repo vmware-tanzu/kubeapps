@@ -101,8 +101,8 @@ export class Auth {
   // isErrorFromAPIsServer returns true if the response is a 403 determined to have originated
   // from the grpc-web APIs server, rather than the auth proxy.
   public static isErrorFromAPIsServer(e: any): boolean {
-    const contentType = e.metadata?.headersMap["content-type"] as string[];
-    if (contentType.some(v => v.startsWith("application/grpc-web"))) {
+    const contentType = (e.metadata?.get("content-type") || "") as string;
+    if (contentType.startsWith("application/grpc-web")) {
       return true;
     }
     return false;
