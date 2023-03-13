@@ -297,8 +297,8 @@ github.com/fluxcd/pkg/oci v0.21.0 h1:xiCGEtyIlH+wqHW0NCPmcwbEgCUbZwpTWmw7vKPHYe0
 github.com/fluxcd/pkg/oci v0.21.0/go.mod h1:DvGuPqQvoVeDmiIKNCpjgIIs2MdkGIS0BjhLZIVfOWA=
 github.com/fluxcd/pkg/version v0.2.1 h1:RRH7+6qiWHdTvRNwpoBmilnubJ2C4FZYGgy5wTDVKVc=
 github.com/fluxcd/pkg/version v0.2.1/go.mod h1:UmUYHDz4BxHQMesMUx3gYVrT2Wf66H49JpTg/PW+/OY=
-github.com/fluxcd/source-controller/api v0.35.2 h1:1xTB0hIR8pmE8JJUQd41dHPbPx4a7EnH5iPY6bg83Oc=
-github.com/fluxcd/source-controller/api v0.35.2/go.mod h1:9eIMRWYxNT3NZClA/zm5M55LleBFHB/jE+g3hNJPQBg=
+github.com/fluxcd/source-controller/api v0.36.0 h1:c5/uWFqKZ9vtDkkXsdMTyiuHNNEX3B6ldjgTsB7Uy14=
+github.com/fluxcd/source-controller/api v0.36.0/go.mod h1:GktZmd5Dfxo84vPFBdLDl0bBtiJRODfd47uugK0romU=
 github.com/franela/goblin v0.0.0-20200105215937-c9ffbefa60db/go.mod h1:7dvUGVsVBjqR7JHJk0brhHOZYGmfBYOrK0ZhYMEtBr4=
 github.com/franela/goreq v0.0.0-20171204163338-bcd34c9993f8/go.mod h1:ZhphrRTfi2rbfLwlschooIH4+wKKDR4Pdxhh+TRoA20=
 github.com/frankban/quicktest v1.14.3 h1:FJKSZTDHjyhriyC81FLQ0LY93eSai0ZyR/ZIkd3ZUKE=
