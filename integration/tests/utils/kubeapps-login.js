@@ -51,7 +51,6 @@ exports.KubeappsLogin = class KubeappsLogin {
 
     // Go to Home page
     await this.page.goto(utils.getUrl("/"));
-    await this.page.waitForLoadState("networkidle");
 
     // Click to Log in with OIDC provider
     await this.page.click("text=Login via OIDC Provider");
