@@ -353,7 +353,7 @@ export function getGlobalNamespaceOrNamespace(
 // See https://github.com/googleapis/googleapis/blob/master/google/rpc/code.proto
 // See https://github.com/grpc-ecosystem/grpc-gateway/blob/master/runtime/errors.go
 export function convertGrpcAuthError(e: any): CustomError | any {
-  const msg = e?.metadata?.headersMap?.["grpc-message"].toString();
+  const msg = (e?.metadata?.get("grpc-message") || "").toString();
   switch (e?.code) {
     case Code.Unauthenticated:
       return new UnauthorizedNetworkError(msg);

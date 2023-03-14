@@ -42,7 +42,6 @@ exports.KubeappsLogin = class KubeappsLogin {
     console.log("Logging out of Kubeapps");
     await this.page.click(".dropdown.kubeapps-menu .kubeapps-nav-link");
     await this.page.click('cds-button:has-text("Log out")');
-    await this.page.waitForLoadState("networkidle");
     console.log("Logged out of Kubeapps");
   }
 
