@@ -9,8 +9,8 @@ import { ActionType, deprecated } from "typesafe-actions";
 import {
   ResourceRef as APIResourceRef,
   InstalledPackageReference,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { GetResourcesResponse } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import { GetResourcesResponse } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources_pb";
 import actions from "actions";
 import { debounce } from "lodash";
 

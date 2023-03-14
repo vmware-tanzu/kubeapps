@@ -9,8 +9,9 @@ import {
   GetAvailablePackageDetailResponse,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageVersionsResponse,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+  PackageAppVersion,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import PackagesService from "shared/PackagesService";
@@ -29,21 +30,21 @@ const defaultPaginationToken = "defaultPaginationToken";
 const defaultSize = 0;
 const plugin = { name: "my.plugin", version: "0.0.1" } as Plugin;
 
-const defaultAvailablePackageSummary: AvailablePackageSummary = {
+const defaultAvailablePackageSummary = new AvailablePackageSummary({
   name: "foo",
   categories: [""],
   displayName: "foo",
   iconUrl: "",
-  latestVersion: { appVersion: "v1.0.0", pkgVersion: "" },
+  latestVersion: new PackageAppVersion({ appVersion: "v1.0.0", pkgVersion: "" }),
   shortDescription: "",
-  availablePackageRef: {
+  availablePackageRef: new AvailablePackageReference({
     identifier: "foo/foo",
     context: { cluster: "", namespace: "package-namespace" } as Context,
     plugin: plugin,
-  },
-};
+  }),
+});
 
-const defaultAvailablePackageDetail: AvailablePackageDetail = {
+const defaultAvailablePackageDetail = new AvailablePackageDetail({
   name: "foo",
   categories: [""],
   displayName: "foo",
@@ -67,7 +68,7 @@ const defaultAvailablePackageDetail: AvailablePackageDetail = {
     pkgVersion: "1.2.3",
     appVersion: "4.5.6",
   },
-};
+});
 
 beforeEach(() => {
   store = mockStore({
@@ -97,11 +98,11 @@ const nextPageToken = "nextPageToken";
 const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTestCase[] = [
   {
     name: "fetches packages with query",
-    response: {
+    response: new GetAvailablePackageSummariesResponse({
       availablePackageSummaries: [defaultAvailablePackageSummary],
       nextPageToken,
       categories: ["foo"],
-    },
+    }),
     requestedRepos: "",
     requestedPageToken: currentPageToken,
     requestedQuery: "foo",
@@ -126,11 +127,11 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
   },
   {
     name: "fetches packages from a repo (first page)",
-    response: {
+    response: new GetAvailablePackageSummariesResponse({
       availablePackageSummaries: [defaultAvailablePackageSummary],
       nextPageToken,
       categories: ["foo"],
-    },
+    }),
     requestedRepos: repos,
     requestedPageToken: "",
     expectedActions: [
@@ -151,11 +152,11 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
   },
   {
     name: "fetches packages from a repo (middle page)",
-    response: {
+    response: new GetAvailablePackageSummariesResponse({
       availablePackageSummaries: [defaultAvailablePackageSummary],
       nextPageToken,
       categories: ["foo"],
-    },
+    }),
     requestedRepos: repos,
     requestedPageToken: currentPageToken,
     expectedActions: [
@@ -179,11 +180,11 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
   },
   {
     name: "fetches packages from a repo (last page)",
-    response: {
+    response: new GetAvailablePackageSummariesResponse({
       availablePackageSummaries: [defaultAvailablePackageSummary],
       nextPageToken: "",
       categories: ["foo"],
-    },
+    }),
     requestedRepos: repos,
     requestedPageToken: currentPageToken,
     expectedActions: [
@@ -207,11 +208,11 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
   },
   {
     name: "fetches packages from a repo (already processed page)",
-    response: {
+    response: new GetAvailablePackageSummariesResponse({
       availablePackageSummaries: [defaultAvailablePackageSummary],
       nextPageToken,
       categories: ["foo"],
-    },
+    }),
     requestedRepos: repos,
     requestedPageToken: currentPageToken,
     expectedActions: [
@@ -235,11 +236,11 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
   },
   {
     name: "fetches packages from a repo (off-limits page)",
-    response: {
+    response: new GetAvailablePackageSummariesResponse({
       availablePackageSummaries: [defaultAvailablePackageSummary],
       nextPageToken: "3",
       categories: ["foo"],
-    },
+    }),
     requestedRepos: repos,
     requestedPageToken: "next-page-token",
     expectedActions: [
@@ -380,9 +381,9 @@ describe("fetchAvailablePackageSummaries", () => {
 
 describe("fetchAvailablePackageVersions", () => {
   const packageAppVersions = [{ pkgVersion: "1.2.3", appVersion: "4.5.6" }];
-  const availableVersionsResponse: GetAvailablePackageVersionsResponse = {
+  const availableVersionsResponse = new GetAvailablePackageVersionsResponse({
     packageAppVersions,
-  };
+  });
   let mockGetAvailablePackageVersions: jest.Mock;
   beforeEach(() => {
     mockGetAvailablePackageVersions = jest
@@ -422,9 +423,9 @@ describe("fetchAvailablePackageVersions", () => {
 describe("fetchAndSelectAvailablePackageDetail", () => {
   let mockGetAvailablePackageDetail: jest.Mock;
   beforeEach(() => {
-    const response: GetAvailablePackageDetailResponse = {
+    const response = new GetAvailablePackageDetailResponse({
       availablePackageDetail: defaultAvailablePackageDetail,
-    };
+    });
     mockGetAvailablePackageDetail = jest.fn().mockImplementation(() => Promise.resolve(response));
     jest
       .spyOn(PackagesService, "getAvailablePackageDetail")

@@ -6,7 +6,7 @@ import PageHeader from "components/PageHeader/PageHeader";
 import {
   AvailablePackageDetail,
   PackageAppVersion,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import React from "react";
 import placeholder from "icons/placeholder.svg";
 import "./PackageHeader.css";

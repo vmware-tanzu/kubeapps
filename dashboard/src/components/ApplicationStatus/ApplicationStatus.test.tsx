@@ -6,7 +6,7 @@ import {
   InstalledPackageDetail,
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { has } from "lodash";
 import { IK8sList, IKubeItem, IResource } from "shared/types";
 import ApplicationStatus from "./ApplicationStatus";
@@ -41,7 +41,7 @@ it("renders a deleting status", () => {
         {
           status: {
             ready: false,
-            reason: InstalledPackageStatus_StatusReason.STATUS_REASON_UNINSTALLED,
+            reason: InstalledPackageStatus_StatusReason.UNINSTALLED,
             userReason: "Deleted",
           } as InstalledPackageStatus,
         } as InstalledPackageDetail
@@ -65,7 +65,7 @@ it("renders a failed status", () => {
         {
           status: {
             ready: false,
-            reason: InstalledPackageStatus_StatusReason.STATUS_REASON_FAILED,
+            reason: InstalledPackageStatus_StatusReason.FAILED,
             userReason: "Failed",
           } as InstalledPackageStatus,
         } as InstalledPackageDetail
@@ -94,7 +94,7 @@ describe("isFetching", () => {
       deployed: false,
       totalPods: 0,
       readyPods: 0,
-      infoReason: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
+      infoReason: InstalledPackageStatus_StatusReason.PENDING,
     },
     {
       title: "shows a deploying status if there is a non deployed deployment",
@@ -117,7 +117,7 @@ describe("isFetching", () => {
       deployed: false,
       totalPods: 1,
       readyPods: 0,
-      infoReason: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
+      infoReason: InstalledPackageStatus_StatusReason.PENDING,
     },
     {
       title: "shows a deploying status if there is a non deployed statefulset",
@@ -140,7 +140,7 @@ describe("isFetching", () => {
       deployed: false,
       totalPods: 1,
       readyPods: 0,
-      infoReason: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
+      infoReason: InstalledPackageStatus_StatusReason.PENDING,
     },
     {
       title: "shows a deploying status if there is a non deployed daemonset",
@@ -161,7 +161,7 @@ describe("isFetching", () => {
       deployed: false,
       totalPods: 1,
       readyPods: 0,
-      infoReason: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
+      infoReason: InstalledPackageStatus_StatusReason.PENDING,
     },
     {
       title: "shows a deployed status if it has a daemonset, deployment and statefulset deployed",
@@ -208,7 +208,7 @@ describe("isFetching", () => {
       deployed: true,
       totalPods: 3,
       readyPods: 3,
-      infoReason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+      infoReason: InstalledPackageStatus_StatusReason.INSTALLED,
     },
     {
       title:
@@ -256,7 +256,7 @@ describe("isFetching", () => {
       deployed: true,
       totalPods: 3,
       readyPods: 2,
-      infoReason: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
+      infoReason: InstalledPackageStatus_StatusReason.PENDING,
     },
     {
       title:
@@ -316,7 +316,7 @@ describe("isFetching", () => {
       deployed: true,
       totalPods: 3,
       readyPods: 2,
-      infoReason: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
+      infoReason: InstalledPackageStatus_StatusReason.PENDING,
     },
   ];
   tests.forEach(t => {

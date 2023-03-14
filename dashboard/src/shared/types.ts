@@ -1,6 +1,7 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { PartialMessage } from "@bufbuild/protobuf";
 import { JSONSchemaType, ErrorObject } from "ajv";
 import { RouterState } from "connected-react-router";
 import {
@@ -11,7 +12,7 @@ import {
   InstalledPackageSummary,
   PackageAppVersion,
   ResourceRef,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import {
   DockerCredentials,
   OpaqueCredentials,
@@ -19,11 +20,11 @@ import {
   SshCredentials,
   TlsCertKey,
   UsernamePassword,
-} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2";
-import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
-import { KappControllerPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
+import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2_pb";
+import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
+import { KappControllerPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller_pb";
 import { IOperatorsState } from "reducers/operators";
 import { Subscription } from "rxjs";
 import { IAuthState } from "../reducers/auth";
@@ -424,8 +425,13 @@ export interface IAjvValidateResult {
 
 // type for handling Helm installed packages, which includes the revision,
 // a field not present in other packages
-export interface CustomInstalledPackageDetail extends InstalledPackageDetail {
+export class CustomInstalledPackageDetail extends InstalledPackageDetail {
   revision: number;
+
+  constructor(revision: number, data?: PartialMessage<InstalledPackageDetail>) {
+    super(data);
+    this.revision = revision;
+  }
 }
 
 //  enum for the type of package repository storage

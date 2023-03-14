@@ -5,7 +5,7 @@ import { CdsIcon } from "@cds/react/icon";
 import {
   InstalledPackageReference,
   InstalledPackageStatus,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Link } from "react-router-dom";
 import * as url from "../../../../shared/url";
 import StatusAwareButton from "../StatusAwareButton/StatusAwareButton";

@@ -5,7 +5,7 @@ import {
   AvailablePackageDetail,
   InstalledPackageDetail,
   InstalledPackageStatus_StatusReason,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import PackageUpdateInfo from "./PackageUpdateInfo";
 import { getAppStatusLabel } from "shared/utils";
 
@@ -25,7 +25,7 @@ function PackageInfo({ installedPackageDetail, availablePackageDetail }: IPackag
                 Status: <strong>{getAppStatusLabel(installedPackageDetail.status.reason)}</strong>
               </div>
               {installedPackageDetail.status.reason !==
-                InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED && (
+                InstalledPackageStatus_StatusReason.INSTALLED && (
                 <div>{installedPackageDetail.status.userReason}</div>
               )}
             </section>

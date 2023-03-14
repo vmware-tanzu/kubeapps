@@ -1,8 +1,9 @@
 // Copyright 2019-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { PartialMessage } from "@bufbuild/protobuf";
 import { IClusterServiceVersionCRDResource, IKind } from "./types";
-import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 
 export function fromCRD(
   r: IClusterServiceVersionCRDResource,
@@ -11,11 +12,10 @@ export function fromCRD(
   namespace: string,
   ownerReference: any,
 ) {
-  const apiResourceRef = {
+  const ref = new ResourceRef(cluster, kind.plural, kind.namespaced, namespace, {
     apiVersion: kind.apiVersion,
     kind: r.kind,
-  } as APIResourceRef;
-  const ref = new ResourceRef(apiResourceRef, cluster, kind.plural, kind.namespaced, namespace);
+  });
   ref.filter = {
     metadata: { ownerReferences: [ownerReference] },
   };
@@ -29,32 +29,28 @@ export const keyForResourceRef = (r: APIResourceRef) =>
 
 // ResourceRef defines a reference to a namespaced Kubernetes API Object and
 // provides helpers to retrieve the resource URL
-class ResourceRef {
+class ResourceRef extends APIResourceRef {
   public cluster: string;
-  public apiVersion: string;
-  public kind: string;
   public plural: string;
   public namespaced: boolean;
-  public name: string;
-  public namespace: string;
   public filter: any;
 
   // Creates a new ResourceRef instance from an existing IResource. Provide
   // defaultNamespace to set if the IResource doesn't specify a namespace.
+  //constructor(data?: PartialMessage<ResourceRef>) {
   constructor(
-    apiRef: APIResourceRef,
     cluster: string,
     plural: string,
     namespaced: boolean,
     releaseNamespace: string,
+    data?: PartialMessage<APIResourceRef>,
   ) {
+    data = data || {};
+    data.namespace = namespaced ? data.namespace || releaseNamespace || "" : "";
+    super(data);
+    this.namespaced = namespaced;
     this.cluster = cluster;
     this.plural = plural;
-    this.apiVersion = apiRef.apiVersion;
-    this.kind = apiRef.kind;
-    this.name = apiRef.name;
-    this.namespace = namespaced ? apiRef.namespace || releaseNamespace || "" : "";
-    this.namespaced = namespaced;
     return this;
   }
 }

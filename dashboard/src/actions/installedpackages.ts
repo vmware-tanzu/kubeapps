@@ -11,7 +11,7 @@ import {
   InstalledPackageSummary,
   ReconciliationOptions,
   VersionReference,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { ThunkAction } from "redux-thunk";
 import PackagesService from "shared/PackagesService";
 import {

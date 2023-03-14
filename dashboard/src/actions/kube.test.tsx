@@ -4,8 +4,8 @@
 import {
   InstalledPackageReference,
   ResourceRef as APIResourceRef,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { GetResourcesResponse } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import { GetResourcesResponse } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources_pb";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { Kube } from "shared/Kube";

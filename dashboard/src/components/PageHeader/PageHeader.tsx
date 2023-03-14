@@ -6,7 +6,7 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { getPluginIcon, getPluginPackageName } from "shared/utils";
 import "./PageHeader.css";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 
 export interface IPageHeaderProps {
   title: string;

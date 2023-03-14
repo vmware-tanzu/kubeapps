@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { connect } from "react-redux";
-import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { IStoreState } from "shared/types";
 import AccessURLTable from "../../components/AppView/AccessURLTable";
 import { filterByResourceRefs } from "../helpers";

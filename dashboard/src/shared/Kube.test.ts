@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import MockAdapter from "axios-mock-adapter";
-import { CanIRequest, CanIResponse } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
+import {
+  CanIRequest,
+  CanIResponse,
+} from "gen/kubeappsapis/plugins/resources/v1alpha1/resources_pb";
 import { axiosWithAuth } from "./AxiosInstance";
 import { Kube } from "./Kube";
 import KubeappsGrpcClient from "./KubeappsGrpcClient";
@@ -152,7 +155,7 @@ describe("Kube", () => {
   describe("canI", () => {
     // Create a real client, but we'll stub out the function we're interested in.
     const client = new KubeappsGrpcClient().getResourcesServiceClientImpl();
-    let mockClientCanI: jest.MockedFunction<typeof client.CanI>;
+    let mockClientCanI: jest.MockedFunction<typeof client.canI>;
 
     beforeEach(() => {});
     afterEach(() => {
@@ -163,7 +166,7 @@ describe("Kube", () => {
       mockClientCanI = jest
         .fn()
         .mockImplementation(() => Promise.resolve({ allowed: true } as CanIResponse));
-      jest.spyOn(client, "CanI").mockImplementation(mockClientCanI);
+      jest.spyOn(client, "canI").mockImplementation(mockClientCanI);
       jest.spyOn(Kube, "resourcesServiceClient").mockImplementation(() => client);
 
       const allowed = await Kube.canI(clusterName, "v1", "namespaces", "create", "");
@@ -192,7 +195,7 @@ describe("Kube", () => {
             throw new Error("error");
           }),
       );
-      jest.spyOn(client, "CanI").mockImplementation(mockClientCanI);
+      jest.spyOn(client, "canI").mockImplementation(mockClientCanI);
       jest.spyOn(Kube, "resourcesServiceClient").mockImplementation(() => client);
 
       const allowed = await Kube.canI(clusterName, "v1", "secrets", "list", "");

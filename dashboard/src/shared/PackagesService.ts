@@ -6,7 +6,7 @@ import {
   GetAvailablePackageDetailResponse,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageVersionsResponse,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import { convertGrpcAuthError } from "./utils";
 
@@ -25,7 +25,7 @@ export default class PackagesService {
     query?: string,
   ): Promise<GetAvailablePackageSummariesResponse> {
     return await this.packagesServiceClient()
-      .GetAvailablePackageSummaries({
+      .getAvailablePackageSummaries({
         context: { cluster: cluster, namespace: namespace },
         filterOptions: {
           query: query,
@@ -42,7 +42,7 @@ export default class PackagesService {
     availablePackageReference?: AvailablePackageReference,
   ): Promise<GetAvailablePackageVersionsResponse> {
     return await this.packagesServiceClient()
-      .GetAvailablePackageVersions({
+      .getAvailablePackageVersions({
         availablePackageRef: availablePackageReference,
       })
       .catch((e: any) => {
@@ -55,7 +55,7 @@ export default class PackagesService {
     version?: string,
   ): Promise<GetAvailablePackageDetailResponse> {
     return await this.packagesServiceClient()
-      .GetAvailablePackageDetail({
+      .getAvailablePackageDetail({
         pkgVersion: version,
         availablePackageRef: availablePackageReference,
       })

@@ -3,27 +3,24 @@
 
 import ResourceRef, { fromCRD } from "./ResourceRef";
 import { IClusterServiceVersionCRDResource } from "./types";
-import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 const clusterName = "cluster-name";
 
 describe("ResourceRef", () => {
   describe("constructor", () => {
     it("returns a ResourceRef with the correct details", () => {
-      const apiRef = {
+      const ref = new ResourceRef(clusterName, "deployments", true, "releaseNamespace", {
         apiVersion: "apps/v1",
         kind: "Deployment",
         name: "foo",
         namespace: "bar",
-      } as APIResourceRef;
-
-      const ref = new ResourceRef(apiRef, clusterName, "deployments", true, "releaseNamespace");
+      });
       expect(ref).toBeInstanceOf(ResourceRef);
       expect(ref).toEqual({
         cluster: clusterName,
-        apiVersion: apiRef.apiVersion,
-        kind: apiRef.kind,
-        name: apiRef.name,
+        apiVersion: "apps/v1",
+        kind: "Deployment",
+        name: "foo",
         namespace: "bar",
         namespaced: true,
         plural: "deployments",
@@ -31,13 +28,11 @@ describe("ResourceRef", () => {
     });
 
     it("sets a default namespace if not in the resource", () => {
-      const r = {
+      const ref = new ResourceRef(clusterName, "deployments", true, "default", {
         apiVersion: "apps/v1",
         kind: "Deployment",
         name: "foo",
-      } as APIResourceRef;
-
-      const ref = new ResourceRef(r, clusterName, "deployments", true, "default");
+      });
       expect(ref.namespace).toBe("default");
     });
 
@@ -62,7 +57,7 @@ describe("ResourceRef", () => {
         expect(res).toMatchObject({
           apiVersion: "apps/v1",
           kind: "Deployment",
-          name: undefined,
+          name: "",
           namespace: "default",
           filter: { metadata: { ownerReferences: [ownerRef] } },
         });
@@ -88,7 +83,7 @@ describe("ResourceRef", () => {
         expect(res).toMatchObject({
           apiVersion: "rbac.authorization.k8s.io/v1",
           kind: "ClusterRole",
-          name: undefined,
+          name: "",
           namespace: "",
           filter: { metadata: { ownerReferences: [ownerRef] } },
         });

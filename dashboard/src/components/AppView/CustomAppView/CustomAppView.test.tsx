@@ -4,8 +4,8 @@
 import {
   InstalledPackageDetail,
   AvailablePackageDetail,
-  ResourceRef,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import ResourceRef from "shared/ResourceRef";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { IStoreState } from "shared/types";
 import CustomAppView from ".";
@@ -25,15 +25,12 @@ const defaultProps = {
   resourceRefs: {
     ingresses: [] as ResourceRef[],
     deployments: [
-      {
-        cluster: "default",
+      new ResourceRef("default", "deployments", true, "demo-namespace", {
         apiVersion: "apps/v1",
         kind: "Deployment",
-        plural: "deployments",
-        namespaced: true,
         name: "ssh-server-example",
         namespace: "demo-namespace",
-      } as ResourceRef,
+      }),
     ] as ResourceRef[],
     statefulsets: [] as ResourceRef[],
     daemonsets: [] as ResourceRef[],

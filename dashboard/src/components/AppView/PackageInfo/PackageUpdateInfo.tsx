@@ -3,7 +3,7 @@
 
 import { CdsIcon } from "@cds/react/icon";
 import Alert from "components/js/Alert";
-import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Link } from "react-router-dom";
 import { app as appURL } from "shared/url";
 interface IPackageUpdateInfoProps {

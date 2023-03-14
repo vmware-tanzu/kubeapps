@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { LocationChangeAction, LOCATION_CHANGE } from "connected-react-router";
-import { InstalledPackageDetailCustomDataHelm } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
-import { IInstalledPackageState } from "shared/types";
+import { InstalledPackageDetailCustomDataHelm } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
+import { CustomInstalledPackageDetail, IInstalledPackageState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { InstalledPackagesAction } from "../actions/installedpackages";
@@ -33,9 +33,8 @@ const installedPackagesReducer = (
     case getType(actions.installedpackages.selectInstalledPackage): {
       let revision: number;
       try {
-        // TODO(agamez): verify why the field is not automatically decoded.
-        revision = InstalledPackageDetailCustomDataHelm.decode(
-          action.payload.pkg?.customDetail?.value as unknown as Uint8Array,
+        revision = InstalledPackageDetailCustomDataHelm.fromBinary(
+          action.payload.pkg!.customDetail!.value,
         ).releaseRevision;
       } catch (error) {
         // If the decoding fails, ignore it and just fall back to "no revisions"
@@ -48,7 +47,7 @@ const installedPackagesReducer = (
           ...action.payload.pkg,
           // TODO(agamez): remove it once we have a core mechanism for rolling back
           revision: revision,
-        },
+        } as CustomInstalledPackageDetail,
         selectedDetails: action.payload.details,
       };
     }
@@ -60,7 +59,7 @@ const installedPackagesReducer = (
             ...state.selected!,
             revision: state.selected!.revision,
             status: action.payload,
-          },
+          } as CustomInstalledPackageDetail,
         };
       }
       return state;

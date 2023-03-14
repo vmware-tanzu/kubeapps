@@ -8,7 +8,7 @@ import {
   InstalledPackageDetail,
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { flatten, get } from "lodash";
 import { useEffect, useState } from "react";
 import { PieChart } from "react-minimal-pie-chart";
@@ -46,12 +46,11 @@ function flattenItemList(items: Array<IKubeItem<IResource | IK8sList<IResource, 
 
 function codeToString(status: InstalledPackageStatus | null | undefined) {
   const codes = {
-    [InstalledPackageStatus_StatusReason.STATUS_REASON_UNSPECIFIED]: "Unknown",
-    [InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED]: "Installed",
-    [InstalledPackageStatus_StatusReason.STATUS_REASON_UNINSTALLED]: "Deleted",
-    [InstalledPackageStatus_StatusReason.STATUS_REASON_FAILED]: "Failed",
-    [InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING]: "Pending",
-    [InstalledPackageStatus_StatusReason.UNRECOGNIZED]: "Unknown",
+    [InstalledPackageStatus_StatusReason.UNSPECIFIED]: "Unknown",
+    [InstalledPackageStatus_StatusReason.INSTALLED]: "Installed",
+    [InstalledPackageStatus_StatusReason.UNINSTALLED]: "Deleted",
+    [InstalledPackageStatus_StatusReason.FAILED]: "Failed",
+    [InstalledPackageStatus_StatusReason.PENDING]: "Pending",
   };
   let msg = codes[0];
   if (status && status.reason) {
@@ -125,7 +124,7 @@ export default function ApplicationStatus({
       </div>
     );
   }
-  if (info?.status?.reason === InstalledPackageStatus_StatusReason.STATUS_REASON_UNINSTALLED) {
+  if (info?.status?.reason === InstalledPackageStatus_StatusReason.UNINSTALLED) {
     return (
       <div className="center">
         <div className="color-icon-danger">
@@ -140,8 +139,8 @@ export default function ApplicationStatus({
     const packageStatus = codeToString(info.status);
     if (
       ![
-        InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
-        InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
+        InstalledPackageStatus_StatusReason.INSTALLED,
+        InstalledPackageStatus_StatusReason.PENDING,
       ].includes(info?.status?.reason)
     ) {
       return (

@@ -3,7 +3,7 @@
 
 import Tabs from "components/Tabs";
 import ResourceTable from "components/AppView/ResourceTable";
-import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 
 interface IAppViewResourceRefs {
   deployments: ResourceRef[];

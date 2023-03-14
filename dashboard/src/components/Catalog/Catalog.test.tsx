@@ -7,12 +7,17 @@ import FilterGroup from "components/FilterGroup/FilterGroup";
 import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
-import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  AvailablePackageReference,
+  AvailablePackageSummary,
+  Context,
+  PackageAppVersion,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import {
   PackageRepositoryDetail,
   PackageRepositorySummary,
-} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { createMemoryHistory } from "history";
 import React from "react";
 import { act } from "react-dom/test-utils";
@@ -48,41 +53,41 @@ const defaultProps = {
   namespace: "kubeapps",
   kubeappsNamespace: "kubeapps",
 };
-const availablePkgSummary1: AvailablePackageSummary = {
+const availablePkgSummary1 = new AvailablePackageSummary({
   name: "foo",
   categories: [""],
   displayName: "foo",
   iconUrl: "",
-  latestVersion: { appVersion: "v1.0.0", pkgVersion: "" },
+  latestVersion: new PackageAppVersion({ appVersion: "v1.0.0", pkgVersion: "" }),
   shortDescription: "",
-  availablePackageRef: {
+  availablePackageRef: new AvailablePackageReference({
     identifier: "foo/foo",
     context: { cluster: "", namespace: "package-namespace" } as Context,
     plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-  },
-};
-const availablePkgSummary2: AvailablePackageSummary = {
+  }),
+});
+const availablePkgSummary2 = new AvailablePackageSummary({
   name: "bar",
   categories: ["Database"],
   displayName: "bar",
   iconUrl: "",
-  latestVersion: { appVersion: "v2.0.0", pkgVersion: "" },
+  latestVersion: new PackageAppVersion({ appVersion: "v2.0.0", pkgVersion: "" }),
   shortDescription: "",
-  availablePackageRef: {
+  availablePackageRef: new AvailablePackageReference({
     identifier: "bar/bar",
     context: { cluster: "", namespace: "package-namespace" } as Context,
     plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-  },
-};
+  }),
+});
 
-const availablePkgSummary3: AvailablePackageSummary = {
+const availablePkgSummary3 = new AvailablePackageSummary({
   ...availablePkgSummary2,
-  availablePackageRef: {
+  availablePackageRef: new AvailablePackageReference({
     identifier: "bar/bar2",
     context: { cluster: "", namespace: "package-namespace" } as Context,
     plugin: { name: PluginNames.PACKAGES_KAPP, version: "0.0.1" } as Plugin,
-  },
-};
+  }),
+});
 
 const csv = {
   metadata: {

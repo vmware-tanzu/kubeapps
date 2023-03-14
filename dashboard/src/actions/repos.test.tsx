@@ -5,21 +5,31 @@ import {
   AvailablePackageReference,
   Context,
   InstalledPackageDetail,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import {
   AddPackageRepositoryResponse,
   DeletePackageRepositoryResponse,
+  DockerCredentials,
   GetPackageRepositoryDetailResponse,
   GetPackageRepositorySummariesResponse,
+  OpaqueCredentials,
   PackageRepositoriesPermissions,
   PackageRepositoryAuth_PackageRepositoryAuthType,
   PackageRepositoryDetail,
   PackageRepositoryReference,
   PackageRepositorySummary,
+  SecretKeyReference,
+  SshCredentials,
+  TlsCertKey,
   UpdatePackageRepositoryResponse,
-} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+  UsernamePassword,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
+import {
+  HelmPackageRepositoryCustomDetail,
+  ImagesPullSecret,
+  RepositoryFilterRule,
+} from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
 import context from "jest-plugin-context";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
@@ -135,23 +145,25 @@ interface ITestCase {
 }
 
 const pkgRepoFormData = {
+  isUserManaged: false,
   plugin: plugin,
   authHeader: "",
-  authMethod:
-    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
-  basicAuth: {
+  authMethod: PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED,
+  basicAuth: new UsernamePassword({
     password: "",
     username: "",
-  },
+  }),
   customCA: "",
-  customDetail: {
+  customDetail: new HelmPackageRepositoryCustomDetail({
     imagesPullSecret: {
-      secretRef: "repo-1",
-      credentials: { server: "", username: "", password: "", email: "" },
+      dockerRegistryCredentialOneOf: {
+        case: "secretRef",
+        value: "repo-1",
+      },
     },
     ociRepositories: [],
     performValidation: false,
-    filterRules: [],
+    filterRule: new RepositoryFilterRule(),
     tolerations: [],
     nodeSelector: {},
     securityContext: {
@@ -163,14 +175,14 @@ const pkgRepoFormData = {
       httpsProxy: "",
       noProxy: "",
     },
-  } as HelmPackageRepositoryCustomDetail,
+  }),
   description: "",
-  dockerRegCreds: {
+  dockerRegCreds: new DockerCredentials({
     password: "",
     username: "",
     email: "",
     server: "",
-  },
+  }),
   interval: "",
   name: "",
   passCredentials: false,
@@ -179,17 +191,17 @@ const pkgRepoFormData = {
   skipTLS: false,
   type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM,
   url: "",
-  opaqueCreds: {
+  opaqueCreds: new OpaqueCredentials({
     data: {},
-  },
-  sshCreds: {
+  }),
+  sshCreds: new SshCredentials({
     knownHosts: "",
     privateKey: "",
-  },
-  tlsCertKey: {
+  }),
+  tlsCertKey: new TlsCertKey({
     cert: "",
     key: "",
-  },
+  }),
   namespace: "my-namespace",
   isNamespaceScoped: true,
 } as IPkgRepoFormData;
@@ -606,10 +618,12 @@ describe("addRepo", () => {
         ...pkgRepoFormData,
         customDetail: {
           ...pkgRepoFormData.customDetail,
-          imagesPullSecret: {
-            secretRef: "repo-1",
-            credentials: { server: "", username: "", password: "", email: "" },
-          },
+          imagesPullSecret: new ImagesPullSecret({
+            dockerRegistryCredentialOneOf: {
+              case: "secretRef",
+              value: "repo-1",
+            },
+          }),
         },
       }),
     );
@@ -619,8 +633,10 @@ describe("addRepo", () => {
       customDetail: {
         ...pkgRepoFormData.customDetail,
         imagesPullSecret: {
-          secretRef: "repo-1",
-          credentials: { server: "", username: "", password: "", email: "" },
+          dockerRegistryCredentialOneOf: {
+            case: "secretRef",
+            value: "repo-1",
+          },
         },
       },
     });
@@ -642,12 +658,15 @@ describe("addRepo", () => {
 
 describe("updateRepo", () => {
   it("updates a repo with an auth header", async () => {
-    const pkgRepoDetail = {
+    const pkgRepoDetail = new PackageRepositoryDetail({
       ...packageRepositoryDetail,
       auth: {
-        header: "foo",
+        packageRepoAuthOneOf: {
+          case: "header",
+          value: "foo",
+        },
       },
-    } as PackageRepositoryDetail;
+    });
 
     PackageRepositoriesService.updatePackageRepository = jest.fn().mockReturnValue({
       packageRepoRef: pkgRepoDetail.packageRepoRef,
@@ -680,14 +699,19 @@ describe("updateRepo", () => {
   });
 
   it("updates a repo with an customCA", async () => {
-    const pkgRepoDetail = {
+    const pkgRepoDetail = new PackageRepositoryDetail({
       ...packageRepositoryDetail,
       tlsConfig: {
-        secretRef: { name: "pkgrepo-repo-abc", key: "data" },
-        certAuthority: "",
+        packageRepoTlsConfigOneOf: {
+          case: "secretRef",
+          value: new SecretKeyReference({
+            name: "pkgrepo-repo-abc",
+            key: "data",
+          }),
+        },
         insecureSkipVerify: false,
       },
-    } as PackageRepositoryDetail;
+    });
     PackageRepositoriesService.updatePackageRepository = jest.fn().mockReturnValue({
       packageRepoRef: packageRepositoryDetail.packageRepoRef,
     } as UpdatePackageRepositoryResponse);
@@ -843,7 +867,7 @@ describe("findPackageInRepo", () => {
 
   it("fetches repos permissions", async () => {
     const permissions = [
-      {
+      new PackageRepositoriesPermissions({
         plugin: plugin,
         global: {
           create: true,
@@ -857,7 +881,7 @@ describe("findPackageInRepo", () => {
           list: true,
           update: true,
         },
-      },
+      }),
     ] as PackageRepositoriesPermissions[];
     PackageRepositoriesService.getRepositoriesPermissions = jest.fn().mockReturnValue(permissions);
 

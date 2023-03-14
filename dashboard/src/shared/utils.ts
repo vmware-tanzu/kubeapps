@@ -1,13 +1,11 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { grpc } from "@improbable-eng/grpc-web";
-import {
-  InstalledPackageStatus_StatusReason,
-  installedPackageStatus_StatusReasonToJSON,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { PackageRepositoryAuth_PackageRepositoryAuthType } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { Code } from "@bufbuild/connect";
+import { proto3 } from "@bufbuild/protobuf";
+import { InstalledPackageStatus_StatusReason } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import { PackageRepositoryAuth_PackageRepositoryAuthType } from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import carvelIcon from "icons/carvel.svg";
 import fluxIcon from "icons/flux.svg";
 import helmIcon from "icons/helm.svg";
@@ -233,12 +231,12 @@ export function getPluginsSupportingRollback(): string[] {
 }
 
 export function getAppStatusLabel(
-  statusReason: InstalledPackageStatus_StatusReason = InstalledPackageStatus_StatusReason.STATUS_REASON_UNSPECIFIED,
+  statusReason: InstalledPackageStatus_StatusReason = InstalledPackageStatus_StatusReason.UNSPECIFIED,
 ): string {
-  // The JSON versions of the reasons are forced to follow the standard
-  // pattern STATUS_REASON_<reason> by buf.
-  const jsonReason = installedPackageStatus_StatusReasonToJSON(statusReason);
-  return jsonReason.replace("STATUS_REASON_", "").toLowerCase();
+  const statusReasonName = proto3
+    .getEnumType(InstalledPackageStatus_StatusReason)
+    .findNumber(statusReason)!.name;
+  return statusReasonName.toString().replace("STATUS_REASON_", "").toLowerCase();
 }
 
 export function getSupportedPackageRepositoryAuthTypes(
@@ -248,27 +246,27 @@ export function getSupportedPackageRepositoryAuthTypes(
   switch (plugin.name) {
     case PluginNames.PACKAGES_HELM:
       return [
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+        PackageRepositoryAuth_PackageRepositoryAuthType.AUTHORIZATION_HEADER,
+        PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+        PackageRepositoryAuth_PackageRepositoryAuthType.BEARER,
+        PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON,
       ];
     case PluginNames.PACKAGES_FLUX:
       switch (type) {
         case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM:
           return [
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+            PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.TLS,
           ];
         case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI:
           return [
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+            PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON,
           ];
         default:
           return [
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+            PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.TLS,
           ];
       }
     case PluginNames.PACKAGES_KAPP:
@@ -280,27 +278,25 @@ export function getSupportedPackageRepositoryAuthTypes(
         // "Secret with auth details. allowed keys: ssh-privatekey, ssh-knownhosts, username, password"
         case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT:
           return [
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.SSH,
           ];
         // "Secret may include one or more keys: username, password"
         case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP:
-          return [
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-          ];
+          return [PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH];
         // "Secret may include one or more keys: username, password, token"
         case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE:
           return [
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+            PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.BEARER,
+            PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON,
           ];
         // "Secret may include one or more keys: username, password, token"
         case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE:
           return [
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+            PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.BEARER,
+            PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON,
           ];
         // inline is not supported for write
         case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE:
@@ -357,11 +353,11 @@ export function getGlobalNamespaceOrNamespace(
 // See https://github.com/googleapis/googleapis/blob/master/google/rpc/code.proto
 // See https://github.com/grpc-ecosystem/grpc-gateway/blob/master/runtime/errors.go
 export function convertGrpcAuthError(e: any): CustomError | any {
-  const msg = e?.metadata?.headersMap?.["grpc-message"].toString();
+  const msg = (e?.metadata?.get("grpc-message") || "").toString();
   switch (e?.code) {
-    case grpc.Code.Unauthenticated:
+    case Code.Unauthenticated:
       return new UnauthorizedNetworkError(msg);
-    case grpc.Code.FailedPrecondition:
+    case Code.FailedPrecondition:
       // Use `FAILED_PRECONDITION` if the client should not retry until the system state has been explicitly fixed.
       //TODO(agamez): this code shouldn't be returned by the API, but it is
       if (["credentials", "unauthorized"].some(p => msg?.toLowerCase()?.includes(p))) {
@@ -369,43 +365,41 @@ export function convertGrpcAuthError(e: any): CustomError | any {
       } else {
         return new BadRequestNetworkError(msg);
       }
-    case grpc.Code.Internal:
+    case Code.Internal:
       //TODO(agamez): this code shouldn't be returned by the API, but it is
       if (["credentials", "unauthorized"].some(p => msg?.toLowerCase()?.includes(p))) {
         return new UnauthorizedNetworkError(msg);
       } else {
         return new InternalServerNetworkError(msg);
       }
-    case grpc.Code.PermissionDenied:
+    case Code.PermissionDenied:
       return new ForbiddenNetworkError(msg);
-    case grpc.Code.NotFound:
+    case Code.NotFound:
       return new NotFoundNetworkError(msg);
-    case grpc.Code.AlreadyExists:
+    case Code.AlreadyExists:
       return new ConflictNetworkError(msg);
-    case grpc.Code.InvalidArgument:
+    case Code.InvalidArgument:
       return new BadRequestNetworkError(msg);
-    case grpc.Code.DeadlineExceeded:
+    case Code.DeadlineExceeded:
       return new GatewayTimeoutNetworkError(msg);
-    case grpc.Code.ResourceExhausted:
+    case Code.ResourceExhausted:
       return new TooManyRequestsNetworkError(msg);
-    case grpc.Code.Aborted:
+    case Code.Aborted:
       //  Use `ABORTED` if the client should retry at a higher level
       return new ConflictNetworkError(msg);
-    case grpc.Code.Unimplemented:
+    case Code.Unimplemented:
       return new NotImplementedNetworkError(msg);
-    case grpc.Code.OutOfRange:
+    case Code.OutOfRange:
       return new BadRequestNetworkError(msg);
-    case grpc.Code.Unavailable:
+    case Code.Unavailable:
       // Use `UNAVAILABLE` if the client can retry just the failing call.
       return new ServerUnavailableNetworkError(msg);
-    case grpc.Code.DataLoss:
+    case Code.DataLoss:
       return new InternalServerNetworkError(msg);
-    case grpc.Code.Unknown:
+    case Code.Unknown:
       return new InternalServerNetworkError(msg);
-    case grpc.Code.Canceled:
+    case Code.Canceled:
       return new RequestTimeoutNetworkError(msg);
-    case grpc.Code.OK:
-      return undefined;
     default:
       return e;
   }

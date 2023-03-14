@@ -4,11 +4,11 @@
 import {
   InstalledPackageReference,
   ResourceRef,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import {
   GetServiceAccountNamesRequest,
   GetServiceAccountNamesResponse,
-} from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
+} from "gen/kubeappsapis/plugins/resources/v1alpha1/resources_pb";
 import * as url from "shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
@@ -28,7 +28,7 @@ export class Kube {
     refs: ResourceRef[],
     watch: boolean,
   ) {
-    return this.resourcesServiceClient().GetResources({
+    return this.resourcesServiceClient().getResources({
       installedPackageRef: pkgRef,
       resourceRefs: refs,
       watch,
@@ -82,7 +82,7 @@ export class Kube {
         return false;
       }
       // TODO(rcastelblanq) Migrate the CanI endpoint to a proper RBAC/Auth plugin
-      const response = await this.resourcesServiceClient().CanI({
+      const response = await this.resourcesServiceClient().canI({
         context: { cluster, namespace },
         group: group,
         resource: resource,
@@ -99,7 +99,7 @@ export class Kube {
     namespace: string,
   ): Promise<GetServiceAccountNamesResponse> {
     return await this.resourcesServiceClient()
-      .GetServiceAccountNames({
+      .getServiceAccountNames({
         context: { cluster, namespace },
       } as GetServiceAccountNamesRequest)
       .catch((e: any) => {

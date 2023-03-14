@@ -17,8 +17,8 @@ import {
   Maintainer,
   PackageAppVersion,
   VersionReference,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { cloneDeep } from "lodash";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
@@ -35,10 +35,10 @@ import {
 import * as url from "shared/url";
 import UpgradeForm from "./UpgradeForm";
 
-const testVersion: PackageAppVersion = {
+const testVersion = new PackageAppVersion({
   pkgVersion: "1.2.3",
   appVersion: "4.5.6",
-};
+});
 
 const schema = { properties: { foo: { type: "string" } } };
 
@@ -86,19 +86,18 @@ const installedPkgDetail = {
     plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   } as AvailablePackageReference,
   currentVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
-  installedPackageRef: {
+  installedPackageRef: new InstalledPackageReference({
     identifier: "stable/bar",
-    pkgVersion: "1.0.0",
     context: { cluster: defaultProps.cluster, namespace: defaultProps.repoNamespace } as Context,
     plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-  } as InstalledPackageReference,
+  }),
   latestMatchingVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
   latestVersion: { appVersion: "10.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
   pkgVersionReference: { version: "1" } as VersionReference,
   reconciliationOptions: {},
   status: {
     ready: true,
-    reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+    reason: InstalledPackageStatus_StatusReason.INSTALLED,
     userReason: "deployed",
   } as InstalledPackageStatus,
 } as CustomInstalledPackageDetail;
@@ -721,8 +720,8 @@ describe("when receiving new props", () => {
           ...state.apps,
           selected: {
             ...state.apps.selected,
-            values: t.deployedValues,
-          },
+            valuesApplied: t.deployedValues,
+          } as CustomInstalledPackageDetail,
         } as IInstalledPackageState,
         packages: {
           selected: {

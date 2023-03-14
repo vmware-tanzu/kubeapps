@@ -12,7 +12,7 @@ export default class Namespace {
 
   public static async list(cluster: string) {
     const { namespaceNames } = await this.resourcesServiceClient()
-      .GetNamespaceNames({ cluster: cluster })
+      .getNamespaceNames({ cluster: cluster })
       .catch((e: any) => {
         throw convertGrpcAuthError(e);
       });
@@ -25,7 +25,7 @@ export default class Namespace {
     labels: { [key: string]: string },
   ) {
     await this.resourcesServiceClient()
-      .CreateNamespace({
+      .createNamespace({
         context: {
           cluster,
           namespace,
@@ -39,7 +39,7 @@ export default class Namespace {
 
   public static async exists(cluster: string, namespace: string) {
     const { exists } = await this.resourcesServiceClient()
-      .CheckNamespaceExists({
+      .checkNamespaceExists({
         context: {
           cluster,
           namespace,

@@ -6,7 +6,7 @@ import Table from "components/js/Table";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
-import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { IKubeItem, IResource, ISecret, IStoreState } from "shared/types";
 import { DaemonSetColumns } from "./ResourceData/DaemonSet";
 import { DeploymentColumns } from "./ResourceData/Deployment";

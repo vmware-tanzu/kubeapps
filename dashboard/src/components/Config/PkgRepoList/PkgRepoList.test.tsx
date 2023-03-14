@@ -9,13 +9,13 @@ import Tooltip from "components/js/Tooltip";
 import {
   PackageRepositoriesPermissions,
   PackageRepositorySummary,
-} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { Link } from "react-router-dom";
 import { IPackageRepositoryState } from "reducers/repos";
 import { Kube } from "shared/Kube";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { IStoreState, PluginNames } from "shared/types";
 import { PkgRepoControl } from "./PkgRepoControl";
@@ -78,12 +78,12 @@ it("fetches repos from all namespaces", () => {
       ...initialState,
       repos: {
         reposPermissions: [
-          {
+          new PackageRepositoriesPermissions({
             global: {
               list: true,
             },
             namespace: {},
-          },
+          }),
         ] as PackageRepositoriesPermissions[],
       },
     } as Partial<IStoreState>),
@@ -215,7 +215,7 @@ describe("global and namespaced repositories", () => {
 
   it("shows the global repositories with the buttons enabled based on permissions", async () => {
     const permissions = [
-      {
+      new PackageRepositoriesPermissions({
         plugin: plugin,
         global: {
           create: true,
@@ -229,7 +229,7 @@ describe("global and namespaced repositories", () => {
           list: true,
           update: true,
         },
-      },
+      }),
     ] as PackageRepositoriesPermissions[];
 
     let wrapper: any;
@@ -315,12 +315,12 @@ describe("global and namespaced repositories", () => {
         repos: {
           reposSummaries: [namespacedRepo],
           reposPermissions: [
-            {
+            new PackageRepositoriesPermissions({
               global: {
                 list: true,
               },
               namespace: {},
-            },
+            }),
           ] as PackageRepositoriesPermissions[],
         } as IPackageRepositoryState,
       } as Partial<IStoreState>),
@@ -339,12 +339,12 @@ describe("global and namespaced repositories", () => {
         repos: {
           reposSummaries: [namespacedRepo],
           reposPermissions: [
-            {
+            new PackageRepositoriesPermissions({
               global: {
                 list: true,
               },
               namespace: {},
-            },
+            }),
           ] as PackageRepositoriesPermissions[],
         } as IPackageRepositoryState,
       } as Partial<IStoreState>),

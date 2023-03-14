@@ -7,8 +7,8 @@ import {
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageVersionsResponse,
   PackageAppVersion,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import PackagesService from "./PackagesService";
 
@@ -107,7 +107,7 @@ describe("App", () => {
         // Create a real client, but we'll stub out the function we're interested in.
         const mockClient = new KubeappsGrpcClient().getPackagesServiceClientImpl();
         jest
-          .spyOn(mockClient, "GetAvailablePackageSummaries")
+          .spyOn(mockClient, "getAvailablePackageSummaries")
           .mockImplementation(mockClientGetAvailablePackageSummaries);
         jest.spyOn(PackagesService, "packagesServiceClient").mockImplementation(() => mockClient);
         const availablePackageSummaries = await PackagesService.getAvailablePackageSummaries(

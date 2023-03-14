@@ -1,19 +1,30 @@
 // Copyright 2020-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { Any } from "@bufbuild/protobuf";
+// import { Any } from "gen/google/protobuf/any";
 import { CdsButton } from "@cds/react/button";
 import { waitFor } from "@testing-library/react";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import {
+  DockerCredentials,
+  OpaqueCredentials,
   PackageRepositoryAuth_PackageRepositoryAuthType,
   PackageRepositoryDetail,
   PackageRepositoryReference,
   PackageRepositorySummary,
-} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2";
-import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+  PackageRepositoryTlsConfig,
+  SshCredentials,
+  TlsCertKey,
+  UsernamePassword,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
+import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2_pb";
+import {
+  HelmPackageRepositoryCustomDetail,
+  RepositoryFilterRule,
+} from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { IPackageRepositoryState } from "reducers/repos";
@@ -27,7 +38,10 @@ const defaultProps = {
   kubeappsNamespace: "kubeapps",
   helmGlobalNamespace: "kubeapps",
   carvelGlobalNamespace: "carvel-global",
-  packageRepoRef: { identifier: "test", context: { cluster: "default", namespace: "default" } },
+  packageRepoRef: new PackageRepositoryReference({
+    identifier: "test",
+    context: { cluster: "default", namespace: "default" },
+  }),
 } as IPkgRepoFormProps;
 
 const defaultState = {
@@ -42,30 +56,27 @@ const defaultState = {
 const pkgRepoFormData = {
   plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" } as Plugin,
   authHeader: "",
-  authMethod:
-    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+  authMethod: PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED,
   isUserManaged: false,
-  basicAuth: {
+  basicAuth: new UsernamePassword({
     password: "",
     username: "",
-  },
+  }),
   customCA: "",
   customDetail: {
-    imagesPullSecret: {
-      secretRef: "",
-      credentials: undefined,
-    },
     ociRepositories: [],
     performValidation: true,
     filterRules: undefined,
+    nodeSelector: {},
+    tolerations: [],
   },
   description: "",
-  dockerRegCreds: {
+  dockerRegCreds: new DockerCredentials({
     password: "",
     username: "",
     email: "",
     server: "",
-  },
+  }),
   interval: "10m",
   name: "",
   passCredentials: false,
@@ -74,17 +85,17 @@ const pkgRepoFormData = {
   skipTLS: false,
   type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM,
   url: "",
-  opaqueCreds: {
+  opaqueCreds: new OpaqueCredentials({
     data: {},
-  },
-  sshCreds: {
+  }),
+  sshCreds: new SshCredentials({
     knownHosts: "",
     privateKey: "",
-  },
-  tlsCertKey: {
+  }),
+  tlsCertKey: new TlsCertKey({
     cert: "",
     key: "",
-  },
+  }),
   namespace: "default",
   isNamespaceScoped: true,
 } as IPkgRepoFormData;
@@ -278,12 +289,10 @@ it("should call the install method with OCI information", async () => {
     plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
     customDetail: {
       ociRepositories: ["apache", "jenkins"],
-      imagesPullSecret: {
-        secretRef: "",
-        credentials: undefined,
-      },
       filterRule: undefined,
       performValidation: true,
+      nodeSelector: {},
+      tolerations: [],
     },
     interval: "10m",
     description: undefined,
@@ -317,12 +326,10 @@ it("should call the install skipping TLS verification", async () => {
     plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
     customDetail: {
       ociRepositories: [],
-      imagesPullSecret: {
-        secretRef: "",
-        credentials: undefined,
-      },
       filterRule: undefined,
       performValidation: true,
+      nodeSelector: {},
+      tolerations: [],
     },
     skipTLS: true,
     interval: "10m",
@@ -357,12 +364,10 @@ it("should call the install passing credentials", async () => {
     plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
     customDetail: {
       ociRepositories: [],
-      imagesPullSecret: {
-        secretRef: "",
-        credentials: undefined,
-      },
       filterRule: undefined,
       performValidation: true,
+      nodeSelector: {},
+      tolerations: [],
     },
     passCredentials: true,
     interval: "10m",
@@ -427,15 +432,13 @@ describe("when using a filter", () => {
       plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
       customDetail: {
         ociRepositories: [],
-        imagesPullSecret: {
-          secretRef: "",
-          credentials: undefined,
-        },
         filterRule: {
           jq: ".name == $var0 or .name == $var1",
           variables: { $var0: "nginx", $var1: "wordpress" },
         },
         performValidation: true,
+        nodeSelector: {},
+        tolerations: [],
       },
       interval: "10m",
       description: undefined,
@@ -471,15 +474,13 @@ describe("when using a filter", () => {
       plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
       customDetail: {
         ociRepositories: [],
-        imagesPullSecret: {
-          secretRef: "",
-          credentials: undefined,
-        },
+        nodeSelector: {},
         filterRule: {
           jq: ".name | test($var) | not",
           variables: { $var: "nginx" },
         },
         performValidation: true,
+        tolerations: [],
       },
       interval: "10m",
       description: undefined,
@@ -519,12 +520,9 @@ describe("when using a filter", () => {
       plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
       customDetail: {
         ociRepositories: ["apache", "jenkins"],
-        imagesPullSecret: {
-          secretRef: "",
-          credentials: undefined,
-        },
-        filterRule: undefined,
+        nodeSelector: {},
         performValidation: true,
+        tolerations: [],
       },
       interval: "10m",
       description: undefined,
@@ -556,12 +554,10 @@ it("should call the install method with a description", async () => {
     url: "https://helm.repo",
     customDetail: {
       ociRepositories: [],
-      imagesPullSecret: {
-        secretRef: "",
-        credentials: undefined,
-      },
+      nodeSelector: {},
       filterRule: undefined,
       performValidation: true,
+      tolerations: [],
     },
     interval: "10m",
     description: "description test",
@@ -642,16 +638,18 @@ describe("when the repository info is already populated", () => {
   });
 
   it("should parse the existing filter (simple)", async () => {
-    const testRepo = {
+    const testRepo = new PackageRepositoryDetail({
       ...repo,
       type: "helm",
-      customDetail: {
-        filterRule: {
-          jq: ".name == $var0 or .name == $var1",
-          variables: { $var0: "nginx", $var1: "wordpress" },
-        },
-      } as Partial<HelmPackageRepositoryCustomDetail>,
-    } as PackageRepositoryDetail;
+      customDetail: new Any({
+        value: new HelmPackageRepositoryCustomDetail({
+          filterRule: {
+            jq: ".name == $var0 or .name == $var1",
+            variables: { $var0: "nginx", $var1: "wordpress" },
+          },
+        }).toBinary(),
+      }),
+    });
 
     let wrapper: any;
     await act(async () => {
@@ -674,13 +672,18 @@ describe("when the repository info is already populated", () => {
   });
 
   it("should parse the existing filter (negated regex)", async () => {
-    const testRepo = {
+    const testRepo = new PackageRepositoryDetail({
       ...repo,
       type: "helm",
-      customDetail: {
-        filterRule: { jq: ".name | test($var) | not", variables: { $var: "nginx" } },
-      } as Partial<HelmPackageRepositoryCustomDetail>,
-    } as PackageRepositoryDetail;
+      customDetail: new Any({
+        value: new HelmPackageRepositoryCustomDetail({
+          filterRule: new RepositoryFilterRule({
+            jq: ".name | test($var) | not",
+            variables: { $var: "nginx" },
+          }),
+        }).toBinary(),
+      }),
+    });
 
     let wrapper: any;
     await act(async () => {
@@ -763,10 +766,15 @@ describe("when the repository info is already populated", () => {
 
   describe("when there is a kubeapps-handled secret associated to the repo", () => {
     it("should parse the existing CA cert", async () => {
-      const testRepo = {
+      const testRepo = new PackageRepositoryDetail({
         ...repo,
-        tlsConfig: { certAuthority: "fooCA" },
-      } as PackageRepositoryDetail;
+        tlsConfig: new PackageRepositoryTlsConfig({
+          packageRepoTlsConfigOneOf: {
+            case: "certAuthority",
+            value: "fooCA",
+          },
+        }),
+      });
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
@@ -782,13 +790,16 @@ describe("when the repository info is already populated", () => {
     });
 
     it("should parse the existing auth header", async () => {
-      const testRepo = {
+      const testRepo = new PackageRepositoryDetail({
         ...repo,
         auth: {
-          type: PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
-          header: "fooHeader",
+          type: PackageRepositoryAuth_PackageRepositoryAuthType.AUTHORIZATION_HEADER,
+          packageRepoAuthOneOf: {
+            case: "header",
+            value: "fooHeader",
+          },
         },
-      } as PackageRepositoryDetail;
+      });
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
@@ -807,13 +818,19 @@ describe("when the repository info is already populated", () => {
     });
 
     it("should parse the existing basic auth", async () => {
-      const testRepo = {
+      const testRepo = new PackageRepositoryDetail({
         ...repo,
         auth: {
-          type: PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-          usernamePassword: { username: "foo", password: "bar" },
+          type: PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
+          packageRepoAuthOneOf: {
+            case: "usernamePassword",
+            value: new UsernamePassword({
+              username: "foo",
+              password: "bar",
+            }),
+          },
         },
-      } as PackageRepositoryDetail;
+      });
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
@@ -833,13 +850,16 @@ describe("when the repository info is already populated", () => {
     });
 
     it("should parse a bearer token", async () => {
-      const testRepo = {
+      const testRepo = new PackageRepositoryDetail({
         ...repo,
         auth: {
-          type: PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-          header: "Bearer fooToken",
+          type: PackageRepositoryAuth_PackageRepositoryAuthType.BEARER,
+          packageRepoAuthOneOf: {
+            case: "header",
+            value: "Bearer fooToken",
+          },
         },
-      } as PackageRepositoryDetail;
+      });
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
@@ -858,18 +878,21 @@ describe("when the repository info is already populated", () => {
     });
 
     it("should select a docker secret as auth mechanism", async () => {
-      const testRepo = {
+      const testRepo = new PackageRepositoryDetail({
         ...repo,
         auth: {
-          type: PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
-          dockerCreds: {
-            email: "foo@foo.foo",
-            password: "bar",
-            server: "foobar",
-            username: "foo",
+          type: PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON,
+          packageRepoAuthOneOf: {
+            case: "dockerCreds",
+            value: new DockerCredentials({
+              email: "foo@foo.foo",
+              password: "bar",
+              server: "foobar",
+              username: "foo",
+            }),
           },
         },
-      } as PackageRepositoryDetail;
+      });
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
@@ -891,15 +914,18 @@ describe("when the repository info is already populated", () => {
     });
 
     it("should select a opaque as auth mechanism", async () => {
-      const testRepo = {
+      const testRepo = new PackageRepositoryDetail({
         ...repo,
         auth: {
-          type: PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE,
-          opaqueCreds: {
-            data: {},
+          type: PackageRepositoryAuth_PackageRepositoryAuthType.OPAQUE,
+          packageRepoAuthOneOf: {
+            case: "opaqueCreds",
+            value: new OpaqueCredentials({
+              data: {},
+            }),
           },
         },
-      } as PackageRepositoryDetail;
+      });
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
@@ -918,16 +944,19 @@ describe("when the repository info is already populated", () => {
     });
 
     it("should select a ssh as auth mechanism", async () => {
-      const testRepo = {
+      const testRepo = new PackageRepositoryDetail({
         ...repo,
         auth: {
-          type: PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
-          sshCreds: {
-            knownHosts: "foo",
-            privateKey: "bar",
+          type: PackageRepositoryAuth_PackageRepositoryAuthType.SSH,
+          packageRepoAuthOneOf: {
+            case: "sshCreds",
+            value: new SshCredentials({
+              knownHosts: "foo",
+              privateKey: "bar",
+            }),
           },
         },
-      } as PackageRepositoryDetail;
+      });
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
@@ -947,16 +976,19 @@ describe("when the repository info is already populated", () => {
     });
 
     it("should select a tls as auth mechanism", async () => {
-      const testRepo = {
+      const testRepo = new PackageRepositoryDetail({
         ...repo,
         auth: {
-          type: PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
-          tlsCertKey: {
-            cert: "foo",
-            key: "bar",
+          type: PackageRepositoryAuth_PackageRepositoryAuthType.TLS,
+          packageRepoAuthOneOf: {
+            case: "tlsCertKey",
+            value: new TlsCertKey({
+              cert: "foo",
+              key: "bar",
+            }),
           },
         },
-      } as PackageRepositoryDetail;
+      });
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
@@ -994,13 +1026,15 @@ describe("auth provider selector for Flux repositories", () => {
   } as PackageRepositoryDetail;
 
   it("repository auth provider should appear as a valid option for Flux and OCI", async () => {
-    const testRepo = {
+    const testRepo = new PackageRepositoryDetail({
       ...repo,
       type: "oci",
-      customDetail: {
-        provider: "",
-      } as Partial<FluxPackageRepositoryCustomDetail>,
-    } as PackageRepositoryDetail;
+      customDetail: new Any({
+        value: new FluxPackageRepositoryCustomDetail({
+          provider: "",
+        }).toBinary(),
+      }),
+    });
     let wrapper: any;
     await act(async () => {
       wrapper = mountWrapper(
@@ -1066,13 +1100,21 @@ describe("auth provider selector for Flux repositories", () => {
   });
 
   it("repository auth provider selected should show the subsequent options dropdown", async () => {
-    const testRepo = {
+    const customDetail = new FluxPackageRepositoryCustomDetail({
+      provider: "aws",
+    });
+    // UPTOHERE: Is there a difference between google's Any and
+    // connect's Any? (Well, yes, one has a constructor etc.)
+    // Currently logging is showing the typeUrl appearing as the
+    // provider value :/
+    const testRepo = new PackageRepositoryDetail({
       ...repo,
       type: "oci",
       customDetail: {
-        provider: "aws",
-      } as Partial<FluxPackageRepositoryCustomDetail>,
-    } as PackageRepositoryDetail;
+        typeUrl: FluxPackageRepositoryCustomDetail.typeName,
+        value: customDetail.toBinary(),
+      } as Any,
+    });
     let wrapper: any;
     await act(async () => {
       wrapper = mountWrapper(

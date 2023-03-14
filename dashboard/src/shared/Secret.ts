@@ -4,7 +4,7 @@
 import {
   CreateSecretRequest,
   SecretType,
-} from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
+} from "gen/kubeappsapis/plugins/resources/v1alpha1/resources_pb";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import { convertGrpcAuthError } from "./utils";
 
@@ -15,7 +15,7 @@ export default class Secret {
   // TODO(agamez): unused method, remove?
   public static async getDockerConfigSecretNames(cluster: string, namespace: string) {
     const result = await this.resourcesServiceClient()
-      .GetSecretNames({
+      .getSecretNames({
         context: {
           cluster,
           namespace,
@@ -27,7 +27,7 @@ export default class Secret {
 
     const secretNames = [];
     for (const [name, type] of Object.entries(result.secretNames)) {
-      if (type === SecretType.SECRET_TYPE_DOCKER_CONFIG_JSON) {
+      if (type === SecretType.DOCKER_CONFIG_JSON) {
         secretNames.push(name);
       }
     }
@@ -55,17 +55,19 @@ export default class Secret {
       },
     };
     await this.resourcesServiceClient()
-      .CreateSecret({
-        context: {
-          cluster,
-          namespace,
-        },
-        name,
-        type: SecretType.SECRET_TYPE_DOCKER_CONFIG_JSON,
-        stringData: {
-          ".dockerconfigjson": JSON.stringify(dockercfg),
-        },
-      } as CreateSecretRequest)
+      .createSecret(
+        new CreateSecretRequest({
+          context: {
+            cluster,
+            namespace,
+          },
+          name,
+          type: SecretType.DOCKER_CONFIG_JSON,
+          stringData: {
+            ".dockerconfigjson": JSON.stringify(dockercfg),
+          },
+        }),
+      )
       .catch((e: any) => {
         throw convertGrpcAuthError(e);
       });

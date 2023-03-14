@@ -58,6 +58,9 @@ function parseResource(
   if (crd.resources) {
     crd.resources?.forEach(r => {
       switch (r.kind) {
+        // TODO(minelson): Audit code to see if we can switch to use the normal ResourceRef
+        // here instead, then remove the shared/ResourceRef with the extra fields.
+        // https://github.com/vmware-tanzu/kubeapps/issues/6062
         case "Deployment":
           result.deployments.push(fromCRD(r, kind, cluster, namespace, ownerRef));
           break;

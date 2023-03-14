@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import Row from "components/js/Row";
-import { InstalledPackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { InstalledPackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Link } from "react-router-dom";
 import { IClusterServiceVersion, IResource } from "../../shared/types";
 import * as url from "../../shared/url";

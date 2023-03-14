@@ -22,10 +22,13 @@ import {
   PackageRepositoryAuth_PackageRepositoryAuthType,
   PackageRepositoryReference,
   UsernamePassword,
-} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2";
-import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
+import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2_pb";
+import {
+  HelmPackageRepositoryCustomDetail,
+  ImagesPullSecret,
+} from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
@@ -98,11 +101,11 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
 
   // Auth type of the package repository
   const [authMethod, setAuthMethod] = useState(
-    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+    PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED,
   );
   // Auth type of the registry (for Helm-based repos)
   const [helmPSAuthMethod, setHelmPsAuthMethod] = useState(
-    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+    PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED,
   );
 
   // PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
@@ -205,33 +208,95 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
       setSkipTLS(!!repo.tlsConfig?.insecureSkipVerify);
       setPassCredentials(!!repo.auth?.passCredentials);
       setSyncInterval(repo.interval);
-      setCustomCA(repo.tlsConfig?.certAuthority || "");
-      setAuthCustomHeader(repo.auth?.header || "");
-      setBearerToken(repo.auth?.header || "");
-      setBasicPassword(repo.auth?.usernamePassword?.password || "");
-      setBasicUser(repo.auth?.usernamePassword?.username || "");
-      setSecretEmail(repo.auth?.dockerCreds?.email || "");
-      setSecretPassword(repo.auth?.dockerCreds?.password || "");
-      setSecretServer(repo.auth?.dockerCreds?.server || "");
-      setSecretUser(repo.auth?.dockerCreds?.username || "");
-      setSshKnownHosts(repo.auth?.sshCreds?.knownHosts || "");
-      setSshPrivateKey(repo.auth?.sshCreds?.privateKey || "");
-      setTlsAuthCert(repo.auth?.tlsCertKey?.cert || "");
-      setTlsAuthKey(repo.auth?.tlsCertKey?.key || "");
-      setOpaqueData(JSON.stringify(repo.auth?.opaqueCreds?.data) || "");
-      setAuthMethod(
-        repo.auth?.type ||
-          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+      setCustomCA(
+        repo.tlsConfig?.packageRepoTlsConfigOneOf?.case === "certAuthority"
+          ? repo.tlsConfig?.packageRepoTlsConfigOneOf?.value
+          : "",
       );
-      setSecretAuthName(repo.auth?.secretRef?.name || "");
-      setSecretTLSName(repo.tlsConfig?.secretRef?.name || "");
-      setIsUserManagedSecret(!!repo.auth?.secretRef?.name);
-      setIsUserManagedCASecret(!!repo.tlsConfig?.secretRef?.name);
+      setAuthCustomHeader(
+        repo.auth?.packageRepoAuthOneOf?.case === "header"
+          ? repo.auth?.packageRepoAuthOneOf?.value
+          : "",
+      );
+      setBearerToken(
+        repo.auth?.packageRepoAuthOneOf?.case === "header"
+          ? repo.auth?.packageRepoAuthOneOf?.value
+          : "",
+      );
+      setBasicPassword(
+        repo.auth?.packageRepoAuthOneOf?.case === "usernamePassword"
+          ? repo.auth?.packageRepoAuthOneOf?.value.password
+          : "",
+      );
+      setBasicUser(
+        repo.auth?.packageRepoAuthOneOf?.case === "usernamePassword"
+          ? repo.auth?.packageRepoAuthOneOf?.value.username
+          : "",
+      );
+      setSecretEmail(
+        repo.auth?.packageRepoAuthOneOf?.case === "dockerCreds"
+          ? repo.auth?.packageRepoAuthOneOf?.value.email
+          : "",
+      );
+      setSecretPassword(
+        repo.auth?.packageRepoAuthOneOf?.case === "dockerCreds"
+          ? repo.auth?.packageRepoAuthOneOf?.value.password
+          : "",
+      );
+      setSecretServer(
+        repo.auth?.packageRepoAuthOneOf?.case === "dockerCreds"
+          ? repo.auth?.packageRepoAuthOneOf?.value.server
+          : "",
+      );
+      setSecretUser(
+        repo.auth?.packageRepoAuthOneOf?.case === "dockerCreds"
+          ? repo.auth?.packageRepoAuthOneOf?.value.username
+          : "",
+      );
+      setSshKnownHosts(
+        repo.auth?.packageRepoAuthOneOf?.case === "sshCreds"
+          ? repo.auth?.packageRepoAuthOneOf?.value.knownHosts
+          : "",
+      );
+      setSshPrivateKey(
+        repo.auth?.packageRepoAuthOneOf?.case === "sshCreds"
+          ? repo.auth?.packageRepoAuthOneOf?.value.privateKey
+          : "",
+      );
+      setTlsAuthCert(
+        repo.auth?.packageRepoAuthOneOf?.case === "tlsCertKey"
+          ? repo.auth?.packageRepoAuthOneOf?.value.cert
+          : "",
+      );
+      setTlsAuthKey(
+        repo.auth?.packageRepoAuthOneOf?.case === "tlsCertKey"
+          ? repo.auth?.packageRepoAuthOneOf?.value.key
+          : "",
+      );
+      setOpaqueData(
+        repo.auth?.packageRepoAuthOneOf?.case === "opaqueCreds"
+          ? JSON.stringify(repo.auth?.packageRepoAuthOneOf?.value.data)
+          : "",
+      );
+      setAuthMethod(repo.auth?.type || PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED);
+      setSecretAuthName(
+        repo.auth?.packageRepoAuthOneOf?.case === "secretRef"
+          ? repo.auth?.packageRepoAuthOneOf?.value.name
+          : "",
+      );
+      setSecretTLSName(
+        repo.tlsConfig?.packageRepoTlsConfigOneOf?.case === "secretRef"
+          ? repo.tlsConfig?.packageRepoTlsConfigOneOf?.value.name
+          : "",
+      );
+      setIsUserManagedSecret(!!(repo.auth?.packageRepoAuthOneOf?.case === "secretRef"));
+      setIsUserManagedCASecret(!!(repo.tlsConfig?.packageRepoTlsConfigOneOf?.case === "secretRef"));
 
       // setting custom details for the Helm plugin
-      if (repo.packageRepoRef?.plugin?.name === PluginNames.PACKAGES_HELM) {
-        const helmPackageRepositoryCustomDetail =
-          repo.customDetail as Partial<HelmPackageRepositoryCustomDetail>;
+      if (repo.packageRepoRef?.plugin?.name === PluginNames.PACKAGES_HELM && repo.customDetail) {
+        const helmPackageRepositoryCustomDetail = HelmPackageRepositoryCustomDetail.fromBinary(
+          repo.customDetail.value,
+        );
         setOCIRepositories(helmPackageRepositoryCustomDetail?.ociRepositories?.join(", ") || "");
         setPerformValidation(helmPackageRepositoryCustomDetail?.performValidation || false);
         if (helmPackageRepositoryCustomDetail?.filterRule?.jq) {
@@ -247,36 +312,62 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
           setProxyOptionsNoProxy(helmPackageRepositoryCustomDetail.proxyOptions.noProxy);
         }
         if (
-          helmPackageRepositoryCustomDetail?.imagesPullSecret?.secretRef ||
-          helmPackageRepositoryCustomDetail?.imagesPullSecret?.credentials
+          helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
+            ?.case === "secretRef" ||
+          helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
+            ?.case === "credentials"
         ) {
           setUseSameAuthCreds(false);
           setIsUserManagedPSSecret(
-            !!helmPackageRepositoryCustomDetail?.imagesPullSecret?.secretRef,
+            !!(
+              helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
+                ?.case === "secretRef"
+            ),
           );
-          setHelmPsAuthMethod(
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+          setHelmPsAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON);
+          setSecretPSName(
+            helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
+              ?.case === "secretRef"
+              ? helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
+                  ?.value
+              : "",
           );
-          setSecretPSName(helmPackageRepositoryCustomDetail?.imagesPullSecret?.secretRef || "");
           setPullSecretEmail(
-            helmPackageRepositoryCustomDetail?.imagesPullSecret?.credentials?.email || "",
+            helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
+              ?.case === "credentials"
+              ? helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
+                  ?.value.email
+              : "",
           );
           setPullSecretUser(
-            helmPackageRepositoryCustomDetail?.imagesPullSecret?.credentials?.username || "",
+            helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
+              ?.case === "credentials"
+              ? helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
+                  ?.value.username
+              : "",
           );
           setPullSecretPassword(
-            helmPackageRepositoryCustomDetail?.imagesPullSecret?.credentials?.password || "",
+            helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
+              ?.case === "credentials"
+              ? helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
+                  ?.value.password
+              : "",
           );
           setPullSecretServer(
-            helmPackageRepositoryCustomDetail?.imagesPullSecret?.credentials?.server || "",
+            helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
+              ?.case === "credentials"
+              ? helmPackageRepositoryCustomDetail?.imagesPullSecret?.dockerRegistryCredentialOneOf
+                  ?.value.server
+              : "",
           );
         }
       }
 
       // setting custom details for the Flux plugin
       if (repo.packageRepoRef?.plugin?.name === PluginNames.PACKAGES_FLUX && repo.customDetail) {
-        const fluxPackageRepositoryCustomDetail =
-          repo.customDetail as Partial<FluxPackageRepositoryCustomDetail>;
+        const fluxPackageRepositoryCustomDetail = FluxPackageRepositoryCustomDetail.fromBinary(
+          repo.customDetail.value,
+        );
         setAuthProvider(fluxPackageRepositoryCustomDetail?.provider || "");
       }
     }
@@ -285,7 +376,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
   const hasAuthProvider = useCallback(() => authProvider !== "", [authProvider]);
 
   const handleFluxAuthProviderAuthChange = useCallback(() => {
-    setAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType.UNRECOGNIZED);
+    setAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED);
     setShowAuthProviderDetails(true);
     if (!hasAuthProvider()) {
       setAuthProvider("generic");
@@ -294,11 +385,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
 
   useEffect(() => {
     // Reset auth provider state as soon as there is an auth type selected
-    if (
-      authMethod === PackageRepositoryAuth_PackageRepositoryAuthType.UNRECOGNIZED ||
-      authMethod ===
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
-    ) {
+    if (authMethod === PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED) {
       if (hasAuthProvider()) {
         handleFluxAuthProviderAuthChange();
       }
@@ -327,10 +414,10 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     // send the proper header depending on the auth method
     let finalHeader = "";
     switch (authMethod) {
-      case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER:
+      case PackageRepositoryAuth_PackageRepositoryAuthType.AUTHORIZATION_HEADER:
         finalHeader = authCustomHeader;
         break;
-      case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER:
+      case PackageRepositoryAuth_PackageRepositoryAuthType.BEARER:
         finalHeader = bearerToken;
         break;
     }
@@ -397,35 +484,39 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     } as IPkgRepoFormData;
 
     // enrich the request object with the corresponding plugin's custom details
+    let imagesPullSecret: ImagesPullSecret | undefined;
     switch (plugin?.name) {
       case PluginNames.PACKAGES_HELM:
-        request.customDetail = {
+        if (
+          helmPSAuthMethod === PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON
+        ) {
+          if (isUserManagedPSSecret) {
+            imagesPullSecret = new ImagesPullSecret({
+              dockerRegistryCredentialOneOf: {
+                case: "secretRef",
+                value: useSameAuthCreds ? secretAuthName : secretPSName,
+              },
+            });
+          } else {
+            imagesPullSecret = new ImagesPullSecret({
+              dockerRegistryCredentialOneOf: {
+                case: "credentials",
+                value: {
+                  email: useSameAuthCreds ? secretEmail : pullSecretEmail,
+                  username: useSameAuthCreds ? secretUser : pullSecretUser,
+                  password: useSameAuthCreds ? secretPassword : pullSecretPassword,
+                  server: useSameAuthCreds ? secretServer : pullSecretServer,
+                },
+              },
+            });
+          }
+        }
+        request.customDetail = new HelmPackageRepositoryCustomDetail({
           ociRepositories: ociRepoList,
           performValidation,
           filterRule: filter,
-          imagesPullSecret: {
-            // if using the same credentials toggle is set, use the repo auth's creds instead
-            secretRef:
-              helmPSAuthMethod ===
-                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON &&
-              isUserManagedPSSecret
-                ? useSameAuthCreds
-                  ? secretAuthName
-                  : secretPSName
-                : "",
-            credentials:
-              helmPSAuthMethod ===
-                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON &&
-              !isUserManagedPSSecret
-                ? {
-                    email: useSameAuthCreds ? secretEmail : pullSecretEmail,
-                    username: useSameAuthCreds ? secretUser : pullSecretUser,
-                    password: useSameAuthCreds ? secretPassword : pullSecretPassword,
-                    server: useSameAuthCreds ? secretServer : pullSecretServer,
-                  }
-                : undefined,
-          },
-        } as HelmPackageRepositoryCustomDetail;
+          imagesPullSecret,
+        });
         break;
       //TODO(agamez): add it once other PRs get merged
       // case PluginNames.PACKAGES_KAPP:
@@ -438,8 +529,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
           } as FluxPackageRepositoryCustomDetail;
 
           // Backend won't accept UNRECOGNIZED
-          request.authMethod =
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED;
+          request.authMethod = PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED;
         }
         break;
       default:
@@ -487,11 +577,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     // if the user selects the docker config, suggest also setting the pull secret
     if (
       PackageRepositoryAuth_PackageRepositoryAuthType[e.target.value] ===
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+      PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON
     ) {
-      setHelmPsAuthMethod(
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
-      );
+      setHelmPsAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON);
       // if user hasn't set any field yet, suggest using the same pullsecret
       if (
         !secretPSName &&
@@ -513,9 +601,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
 
     // if a unsupported auth method is selected, reset it to the default one
     if (!getSupportedPackageRepositoryAuthTypes(plugin, newType).includes(authMethod)) {
-      setAuthMethod(
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
-      );
+      setAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED);
     }
   };
   const handlePluginRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -527,9 +613,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
 
     // if a unsupported auth method is selected, reset it to the default one
     if (!getSupportedPackageRepositoryAuthTypes(newPlugin, type).includes(authMethod)) {
-      setAuthMethod(
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
-      );
+      setAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED);
     }
 
     // set some default values based on the selected plugin
@@ -703,8 +787,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
           onChange={handleSecretAuthNameChange}
           required={
             isUserManagedSecret &&
-            authMethod !==
-              PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+            authMethod !== PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED
           }
           pattern={k8sObjectNameRegex}
           title="Use lower case alphanumeric characters, '-' or '.'"
@@ -1068,13 +1151,11 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         name="auth"
                         value={
                           PackageRepositoryAuth_PackageRepositoryAuthType[
-                            PackageRepositoryAuth_PackageRepositoryAuthType
-                              .PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+                            PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED
                           ] || ""
                         }
                         checked={
-                          authMethod ===
-                          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+                          authMethod === PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED
                         }
                         onChange={handleAuthRadioButtonChange}
                       />
@@ -1088,7 +1169,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         value="flux-auth-provider"
                         checked={
                           authMethod ===
-                            PackageRepositoryAuth_PackageRepositoryAuthType.UNRECOGNIZED &&
+                            PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED &&
                           showAuthProviderDetails
                         }
                         onChange={handleFluxAuthProviderAuthChange}
@@ -1103,18 +1184,16 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         name="auth"
                         value={
                           PackageRepositoryAuth_PackageRepositoryAuthType[
-                            PackageRepositoryAuth_PackageRepositoryAuthType
-                              .PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+                            PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH
                           ] || ""
                         }
                         checked={
-                          authMethod ===
-                          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+                          authMethod === PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH
                         }
                         onChange={handleAuthRadioButtonChange}
                         disabled={
                           !getSupportedPackageRepositoryAuthTypes(plugin, type).includes(
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+                            PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH,
                           )
                         }
                       />
@@ -1127,18 +1206,16 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         name="auth"
                         value={
                           PackageRepositoryAuth_PackageRepositoryAuthType[
-                            PackageRepositoryAuth_PackageRepositoryAuthType
-                              .PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
+                            PackageRepositoryAuth_PackageRepositoryAuthType.BEARER
                           ] || ""
                         }
                         checked={
-                          authMethod ===
-                          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
+                          authMethod === PackageRepositoryAuth_PackageRepositoryAuthType.BEARER
                         }
                         onChange={handleAuthRadioButtonChange}
                         disabled={
                           !getSupportedPackageRepositoryAuthTypes(plugin, type).includes(
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+                            PackageRepositoryAuth_PackageRepositoryAuthType.BEARER,
                           )
                         }
                       />
@@ -1153,18 +1230,17 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         name="auth"
                         value={
                           PackageRepositoryAuth_PackageRepositoryAuthType[
-                            PackageRepositoryAuth_PackageRepositoryAuthType
-                              .PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                            PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON
                           ] || ""
                         }
                         checked={
                           authMethod ===
-                          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                          PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON
                         }
                         onChange={handleAuthRadioButtonChange}
                         disabled={
                           !getSupportedPackageRepositoryAuthTypes(plugin, type).includes(
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+                            PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON,
                           )
                         }
                       />
@@ -1179,18 +1255,17 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         name="auth"
                         value={
                           PackageRepositoryAuth_PackageRepositoryAuthType[
-                            PackageRepositoryAuth_PackageRepositoryAuthType
-                              .PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
+                            PackageRepositoryAuth_PackageRepositoryAuthType.AUTHORIZATION_HEADER
                           ] || ""
                         }
                         checked={
                           authMethod ===
-                          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
+                          PackageRepositoryAuth_PackageRepositoryAuthType.AUTHORIZATION_HEADER
                         }
                         onChange={handleAuthRadioButtonChange}
                         disabled={
                           !getSupportedPackageRepositoryAuthTypes(plugin, type).includes(
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
+                            PackageRepositoryAuth_PackageRepositoryAuthType.AUTHORIZATION_HEADER,
                           )
                         }
                       />
@@ -1205,18 +1280,14 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         name="auth"
                         value={
                           PackageRepositoryAuth_PackageRepositoryAuthType[
-                            PackageRepositoryAuth_PackageRepositoryAuthType
-                              .PACKAGE_REPOSITORY_AUTH_TYPE_SSH
+                            PackageRepositoryAuth_PackageRepositoryAuthType.SSH
                           ] || ""
                         }
-                        checked={
-                          authMethod ===
-                          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH
-                        }
+                        checked={authMethod === PackageRepositoryAuth_PackageRepositoryAuthType.SSH}
                         onChange={handleAuthRadioButtonChange}
                         disabled={
                           !getSupportedPackageRepositoryAuthTypes(plugin, type).includes(
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
+                            PackageRepositoryAuth_PackageRepositoryAuthType.SSH,
                           )
                         }
                       />
@@ -1231,18 +1302,14 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         name="auth"
                         value={
                           PackageRepositoryAuth_PackageRepositoryAuthType[
-                            PackageRepositoryAuth_PackageRepositoryAuthType
-                              .PACKAGE_REPOSITORY_AUTH_TYPE_TLS
+                            PackageRepositoryAuth_PackageRepositoryAuthType.TLS
                           ] || ""
                         }
-                        checked={
-                          authMethod ===
-                          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS
-                        }
+                        checked={authMethod === PackageRepositoryAuth_PackageRepositoryAuthType.TLS}
                         onChange={handleAuthRadioButtonChange}
                         disabled={
                           !getSupportedPackageRepositoryAuthTypes(plugin, type).includes(
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+                            PackageRepositoryAuth_PackageRepositoryAuthType.TLS,
                           )
                         }
                       />
@@ -1257,18 +1324,16 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         name="auth"
                         value={
                           PackageRepositoryAuth_PackageRepositoryAuthType[
-                            PackageRepositoryAuth_PackageRepositoryAuthType
-                              .PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE
+                            PackageRepositoryAuth_PackageRepositoryAuthType.OPAQUE
                           ] || ""
                         }
                         checked={
-                          authMethod ===
-                          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE
+                          authMethod === PackageRepositoryAuth_PackageRepositoryAuthType.OPAQUE
                         }
                         onChange={handleAuthRadioButtonChange}
                         disabled={
                           !getSupportedPackageRepositoryAuthTypes(plugin, type).includes(
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE,
+                            PackageRepositoryAuth_PackageRepositoryAuthType.OPAQUE,
                           )
                         }
                       />
@@ -1282,8 +1347,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                     <div
                       id="kubeapps-repo-auth-details-basic"
                       hidden={
-                        authMethod !==
-                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+                        authMethod !== PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH
                       }
                     >
                       {isUserManagedSecretToggle("basic")}
@@ -1302,7 +1366,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               placeholder="username"
                               required={
                                 authMethod ===
-                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+                                PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH
                               }
                             />
                           </CdsInput>
@@ -1317,7 +1381,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               placeholder="password"
                               required={
                                 authMethod ===
-                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+                                PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH
                               }
                             />
                           </CdsInput>
@@ -1328,10 +1392,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                     {/* Begin http bearer authentication */}
                     <div
                       id="kubeapps-repo-auth-details-bearer"
-                      hidden={
-                        authMethod !==
-                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
-                      }
+                      hidden={authMethod !== PackageRepositoryAuth_PackageRepositoryAuthType.BEARER}
                     >
                       {isUserManagedSecretToggle("bearer")}
                       <br />
@@ -1349,7 +1410,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               placeholder="xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
                               required={
                                 authMethod ===
-                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
+                                PackageRepositoryAuth_PackageRepositoryAuthType.BEARER
                               }
                             />
                           </CdsInput>
@@ -1362,7 +1423,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       id="kubeapps-repo-auth-details-docker"
                       hidden={
                         authMethod !==
-                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                        PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON
                       }
                     >
                       {isUserManagedSecretToggle("docker")}
@@ -1380,7 +1441,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               placeholder="https://index.docker.io/v1/"
                               required={
                                 authMethod ===
-                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                                PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON
                               }
                             />
                           </CdsInput>
@@ -1394,7 +1455,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               placeholder="Username"
                               required={
                                 authMethod ===
-                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                                PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON
                               }
                             />
                           </CdsInput>
@@ -1409,7 +1470,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               placeholder="Password"
                               required={
                                 authMethod ===
-                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                                PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON
                               }
                             />
                           </CdsInput>
@@ -1432,7 +1493,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       id="kubeapps-repo-auth-details-custom"
                       hidden={
                         authMethod !==
-                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
+                        PackageRepositoryAuth_PackageRepositoryAuthType.AUTHORIZATION_HEADER
                       }
                     >
                       {isUserManagedSecretToggle("custom")}
@@ -1453,7 +1514,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               onChange={handleAuthCustomHeaderChange}
                               required={
                                 authMethod ===
-                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
+                                PackageRepositoryAuth_PackageRepositoryAuthType.AUTHORIZATION_HEADER
                               }
                             />
                           </CdsInput>
@@ -1464,10 +1525,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                     {/* Begin SSH authentication */}
                     <div
                       id="kubeapps-repo-auth-details-ssh"
-                      hidden={
-                        authMethod !==
-                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH
-                      }
+                      hidden={authMethod !== PackageRepositoryAuth_PackageRepositoryAuthType.SSH}
                     >
                       {isUserManagedSecretToggle("ssh")}
                       <br />
@@ -1486,8 +1544,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               value={sshKnownHosts || ""}
                               onChange={handleSshKnownHostsChange}
                               required={
-                                authMethod ===
-                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH
+                                authMethod === PackageRepositoryAuth_PackageRepositoryAuthType.SSH
                               }
                             />
                           </CdsTextarea>
@@ -1505,8 +1562,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               value={sshPrivateKey || ""}
                               onChange={handleSshPrivateKeyChange}
                               required={
-                                authMethod ===
-                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH
+                                authMethod === PackageRepositoryAuth_PackageRepositoryAuthType.SSH
                               }
                             />
                           </CdsTextarea>
@@ -1517,10 +1573,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                     {/* Begin TLS authentication */}
                     <div
                       id="kubeapps-repo-auth-details-tls"
-                      hidden={
-                        authMethod !==
-                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS
-                      }
+                      hidden={authMethod !== PackageRepositoryAuth_PackageRepositoryAuthType.TLS}
                     >
                       {isUserManagedSecretToggle("tls")}
                       <br />
@@ -1539,8 +1592,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               value={tlsAuthCert || ""}
                               onChange={handleTlsAuthCertChange}
                               required={
-                                authMethod ===
-                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS
+                                authMethod === PackageRepositoryAuth_PackageRepositoryAuthType.TLS
                               }
                             />
                           </CdsTextarea>
@@ -1556,8 +1608,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               value={tlsAuthKey || ""}
                               onChange={handleTlsAuthKeyChange}
                               required={
-                                authMethod ===
-                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS
+                                authMethod === PackageRepositoryAuth_PackageRepositoryAuthType.TLS
                               }
                             />
                           </CdsTextarea>
@@ -1568,10 +1619,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                     {/* Begin opaque authentication */}
                     <div
                       id="kubeapps-repo-auth-details-opaque"
-                      hidden={
-                        authMethod !==
-                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE
-                      }
+                      hidden={authMethod !== PackageRepositoryAuth_PackageRepositoryAuthType.OPAQUE}
                     >
                       {isUserManagedSecretToggle("opaque")}
                       <br />
@@ -1591,7 +1639,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               onChange={handleOpaqueDataChange}
                               required={
                                 authMethod ===
-                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE
+                                PackageRepositoryAuth_PackageRepositoryAuthType.OPAQUE
                               }
                             />
                           </CdsTextarea>
@@ -1611,8 +1659,12 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             disabled={
                               !!repo.name &&
                               ["aws", "azure", "gcp"].includes(
-                                (repo.customDetail as Partial<FluxPackageRepositoryCustomDetail>)
-                                  ?.provider || "",
+                                (repo.customDetail
+                                  ? FluxPackageRepositoryCustomDetail.fromBinary(
+                                      repo.customDetail?.value,
+                                    )
+                                  : undefined
+                                )?.provider || "",
                               )
                             }
                           >
@@ -1661,18 +1713,17 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           name="auth"
                           value={
                             PackageRepositoryAuth_PackageRepositoryAuthType[
-                              PackageRepositoryAuth_PackageRepositoryAuthType
-                                .PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+                              PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED
                             ] || ""
                           }
                           checked={
                             helmPSAuthMethod ===
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+                            PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED
                           }
                           onChange={handleImgPSChange}
                           required={
                             authMethod ===
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                            PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON
                           }
                         />
                       </CdsRadio>
@@ -1687,18 +1738,17 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           name="auth"
                           value={
                             PackageRepositoryAuth_PackageRepositoryAuthType[
-                              PackageRepositoryAuth_PackageRepositoryAuthType
-                                .PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                              PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON
                             ] || ""
                           }
                           checked={
                             helmPSAuthMethod ===
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                            PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON
                           }
                           onChange={handleImgPSChange}
                           required={
                             authMethod ===
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                            PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON
                           }
                         />
                       </CdsRadio>
@@ -1711,17 +1761,18 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         id="kubeapps-repo-imagePullSecrets-details-docker"
                         hidden={
                           helmPSAuthMethod !==
-                          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                          PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON
                         }
                       >
                         {authMethod ===
-                          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON &&
-                          !(
-                            !!(repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>)
-                              ?.imagesPullSecret?.credentials ||
-                            !!(repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>)
-                              ?.imagesPullSecret?.secretRef
-                          ) && (
+                          PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON &&
+                          !!(
+                            repo.customDetail
+                              ? HelmPackageRepositoryCustomDetail.fromBinary(
+                                  repo.customDetail?.value,
+                                )
+                              : undefined
+                          )?.imagesPullSecret?.dockerRegistryCredentialOneOf.value && (
                             <CdsToggleGroup className="flex-v-center">
                               <CdsToggle>
                                 {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
@@ -1755,11 +1806,12 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                                   checked={isUserManagedPSSecret}
                                   disabled={
                                     !!(
-                                      repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>
-                                    )?.imagesPullSecret?.credentials ||
-                                    !!(
-                                      repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>
-                                    )?.imagesPullSecret?.secretRef
+                                      repo.customDetail
+                                        ? HelmPackageRepositoryCustomDetail.fromBinary(
+                                            repo.customDetail?.value,
+                                          )
+                                        : undefined
+                                    )?.imagesPullSecret?.dockerRegistryCredentialOneOf.value
                                   }
                                 />
                               </CdsToggle>
@@ -1780,7 +1832,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                                     required={
                                       isUserManagedPSSecret &&
                                       helmPSAuthMethod !==
-                                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+                                        PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED
                                     }
                                     pattern={k8sObjectNameRegex}
                                     title="Use lower case alphanumeric characters, '-' or '.'"
@@ -1814,7 +1866,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                                     required={
                                       !isUserManagedPSSecret &&
                                       helmPSAuthMethod !==
-                                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+                                        PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED
                                     }
                                   />
                                 </CdsInput>
@@ -1831,7 +1883,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                                     required={
                                       !isUserManagedPSSecret &&
                                       helmPSAuthMethod !==
-                                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+                                        PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED
                                     }
                                   />
                                 </CdsInput>
@@ -1849,7 +1901,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                                     required={
                                       !isUserManagedPSSecret &&
                                       helmPSAuthMethod !==
-                                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+                                        PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED
                                     }
                                   />
                                 </CdsInput>
@@ -2017,8 +2069,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           checked={isUserManagedCASecret}
                           disabled={
                             skipTLS ||
-                            (!!repo?.name &&
-                              (!!repo?.tlsConfig?.certAuthority || !!repo?.tlsConfig?.secretRef))
+                            (!!repo?.name && !!repo?.tlsConfig?.packageRepoTlsConfigOneOf.value)
                           }
                         />
                       </CdsToggle>

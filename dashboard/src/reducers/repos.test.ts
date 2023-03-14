@@ -5,13 +5,13 @@ import {
   PackageRepositoriesPermissions,
   PackageRepositoryDetail,
   PackageRepositorySummary,
-} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import reposReducer, { IPackageRepositoryState } from "./repos";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { PluginNames } from "shared/types";
-import { Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 
 describe("reposReducer", () => {
   let initialState: IPackageRepositoryState;
@@ -72,7 +72,7 @@ describe("reposReducer", () => {
       });
 
       it("unsets isFetching and receive repo", () => {
-        const repoDetail = { name: "foo" } as PackageRepositoryDetail;
+        const repoDetail = new PackageRepositoryDetail({ name: "foo" });
         const state = reposReducer(undefined, {
           type: actionTypes.requestRepos,
           payload: "",
@@ -124,17 +124,17 @@ describe("reposReducer", () => {
     });
 
     it("updates a repo", () => {
-      const repoSummary = {
+      const repoSummary = new PackageRepositorySummary({
         name: "foo",
         url: "foo",
         packageRepoRef: { context: { namespace: "ns" } },
-      } as PackageRepositorySummary;
+      });
       expect(
         reposReducer(
           { ...initialState, reposSummaries: [repoSummary] },
           {
             type: actionTypes.repoUpdated,
-            payload: { ...repoSummary, url: "bar" },
+            payload: new PackageRepositorySummary({ ...repoSummary, url: "bar" }),
           },
         ),
       ).toEqual({
@@ -146,7 +146,7 @@ describe("reposReducer", () => {
     it("unsets isFetching and receive repos permissions", () => {
       const plugin = { name: PluginNames.PACKAGES_HELM, version: "0.0.1" } as Plugin;
       const reposPermissions = [
-        {
+        new PackageRepositoriesPermissions({
           plugin: plugin,
           global: {
             create: true,
@@ -160,7 +160,7 @@ describe("reposReducer", () => {
             list: true,
             update: true,
           },
-        },
+        }),
       ] as PackageRepositoriesPermissions[];
       const state = reposReducer(undefined, {
         type: actionTypes.requestReposPermissions,

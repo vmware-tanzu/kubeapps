@@ -4,7 +4,7 @@
 import {
   AvailablePackageReference,
   InstalledPackageReference,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 
 export const app = {
   apps: {

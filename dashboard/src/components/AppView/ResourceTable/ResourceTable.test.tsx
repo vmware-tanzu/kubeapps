@@ -3,7 +3,7 @@
 
 import Table from "components/js/Table";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
-import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { keyForResourceRef } from "shared/ResourceRef";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { IResource, IStoreState } from "shared/types";

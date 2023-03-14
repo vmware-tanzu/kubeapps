@@ -9,8 +9,8 @@ import {
   InstalledPackageReference,
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { Tooltip as ReactTooltip } from "react-tooltip";
@@ -88,7 +88,7 @@ it("should render a deactivated button if when passing an in-progress status", a
     ...defaultProps,
     releaseStatus: {
       ready: false,
-      reason: InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING,
+      reason: InstalledPackageStatus_StatusReason.PENDING,
       userReason: "Pending",
     } as InstalledPackageStatus,
   };

@@ -3,6 +3,7 @@
 
 import {
   AvailablePackageDetail,
+  Context,
   GetInstalledPackageSummariesResponse,
   InstalledPackageDetail,
   InstalledPackageReference,
@@ -11,8 +12,8 @@ import {
   InstalledPackageSummary,
   ReconciliationOptions,
   VersionReference,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { InstalledPackage } from "shared/InstalledPackage";
 import { getStore, initialState } from "shared/specs/mountWrapper";
 import { IStoreState, PluginNames, UnprocessableEntityError, UpgradeError } from "shared/types";
@@ -40,16 +41,16 @@ beforeEach(() => {
 });
 
 describe("fetches installed packages", () => {
-  const validInstalledPackageSummary: InstalledPackageSummary = {
-    installedPackageRef: {
-      context: { cluster: "second-cluster", namespace: "my-ns" },
+  const validInstalledPackageSummary = new InstalledPackageSummary({
+    installedPackageRef: new InstalledPackageReference({
+      context: new Context({ cluster: "second-cluster", namespace: "my-ns" }),
       identifier: "some-name",
-    },
+    }),
     iconUrl: "",
     name: "foo",
     pkgDisplayName: "foo",
     shortDescription: "some description",
-  };
+  });
   let requestInstalledPackageListMock: jest.Mock;
   const installedPackageSummaries: InstalledPackageSummary[] = [validInstalledPackageSummary];
   beforeEach(() => {
@@ -333,16 +334,16 @@ describe("rollbackInstalledPackage", () => {
   );
 
   it("success and re-request apps info", async () => {
-    const installedPackageDetail = {
+    const installedPackageDetail = new InstalledPackageDetail({
       availablePackageRef: {
         context: { cluster: "default", namespace: "my-ns" },
         identifier: "test",
         plugin: { name: PluginNames.PACKAGES_HELM, version: "0.0.1" } as Plugin,
       },
       currentVersion: { appVersion: "4.5.6", pkgVersion: "1.2.3" },
-    } as InstalledPackageDetail;
+    });
 
-    const availablePackageDetail = { name: "test" } as AvailablePackageDetail;
+    const availablePackageDetail = new AvailablePackageDetail({ name: "test" });
 
     InstalledPackage.RollbackInstalledPackage = jest.fn().mockImplementationOnce(() => true);
     InstalledPackage.GetInstalledPackageDetail = jest.fn().mockReturnValue({
@@ -352,7 +353,7 @@ describe("rollbackInstalledPackage", () => {
     expect(res).toBe(true);
 
     const selectCMD = actions.installedpackages.selectInstalledPackage(
-      installedPackageDetail as any,
+      installedPackageDetail,
       availablePackageDetail,
     );
     const res2 = await store.dispatch(selectCMD);
@@ -410,7 +411,7 @@ describe("getInstalledPkgStatus", () => {
       plugin: { name: "bad-plugin", version: "0.0.1" } as Plugin,
     } as InstalledPackageReference;
     const status = {
-      reason: InstalledPackageStatus_StatusReason.STATUS_REASON_INSTALLED,
+      reason: InstalledPackageStatus_StatusReason.INSTALLED,
     } as InstalledPackageStatus;
     const installedPackageDetail = { status } as InstalledPackageDetail;
     InstalledPackage.GetInstalledPackageDetail = jest.fn().mockReturnValue({

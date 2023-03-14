@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Any } from "gen/google/protobuf/any";
-import { Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import {
   AddPackageRepositoryRequest,
   DeletePackageRepositoryResponse,
@@ -19,21 +19,14 @@ import {
   TlsCertKey,
   UpdatePackageRepositoryRequest,
   UsernamePassword,
-} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
-import { GetConfiguredPluginsResponse } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
+import { GetConfiguredPluginsResponse } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import {
   HelmPackageRepositoryCustomDetail,
-  protobufPackage as helmProtobufPackage,
   ProxyOptions,
-} from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
-import {
-  KappControllerPackageRepositoryCustomDetail,
-  protobufPackage as kappControllerProtobufPackage,
-} from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
-import {
-  FluxPackageRepositoryCustomDetail,
-  protobufPackage as fluxv2ProtobufPackage,
-} from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2";
+} from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
+import { KappControllerPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller_pb";
+import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2_pb";
 import KubeappsGrpcClient from "./KubeappsGrpcClient";
 import { IPkgRepoFormData, PluginNames } from "./types";
 import { convertGrpcAuthError } from "./utils";
@@ -48,7 +41,7 @@ export class PackageRepositoriesService {
     context: Context,
   ): Promise<GetPackageRepositorySummariesResponse> {
     return await this.coreRepositoriesClient()
-      .GetPackageRepositorySummaries({ context })
+      .getPackageRepositorySummaries({ context })
       .catch((e: any) => {
         throw convertGrpcAuthError(e);
       });
@@ -58,7 +51,7 @@ export class PackageRepositoriesService {
     packageRepoRef: PackageRepositoryReference,
   ): Promise<GetPackageRepositoryDetailResponse> {
     return await this.coreRepositoriesClient()
-      .GetPackageRepositoryDetail({ packageRepoRef })
+      .getPackageRepositoryDetail({ packageRepoRef })
       .catch((e: any) => {
         throw convertGrpcAuthError(e);
       });
@@ -73,7 +66,7 @@ export class PackageRepositoriesService {
     );
 
     return await this.coreRepositoriesClient()
-      .AddPackageRepository(addPackageRepositoryRequest)
+      .addPackageRepository(addPackageRepositoryRequest)
       .catch((e: any) => {
         throw convertGrpcAuthError(e);
       });
@@ -88,7 +81,7 @@ export class PackageRepositoriesService {
     );
 
     return await this.coreRepositoriesClient()
-      .UpdatePackageRepository(updatePackageRepositoryRequest)
+      .updatePackageRepository(updatePackageRepositoryRequest)
       .catch((e: any) => {
         throw convertGrpcAuthError(e);
       });
@@ -98,7 +91,7 @@ export class PackageRepositoriesService {
     packageRepoRef: PackageRepositoryReference,
   ): Promise<DeletePackageRepositoryResponse> {
     return await this.coreRepositoriesClient()
-      .DeletePackageRepository({
+      .deletePackageRepository({
         packageRepoRef,
       })
       .catch((e: any) => {
@@ -135,91 +128,117 @@ export class PackageRepositoriesService {
     // auth/tls - user entered
     if (!request.isUserManaged) {
       switch (request.authMethod) {
-        case (PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER):
+        case (PackageRepositoryAuth_PackageRepositoryAuthType.AUTHORIZATION_HEADER,
+        PackageRepositoryAuth_PackageRepositoryAuthType.BEARER):
           if (request.authHeader) {
-            addPackageRepositoryRequest.auth = {
+            addPackageRepositoryRequest.auth = new PackageRepositoryAuth({
               ...addPackageRepositoryRequest.auth,
-              header: request.authHeader,
-            } as PackageRepositoryAuth;
+              packageRepoAuthOneOf: {
+                case: "header",
+                value: request.authHeader,
+              },
+            });
           }
           break;
-        case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
+        case PackageRepositoryAuth_PackageRepositoryAuthType.BASIC_AUTH:
           if (Object.values(request.basicAuth).some(e => !!e)) {
-            addPackageRepositoryRequest.auth = {
+            addPackageRepositoryRequest.auth = new PackageRepositoryAuth({
               ...addPackageRepositoryRequest.auth,
-              usernamePassword: {
-                username: request.basicAuth.username,
-                password: request.basicAuth.password,
-              } as UsernamePassword,
-            } as PackageRepositoryAuth;
+              packageRepoAuthOneOf: {
+                case: "usernamePassword",
+                value: {
+                  username: request.basicAuth.username,
+                  password: request.basicAuth.password,
+                } as UsernamePassword,
+              },
+            });
           }
           break;
-        case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
+        case PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON:
           if (Object.values(request.dockerRegCreds).some(e => !!e)) {
-            addPackageRepositoryRequest.auth = {
+            addPackageRepositoryRequest.auth = new PackageRepositoryAuth({
               ...addPackageRepositoryRequest.auth,
-              dockerCreds: { ...request.dockerRegCreds } as DockerCredentials,
-            } as PackageRepositoryAuth;
+              packageRepoAuthOneOf: {
+                case: "dockerCreds",
+                value: { ...request.dockerRegCreds } as DockerCredentials,
+              },
+            });
           }
           break;
-        case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH:
+        case PackageRepositoryAuth_PackageRepositoryAuthType.SSH:
           if (Object.values(request.sshCreds).some(e => !!e)) {
-            addPackageRepositoryRequest.auth = {
+            addPackageRepositoryRequest.auth = new PackageRepositoryAuth({
               ...addPackageRepositoryRequest.auth,
-              sshCreds: {
-                ...request.sshCreds,
-              } as SshCredentials,
-            } as PackageRepositoryAuth;
+              packageRepoAuthOneOf: {
+                case: "sshCreds",
+                value: {
+                  ...request.sshCreds,
+                } as SshCredentials,
+              },
+            });
           }
           break;
-        case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS:
+        case PackageRepositoryAuth_PackageRepositoryAuthType.TLS:
           if (Object.values(request.tlsCertKey).some(e => !!e)) {
-            addPackageRepositoryRequest.auth = {
+            addPackageRepositoryRequest.auth = new PackageRepositoryAuth({
               ...addPackageRepositoryRequest.auth,
-              tlsCertKey: { ...request.tlsCertKey } as TlsCertKey,
-            } as PackageRepositoryAuth;
+              packageRepoAuthOneOf: {
+                case: "tlsCertKey",
+                value: { ...request.tlsCertKey } as TlsCertKey,
+              },
+            });
           }
           break;
-        case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE:
+        case PackageRepositoryAuth_PackageRepositoryAuthType.OPAQUE:
           if (Object.values(request.opaqueCreds.data).some(e => !!e)) {
-            addPackageRepositoryRequest.auth = {
+            addPackageRepositoryRequest.auth = new PackageRepositoryAuth({
               ...addPackageRepositoryRequest.auth,
-              opaqueCreds: { ...request.opaqueCreds } as OpaqueCredentials,
-            } as PackageRepositoryAuth;
+              packageRepoAuthOneOf: {
+                case: "opaqueCreds",
+                value: { ...request.opaqueCreds } as OpaqueCredentials,
+              },
+            });
           }
           break;
       }
 
       if (request.customCA) {
-        addPackageRepositoryRequest.tlsConfig = {
+        addPackageRepositoryRequest.tlsConfig = new PackageRepositoryTlsConfig({
           ...addPackageRepositoryRequest.tlsConfig,
-          certAuthority: request.customCA,
-        } as PackageRepositoryTlsConfig;
+          packageRepoTlsConfigOneOf: {
+            case: "certAuthority",
+            value: request.customCA,
+          },
+        });
       }
     }
 
     // auth/tls - user managed
     if (request.isUserManaged) {
       if (request.secretTLSName) {
-        addPackageRepositoryRequest.tlsConfig = {
+        addPackageRepositoryRequest.tlsConfig = new PackageRepositoryTlsConfig({
           ...addPackageRepositoryRequest.tlsConfig,
-          secretRef: {
-            name: request.secretTLSName,
-          } as SecretKeyReference,
-        } as PackageRepositoryTlsConfig;
+          packageRepoTlsConfigOneOf: {
+            case: "secretRef",
+            value: {
+              name: request.secretTLSName,
+            },
+          },
+        });
       }
       if (
-        request.authMethod !==
-          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED &&
+        request.authMethod !== PackageRepositoryAuth_PackageRepositoryAuthType.UNSPECIFIED &&
         request.secretAuthName
       ) {
-        addPackageRepositoryRequest.auth = {
+        addPackageRepositoryRequest.auth = new PackageRepositoryAuth({
           ...addPackageRepositoryRequest.auth,
-          secretRef: {
-            name: request.secretAuthName,
-          } as SecretKeyReference,
-        } as PackageRepositoryAuth;
+          packageRepoAuthOneOf: {
+            case: "secretRef",
+            value: new SecretKeyReference({
+              name: request.secretAuthName,
+            }),
+          },
+        });
       }
     }
 
@@ -238,19 +257,20 @@ export class PackageRepositoriesService {
     }
 
     if (isUpdate) {
-      const updatePackageRepositoryRequest: UpdatePackageRepositoryRequest = {
-        description: addPackageRepositoryRequest.description,
-        interval: addPackageRepositoryRequest.interval,
-        url: addPackageRepositoryRequest.url,
-        auth: addPackageRepositoryRequest.auth,
-        customDetail: addPackageRepositoryRequest.customDetail,
-        tlsConfig: addPackageRepositoryRequest.tlsConfig,
-        packageRepoRef: {
-          identifier: addPackageRepositoryRequest.name,
-          context: addPackageRepositoryRequest.context,
-          plugin: addPackageRepositoryRequest.plugin,
-        },
-      };
+      const updatePackageRepositoryRequest: UpdatePackageRepositoryRequest =
+        new UpdatePackageRepositoryRequest({
+          description: addPackageRepositoryRequest.description,
+          interval: addPackageRepositoryRequest.interval,
+          url: addPackageRepositoryRequest.url,
+          auth: addPackageRepositoryRequest.auth,
+          customDetail: addPackageRepositoryRequest.customDetail,
+          tlsConfig: addPackageRepositoryRequest.tlsConfig,
+          packageRepoRef: new PackageRepositoryReference({
+            identifier: addPackageRepositoryRequest.name,
+            context: addPackageRepositoryRequest.context,
+            plugin: addPackageRepositoryRequest.plugin,
+          }),
+        });
       return updatePackageRepositoryRequest;
     }
     return addPackageRepositoryRequest;
@@ -268,7 +288,7 @@ export class PackageRepositoriesService {
     switch (request.plugin?.name) {
       case PluginNames.PACKAGES_HELM: {
         const detail = request.customDetail as HelmPackageRepositoryCustomDetail;
-        const helmCustomDetail = {
+        const helmCustomDetail = new HelmPackageRepositoryCustomDetail({
           // populate the non-optional fields
           ociRepositories: detail?.ociRepositories || [],
           performValidation: !!detail?.performValidation,
@@ -278,47 +298,45 @@ export class PackageRepositoriesService {
           securityContext: {
             supplementalGroups: [],
           },
-        } as HelmPackageRepositoryCustomDetail;
+        });
 
         // populate the imagesPullSecret if it's not empty
         if (
-          detail?.imagesPullSecret?.secretRef ||
-          (detail?.imagesPullSecret?.credentials &&
-            Object.values((detail?.imagesPullSecret?.credentials || {}) as DockerCredentials).some(
-              e => !!e,
-            ))
+          detail?.imagesPullSecret?.dockerRegistryCredentialOneOf?.case === "secretRef" ||
+          (detail?.imagesPullSecret?.dockerRegistryCredentialOneOf?.case === "credentials" &&
+            Object.values(
+              (detail?.imagesPullSecret?.dockerRegistryCredentialOneOf?.value ||
+                {}) as DockerCredentials,
+            ).some(e => !!e))
         ) {
           helmCustomDetail.imagesPullSecret = detail.imagesPullSecret;
         }
+        helmCustomDetail.imagesPullSecret?.fromJsonString(JSON.stringify(detail.imagesPullSecret));
 
         // populate the proxyOptions if it's not empty
         if (Object.values((detail?.proxyOptions || {}) as ProxyOptions).some(e => !!e)) {
-          helmCustomDetail.proxyOptions = {
+          helmCustomDetail.proxyOptions = new ProxyOptions({
             enabled: detail.proxyOptions?.enabled || false,
             httpProxy: detail.proxyOptions?.httpProxy || "",
             httpsProxy: detail.proxyOptions?.httpsProxy || "",
             noProxy: detail.proxyOptions?.noProxy || "",
-          };
+          });
         }
 
         return {
-          typeUrl: `${helmProtobufPackage}.HelmPackageRepositoryCustomDetail`,
-          value: HelmPackageRepositoryCustomDetail.encode(helmCustomDetail).finish(),
+          typeUrl: HelmPackageRepositoryCustomDetail.typeName,
+          value: helmCustomDetail.toBinary(),
         } as Any;
       }
       case PluginNames.PACKAGES_KAPP:
         return {
-          typeUrl: `${kappControllerProtobufPackage}.KappControllerPackageRepositoryCustomDetail`,
-          value: KappControllerPackageRepositoryCustomDetail.encode(
-            request.customDetail as KappControllerPackageRepositoryCustomDetail,
-          ).finish(),
+          typeUrl: KappControllerPackageRepositoryCustomDetail.typeName,
+          value: request.customDetail,
         } as Any;
       case PluginNames.PACKAGES_FLUX:
         return {
-          typeUrl: `${fluxv2ProtobufPackage}.FluxPackageRepositoryCustomDetail`,
-          value: FluxPackageRepositoryCustomDetail.encode(
-            request.customDetail as FluxPackageRepositoryCustomDetail,
-          ).finish(),
+          typeUrl: FluxPackageRepositoryCustomDetail.typeName,
+          value: request.customDetail,
         } as Any;
       default:
         return;
@@ -327,14 +345,14 @@ export class PackageRepositoriesService {
 
   public static async getConfiguredPlugins(): Promise<GetConfiguredPluginsResponse> {
     return await this.pluginsServiceClientImpl()
-      .GetConfiguredPlugins({})
+      .getConfiguredPlugins({})
       .catch((e: any) => {
         throw convertGrpcAuthError(e);
       });
   }
 
   public static async getRepositoriesPermissions(cluster: string, namespace: string) {
-    const resp = await this.coreRepositoriesClient().GetPackageRepositoryPermissions({
+    const resp = await this.coreRepositoriesClient().getPackageRepositoryPermissions({
       context: {
         cluster: cluster,
         namespace: namespace,

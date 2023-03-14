@@ -9,8 +9,8 @@ import {
   Context,
   Maintainer,
   PackageAppVersion,
-} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { createMemoryHistory } from "history";
 import * as ReactRedux from "react-redux";
 import { Route, Router } from "react-router-dom";
@@ -34,12 +34,12 @@ const defaultProps = {
   plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
 };
 
-const testVersion: PackageAppVersion = {
+const testVersion = new PackageAppVersion({
   pkgVersion: "1.2.3",
   appVersion: "4.5.6",
-};
+});
 
-const defaultAvailablePkgDetail: AvailablePackageDetail = {
+const defaultAvailablePkgDetail = new AvailablePackageDetail({
   name: "foo",
   categories: [""],
   displayName: "foo",
@@ -49,11 +49,11 @@ const defaultAvailablePkgDetail: AvailablePackageDetail = {
   sourceUrls: ["test"],
   shortDescription: "test",
   longDescription: "test",
-  availablePackageRef: {
+  availablePackageRef: new AvailablePackageReference({
     identifier: "foo/foo",
     context: { cluster: "", namespace: "package-namespace" } as Context,
     plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-  },
+  }),
   valuesSchema: "test",
   defaultValues: "test",
   additionalDefaultValues: {},
@@ -63,7 +63,7 @@ const defaultAvailablePkgDetail: AvailablePackageDetail = {
     appVersion: testVersion.appVersion,
     pkgVersion: testVersion.pkgVersion,
   } as PackageAppVersion,
-};
+});
 
 const defaultPackageState = {
   isFetching: false,
@@ -308,7 +308,9 @@ describe("AvailablePackageMaintainers githubIDAsNames prop value", () => {
   for (const t of tests) {
     it(`for ${t.name}`, () => {
       const myAvailablePkgDetail = defaultAvailablePkgDetail;
-      myAvailablePkgDetail.maintainers = [{ name: "John Smith", email: "john@example.com" }];
+      myAvailablePkgDetail.maintainers = [
+        new Maintainer({ name: "John Smith", email: "john@example.com" }),
+      ];
       myAvailablePkgDetail.repoUrl = t.repoURL;
 
       const wrapper = mountWrapper(
