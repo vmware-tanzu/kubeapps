@@ -1125,17 +1125,17 @@
     "@bufbuild/buf-win32-arm64" "1.14.0-1"
     "@bufbuild/buf-win32-x64" "1.14.0-1"
 
-"@bufbuild/connect-web@^0.8.1":
-  version "0.8.1"
-  resolved "https://registry.yarnpkg.com/@bufbuild/connect-web/-/connect-web-0.8.1.tgz#217f706ef774bc63371bcdee1cf3ef043ecb6705"
-  integrity sha512-gUaFFxnnDd/LjOST2AXn/YZLLJqRjkWQhufjx6B4rHqoIdGCtkoYMTxjFHVO7AqPkszBClxlaGzMf+7jBPmf9A==
+"@bufbuild/connect-web@^0.8.3":
+  version "0.8.3"
+  resolved "https://registry.yarnpkg.com/@bufbuild/connect-web/-/connect-web-0.8.3.tgz#0a67d2b505a202a658de920ddb9dc519ce8951ed"
+  integrity sha512-36FZ8L6e/oNUglIclhLu3mHceTXRHp/QB/Pnphzhc0SYkZFFyjGfRJfm+qq89dFns8krchtP8sTyqV8G7EaJEQ==
   dependencies:
-    "@bufbuild/connect" "0.8.1"
+    "@bufbuild/connect" "0.8.3"
 
-"@bufbuild/connect@0.8.1", "@bufbuild/connect@^0.8.1":
-  version "0.8.1"
-  resolved "https://registry.yarnpkg.com/@bufbuild/connect/-/connect-0.8.1.tgz#71afa90bf56bb833a7f3e2a492e6f9f83c2bebeb"
-  integrity sha512-cQA0jstYcLknJecTE7KbU4ePNBqiCNviBEcUCbFLve3x+vcSmtoH6jb8z39MeBqFy42ZoWhTGGc3RNCeOx2QUA==
+"@bufbuild/connect@0.8.3", "@bufbuild/connect@^0.8.1":
+  version "0.8.3"
+  resolved "https://registry.yarnpkg.com/@bufbuild/connect/-/connect-0.8.3.tgz#5eed5b2231ce7b0f9e9c504ea231d21eb7266ec4"
+  integrity sha512-lk4JVYxRPRvELAiYIc4fALI2qh/gG8j0yYTSKzBkmy+DuJ7xvWQ81DX7zo1WhXaZRxiC9VDU3jfFwgbwYrd2eQ==
 
 "@bufbuild/protobuf@1.0.0", "@bufbuild/protobuf@^1.0.0":
   version "1.0.0"
