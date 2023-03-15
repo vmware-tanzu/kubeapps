@@ -52,8 +52,8 @@ cloud.google.com/go/storage v1.14.0/go.mod h1:GrKmX003DSIwi9o29oFT7YDnHYwZoctc3f
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/AdaLogics/go-fuzz-headers v0.0.0-20230106234847-43070de90fa1 h1:EKPd1INOIyr5hWOWhvpmQpY6tKjeG0hT1s3AMC/9fic=
 github.com/AdaLogics/go-fuzz-headers v0.0.0-20230106234847-43070de90fa1/go.mod h1:VzwV+t+dZ9j/H867F1M2ziD+yLHtB46oM35FxxMJ4d0=
-github.com/Azure/azure-sdk-for-go/sdk/azcore v1.3.1 h1:gVXuXcWd1i4C2Ruxe321aU+IKGaStvGB/S90PUPB/W8=
-github.com/Azure/azure-sdk-for-go/sdk/azcore v1.3.1/go.mod h1:DffdKW9RFqa5VgmsjUOsS7UE7eiA5iAvYUs63bhKQ0M=
+github.com/Azure/azure-sdk-for-go/sdk/azcore v1.4.0 h1:rTnT/Jrcm+figWlYz4Ixzt0SJVR2cMC8lvZcimipiEY=
+github.com/Azure/azure-sdk-for-go/sdk/azcore v1.4.0/go.mod h1:ON4tFdPTwRcgWEaVDrN3584Ef+b7GgSJaXxe5fW9t4M=
 github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.2.1 h1:T8quHYlUGyb/oqtSTwqlCr1ilJHrDv+ZtpSfo+hm1BU=
 github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.2.1/go.mod h1:gLa1CL2RNE4s7M3yopJ/p0iq5DdY6Yv5ZUt9MTRZOQM=
 github.com/Azure/azure-sdk-for-go/sdk/internal v1.1.2 h1:+5VZ72z0Qan5Bog5C+ZkgSqUbeVUd9wgtHOrIKuc5b8=
@@ -296,8 +296,8 @@ github.com/fluxcd/pkg/apis/kustomize v0.8.1 h1:uRH9xVDJfSBGIiL6PIhkguHvf2Nme6uTW
 github.com/fluxcd/pkg/apis/kustomize v0.8.1/go.mod h1:TBem+2mHp6Ib7XD1fmzDkoUnBzx07wSzIYo6BVx3XAc=
 github.com/fluxcd/pkg/apis/meta v0.19.1 h1:fCI5CnTXpAqr67UlaI9q0H+OztMKB5kDTr6xV6vlAo0=
 github.com/fluxcd/pkg/apis/meta v0.19.1/go.mod h1:ZPPMYrPnWwPQYNEGM/Uc0N4SurUPS3xNI3IIpCQEfuM=
-github.com/fluxcd/pkg/oci v0.21.0 h1:xiCGEtyIlH+wqHW0NCPmcwbEgCUbZwpTWmw7vKPHYe0=
-github.com/fluxcd/pkg/oci v0.21.0/go.mod h1:DvGuPqQvoVeDmiIKNCpjgIIs2MdkGIS0BjhLZIVfOWA=
+github.com/fluxcd/pkg/oci v0.21.1 h1:9kn19wkabE2xB77NRlOtMJlSYhZmUjdloZCzlHdAS6s=
+github.com/fluxcd/pkg/oci v0.21.1/go.mod h1:9E2DBlQII7YmeWt2ieTh38wwkiBqx3yg5NEJ51uefaA=
 github.com/fluxcd/pkg/version v0.2.1 h1:RRH7+6qiWHdTvRNwpoBmilnubJ2C4FZYGgy5wTDVKVc=
 github.com/fluxcd/pkg/version v0.2.1/go.mod h1:UmUYHDz4BxHQMesMUx3gYVrT2Wf66H49JpTg/PW+/OY=
 github.com/fluxcd/source-controller/api v0.36.0 h1:c5/uWFqKZ9vtDkkXsdMTyiuHNNEX3B6ldjgTsB7Uy14=
