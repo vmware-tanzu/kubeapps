@@ -11,6 +11,7 @@ package tools
 // prevent tools from inspecting the imports.
 
 import (
+	_ "github.com/bufbuild/connect-go/cmd/protoc-gen-connect-go"
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway"
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2"
 	_ "github.com/spf13/cobra-cli"

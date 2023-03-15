@@ -8,6 +8,10 @@ plugins:
     out: gen
     opt:
       - module=github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen
+  - name: connect-go
+    out: gen
+    opt:
+      - module=github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen
   - name: go-grpc
     out: gen
     opt:

@@ -69,7 +69,7 @@ func local_request_HelmPackagesService_GetAvailablePackageSummaries_0(ctx contex
 }
 
 var (
-	filter_HelmPackagesService_GetAvailablePackageDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"available_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
+	filter_HelmPackagesService_GetAvailablePackageDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"available_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 7, 4, 8, 9, 10, 2, 0, 6, 5, 0, 7, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 1, 3, 7, 2, 9, 10, 2, 12, 4, 5, 6}}
 )
 
 func request_HelmPackagesService_GetAvailablePackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -179,7 +179,7 @@ func local_request_HelmPackagesService_GetAvailablePackageDetail_0(ctx context.C
 }
 
 var (
-	filter_HelmPackagesService_GetAvailablePackageVersions_0 = &utilities.DoubleArray{Encoding: map[string]int{"available_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
+	filter_HelmPackagesService_GetAvailablePackageVersions_0 = &utilities.DoubleArray{Encoding: map[string]int{"available_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 7, 4, 8, 9, 10, 2, 0, 6, 5, 0, 7, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 1, 3, 7, 2, 9, 10, 2, 12, 4, 5, 6}}
 )
 
 func request_HelmPackagesService_GetAvailablePackageVersions_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -325,7 +325,7 @@ func local_request_HelmPackagesService_GetInstalledPackageSummaries_0(ctx contex
 }
 
 var (
-	filter_HelmPackagesService_GetInstalledPackageDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
+	filter_HelmPackagesService_GetInstalledPackageDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 7, 4, 8, 9, 10, 2, 0, 6, 5, 0, 7, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 1, 3, 7, 2, 9, 10, 2, 12, 4, 5, 6}}
 )
 
 func request_HelmPackagesService_GetInstalledPackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -577,7 +577,7 @@ func local_request_HelmPackagesService_UpdateInstalledPackage_0(ctx context.Cont
 }
 
 var (
-	filter_HelmPackagesService_DeleteInstalledPackage_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
+	filter_HelmPackagesService_DeleteInstalledPackage_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 7, 4, 8, 9, 10, 2, 0, 6, 5, 0, 7, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 1, 3, 7, 2, 9, 10, 2, 12, 4, 5, 6}}
 )
 
 func request_HelmPackagesService_DeleteInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -795,7 +795,7 @@ func local_request_HelmPackagesService_RollbackInstalledPackage_0(ctx context.Co
 }
 
 var (
-	filter_HelmPackagesService_GetInstalledPackageResourceRefs_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
+	filter_HelmPackagesService_GetInstalledPackageResourceRefs_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 7, 4, 8, 9, 10, 2, 0, 6, 5, 0, 7, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 1, 3, 7, 2, 9, 10, 2, 12, 4, 5, 6}}
 )
 
 func request_HelmPackagesService_GetInstalledPackageResourceRefs_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -939,7 +939,7 @@ func local_request_HelmRepositoriesService_AddPackageRepository_0(ctx context.Co
 }
 
 var (
-	filter_HelmRepositoriesService_GetPackageRepositoryDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"package_repo_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
+	filter_HelmRepositoriesService_GetPackageRepositoryDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"package_repo_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 7, 4, 8, 9, 10, 2, 0, 6, 5, 0, 7, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 1, 3, 7, 2, 9, 10, 2, 12, 4, 5, 6}}
 )
 
 func request_HelmRepositoriesService_GetPackageRepositoryDetail_0(ctx context.Context, marshaler runtime.Marshaler, client HelmRepositoriesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -1193,7 +1193,7 @@ func local_request_HelmRepositoriesService_UpdatePackageRepository_0(ctx context
 }
 
 var (
-	filter_HelmRepositoriesService_DeletePackageRepository_0 = &utilities.DoubleArray{Encoding: map[string]int{"package_repo_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
+	filter_HelmRepositoriesService_DeletePackageRepository_0 = &utilities.DoubleArray{Encoding: map[string]int{"package_repo_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 7, 4, 8, 9, 10, 2, 0, 6, 5, 0, 7, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 1, 3, 7, 2, 9, 10, 2, 12, 4, 5, 6}}
 )
 
 func request_HelmRepositoriesService_DeletePackageRepository_0(ctx context.Context, marshaler runtime.Marshaler, client HelmRepositoriesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -1303,7 +1303,7 @@ func local_request_HelmRepositoriesService_DeletePackageRepository_0(ctx context
 }
 
 var (
-	filter_HelmRepositoriesService_GetPackageRepositoryPermissions_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "cluster": 1}, Base: []int{1, 1, 1, 0}, Check: []int{0, 1, 2, 3}}
+	filter_HelmRepositoriesService_GetPackageRepositoryPermissions_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "cluster": 1}, Base: []int{1, 2, 3, 2, 0, 0}, Check: []int{0, 1, 1, 2, 4, 3}}
 )
 
 func request_HelmRepositoriesService_GetPackageRepositoryPermissions_0(ctx context.Context, marshaler runtime.Marshaler, client HelmRepositoriesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -1793,7 +1793,7 @@ func RegisterHelmRepositoriesServiceHandlerServer(ctx context.Context, mux *runt
 // RegisterHelmPackagesServiceHandlerFromEndpoint is same as RegisterHelmPackagesServiceHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
 func RegisterHelmPackagesServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
-	conn, err := grpc.Dial(endpoint, opts...)
+	conn, err := grpc.DialContext(ctx, endpoint, opts...)
 	if err != nil {
 		return err
 	}
@@ -2098,7 +2098,7 @@ var (
 // RegisterHelmRepositoriesServiceHandlerFromEndpoint is same as RegisterHelmRepositoriesServiceHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
 func RegisterHelmRepositoriesServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
-	conn, err := grpc.Dial(endpoint, opts...)
+	conn, err := grpc.DialContext(ctx, endpoint, opts...)
 	if err != nil {
 		return err
 	}
