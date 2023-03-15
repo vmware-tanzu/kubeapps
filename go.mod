@@ -49,7 +49,7 @@ require (
 	github.com/docker/cli v23.0.1+incompatible
 	github.com/fluxcd/helm-controller/api v0.31.0
 	github.com/fluxcd/pkg/apis/meta v0.19.1
-	github.com/fluxcd/pkg/oci v0.21.0
+	github.com/fluxcd/pkg/oci v0.21.1
 	github.com/fluxcd/pkg/version v0.2.1
 	github.com/fluxcd/source-controller/api v0.36.0
 	github.com/go-redis/redis/v8 v8.11.5
@@ -101,7 +101,7 @@ require (
 
 require (
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230106234847-43070de90fa1 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.3.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.4.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.2.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.1.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
