@@ -12,6 +12,7 @@ import (
 	"testing"
 	"testing/fstest"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
@@ -70,12 +71,12 @@ func TestPluginsAvailable(t *testing.T) {
 				pluginsWithServers: tc.configuredPlugins,
 			}
 
-			resp, err := ps.GetConfiguredPlugins(context.TODO(), &plugins.GetConfiguredPluginsRequest{})
+			resp, err := ps.GetConfiguredPlugins(context.TODO(), connect.NewRequest(&plugins.GetConfiguredPluginsRequest{}))
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			if got, want := resp.Plugins, tc.expectedPlugins; !cmp.Equal(want, got, ignoreUnexported) {
+			if got, want := resp.Msg.Plugins, tc.expectedPlugins; !cmp.Equal(want, got, ignoreUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 			}
 		})

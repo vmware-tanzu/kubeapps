@@ -6,13 +6,16 @@ package server
 import (
 	"context"
 	"fmt"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"net"
 	"net/http"
 	"reflect"
 	"strings"
 	"time"
+
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/soheilhy/cmux"
@@ -23,6 +26,7 @@ import (
 	pluginsv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
 	packagesGRPCv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	pluginsGRPCv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	pluginsConnect "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1/v1alpha1connect"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
@@ -93,13 +97,31 @@ func Serve(serveOpts core.ServeOptions) error {
 
 	// Create the core.plugins.v1alpha1 server which handles registration of
 	// plugins, and register it for both grpc and http.
+
 	pluginsServer, err := pluginsv1alpha1.NewPluginsServer(serveOpts, grpcSrv, gwArgs)
 	if err != nil {
 		return fmt.Errorf("failed to initialize plugins server: %v", err)
 	}
-	if err = registerPluginsServiceServer(grpcSrv, pluginsServer, gwArgs); err != nil {
-		return err
-	} else if err = registerPackagesServiceServer(grpcSrv, pluginsServer, gwArgs); err != nil {
+
+	// UPTOHERE: Perhaps do this differently - can we mix both the grpc server
+	// and the connect one, or not? (Really just want to add a handler for the
+	// RPC). Instead of registering like this, just need to
+
+	// The connect service handler automatically handles grpc-web, connect and
+	// grpc for us, so we won't need all the extra code below when transitioning
+	// services to the new mux (and can remove the use of cmux once connect is
+	// used for all requests).
+	// TOTRY: try handling the request with the new mux and only if that fails,
+	// revert to the existing one.
+	path, handler := pluginsConnect.NewPluginsServiceHandler(pluginsServer)
+	klogv2.Errorf("The path for the connect handler is: %+v", path)
+	mux_new := http.NewServeMux()
+	mux_new.Handle(path, handler)
+
+	// if err = registerPluginsServiceServer(gwArgs); err != nil {
+	// 	return err
+	// } else
+	if err = registerPackagesServiceServer(grpcSrv, pluginsServer, gwArgs); err != nil {
 		return err
 	} else if err = registerRepositoriesServiceServer(grpcSrv, pluginsServer, gwArgs); err != nil {
 		return err
@@ -115,6 +137,9 @@ func Serve(serveOpts core.ServeOptions) error {
 	// on the simpler cmux.HTTP2HeaderField("content-type", "application/grpc"). More details
 	// at https://github.com/soheilhy/cmux/issues/64
 	mux := cmux.New(lis)
+	// Want to match anything (grpc, connect, grpc-web that is for the
+	// transitioned plugins/handlers)
+	connectListener := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldPrefixSendSettings(":path", path))
 	grpcListener := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
 	grpcWebListener := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc-web"))
 	httpListener := mux.Match(cmux.Any())
@@ -155,6 +180,12 @@ func Serve(serveOpts core.ServeOptions) error {
 			klogv2.Fatalf("failed to serve: %v", err)
 		}
 	}()
+	go func() {
+		err := http.Serve(connectListener, h2c.NewHandler(mux_new, &http2.Server{}))
+		if err != nil {
+			klogv2.Fatalf("failed to server: %+v", err)
+		}
+	}()
 
 	if serveOpts.UnsafeLocalDevKubeconfig {
 		klogv2.Warning("Using the local Kubeconfig file instead of the actual in-cluster's config. This is not recommended except for development purposes.")
@@ -168,9 +199,9 @@ func Serve(serveOpts core.ServeOptions) error {
 	return nil
 }
 
-func registerPluginsServiceServer(grpcSrv *grpc.Server, pluginsServer *pluginsv1alpha1.PluginsServer, gwArgs core.GatewayHandlerArgs) error {
-	pluginsGRPCv1alpha1.RegisterPluginsServiceServer(grpcSrv, pluginsServer)
+func registerPluginsServiceServer(gwArgs core.GatewayHandlerArgs) error {
 	err := pluginsGRPCv1alpha1.RegisterPluginsServiceHandlerFromEndpoint(gwArgs.Ctx, gwArgs.Mux, gwArgs.Addr, gwArgs.DialOptions)
+
 	if err != nil {
 		return fmt.Errorf("failed to register core.plugins handler for gateway: %v", err)
 	}
