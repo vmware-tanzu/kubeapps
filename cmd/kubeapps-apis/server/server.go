@@ -6,6 +6,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"reflect"
@@ -14,12 +15,14 @@ import (
 
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+	"golang.org/x/net/http2/hpack"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/soheilhy/cmux"
 
+	grpchealth "github.com/bufbuild/connect-grpchealth-go"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
 	packagesv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core/packages/v1alpha1"
@@ -113,10 +116,23 @@ func Serve(serveOpts core.ServeOptions) error {
 	// used for all requests).
 	// TOTRY: try handling the request with the new mux and only if that fails,
 	// revert to the existing one.
-	path, handler := pluginsConnect.NewPluginsServiceHandler(pluginsServer)
-	klogv2.Errorf("The path for the connect handler is: %+v", path)
+	paths_for_connect_grpc := []string{}
+
+	plugins_path, handler := pluginsConnect.NewPluginsServiceHandler(pluginsServer)
+	paths_for_connect_grpc = append(paths_for_connect_grpc, plugins_path)
+
+	klogv2.Errorf("The path for the connect handler is: %+v", plugins_path)
 	mux_new := http.NewServeMux()
-	mux_new.Handle(path, handler)
+	mux_new.Handle(plugins_path, handler)
+
+	// TODO: Add a handler for the health check here too, and update the cmux later to use it too.
+	checker := grpchealth.NewStaticChecker(
+		pluginsConnect.PluginsServiceName,
+	)
+	// Add to paths for cmux later.
+	checker_path, handler := grpchealth.NewHandler(checker)
+	mux_new.Handle(checker_path, handler)
+	paths_for_connect_grpc = append(paths_for_connect_grpc, checker_path)
 
 	// if err = registerPluginsServiceServer(gwArgs); err != nil {
 	// 	return err
@@ -137,9 +153,11 @@ func Serve(serveOpts core.ServeOptions) error {
 	// on the simpler cmux.HTTP2HeaderField("content-type", "application/grpc"). More details
 	// at https://github.com/soheilhy/cmux/issues/64
 	mux := cmux.New(lis)
+
 	// Want to match anything (grpc, connect, grpc-web that is for the
 	// transitioned plugins/handlers)
-	connectListener := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldPrefixSendSettings(":path", path))
+	connectListener := mux.MatchWithWriters(match_transitioned_paths(paths_for_connect_grpc))
+
 	grpcListener := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
 	grpcWebListener := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc-web"))
 	httpListener := mux.Match(cmux.Any())
@@ -313,4 +331,86 @@ func gatewayMux() (*runtime.ServeMux, error) {
 	}
 
 	return gwmux, nil
+}
+
+func match_transitioned_paths(paths []string) cmux.MatchWriter {
+	return func(w io.Writer, r io.Reader) bool {
+		if !hasHTTP2Preface(r) {
+			return false
+		}
+
+		done := false
+		matched := false
+
+		framer := http2.NewFramer(w, r)
+
+		// We're only interested in the :path header.
+		hdec := hpack.NewDecoder(uint32(4<<10), func(hf hpack.HeaderField) {
+			if hf.Name == ":path" {
+				done = true
+				klogv2.Errorf("Found :path=%q", hf.Value)
+				for _, path := range paths {
+					if strings.HasPrefix(hf.Value, path) {
+						matched = true
+						klogv2.Errorf("Matched a transitioned path")
+					}
+				}
+			}
+		})
+
+		for {
+			f, err := framer.ReadFrame()
+			if err != nil {
+				return false
+			}
+
+			switch f := f.(type) {
+			case *http2.SettingsFrame:
+				// Sender acknoweldged the SETTINGS frame. No need to write
+				// SETTINGS again.
+				if f.IsAck() {
+					break
+				}
+				if err := framer.WriteSettings(); err != nil {
+					return false
+				}
+			case *http2.ContinuationFrame:
+				if _, err := hdec.Write(f.HeaderBlockFragment()); err != nil {
+					return false
+				}
+				done = done || f.FrameHeader.Flags&http2.FlagHeadersEndHeaders != 0
+			case *http2.HeadersFrame:
+				if _, err := hdec.Write(f.HeaderBlockFragment()); err != nil {
+					return false
+				}
+				done = done || f.FrameHeader.Flags&http2.FlagHeadersEndHeaders != 0
+			}
+
+			if done {
+				return matched
+			}
+		}
+		return true
+	}
+}
+
+func hasHTTP2Preface(r io.Reader) bool {
+	var b [len(http2.ClientPreface)]byte
+	last := 0
+
+	for {
+		n, err := r.Read(b[last:])
+		if err != nil {
+			return false
+		}
+
+		last += n
+		eq := string(b[:last]) == http2.ClientPreface[:last]
+		if last == len(http2.ClientPreface) {
+			return eq
+		}
+		if !eq {
+			return false
+		}
+	}
 }
