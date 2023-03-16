@@ -22,7 +22,7 @@ postgresql:
 kubeappsapis:
   replicaCount: 1
   image:
-    tag: dev2
+    tag: dev5
 ingress:
   enabled: true
   hostname: localhost

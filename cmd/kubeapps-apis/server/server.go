@@ -333,6 +333,11 @@ func gatewayMux() (*runtime.ServeMux, error) {
 	return gwmux, nil
 }
 
+// UPTOHERE:
+// Seeing:
+// E0316 06:04:26.037244       1 server.go:351] Found :path="/grpc.health.v1.Health/Check"
+// E0316 06:04:26.037253       1 server.go:355] Matched a transitioned path
+// 2023/03/16 06:04:26 http2: server connection error from 127.0.0.1:39674: connection error: PROTOCOL_ERROR
 func match_transitioned_paths(paths []string) cmux.MatchWriter {
 	return func(w io.Writer, r io.Reader) bool {
 		if !hasHTTP2Preface(r) {
