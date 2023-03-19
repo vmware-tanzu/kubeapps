@@ -33,6 +33,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "anstream"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1be94522db49757a6f9266e8ac18a59704e3e1c770c2e8173a39f9f8161a163a"
+dependencies = [
+ "anstyle",
+ "anstyle-parse",
+ "anstyle-wincon",
+ "concolor-override",
+ "concolor-query",
+ "is-terminal",
+ "utf8parse",
+]
+
+[[package]]
 name = "anstyle"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -44,21 +59,6 @@ version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a7d1bb534e9efed14f3e5f44e7dd1a4f709384023a4165199a4241e18dff0116"
 dependencies = [
- "utf8parse",
-]
-
-[[package]]
-name = "anstyle-stream"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1383966ba5bad155fe30bb239f7ca9eb149990674414aee2f8aef35a0a2dc9d0"
-dependencies = [
- "anstyle",
- "anstyle-parse",
- "anstyle-wincon",
- "concolor-override",
- "concolor-query",
- "is-terminal",
  "utf8parse",
 ]
 
@@ -1769,12 +1769,12 @@ checksum = "a507befe795404456341dfab10cef66ead4c041f62b8b11bbb92bffe5d0953e0"
 
 [[package]]
 name = "snapbox"
-version = "0.4.9"
+version = "0.4.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67df287b9e7dcdc29ab4938b4dffa2858ec39ac206322103e34435599e9cebf3"
+checksum = "9615402f9cff539301119bdf2c2f328739cf2b45c2116666618fb6ac399f75bb"
 dependencies = [
+ "anstream",
  "anstyle",
- "anstyle-stream",
  "content_inspector",
  "dunce",
  "filetime",
@@ -1791,11 +1791,11 @@ dependencies = [
 
 [[package]]
 name = "snapbox-macros"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce20b825fcd690a5cff6b5f6b7ee3cef7adf71820772263e4f28e155f1c164f5"
+checksum = "f8e40c667388ed1cb5060f545d0013bf0a23efdfa6c5c3e9ef592de391cd860f"
 dependencies = [
- "anstyle-stream",
+ "anstream",
 ]
 
 [[package]]
@@ -2129,9 +2129,9 @@ checksum = "3528ecfd12c466c6f163363caf2d02a71161dd5e1cc6ae7b34207ea2d42d81ed"
 
 [[package]]
 name = "trycmd"
-version = "0.14.14"
+version = "0.14.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58af7ca752988a40f0ae2dc453af55923801066bf31527107c0d910b349db852"
+checksum = "32564b3f936a9ebedf5cc07dcf1e7e661204766d35f92c03bf347b099d84e783"
 dependencies = [
  "glob",
  "humantime",
