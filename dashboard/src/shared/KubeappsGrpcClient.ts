@@ -31,7 +31,7 @@ export class KubeappsGrpcClient {
     const auth: Interceptor = next => async req => {
       const t = token ? token : Auth.getAuthToken();
       if (t) {
-        req.header.set("Authorization", t);
+        req.header.set("Authorization", `Bearer ${t}`);
       }
       return await next(req);
     };
