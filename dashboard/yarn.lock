@@ -1152,7 +1152,12 @@
   resolved "https://registry.yarnpkg.com/@bufbuild/connect/-/connect-0.8.3.tgz#5eed5b2231ce7b0f9e9c504ea231d21eb7266ec4"
   integrity sha512-lk4JVYxRPRvELAiYIc4fALI2qh/gG8j0yYTSKzBkmy+DuJ7xvWQ81DX7zo1WhXaZRxiC9VDU3jfFwgbwYrd2eQ==
 
-"@bufbuild/protobuf@1.0.0", "@bufbuild/protobuf@^1.0.0":
+"@bufbuild/protobuf@1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.1.1.tgz#ed2a8d25975ccc405393c96aaf707c1897e249d3"
+  integrity sha512-1dS2m3jabfW2XL2K6//41wZkO4XJOZtpe0bKLuta0BvK5LxNRyUBSSN5835n3bIFiNJKFWhDnzZEMrV7QVGFfQ==
+
+"@bufbuild/protobuf@^1.0.0":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.0.0.tgz#b25c045f8554f92c3723d5bb28e3a2538662f51b"
   integrity sha512-oH3jHBrZ6to8Qf4zLg7O8KqSY42kQZNBRXJRMp5uSi0mqE4L8NbyMnZHeOsbXmTb0xpptRyH11LfS+KeVhXzAA==
@@ -1164,19 +1169,19 @@
   dependencies:
     "@bufbuild/protoplugin" "^1.0.0"
 
-"@bufbuild/protoc-gen-es@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-es/-/protoc-gen-es-1.0.0.tgz#9afa22d6296a741f8b512a5fcf0846d948ce7f65"
-  integrity sha512-3NZzjw2hbeO7JFUZ70W4UOkaMyOC6hJfJP4uDczyWWTXoCr2TPDfPyLE2U8DBpKufneLS1YBhFJPPv4QvJkiPA==
+"@bufbuild/protoc-gen-es@^1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-es/-/protoc-gen-es-1.1.1.tgz#30e239a5f022e66fa4d2ff21fdba6177812c2490"
+  integrity sha512-TaT3xvUrlikuq7bN63d/FlpbecdnrKgerrUD+ArFGIN5CLIdBU+FMVlup/wvP+iTNxf0k6Qrpg2x7XhyLIHZMg==
   dependencies:
-    "@bufbuild/protoplugin" "1.0.0"
+    "@bufbuild/protoplugin" "1.1.1"
 
-"@bufbuild/protoplugin@1.0.0", "@bufbuild/protoplugin@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protoplugin/-/protoplugin-1.0.0.tgz#58708ccbb2710be7d4a69607e2b039ac62cd5665"
-  integrity sha512-L7z2/4MgP36QGEAh8T4OYrdMRv//LAw4gGpL8D3cziE21uP6FLzLKpIxJ4aJBoUyHyS53tpZMpb0djbxYDecFA==
+"@bufbuild/protoplugin@1.1.1", "@bufbuild/protoplugin@^1.0.0":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoplugin/-/protoplugin-1.1.1.tgz#a32ef874e00e3e20e54d1feaca1e77d41ccea92f"
+  integrity sha512-WDLgYReAMo1X2QqZrKyaFaZIcO01CHuq1dGRtaB42tyiY1f6Er9de1tvtRxt0MWfx5vPhZmoPCKSrwLZp92UTw==
   dependencies:
-    "@bufbuild/protobuf" "1.0.0"
+    "@bufbuild/protobuf" "1.1.1"
     "@typescript/vfs" "^1.4.0"
     typescript "4.5.2"
 
