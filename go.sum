@@ -1646,8 +1646,8 @@ k8s.io/kube-openapi v0.0.0-20230118215034-64b6bb138190 h1:5MAqxJfshQZ9NdSNGAn7CJ
 k8s.io/kube-openapi v0.0.0-20230118215034-64b6bb138190/go.mod h1:/BYxry62FuDzmI+i9B+X2pqfySRmSOW2ARmj5Zbqhj0=
 k8s.io/kubectl v0.26.1 h1:K8A0Jjlwg8GqrxOXxAbjY5xtmXYeYjLU96cHp2WMQ7s=
 k8s.io/kubectl v0.26.1/go.mod h1:miYFVzldVbdIiXMrHZYmL/EDWwJKM+F0sSsdxsATFPo=
-k8s.io/kubernetes v1.26.2 h1:6Ve0nzlF2noVXf9jMHSJgbRZC0EkyOV22GYEv1K7MZI=
-k8s.io/kubernetes v1.26.2/go.mod h1:cv07eVU5+kF6ibpVtAvOGjIBsrfgevQL4ORK85/oqWc=
+k8s.io/kubernetes v1.26.3 h1:LtjNGNNpCTRyrWhDJMwTWDX+4h+GLwfULS8pu0xzSdk=
+k8s.io/kubernetes v1.26.3/go.mod h1:NxzR7U7mS+OGa3J/qweI86Pek//mlfHqDgt6NNGdz8g=
 k8s.io/utils v0.0.0-20230220204549-a5ecb0141aa5 h1:kmDqav+P+/5e1i9tFfHq1qcF3sOrDp+YEkVDAHu7Jwk=
 k8s.io/utils v0.0.0-20230220204549-a5ecb0141aa5/go.mod h1:OLgZIPagt7ERELqWJFomSt595RzquPNLL48iOWgYOg0=
 nhooyr.io/websocket v1.8.6/go.mod h1:B70DZP8IakI65RVQ51MsWP/8jndNma26DVA/nFSCgW0=
