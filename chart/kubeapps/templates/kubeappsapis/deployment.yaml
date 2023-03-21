@@ -181,6 +181,8 @@ spec:
           {{- if .Values.kubeappsapis.customLivenessProbe }}
           livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.kubeappsapis.customLivenessProbe "context" $) | nindent 12 }}
           {{- else if .Values.kubeappsapis.livenessProbe.enabled }}
+          # Replace with the built-in gRPC container probes once we're
+          # supporting >= 1.24 only. https://kubernetes.io/blog/2022/05/13/grpc-probes-now-in-beta/
           livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.kubeappsapis.livenessProbe "enabled") "context" $) | nindent 12 }}
             exec:
               command: ["/bin/grpc_health_probe", "-addr=:{{ .Values.kubeappsapis.containerPorts.http }}"]

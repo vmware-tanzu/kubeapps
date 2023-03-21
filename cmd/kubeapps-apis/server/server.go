@@ -106,37 +106,28 @@ func Serve(serveOpts core.ServeOptions) error {
 		return fmt.Errorf("failed to initialize plugins server: %v", err)
 	}
 
-	// UPTOHERE: Perhaps do this differently - can we mix both the grpc server
-	// and the connect one, or not? (Really just want to add a handler for the
-	// RPC). Instead of registering like this, just need to
-
 	// The connect service handler automatically handles grpc-web, connect and
-	// grpc for us, so we won't need all the extra code below when transitioning
-	// services to the new mux (and can remove the use of cmux once connect is
-	// used for all requests).
-	// TOTRY: try handling the request with the new mux and only if that fails,
-	// revert to the existing one.
-	paths_for_connect_grpc := []string{}
+	// grpc for us, so we won't need all the extra code below once all services
+	// have been transitioned to the new mux (and we can remove the use of cmux
+	// once connect is used for all requests).
 
+	// For now, we collect all the gRPC paths used by the services that have
+	// been transitioned, and use those to determine which handler to use.
+	paths_for_connect_grpc := []string{}
 	plugins_path, handler := pluginsConnect.NewPluginsServiceHandler(pluginsServer)
 	paths_for_connect_grpc = append(paths_for_connect_grpc, plugins_path)
 
-	klogv2.Errorf("The path for the connect handler is: %+v", plugins_path)
-	mux_new := http.NewServeMux()
-	mux_new.Handle(plugins_path, handler)
+	mux_connect := http.NewServeMux()
+	mux_connect.Handle(plugins_path, handler)
 
-	// TODO: Add a handler for the health check here too, and update the cmux later to use it too.
+	// The gRPC Health checker reports on all connected services.
 	checker := grpchealth.NewStaticChecker(
 		pluginsConnect.PluginsServiceName,
 	)
-	// Add to paths for cmux later.
 	checker_path, handler := grpchealth.NewHandler(checker)
-	mux_new.Handle(checker_path, handler)
+	mux_connect.Handle(checker_path, handler)
 	paths_for_connect_grpc = append(paths_for_connect_grpc, checker_path)
 
-	// if err = registerPluginsServiceServer(gwArgs); err != nil {
-	// 	return err
-	// } else
 	if err = registerPackagesServiceServer(grpcSrv, pluginsServer, gwArgs); err != nil {
 		return err
 	} else if err = registerRepositoriesServiceServer(grpcSrv, pluginsServer, gwArgs); err != nil {
@@ -158,6 +149,7 @@ func Serve(serveOpts core.ServeOptions) error {
 	// transitioned plugins/handlers)
 	connectListener := mux.MatchWithWriters(match_transitioned_paths(paths_for_connect_grpc))
 
+	// The non-transitioned services continue as normal for now.
 	grpcListener := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
 	grpcWebListener := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc-web"))
 	httpListener := mux.Match(cmux.Any())
@@ -199,7 +191,7 @@ func Serve(serveOpts core.ServeOptions) error {
 		}
 	}()
 	go func() {
-		err := http.Serve(connectListener, h2c.NewHandler(mux_new, &http2.Server{}))
+		err := http.Serve(connectListener, h2c.NewHandler(mux_connect, &http2.Server{}))
 		if err != nil {
 			klogv2.Fatalf("failed to server: %+v", err)
 		}
@@ -333,14 +325,13 @@ func gatewayMux() (*runtime.ServeMux, error) {
 	return gwmux, nil
 }
 
-// UPTOHERE:
-// Seeing:
-// E0316 06:04:26.037244       1 server.go:351] Found :path="/grpc.health.v1.Health/Check"
-// E0316 06:04:26.037253       1 server.go:355] Matched a transitioned path
-// 2023/03/16 06:04:26 http2: server connection error from 127.0.0.1:39674: connection error: PROTOCOL_ERROR
+// match_transitioned_paths is a mux that matches if an http2 request path
+// matches any of the configured paths.
+//
+// This can be removed once all paths are transitioned to the connect mux.
 func match_transitioned_paths(paths []string) cmux.MatchWriter {
 	return func(w io.Writer, r io.Reader) bool {
-		if !hasHTTP2Preface(r) {
+		if !has_HTTP2_preface(r) {
 			return false
 		}
 
@@ -395,11 +386,11 @@ func match_transitioned_paths(paths []string) cmux.MatchWriter {
 				return matched
 			}
 		}
-		return true
 	}
 }
 
-func hasHTTP2Preface(r io.Reader) bool {
+// has_HTTP2_preface returns true if the request includes an http2 preface
+func has_HTTP2_preface(r io.Reader) bool {
 	var b [len(http2.ClientPreface)]byte
 	last := 0
 

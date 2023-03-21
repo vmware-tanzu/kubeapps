@@ -10,8 +10,6 @@ frontend:
       http: 30000
 dashboard:
   replicaCount: 1
-  image:
-    tag: dev6
 postgresql:
   architecture: standalone
   auth:
@@ -21,8 +19,6 @@ postgresql:
       enabled: false
 kubeappsapis:
   replicaCount: 1
-  image:
-    tag: dev5
 ingress:
   enabled: true
   hostname: localhost
