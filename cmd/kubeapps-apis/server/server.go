@@ -28,7 +28,6 @@ import (
 	packagesv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core/packages/v1alpha1"
 	pluginsv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
 	packagesGRPCv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	pluginsGRPCv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	pluginsConnect "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1/v1alpha1connect"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -147,7 +146,7 @@ func Serve(serveOpts core.ServeOptions) error {
 
 	// Want to match anything (grpc, connect, grpc-web that is for the
 	// transitioned plugins/handlers)
-	connectListener := mux.MatchWithWriters(match_transitioned_paths(paths_for_connect_grpc))
+	connectListener := mux.MatchWithWriters(matchTransitionedPaths(paths_for_connect_grpc))
 
 	// The non-transitioned services continue as normal for now.
 	grpcListener := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
@@ -206,15 +205,6 @@ func Serve(serveOpts core.ServeOptions) error {
 		return fmt.Errorf("failed to serve: %v", err)
 	}
 
-	return nil
-}
-
-func registerPluginsServiceServer(gwArgs core.GatewayHandlerArgs) error {
-	err := pluginsGRPCv1alpha1.RegisterPluginsServiceHandlerFromEndpoint(gwArgs.Ctx, gwArgs.Mux, gwArgs.Addr, gwArgs.DialOptions)
-
-	if err != nil {
-		return fmt.Errorf("failed to register core.plugins handler for gateway: %v", err)
-	}
 	return nil
 }
 
@@ -325,13 +315,13 @@ func gatewayMux() (*runtime.ServeMux, error) {
 	return gwmux, nil
 }
 
-// match_transitioned_paths is a mux that matches if an http2 request path
+// matchTransitionedPaths is a mux that matches if an http2 request path
 // matches any of the configured paths.
 //
 // This can be removed once all paths are transitioned to the connect mux.
-func match_transitioned_paths(paths []string) cmux.MatchWriter {
+func matchTransitionedPaths(paths []string) cmux.MatchWriter {
 	return func(w io.Writer, r io.Reader) bool {
-		if !has_HTTP2_preface(r) {
+		if !hasHTTP2Preface(r) {
 			return false
 		}
 
@@ -389,8 +379,8 @@ func match_transitioned_paths(paths []string) cmux.MatchWriter {
 	}
 }
 
-// has_HTTP2_preface returns true if the request includes an http2 preface
-func has_HTTP2_preface(r io.Reader) bool {
+// hasHTTP2Preface returns true if the request includes an http2 preface
+func hasHTTP2Preface(r io.Reader) bool {
 	var b [len(http2.ClientPreface)]byte
 	last := 0
 
