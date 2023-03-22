@@ -200,7 +200,7 @@ func setupRestConfigForCluster(restConfig *rest.Config, cluster string, clusters
 	// Override client config with the service token for additional cluster
 	// Added from #5034 after deprecation of "kubeops"
 	if cluster == clustersConfig.KubeappsClusterName {
-		log.Errorf("Kubeapps cluster, should already have correct token for service acc: %q\n%q", restConfig.BearerToken, restConfig.BearerTokenFile)
+		log.Infof("Kubeapps cluster, should already have correct token for service acc: %q", restConfig.BearerTokenFile)
 	} else {
 		additionalCluster, ok := clustersConfig.Clusters[cluster]
 		if !ok {
