@@ -1,10 +1,10 @@
+<!--- app-name: Kubeapps -->
+
 # Kubeapps packaged by Bitnami
 
 Kubeapps is a web-based UI for launching and managing applications on Kubernetes. It allows users to deploy trusted applications and operators to control users access to the cluster.
 
 [Overview of Kubeapps](https://github.com/vmware-tanzu/kubeapps)
-
-
 
 ## TL;DR
 
@@ -112,7 +112,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | ---------------------- |
 | `frontend.image.registry`                        | NGINX image registry                                                                                  | `docker.io`            |
 | `frontend.image.repository`                      | NGINX image repository                                                                                | `bitnami/nginx`        |
-| `frontend.image.tag`                             | NGINX image tag (immutable tags are recommended)                                                      | `1.23.3-debian-11-r31` |
+| `frontend.image.tag`                             | NGINX image tag (immutable tags are recommended)                                                      | `1.23.3-debian-11-r38` |
 | `frontend.image.digest`                          | NGINX image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                   |
 | `frontend.image.pullPolicy`                      | NGINX image pull policy                                                                               | `IfNotPresent`         |
 | `frontend.image.pullSecrets`                     | NGINX image pull secrets                                                                              | `[]`                   |
@@ -343,7 +343,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `authProxy.enabled`                               | Specifies whether Kubeapps should configure OAuth login/logout                                                                      | `false`                |
 | `authProxy.image.registry`                        | OAuth2 Proxy image registry                                                                                                         | `docker.io`            |
 | `authProxy.image.repository`                      | OAuth2 Proxy image repository                                                                                                       | `bitnami/oauth2-proxy` |
-| `authProxy.image.tag`                             | OAuth2 Proxy image tag (immutable tags are recommended)                                                                             | `7.4.0-debian-11-r44`  |
+| `authProxy.image.tag`                             | OAuth2 Proxy image tag (immutable tags are recommended)                                                                             | `7.4.0-debian-11-r51`  |
 | `authProxy.image.digest`                          | OAuth2 Proxy image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag                        | `""`                   |
 | `authProxy.image.pullPolicy`                      | OAuth2 Proxy image pull policy                                                                                                      | `IfNotPresent`         |
 | `authProxy.image.pullSecrets`                     | OAuth2 Proxy image pull secrets                                                                                                     | `[]`                   |
@@ -875,8 +875,8 @@ helm install --name kubeapps --namespace kubeapps my-repo/kubeapps --set rbac.cr
 It is possible that when upgrading Kubeapps an error appears. That can be caused by a breaking change in the new chart or because the current chart installation is in an inconsistent state. If you find issues upgrading Kubeapps you can follow these steps:
 
 > Note: These steps assume that you have installed Kubeapps in the namespace `kubeapps` using the name `kubeapps`. If that is not the case replace the command with your namespace and/or name.
-> Note: If you are upgrading from 2.3.1 see the [following section](#user-content-upgrading-to-231).
-> Note: If you are upgrading from 1.X to 2.X see the [following section](#user-content-upgrading-to-20).
+> Note: If you are upgrading from 2.3.1 see the [following section](#upgrading-to-231).
+> Note: If you are upgrading from 1.X to 2.X see the [following section](#upgrading-to-20).
 
 1. (Optional) Backup your personal repositories (if you have any):
 
