@@ -88,6 +88,9 @@ COPY --from=builder /fluxv2-packages-v1alpha1-plugin.so /plugins/fluxv2-packages
 COPY --from=builder /helm-packages-v1alpha1-plugin.so /plugins/helm-packages/
 COPY --from=builder /resources-v1alpha1-plugin.so /plugins/resources/
 
+# Ensure the container user will be able to write to the k8s discovery client cache.
+RUN mkdir -p /.kube/cache && chown 1001:1001 /.kube/cache
+
 EXPOSE 50051
 USER 1001
 ENTRYPOINT [ "/kubeapps-apis" ]
