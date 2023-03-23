@@ -1844,11 +1844,11 @@ dependencies = [
 
 [[package]]
 name = "temp-env"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c0c07fe42fe15dcf97c394cb8350483a6e5095affb3a99e0dfd5f664be15fc3"
+checksum = "5ee95b343d943e5a0d2221fb73029e8040f3c91d6d06afec86c664682a361681"
 dependencies = [
- "once_cell",
+ "parking_lot",
 ]
 
 [[package]]
