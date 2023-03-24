@@ -6,6 +6,8 @@ package main
 import (
 	"context"
 	"errors"
+
+	"github.com/bufbuild/connect-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/resources/v1alpha1/common"
@@ -37,6 +39,7 @@ import (
 func TestCheckNamespaceExists(t *testing.T) {
 
 	ignoredUnexported := cmpopts.IgnoreUnexported(
+		connect.Response[v1alpha1.CheckNamespaceExistsResponse]{},
 		v1alpha1.CheckNamespaceExistsResponse{},
 	)
 
@@ -44,7 +47,7 @@ func TestCheckNamespaceExists(t *testing.T) {
 		name              string
 		request           *v1alpha1.CheckNamespaceExistsRequest
 		k8sError          error
-		expectedResponse  *v1alpha1.CheckNamespaceExistsResponse
+		expectedResponse  *connect.Response[v1alpha1.CheckNamespaceExistsResponse]
 		expectedErrorCode codes.Code
 		existingObjects   []runtime.Object
 	}{
@@ -67,9 +70,9 @@ func TestCheckNamespaceExists(t *testing.T) {
 					},
 				},
 			},
-			expectedResponse: &v1alpha1.CheckNamespaceExistsResponse{
+			expectedResponse: connect.NewResponse(&v1alpha1.CheckNamespaceExistsResponse{
 				Exists: true,
-			},
+			}),
 		},
 		{
 			name: "returns false if namespace does not exist",
@@ -79,9 +82,9 @@ func TestCheckNamespaceExists(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			expectedResponse: &v1alpha1.CheckNamespaceExistsResponse{
+			expectedResponse: connect.NewResponse(&v1alpha1.CheckNamespaceExistsResponse{
 				Exists: false,
-			},
+			}),
 		},
 		{
 			name: "returns permission denied if k8s returns a forbidden error",
@@ -125,7 +128,7 @@ func TestCheckNamespaceExists(t *testing.T) {
 					Build(),
 			}
 
-			response, err := s.CheckNamespaceExists(context.Background(), tc.request)
+			response, err := s.CheckNamespaceExists(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
@@ -141,15 +144,16 @@ func TestCheckNamespaceExists(t *testing.T) {
 func TestCreateNamespace(t *testing.T) {
 
 	ignoredUnexported := cmpopts.IgnoreUnexported(
+		connect.Response[v1alpha1.CreateNamespaceResponse]{},
 		v1alpha1.CreateNamespaceResponse{},
 	)
 
-	emptyResponse := &v1alpha1.CreateNamespaceResponse{}
+	emptyResponse := connect.NewResponse(&v1alpha1.CreateNamespaceResponse{})
 	testCases := []struct {
 		name              string
 		request           *v1alpha1.CreateNamespaceRequest
 		k8sError          error
-		expectedResponse  *v1alpha1.CreateNamespaceResponse
+		expectedResponse  *connect.Response[v1alpha1.CreateNamespaceResponse]
 		expectedErrorCode codes.Code
 		existingObjects   []runtime.Object
 		validator         func(action clientGoTesting.Action) (handled bool, ret runtime.Object, err error)
@@ -250,7 +254,7 @@ func TestCreateNamespace(t *testing.T) {
 					Build(),
 			}
 
-			response, err := s.CreateNamespace(context.Background(), tc.request)
+			response, err := s.CreateNamespace(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
@@ -266,6 +270,7 @@ func TestCreateNamespace(t *testing.T) {
 func TestGetNamespaceNames(t *testing.T) {
 
 	ignoredUnexported := cmpopts.IgnoreUnexported(
+		connect.Response[v1alpha1.GetNamespaceNamesResponse]{},
 		v1alpha1.GetNamespaceNamesResponse{},
 	)
 
@@ -279,7 +284,7 @@ func TestGetNamespaceNames(t *testing.T) {
 		trustedNamespacesConfig common.TrustedNamespaces
 		k8sError                error
 		requestHeaders          http.Header
-		expectedResponse        *v1alpha1.GetNamespaceNamesResponse
+		expectedResponse        *connect.Response[v1alpha1.GetNamespaceNamesResponse]
 		expectedErrorCode       codes.Code
 		existingObjects         []runtime.Object
 	}{
@@ -312,12 +317,12 @@ func TestGetNamespaceNames(t *testing.T) {
 					},
 				},
 			},
-			expectedResponse: &v1alpha1.GetNamespaceNamesResponse{
+			expectedResponse: connect.NewResponse(&v1alpha1.GetNamespaceNamesResponse{
 				NamespaceNames: []string{
 					"default",
 					"kubeapps",
 				},
-			},
+			}),
 		},
 		{
 			name:    "returns permission denied if k8s returns a forbidden error",
@@ -362,11 +367,11 @@ func TestGetNamespaceNames(t *testing.T) {
 					},
 				},
 			},
-			expectedResponse: &v1alpha1.GetNamespaceNamesResponse{
+			expectedResponse: connect.NewResponse(&v1alpha1.GetNamespaceNamesResponse{
 				NamespaceNames: []string{
 					"foo",
 				},
-			},
+			}),
 		},
 		{
 			name: "it should return the list of namespaces matching the trusted namespaces header",
@@ -389,12 +394,12 @@ func TestGetNamespaceNames(t *testing.T) {
 				HeaderPattern: "^namespace:(\\w+)$",
 			},
 			requestHeaders: http.Header{"X-Consumer-Groups": []string{"namespace:ns1", "namespace:ns2"}},
-			expectedResponse: &v1alpha1.GetNamespaceNamesResponse{
+			expectedResponse: connect.NewResponse(&v1alpha1.GetNamespaceNamesResponse{
 				NamespaceNames: []string{
 					"ns1",
 					"ns2",
 				},
-			},
+			}),
 		},
 		{
 			name: "it should return the existing list of namespaces when trusted namespaces header does not match pattern",
@@ -417,11 +422,11 @@ func TestGetNamespaceNames(t *testing.T) {
 				HeaderPattern: "^namespace:(\\w+)$",
 			},
 			requestHeaders: http.Header{"X-Consumer-Groups": []string{"nspace:ns1", "nspace:ns2"}},
-			expectedResponse: &v1alpha1.GetNamespaceNamesResponse{
+			expectedResponse: connect.NewResponse(&v1alpha1.GetNamespaceNamesResponse{
 				NamespaceNames: []string{
 					"foo",
 				},
-			},
+			}),
 		},
 		{
 			name: "it should return the existing list of namespaces when trusted namespaces header does not match name",
@@ -444,11 +449,11 @@ func TestGetNamespaceNames(t *testing.T) {
 				HeaderPattern: "^namespace:(\\w+)$",
 			},
 			requestHeaders: http.Header{"Y-Consumer-Groups": []string{"namespace:ns1", "namespace:ns2"}},
-			expectedResponse: &v1alpha1.GetNamespaceNamesResponse{
+			expectedResponse: connect.NewResponse(&v1alpha1.GetNamespaceNamesResponse{
 				NamespaceNames: []string{
 					"foo",
 				},
-			},
+			}),
 		},
 		{
 			name: "it should return the existing list of namespaces when trusted namespaces header name is empty",
@@ -471,11 +476,11 @@ func TestGetNamespaceNames(t *testing.T) {
 				HeaderPattern: "^namespace:(\\w+)$",
 			},
 			requestHeaders: http.Header{"X-Consumer-Groups": []string{"namespace:ns1", "namespace:ns2"}},
-			expectedResponse: &v1alpha1.GetNamespaceNamesResponse{
+			expectedResponse: connect.NewResponse(&v1alpha1.GetNamespaceNamesResponse{
 				NamespaceNames: []string{
 					"foo",
 				},
-			},
+			}),
 		},
 		{
 			name: "it should return the existing list of namespaces when trusted namespaces pattern is empty",
@@ -498,11 +503,11 @@ func TestGetNamespaceNames(t *testing.T) {
 				HeaderPattern: "",
 			},
 			requestHeaders: http.Header{"X-Consumer-Groups": []string{"namespace:ns1", "namespace:ns2"}},
-			expectedResponse: &v1alpha1.GetNamespaceNamesResponse{
+			expectedResponse: connect.NewResponse(&v1alpha1.GetNamespaceNamesResponse{
 				NamespaceNames: []string{
 					"foo",
 				},
-			},
+			}),
 		},
 		{
 			name: "it should return some of the namespaces from trusted namespaces header when not all match the pattern",
@@ -525,12 +530,12 @@ func TestGetNamespaceNames(t *testing.T) {
 				HeaderPattern: "^namespace:(\\w+)$",
 			},
 			requestHeaders: http.Header{"X-Consumer-Groups": []string{"namespace:ns1:read", "namespace:ns2", "ns3", "namespace:ns4", "ns:ns5:write"}},
-			expectedResponse: &v1alpha1.GetNamespaceNamesResponse{
+			expectedResponse: connect.NewResponse(&v1alpha1.GetNamespaceNamesResponse{
 				NamespaceNames: []string{
 					"ns2",
 					"ns4",
 				},
-			},
+			}),
 		},
 		{
 			name: "it should return existing namespaces if no trusted ns header but trusted configuration is in place",
@@ -552,11 +557,11 @@ func TestGetNamespaceNames(t *testing.T) {
 				HeaderName:    "X-Consumer-Groups",
 				HeaderPattern: "^namespace:(\\w+)$",
 			},
-			expectedResponse: &v1alpha1.GetNamespaceNamesResponse{
+			expectedResponse: connect.NewResponse(&v1alpha1.GetNamespaceNamesResponse{
 				NamespaceNames: []string{
 					"foo",
 				},
-			},
+			}),
 		},
 		{
 			name: "it should ignore incoming trusted namespaces header when no trusted configuration is in place",
@@ -575,11 +580,11 @@ func TestGetNamespaceNames(t *testing.T) {
 				},
 			},
 			requestHeaders: http.Header{"X-Consumer-Groups": []string{"namespace:ns1:read", "namespace:ns2", "ns3", "namespace:ns4", "ns:ns5:write"}},
-			expectedResponse: &v1alpha1.GetNamespaceNamesResponse{
+			expectedResponse: connect.NewResponse(&v1alpha1.GetNamespaceNamesResponse{
 				NamespaceNames: []string{
 					"foo",
 				},
-			},
+			}),
 		},
 	}
 
@@ -620,7 +625,7 @@ func TestGetNamespaceNames(t *testing.T) {
 				ctx = metadata.NewIncomingContext(ctx, metadata.Pairs(headerName, strings.Join(headerValue, ",")))
 			}
 
-			response, err := s.GetNamespaceNames(ctx, tc.request)
+			response, err := s.GetNamespaceNames(ctx, connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
@@ -636,6 +641,7 @@ func TestGetNamespaceNames(t *testing.T) {
 func TestCanI(t *testing.T) {
 
 	ignoredUnexported := cmpopts.IgnoreUnexported(
+		connect.Response[v1alpha1.CanIResponse]{},
 		v1alpha1.CanIResponse{},
 	)
 
@@ -643,7 +649,7 @@ func TestCanI(t *testing.T) {
 		name              string
 		isAllowed         bool
 		request           *v1alpha1.CanIRequest
-		expectedResponse  *v1alpha1.CanIResponse
+		expectedResponse  *connect.Response[v1alpha1.CanIResponse]
 		k8sError          error
 		expectedErrorCode codes.Code
 	}{
@@ -655,9 +661,9 @@ func TestCanI(t *testing.T) {
 					Cluster: "default",
 				},
 			},
-			expectedResponse: &v1alpha1.CanIResponse{
+			expectedResponse: connect.NewResponse(&v1alpha1.CanIResponse{
 				Allowed: true,
-			},
+			}),
 		},
 		{
 			name:      "returns forbidden",
@@ -667,9 +673,9 @@ func TestCanI(t *testing.T) {
 					Cluster: "default",
 				},
 			},
-			expectedResponse: &v1alpha1.CanIResponse{
+			expectedResponse: connect.NewResponse(&v1alpha1.CanIResponse{
 				Allowed: false,
-			},
+			}),
 		},
 		{
 			name:              "requires context parameter",
@@ -715,7 +721,7 @@ func TestCanI(t *testing.T) {
 				clientQPS:                       5,
 			}
 
-			response, err := s.CanI(context.Background(), tc.request)
+			response, err := s.CanI(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)

@@ -10,6 +10,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/resources/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
@@ -214,12 +215,12 @@ func setupRestConfigForCluster(restConfig *rest.Config, cluster string, clusters
 }
 
 // GetResources returns the resources for an installed package.
-func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.ResourcesService_GetResourcesServer) error {
-	namespace := r.GetInstalledPackageRef().GetContext().GetNamespace()
-	cluster := r.GetInstalledPackageRef().GetContext().GetCluster()
-	log.InfoS("+resources GetResources ", "cluster", cluster, "namespace", namespace)
+func (s *Server) GetResources(incomingCtx context.Context, r *connect.Request[v1alpha1.GetResourcesRequest], stream *connect.ServerStream[v1alpha1.GetResourcesResponse]) error {
 
-	ctx, err := copyAuthorizationMetadataForOutgoing(stream.Context())
+	namespace := r.Msg.GetInstalledPackageRef().GetContext().GetNamespace()
+	cluster := r.Msg.GetInstalledPackageRef().GetContext().GetCluster()
+	log.InfoS("+resources GetResources ", "cluster", cluster, "namespace", namespace)
+	ctx, err := copyAuthorizationMetadataForOutgoing(incomingCtx)
 	if err != nil {
 		return err
 	}
@@ -230,7 +231,7 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 		return err
 	}
 	refsResponse, err := coreClient.GetInstalledPackageResourceRefs(ctx, &pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsRequest{
-		InstalledPackageRef: r.InstalledPackageRef,
+		InstalledPackageRef: r.Msg.InstalledPackageRef,
 	})
 	if err != nil {
 		return err
@@ -239,13 +240,13 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 	// If the request didn't specify a filter of resource refs,
 	// we return all those found for the installed package. Otherwise
 	// we only return the requested ones.
-	if len(r.GetResourceRefs()) == 0 {
-		if r.GetWatch() {
+	if len(r.Msg.GetResourceRefs()) == 0 {
+		if r.Msg.GetWatch() {
 			return status.Errorf(codes.InvalidArgument, "resource refs must be specified in request when watching resources")
 		}
 		resourcesToReturn = refsResponse.GetResourceRefs()
 	} else {
-		for _, requestedRef := range r.GetResourceRefs() {
+		for _, requestedRef := range r.Msg.GetResourceRefs() {
 			found := false
 			for _, pkgRef := range refsResponse.GetResourceRefs() {
 				if resourceRefsEqual(pkgRef, requestedRef) {
@@ -254,14 +255,14 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 				}
 			}
 			if !found {
-				return status.Errorf(codes.InvalidArgument, "requested resource %+v does not belong to installed package %+v", requestedRef, r.GetInstalledPackageRef())
+				return status.Errorf(codes.InvalidArgument, "requested resource %+v does not belong to installed package %+v", requestedRef, r.Msg.GetInstalledPackageRef())
 			}
 		}
-		resourcesToReturn = r.GetResourceRefs()
+		resourcesToReturn = r.Msg.GetResourceRefs()
 	}
 
 	// Then look up each referenced resource and send it down the stream.
-	dynamicClient, err := s.clientGetter.Dynamic(stream.Context(), cluster)
+	dynamicClient, err := s.clientGetter.Dynamic(incomingCtx, cluster)
 	if err != nil {
 		return err
 	}
@@ -280,12 +281,12 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 			return status.Errorf(codes.Internal, "unable to map group-kind %v to resource: %s", gvk.GroupKind(), err.Error())
 		}
 
-		if !r.GetWatch() {
+		if !r.Msg.GetWatch() {
 			var resource interface{}
 			if scopeName == meta.RESTScopeNameNamespace {
-				resource, err = dynamicClient.Resource(gvr).Namespace(ref.Namespace).Get(stream.Context(), ref.GetName(), metav1.GetOptions{})
+				resource, err = dynamicClient.Resource(gvr).Namespace(ref.Namespace).Get(incomingCtx, ref.GetName(), metav1.GetOptions{})
 			} else {
-				resource, err = dynamicClient.Resource(gvr).Get(stream.Context(), ref.GetName(), metav1.GetOptions{})
+				resource, err = dynamicClient.Resource(gvr).Get(incomingCtx, ref.GetName(), metav1.GetOptions{})
 			}
 			if err != nil {
 				return status.Errorf(codes.Internal, "unable to get resource referenced by %+v: %s", ref, err.Error())
@@ -303,9 +304,9 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 		}
 		var watcher watch.Interface
 		if scopeName == meta.RESTScopeNameNamespace {
-			watcher, err = dynamicClient.Resource(gvr).Namespace(ref.Namespace).Watch(stream.Context(), listOptions)
+			watcher, err = dynamicClient.Resource(gvr).Namespace(ref.Namespace).Watch(incomingCtx, listOptions)
 		} else {
-			watcher, err = dynamicClient.Resource(gvr).Watch(stream.Context(), listOptions)
+			watcher, err = dynamicClient.Resource(gvr).Watch(incomingCtx, listOptions)
 		}
 		if err != nil {
 			log.Errorf("unable to watch resource %v: %v", ref, err)
@@ -336,9 +337,9 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 }
 
 // GetServiceAccountNames returns the list of service account names in a given cluster and namespace.
-func (s *Server) GetServiceAccountNames(ctx context.Context, r *v1alpha1.GetServiceAccountNamesRequest) (*v1alpha1.GetServiceAccountNamesResponse, error) {
-	namespace := r.GetContext().GetNamespace()
-	cluster := r.GetContext().GetCluster()
+func (s *Server) GetServiceAccountNames(ctx context.Context, r *connect.Request[v1alpha1.GetServiceAccountNamesRequest]) (*connect.Response[v1alpha1.GetServiceAccountNamesResponse], error) {
+	namespace := r.Msg.GetContext().GetNamespace()
+	cluster := r.Msg.GetContext().GetCluster()
 	log.InfoS("+resources GetServiceAccountNames ", "cluster", cluster, "namespace", namespace)
 
 	typedClient, err := s.clientGetter.Typed(ctx, cluster)
@@ -357,15 +358,15 @@ func (s *Server) GetServiceAccountNames(ctx context.Context, r *v1alpha1.GetServ
 		saStringList = append(saStringList, sa.Name)
 	}
 
-	return &v1alpha1.GetServiceAccountNamesResponse{
+	return connect.NewResponse(&v1alpha1.GetServiceAccountNamesResponse{
 		ServiceaccountNames: saStringList,
-	}, nil
+	}), nil
 
 }
 
 // sendResourceData just DRYs up this functionality shared between requests to
 // watch or get resources.
-func sendResourceData(ref *pkgsGRPCv1alpha1.ResourceRef, obj interface{}, s v1alpha1.ResourcesService_GetResourcesServer) error {
+func sendResourceData(ref *pkgsGRPCv1alpha1.ResourceRef, obj interface{}, s *connect.ServerStream[v1alpha1.GetResourcesResponse]) error {
 	resourceBytes, err := json.Marshal(obj)
 	if err != nil {
 		return status.Errorf(codes.Internal, "unable to marshal json for resource: %s", err.Error())

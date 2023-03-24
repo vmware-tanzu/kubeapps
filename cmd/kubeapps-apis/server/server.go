@@ -6,16 +6,16 @@ package server
 import (
 	"context"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
-	"golang.org/x/net/http2/hpack"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
@@ -83,7 +83,9 @@ func Serve(serveOpts core.ServeOptions) error {
 	reflection.Register(grpcSrv)
 
 	// Create the http server, register our core service followed by any plugins.
-	listenAddr := fmt.Sprintf(":%d", serveOpts.Port)
+	// The cmux listen address will be a random port. We'll send traffic through to this
+	// port from the main http.mux.
+	listenAddrCMux := ":0"
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	gw, err := gatewayMux()
@@ -93,16 +95,8 @@ func Serve(serveOpts core.ServeOptions) error {
 	gwArgs := core.GatewayHandlerArgs{
 		Ctx:         ctx,
 		Mux:         gw,
-		Addr:        listenAddr,
+		Addr:        listenAddrCMux,
 		DialOptions: []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
-	}
-
-	// Create the core.plugins.v1alpha1 server which handles registration of
-	// plugins, and register it for both grpc and http.
-
-	pluginsServer, err := pluginsv1alpha1.NewPluginsServer(serveOpts, grpcSrv, gwArgs)
-	if err != nil {
-		return fmt.Errorf("failed to initialize plugins server: %v", err)
 	}
 
 	// The connect service handler automatically handles grpc-web, connect and
@@ -110,22 +104,24 @@ func Serve(serveOpts core.ServeOptions) error {
 	// have been transitioned to the new mux (and we can remove the use of cmux
 	// once connect is used for all requests).
 
-	// For now, we collect all the gRPC paths used by the services that have
-	// been transitioned, and use those to determine which handler to use.
-	paths_for_connect_grpc := []string{}
-	plugins_path, handler := pluginsConnect.NewPluginsServiceHandler(pluginsServer)
-	paths_for_connect_grpc = append(paths_for_connect_grpc, plugins_path)
-
+	// For now, we use the connect grpc mux by default and any unhandled paths
+	// are routed to the old cmux handler's listener. I originally tried to
+	// use the cmux as the default, but checking http2 header frames requires
+	// writing settings, which appears to upset the handler.
 	mux_connect := http.NewServeMux()
-	mux_connect.Handle(plugins_path, handler)
+
+	// Create the core.plugins.v1alpha1 server which handles registration of
+	// plugins, and register it for both grpc and http.
+	pluginsServer, err := pluginsv1alpha1.NewPluginsServer(serveOpts, grpcSrv, gwArgs, mux_connect)
+	if err != nil {
+		return fmt.Errorf("failed to initialize plugins server: %v", err)
+	}
 
 	// The gRPC Health checker reports on all connected services.
 	checker := grpchealth.NewStaticChecker(
 		pluginsConnect.PluginsServiceName,
 	)
-	checker_path, handler := grpchealth.NewHandler(checker)
-	mux_connect.Handle(checker_path, handler)
-	paths_for_connect_grpc = append(paths_for_connect_grpc, checker_path)
+	mux_connect.Handle(grpchealth.NewHandler(checker))
 
 	if err = registerPackagesServiceServer(grpcSrv, pluginsServer, gwArgs); err != nil {
 		return err
@@ -133,7 +129,7 @@ func Serve(serveOpts core.ServeOptions) error {
 		return err
 	}
 
-	lis, err := net.Listen("tcp", listenAddr)
+	lis, err := net.Listen("tcp", listenAddrCMux)
 	if err != nil {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
@@ -143,10 +139,6 @@ func Serve(serveOpts core.ServeOptions) error {
 	// on the simpler cmux.HTTP2HeaderField("content-type", "application/grpc"). More details
 	// at https://github.com/soheilhy/cmux/issues/64
 	mux := cmux.New(lis)
-
-	// Want to match anything (grpc, connect, grpc-web that is for the
-	// transitioned plugins/handlers)
-	connectListener := mux.MatchWithWriters(matchTransitionedPaths(paths_for_connect_grpc))
 
 	// The non-transitioned services continue as normal for now.
 	grpcListener := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
@@ -190,9 +182,8 @@ func Serve(serveOpts core.ServeOptions) error {
 		}
 	}()
 	go func() {
-		err := http.Serve(connectListener, h2c.NewHandler(mux_connect, &http2.Server{}))
-		if err != nil {
-			klogv2.Fatalf("failed to server: %+v", err)
+		if err := mux.Serve(); err != nil {
+			klogv2.Fatalf("failed to serve: %v", err)
 		}
 	}()
 
@@ -200,9 +191,26 @@ func Serve(serveOpts core.ServeOptions) error {
 		klogv2.Warning("Using the local Kubeconfig file instead of the actual in-cluster's config. This is not recommended except for development purposes.")
 	}
 
-	klogv2.Infof("Starting server on :%d", serveOpts.Port)
-	if err := mux.Serve(); err != nil {
-		return fmt.Errorf("failed to serve: %v", err)
+	// Finally, link the new mux so that all other requests are routed to the old cmux's listen
+	// address. cmux requires a listener.
+	mux_connect.Handle("/", &httputil.ReverseProxy{
+		Director: func(r *http.Request) {
+			r.URL.Scheme = "http"
+			// Update the port (only) of the url
+			parts := strings.SplitAfter(lis.Addr().String(), ":")
+			port, err := strconv.Atoi(parts[len(parts)-1])
+			if err != nil {
+				klogv2.Fatalf("unable to extract port from listen address %q", lis.Addr().String())
+			}
+			r.URL.Host = fmt.Sprintf("127.0.0.1:%d", port)
+			klogv2.Errorf("proxied URL is: %+v", r.URL)
+		},
+	})
+
+	listenPort := fmt.Sprintf(":%d", serveOpts.Port)
+	klogv2.Infof("Starting server on %q", listenPort)
+	if err := http.ListenAndServe(listenPort, h2c.NewHandler(mux_connect, &http2.Server{})); err != nil {
+		klogv2.Fatalf("failed to server: %+v", err)
 	}
 
 	return nil
@@ -313,90 +321,4 @@ func gatewayMux() (*runtime.ServeMux, error) {
 	}
 
 	return gwmux, nil
-}
-
-// matchTransitionedPaths is a mux that matches if an http2 request path
-// matches any of the configured paths.
-//
-// This can be removed once all paths are transitioned to the connect mux.
-func matchTransitionedPaths(paths []string) cmux.MatchWriter {
-	return func(w io.Writer, r io.Reader) bool {
-		if !hasHTTP2Preface(r) {
-			return false
-		}
-
-		done := false
-		matched := false
-
-		framer := http2.NewFramer(w, r)
-
-		// We're only interested in the :path header.
-		hdec := hpack.NewDecoder(uint32(4<<10), func(hf hpack.HeaderField) {
-			if hf.Name == ":path" {
-				done = true
-				klogv2.Errorf("Found :path=%q", hf.Value)
-				for _, path := range paths {
-					if strings.HasPrefix(hf.Value, path) {
-						matched = true
-						klogv2.Errorf("Matched a transitioned path")
-					}
-				}
-			}
-		})
-
-		for {
-			f, err := framer.ReadFrame()
-			if err != nil {
-				return false
-			}
-
-			switch f := f.(type) {
-			case *http2.SettingsFrame:
-				// Sender acknoweldged the SETTINGS frame. No need to write
-				// SETTINGS again.
-				if f.IsAck() {
-					break
-				}
-				if err := framer.WriteSettings(); err != nil {
-					return false
-				}
-			case *http2.ContinuationFrame:
-				if _, err := hdec.Write(f.HeaderBlockFragment()); err != nil {
-					return false
-				}
-				done = done || f.FrameHeader.Flags&http2.FlagHeadersEndHeaders != 0
-			case *http2.HeadersFrame:
-				if _, err := hdec.Write(f.HeaderBlockFragment()); err != nil {
-					return false
-				}
-				done = done || f.FrameHeader.Flags&http2.FlagHeadersEndHeaders != 0
-			}
-
-			if done {
-				return matched
-			}
-		}
-	}
-}
-
-// hasHTTP2Preface returns true if the request includes an http2 preface
-func hasHTTP2Preface(r io.Reader) bool {
-	var b [len(http2.ClientPreface)]byte
-	last := 0
-
-	for {
-		n, err := r.Read(b[last:])
-		if err != nil {
-			return false
-		}
-
-		last += n
-		eq := string(b[:last]) == http2.ClientPreface[:last]
-		if last == len(http2.ClientPreface) {
-			return eq
-		}
-		if !eq {
-			return false
-		}
-	}
 }

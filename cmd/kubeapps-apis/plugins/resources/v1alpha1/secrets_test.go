@@ -6,8 +6,10 @@ package main
 import (
 	"context"
 	"errors"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"testing"
+
+	"github.com/bufbuild/connect-go"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -29,15 +31,16 @@ import (
 func TestCreateSecret(t *testing.T) {
 
 	ignoredUnexported := cmpopts.IgnoreUnexported(
+		connect.Response[v1alpha1.CreateSecretResponse]{},
 		v1alpha1.CreateSecretResponse{},
 	)
 
-	emptyResponse := &v1alpha1.CreateSecretResponse{}
+	emptyResponse := connect.NewResponse(&v1alpha1.CreateSecretResponse{})
 	testCases := []struct {
 		name              string
 		request           *v1alpha1.CreateSecretRequest
 		k8sError          error
-		expectedResponse  *v1alpha1.CreateSecretResponse
+		expectedResponse  *connect.Response[v1alpha1.CreateSecretResponse]
 		expectedErrorCode codes.Code
 		existingObjects   []runtime.Object
 	}{
@@ -110,7 +113,7 @@ func TestCreateSecret(t *testing.T) {
 					Build(),
 			}
 
-			response, err := s.CreateSecret(context.Background(), tc.request)
+			response, err := s.CreateSecret(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
@@ -137,6 +140,7 @@ func TestCreateSecret(t *testing.T) {
 func TestGetSecretNames(t *testing.T) {
 
 	ignoredUnexported := cmpopts.IgnoreUnexported(
+		connect.Response[v1alpha1.GetSecretNamesResponse]{},
 		v1alpha1.GetSecretNamesResponse{},
 	)
 
@@ -144,7 +148,7 @@ func TestGetSecretNames(t *testing.T) {
 		name              string
 		request           *v1alpha1.GetSecretNamesRequest
 		k8sError          error
-		expectedResponse  *v1alpha1.GetSecretNamesResponse
+		expectedResponse  *connect.Response[v1alpha1.GetSecretNamesResponse]
 		expectedErrorCode codes.Code
 		existingObjects   []runtime.Object
 	}{
@@ -194,12 +198,12 @@ func TestGetSecretNames(t *testing.T) {
 					Type: core.SecretTypeDockerConfigJson,
 				},
 			},
-			expectedResponse: &v1alpha1.GetSecretNamesResponse{
+			expectedResponse: connect.NewResponse(&v1alpha1.GetSecretNamesResponse{
 				SecretNames: map[string]v1alpha1.SecretType{
 					"secret-1": v1alpha1.SecretType_SECRET_TYPE_OPAQUE_UNSPECIFIED,
 					"secret-2": v1alpha1.SecretType_SECRET_TYPE_DOCKER_CONFIG_JSON,
 				},
-			},
+			}),
 		},
 		{
 			name: "returns permission denied if k8s returns a forbidden error",
@@ -243,7 +247,7 @@ func TestGetSecretNames(t *testing.T) {
 					Build(),
 			}
 
-			response, err := s.GetSecretNames(context.Background(), tc.request)
+			response, err := s.GetSecretNames(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
