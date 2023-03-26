@@ -45,7 +45,7 @@ jobs:
       # Pinning to 2.12.4 only because 2.12.5 appears to cause errors for us for
       # which we've not yet identified the cause.
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2.12.4
+        uses: github/codeql-action/init@codeql-bundle-20230304
         with:
           languages: ${{ matrix.language }}
           # If you wish to specify custom queries, you can do so here or in a config file.
@@ -57,7 +57,7 @@ jobs:
 
       # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v2.12.4
+        uses: github/codeql-action/autobuild@codeql-bundle-20230304
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2.12.4
+        uses: github/codeql-action/analyze@codeql-bundle-20230304
