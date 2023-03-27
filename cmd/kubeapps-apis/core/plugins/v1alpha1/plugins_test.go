@@ -401,7 +401,7 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 		},
 		{
 			name:            "it creates the config for the default cluster when passing a valid value for the authorization headers",
-			headers:         http.Header{"Authorization": []string{"token-value"}},
+			headers:         http.Header{"Authorization": []string{"Bearer token-value"}},
 			expectedAPIHost: DefaultK8sAPI,
 			expectedErrMsg:  nil,
 		},

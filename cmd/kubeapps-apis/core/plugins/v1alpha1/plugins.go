@@ -336,6 +336,10 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.S
 			if err != nil {
 				return nil, status.Errorf(codes.Unauthenticated, "invalid authorization metadata: %v", err)
 			}
+		} else if strings.HasPrefix(token, "Bearer ") {
+			// The token via header still includes the "Bearer " prefix,
+			// unlike the token in the context from improbable-eng.
+			token = token[7:]
 		}
 
 		var config *rest.Config
