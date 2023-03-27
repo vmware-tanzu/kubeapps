@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"os"
 	"regexp"
@@ -112,7 +113,7 @@ func TestGetClient(t *testing.T) {
 		{
 			name:    "it returns whatever error the clients getter function returns",
 			manager: manager,
-			clientGetter: &clientgetter.ClientProvider{ClientsFunc: func(ctx context.Context, cluster string) (*clientgetter.ClientGetter, error) {
+			clientGetter: &clientgetter.ClientProvider{ClientsFunc: func(ctx context.Context, hdrs http.Header, cluster string) (*clientgetter.ClientGetter, error) {
 				return nil, status.Errorf(codes.FailedPrecondition, "Bang!")
 			}},
 			statusCodeClient:  codes.FailedPrecondition,
@@ -136,7 +137,7 @@ func TestGetClient(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter, manager: tc.manager}
 
-			clientsProvider, errClient := s.clientGetter.GetClients(context.Background(), "")
+			clientsProvider, errClient := s.clientGetter.GetClients(context.Background(), http.Header{}, "")
 			if got, want := status.Code(errClient), tc.statusCodeClient; got != want {
 				t.Errorf("got: %+v, want: %+v", got, want)
 			}

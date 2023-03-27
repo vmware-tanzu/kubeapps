@@ -323,14 +323,19 @@ func createConfigGetter(serveOpts core.ServeOptions, clustersConfig kube.Cluster
 // createClientGetter takes the required params and returns the closure function.
 // it's split for testing this fn separately
 func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.ServeOptions, clustersConfig kube.ClustersConfig) (core.KubernetesConfigGetter, error) {
-	// return the closure function that takes the context, but preserving the required scope,
+	// return the closure function that takes the context (improbable-eng auth)
+	// and headers (connect auth), but preserving the required scope,
 	// 'inClusterConfig' and 'config'
-	return func(ctx context.Context, cluster string) (*rest.Config, error) {
+	return func(ctx context.Context, hdrs http.Header, cluster string) (*rest.Config, error) {
 		log.V(4).Infof("+clientGetter.GetClient")
+
+		token := hdrs.Get("Authorization")
 		var err error
-		token, err := extractToken(ctx)
-		if err != nil {
-			return nil, status.Errorf(codes.Unauthenticated, "invalid authorization metadata: %v", err)
+		if token == "" {
+			token, err = extractToken(ctx)
+			if err != nil {
+				return nil, status.Errorf(codes.Unauthenticated, "invalid authorization metadata: %v", err)
+			}
 		}
 
 		var config *rest.Config

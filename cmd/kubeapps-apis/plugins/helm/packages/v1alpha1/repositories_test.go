@@ -874,7 +874,7 @@ func TestAddPackageRepository(t *testing.T) {
 			}
 
 			// check expected HelmRelease CRD has been created
-			if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
+			if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, http.Header{}, s.kubeappsCluster); err != nil {
 				t.Fatal(err)
 			} else {
 				var actualRepo appRepov1alpha1.AppRepository
@@ -2133,7 +2133,7 @@ func TestDeletePackageRepository(t *testing.T) {
 
 			if tc.expectedNonExistingSecrets != nil {
 				ctx := context.Background()
-				typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster)
+				typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, s.kubeappsCluster)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -2339,7 +2339,7 @@ func checkRepoSecrets(s *Server, t *testing.T, userManagedSecrets bool,
 			if actualRepo.Spec.Auth.Header == nil && actualRepo.Spec.Auth.CustomCA == nil {
 				t.Errorf("Error: Repository auth secret was expected but auth header and CA are empty")
 			}
-			typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster)
+			typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, s.kubeappsCluster)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -2360,7 +2360,7 @@ func checkRepoSecrets(s *Server, t *testing.T, userManagedSecrets bool,
 			if len(actualRepo.Spec.DockerRegistrySecrets) == 0 {
 				t.Errorf("Error: Repository docker secret was expected but imagePullSecrets are empty")
 			}
-			typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster)
+			typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, s.kubeappsCluster)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -2376,7 +2376,7 @@ func checkRepoSecrets(s *Server, t *testing.T, userManagedSecrets bool,
 
 func checkGlobalSecret(s *Server, t *testing.T, expectedRepo *appRepov1alpha1.AppRepository, expectedGlobalSecret *apiv1.Secret, checkNoGlobalSecret bool) {
 	ctx := context.Background()
-	typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster)
+	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, s.kubeappsCluster)
 	if err != nil {
 		t.Fatal(err)
 	}

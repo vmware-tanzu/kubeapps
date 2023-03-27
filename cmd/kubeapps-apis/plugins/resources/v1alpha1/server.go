@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"sync"
 
@@ -166,7 +167,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 
 func newClientGetter(configGetter core.KubernetesConfigGetter, useServiceAccount bool, clustersConfig kube.ClustersConfig) (clientgetter.ClientProviderInterface, error) {
 
-	customConfigGetter := func(ctx context.Context, cluster string) (*rest.Config, error) {
+	customConfigGetter := func(ctx context.Context, hdrs http.Header, cluster string) (*rest.Config, error) {
 		if useServiceAccount {
 			// If a service account client getter has been requested, the service account
 			// to use depends on which cluster is targeted.
@@ -183,7 +184,7 @@ func newClientGetter(configGetter core.KubernetesConfigGetter, useServiceAccount
 		// Rest config for a *user* created here - must already have token? So
 		// it is at this point where we should *not* pass the user credential /
 		// token if it is not needed?
-		restConfig, err := configGetter(ctx, cluster)
+		restConfig, err := configGetter(ctx, hdrs, cluster)
 		if err != nil {
 			return nil, status.Errorf(codes.FailedPrecondition, "unable to get config : %v", err.Error())
 		}
@@ -262,7 +263,7 @@ func (s *Server) GetResources(incomingCtx context.Context, r *connect.Request[v1
 	}
 
 	// Then look up each referenced resource and send it down the stream.
-	dynamicClient, err := s.clientGetter.Dynamic(incomingCtx, cluster)
+	dynamicClient, err := s.clientGetter.Dynamic(incomingCtx, r.Header(), cluster)
 	if err != nil {
 		return err
 	}
@@ -342,7 +343,7 @@ func (s *Server) GetServiceAccountNames(ctx context.Context, r *connect.Request[
 	cluster := r.Msg.GetContext().GetCluster()
 	log.InfoS("+resources GetServiceAccountNames ", "cluster", cluster, "namespace", namespace)
 
-	typedClient, err := s.clientGetter.Typed(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, r.Header(), cluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}

@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
@@ -18,7 +19,7 @@ import (
 )
 
 func (s *Server) getPkgRepositoryResource(ctx context.Context, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	dynClient, err := s.clientGetter.Dynamic(ctx, cluster)
+	dynClient, err := s.clientGetter.Dynamic(ctx, http.Header{}, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +49,7 @@ func (s *Server) getPkgRepository(ctx context.Context, cluster, namespace, ident
 	}
 
 	// Auth and TLS
-	typedClient, err := s.clientGetter.Typed(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, cluster)
 	if err != nil {
 		return nil, nil, nil, err
 	}

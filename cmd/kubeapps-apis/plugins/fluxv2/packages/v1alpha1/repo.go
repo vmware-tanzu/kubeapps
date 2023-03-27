@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/gob"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -57,7 +58,7 @@ func (s *Server) listReposInNamespace(ctx context.Context, ns string) ([]sourcev
 	// kubeapps-internal-kubeappsapis service account
 	// ref https://github.com/vmware-tanzu/kubeapps/issues/4390 for explanation
 	backgroundCtx := context.Background()
-	client, err := s.serviceAccountClientGetter.ControllerRuntime(backgroundCtx)
+	client, err := s.serviceAccountClientGetter.ControllerRuntime(backgroundCtx, http.Header{})
 	if err != nil {
 		return nil, err
 	}
@@ -814,7 +815,7 @@ func (s *repoEventSink) getRepoSecret(ctx context.Context, repo sourcev1.HelmRep
 	if s == nil || s.clientGetter == nil {
 		return nil, status.Errorf(codes.Internal, "unexpected state in clientGetter instance")
 	}
-	typedClient, err := s.clientGetter.Typed(ctx)
+	typedClient, err := s.clientGetter.Typed(ctx, http.Header{})
 	if err != nil {
 		return nil, err
 	}

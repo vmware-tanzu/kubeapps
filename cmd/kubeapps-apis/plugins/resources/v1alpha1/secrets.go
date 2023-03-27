@@ -23,7 +23,7 @@ func (s *Server) CreateSecret(ctx context.Context, r *connect.Request[v1alpha1.C
 	cluster := r.Msg.GetContext().GetCluster()
 	log.InfoS("+resources CreateSecret ", "cluster", cluster, "namespace", namespace)
 
-	typedClient, err := s.clientGetter.Typed(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, r.Header(), cluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
@@ -98,7 +98,7 @@ func (s *Server) GetSecretNames(ctx context.Context, r *connect.Request[v1alpha1
 	namespace := r.Msg.GetContext().GetNamespace()
 	log.InfoS("+resources GetSecretNames ", "cluster", cluster, "namespace", namespace)
 
-	typedClient, err := s.clientGetter.Typed(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, r.Header(), cluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}

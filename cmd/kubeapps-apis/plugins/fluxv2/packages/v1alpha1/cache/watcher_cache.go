@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
@@ -193,7 +194,7 @@ func (c *NamespacedResourceWatcherCache) isGvrValid() error {
 	}
 	// sanity check that CRD for GVR has been registered
 	ctx := context.Background()
-	apiExt, err := c.config.ClientGetter.ApiExt(ctx)
+	apiExt, err := c.config.ClientGetter.ApiExt(ctx, http.Header{})
 	if err != nil {
 		return err
 	}
@@ -384,7 +385,7 @@ func (c *NamespacedResourceWatcherCache) resyncAndNewRetryWatcher(bootstrap bool
 func (c *NamespacedResourceWatcherCache) Watch(options metav1.ListOptions) (watch.Interface, error) {
 	ctx := context.Background()
 
-	ctrlClient, err := c.config.ClientGetter.ControllerRuntime(ctx)
+	ctrlClient, err := c.config.ClientGetter.ControllerRuntime(ctx, http.Header{})
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
@@ -434,7 +435,7 @@ func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) 
 	}
 
 	ctx := context.Background()
-	ctrlClient, err := c.config.ClientGetter.ControllerRuntime(ctx)
+	ctrlClient, err := c.config.ClientGetter.ControllerRuntime(ctx, http.Header{})
 	if err != nil {
 		return "", status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}
@@ -550,7 +551,7 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 
 	// Get the resource with this namespace/name
 	ctx := context.Background()
-	ctrlClient, err := c.config.ClientGetter.ControllerRuntime(ctx)
+	ctrlClient, err := c.config.ClientGetter.ControllerRuntime(ctx, http.Header{})
 	if err != nil {
 		return status.Errorf(codes.FailedPrecondition, "unable to get client due to: %v", err)
 	}

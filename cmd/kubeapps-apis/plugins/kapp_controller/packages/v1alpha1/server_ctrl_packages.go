@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -470,7 +471,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 		cluster = s.globalPackagingCluster
 	}
 
-	typedClient, err := s.clientGetter.Typed(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, cluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
@@ -589,7 +590,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 		return nil, status.Errorf(codes.InvalidArgument, "installing packages in other clusters in not supported yet")
 	}
 
-	typedClient, err := s.clientGetter.Typed(ctx, targetCluster)
+	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, targetCluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
@@ -695,7 +696,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		packageCluster = s.globalPackagingCluster
 	}
 
-	typedClient, err := s.clientGetter.Typed(ctx, packageCluster)
+	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, packageCluster)
 	if err != nil {
 		return nil, err
 	}
@@ -824,7 +825,7 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 		cluster = s.globalPackagingCluster
 	}
 
-	typedClient, err := s.clientGetter.Typed(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, cluster)
 	if err != nil {
 		return nil, err
 	}

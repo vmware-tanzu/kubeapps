@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	"net/http"
 	"regexp"
 	"strings"
 
@@ -21,14 +22,14 @@ func (s *Server) MaxWorkers() int {
 }
 
 // GetAccessibleNamespaces return the list of namespaces that the user has permission to access
-func (s *Server) GetAccessibleNamespaces(ctx context.Context, cluster string, trustedNamespaces []corev1.Namespace) ([]corev1.Namespace, error) {
+func (s *Server) GetAccessibleNamespaces(ctx context.Context, hdrs http.Header, cluster string, trustedNamespaces []corev1.Namespace) ([]corev1.Namespace, error) {
 	var namespaceList []corev1.Namespace
 
 	if len(trustedNamespaces) > 0 {
 		namespaceList = append(namespaceList, trustedNamespaces...)
 	} else {
 		userTypedClientFunc := func() (kubernetes.Interface, error) {
-			return s.clientGetter.Typed(ctx, cluster)
+			return s.clientGetter.Typed(ctx, hdrs, cluster)
 		}
 
 		// The service account client returned for fetching namespaces depends on whether
@@ -40,11 +41,11 @@ func (s *Server) GetAccessibleNamespaces(ctx context.Context, cluster string, tr
 			serviceAccountTypedClientFunc = func() (kubernetes.Interface, error) {
 				// Not using ctx here so that we can't inadvertently send the user
 				// creds.
-				return s.localServiceAccountClientGetter.Typed(context.Background())
+				return s.localServiceAccountClientGetter.Typed(context.Background(), http.Header{})
 			}
 		} else {
 			serviceAccountTypedClientFunc = func() (kubernetes.Interface, error) {
-				return s.clusterServiceAccountClientGetter.Typed(ctx, cluster)
+				return s.clusterServiceAccountClientGetter.Typed(ctx, hdrs, cluster)
 			}
 		}
 
