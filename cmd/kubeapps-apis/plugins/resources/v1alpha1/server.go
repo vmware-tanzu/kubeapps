@@ -221,20 +221,25 @@ func (s *Server) GetResources(incomingCtx context.Context, r *connect.Request[v1
 	namespace := r.Msg.GetInstalledPackageRef().GetContext().GetNamespace()
 	cluster := r.Msg.GetInstalledPackageRef().GetContext().GetCluster()
 	log.InfoS("+resources GetResources ", "cluster", cluster, "namespace", namespace)
-	ctx, err := copyAuthorizationMetadataForOutgoing(incomingCtx)
+	token, err := getTokenFromIncoming(incomingCtx, r.Header())
 	if err != nil {
 		return err
 	}
+	ctx := metadata.AppendToOutgoingContext(incomingCtx, "authorization", token)
 
 	// First we grab the resource references for the specified installed package.
 	coreClient, err := s.corePackagesClientGetter()
 	if err != nil {
+		log.Errorf("unable to create core packages client: %+v", err)
 		return err
 	}
+	// TODO: Add the Authorization token to the header here when switching
+	// the packaging plugins.
 	refsResponse, err := coreClient.GetInstalledPackageResourceRefs(ctx, &pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsRequest{
 		InstalledPackageRef: r.Msg.InstalledPackageRef,
 	})
 	if err != nil {
+		log.Errorf("unable to query core packages client for installed package resource refs: %+v", err)
 		return err
 	}
 	var resourcesToReturn []*pkgsGRPCv1alpha1.ResourceRef
@@ -476,21 +481,25 @@ func (rw *ResourceWatcher) ResultChan() <-chan ResourceEvent {
 	return rw.resultChan
 }
 
-// copyAuthorizationMetadataForOutgoing explicitly copies the authz from the
-// incoming context to the outgoing context when making the outgoing call the
-// core packaging API.
-func copyAuthorizationMetadataForOutgoing(ctx context.Context) (context.Context, error) {
+// getTokenFromIncoming explicitly copies the authz from the
+// incoming context or headers so the caller can use it in the outgoing context
+// when making the outgoing call the core packaging API.
+func getTokenFromIncoming(ctx context.Context, hdrs http.Header) (string, error) {
 	notAllowedErr := status.Errorf(codes.PermissionDenied, "unable to get authorization from request context")
 
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return nil, notAllowedErr
+	token := hdrs.Get("Authorization")
+	// Fall back to getting the token from the context metadata.
+	if token == "" {
+		md, ok := metadata.FromIncomingContext(ctx)
+		if !ok {
+			return "", notAllowedErr
+		}
+		if len(md["authorization"]) == 0 {
+			return "", notAllowedErr
+		}
+		token = md["authorization"][0]
 	}
-	if len(md["authorization"]) == 0 {
-		return nil, notAllowedErr
-	}
-
-	return metadata.AppendToOutgoingContext(ctx, "authorization", md["authorization"][0]), nil
+	return token, nil
 }
 
 func resourceRefsEqual(r1, r2 *pkgsGRPCv1alpha1.ResourceRef) bool {

@@ -329,6 +329,7 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.S
 	return func(ctx context.Context, hdrs http.Header, cluster string) (*rest.Config, error) {
 		log.V(4).Infof("+clientGetter.GetClient")
 
+		// TODO: Move this into a unified extractToken
 		token := hdrs.Get("Authorization")
 		var err error
 		if token == "" {

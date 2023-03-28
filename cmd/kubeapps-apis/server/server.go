@@ -5,6 +5,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
@@ -193,19 +194,45 @@ func Serve(serveOpts core.ServeOptions) error {
 
 	// Finally, link the new mux so that all other requests are routed to the old cmux's listen
 	// address. cmux requires a listener.
-	mux_connect.Handle("/", &httputil.ReverseProxy{
-		Director: func(r *http.Request) {
-			r.URL.Scheme = "http"
-			// Update the port (only) of the url
-			parts := strings.SplitAfter(lis.Addr().String(), ":")
-			port, err := strconv.Atoi(parts[len(parts)-1])
-			if err != nil {
-				klogv2.Fatalf("unable to extract port from listen address %q", lis.Addr().String())
-			}
-			r.URL.Host = fmt.Sprintf("127.0.0.1:%d", port)
-			klogv2.Errorf("proxied URL is: %+v", r.URL)
-		},
-	})
+	mux_connect.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// TODO: Pull these out into a single proxy that can be used here.
+		h2cProxy := &httputil.ReverseProxy{
+			Director: func(r *http.Request) {
+				r.URL.Scheme = "http"
+				// Update the port (only) of the url
+				parts := strings.SplitAfter(lis.Addr().String(), ":")
+				port, err := strconv.Atoi(parts[len(parts)-1])
+				if err != nil {
+					klogv2.Fatalf("unable to extract port from listen address %q", lis.Addr().String())
+				}
+				r.URL.Host = fmt.Sprintf("127.0.0.1:%d", port)
+			},
+			Transport: &http2.Transport{
+				AllowHTTP: true,
+				DialTLS: func(network, addr string, cfg *tls.Config) (net.Conn, error) {
+					return net.Dial(network, addr)
+				},
+			},
+		}
+
+		http1Proxy := httputil.ReverseProxy{
+			Director: func(r *http.Request) {
+				r.URL.Scheme = "http"
+				// Update the port (only) of the url
+				parts := strings.SplitAfter(lis.Addr().String(), ":")
+				port, err := strconv.Atoi(parts[len(parts)-1])
+				if err != nil {
+					klogv2.Fatalf("unable to extract port from listen address %q", lis.Addr().String())
+				}
+				r.URL.Host = fmt.Sprintf("127.0.0.1:%d", port)
+			},
+		}
+		if r.ProtoMajor == 2 {
+			h2cProxy.ServeHTTP(w, r)
+		} else {
+			http1Proxy.ServeHTTP(w, r)
+		}
+	}))
 
 	listenPort := fmt.Sprintf(":%d", serveOpts.Port)
 	klogv2.Infof("Starting server on %q", listenPort)
