@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"sync"
 
@@ -165,7 +166,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 
 func newClientGetter(configGetter core.KubernetesConfigGetter, useServiceAccount bool, clustersConfig kube.ClustersConfig) (clientgetter.ClientProviderInterface, error) {
 
-	customConfigGetter := func(ctx context.Context, cluster string) (*rest.Config, error) {
+	customConfigGetter := func(ctx context.Context, headers http.Header, cluster string) (*rest.Config, error) {
 		if useServiceAccount {
 			// If a service account client getter has been requested, the service account
 			// to use depends on which cluster is targeted.
@@ -182,7 +183,7 @@ func newClientGetter(configGetter core.KubernetesConfigGetter, useServiceAccount
 		// Rest config for a *user* created here - must already have token? So
 		// it is at this point where we should *not* pass the user credential /
 		// token if it is not needed?
-		restConfig, err := configGetter(ctx, cluster)
+		restConfig, err := configGetter(ctx, http.Header{}, cluster)
 		if err != nil {
 			return nil, status.Errorf(codes.FailedPrecondition, "unable to get config : %v", err.Error())
 		}

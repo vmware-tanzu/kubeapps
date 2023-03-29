@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -126,7 +127,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 				return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.Internal, "configGetter arg required")
 			}
 			// Retrieve the k8s REST client from the configGetter
-			config, err := configGetter(ctx, cluster)
+			config, err := configGetter(ctx, http.Header{}, cluster)
 			if err != nil {
 				return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
 			}

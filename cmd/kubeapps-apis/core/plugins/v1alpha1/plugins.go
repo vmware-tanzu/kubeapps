@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -315,10 +316,10 @@ func createConfigGetter(serveOpts core.ServeOptions, clustersConfig kube.Cluster
 func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.ServeOptions, clustersConfig kube.ClustersConfig) (core.KubernetesConfigGetter, error) {
 	// return the closure function that takes the context, but preserving the required scope,
 	// 'inClusterConfig' and 'config'
-	return func(ctx context.Context, cluster string) (*rest.Config, error) {
+	return func(ctx context.Context, headers http.Header, cluster string) (*rest.Config, error) {
 		log.V(4).Infof("+clientGetter.GetClient")
 		var err error
-		token, err := extractToken(ctx)
+		token, err := extractToken(ctx, headers)
 		if err != nil {
 			return nil, status.Errorf(codes.Unauthenticated, "invalid authorization metadata: %v", err)
 		}
@@ -348,22 +349,32 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.S
 	}, nil
 }
 
-// extractToken returns the token passed through the gRPC request in the "authorization" metadata in the context
+// extractToken returns the token passed through the gRPC request in the
+// "authorization" metadata in the context (improbable-eng grpc) or headers
+// (connect gRPC)
 // It is equivalent to the "Authorization" usual HTTP 1 header
 // For instance: authorization="Bearer abc" will return "abc"
-func extractToken(ctx context.Context) (string, error) {
-	// per https://github.com/vmware-tanzu/kubeapps/issues/3560
-	// extractToken() to raise an error if there is no metadata with the context.
-	// note, the caller will wrap this as a codes.Unauthenticated status
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return "", fmt.Errorf("missing authorization metadata")
+func extractToken(ctx context.Context, headers http.Header) (string, error) {
+	bearerToken := headers.Get("Authorization")
+
+	if bearerToken == "" {
+		// per https://github.com/vmware-tanzu/kubeapps/issues/3560
+		// extractToken() to raise an error if there is no metadata with the context.
+		// note, the caller will wrap this as a codes.Unauthenticated status
+		md, ok := metadata.FromIncomingContext(ctx)
+		if !ok {
+			return "", fmt.Errorf("missing authorization metadata")
+		}
+
+		// metadata is always lowercased
+		if len(md["authorization"]) > 0 {
+			bearerToken = md["authorization"][0]
+		}
 	}
 
-	// metadata is always lowercased
-	if len(md["authorization"]) > 0 {
-		if strings.HasPrefix(md["authorization"][0], "Bearer ") {
-			return strings.TrimPrefix(md["authorization"][0], "Bearer "), nil
+	if len(bearerToken) > 0 {
+		if strings.HasPrefix(bearerToken, "Bearer ") {
+			return strings.TrimPrefix(bearerToken, "Bearer "), nil
 		} else {
 			return "", fmt.Errorf("malformed authorization metadata")
 		}
