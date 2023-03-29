@@ -5,6 +5,7 @@ package clientgetter
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
 	"google.golang.org/grpc/codes"
@@ -187,7 +188,7 @@ func buildClientsProviderFunction(configGetter core.KubernetesConfigGetter, opti
 		if configGetter == nil {
 			return nil, status.Errorf(codes.Internal, "configGetter arg required")
 		}
-		config, err := configGetter(ctx, cluster)
+		config, err := configGetter(ctx, http.Header{}, cluster)
 		if err != nil {
 			code := codes.FailedPrecondition
 			if status.Code(err) == codes.Unauthenticated {

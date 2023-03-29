@@ -5,6 +5,8 @@ package helm
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm/agent"
 	"google.golang.org/grpc/codes"
@@ -22,7 +24,7 @@ func NewHelmActionConfigGetter(configGetter core.KubernetesConfigGetter, cluster
 		if configGetter == nil {
 			return nil, status.Errorf(codes.Internal, "configGetter arg required")
 		}
-		config, err := configGetter(ctx, cluster)
+		config, err := configGetter(ctx, http.Header{}, cluster)
 		if err != nil {
 			return nil, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
 		}

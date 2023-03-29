@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"net/http"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -288,6 +289,7 @@ func TestExtractToken(t *testing.T) {
 		name          string
 		contextKey    string
 		contextValue  string
+		headers       http.Header
 		expectedToken string
 		expectedErr   error
 	}{
@@ -295,6 +297,14 @@ func TestExtractToken(t *testing.T) {
 			name:          "it returns the expected token without error for a valid 'authorization' metadata value",
 			contextKey:    "authorization",
 			contextValue:  "Bearer abc",
+			expectedToken: "abc",
+			expectedErr:   nil,
+		},
+		{
+			name:          "it returns the expected token without error for a valid 'Authorization' header",
+			contextKey:    "",
+			contextValue:  "",
+			headers:       http.Header{"Authorization": []string{"Bearer abc"}},
 			expectedToken: "abc",
 			expectedErr:   nil,
 		},
@@ -321,7 +331,7 @@ func TestExtractToken(t *testing.T) {
 				tc.contextKey: tc.contextValue,
 			}))
 
-			token, err := extractToken(context)
+			token, err := extractToken(context, tc.headers)
 
 			if tc.expectedErr != nil && err != nil {
 				if got, want := err.Error(), tc.expectedErr.Error(); !cmp.Equal(want, got) {
@@ -366,6 +376,7 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 		cluster         string
 		contextKey      string
 		contextValue    string
+		headers         http.Header
 		expectedAPIHost string
 		expectedErrMsg  error
 	}{
@@ -397,6 +408,12 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 			expectedAPIHost: OtherK8sAPI,
 			expectedErrMsg:  status.Errorf(codes.Unauthenticated, "invalid authorization metadata: missing authorization metadata"),
 		},
+		{
+			name:            "it creates the config for the default cluster when passing a valid value for the authorization headers",
+			headers:         http.Header{"Authorization": []string{"Bearer token-value"}},
+			expectedAPIHost: DefaultK8sAPI,
+			expectedErrMsg:  nil,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -414,7 +431,7 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 				t.Fatalf("in %s: fail creating the configGetter:  %+v", tc.name, err)
 			}
 
-			restConfig, err := configGetter(ctx, tc.cluster)
+			restConfig, err := configGetter(ctx, tc.headers, tc.cluster)
 			if tc.expectedErrMsg != nil && err != nil {
 				if got, want := err.Error(), tc.expectedErrMsg.Error(); !cmp.Equal(want, got) {
 					t.Errorf("in %s: mismatch (-want +got):\n%s", tc.name, cmp.Diff(want, got))
