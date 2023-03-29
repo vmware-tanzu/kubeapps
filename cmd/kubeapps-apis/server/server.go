@@ -5,15 +5,22 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+
+	grpchealth "github.com/bufbuild/connect-grpchealth-go"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/soheilhy/cmux"
 
@@ -22,7 +29,7 @@ import (
 	packagesv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core/packages/v1alpha1"
 	pluginsv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
 	packagesGRPCv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	pluginsGRPCv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	pluginsConnect "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1/v1alpha1connect"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
@@ -70,26 +77,25 @@ func LogRequest(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo
 // Serve is the root command that is run when no other sub-commands are present.
 // It runs the gRPC service, registering the configured plugins.
 func Serve(serveOpts core.ServeOptions) error {
-	// Create the grpc server and register the reflection server (for now, useful for discovery
-	// using grpcurl) or similar.
-
-	grpcSrv := grpc.NewServer(grpc.ChainUnaryInterceptor(LogRequest))
-	reflection.Register(grpcSrv)
-
-	// Create the http server, register our core service followed by any plugins.
-	listenAddr := fmt.Sprintf(":%d", serveOpts.Port)
+	// Note: Currently transitioning from the un-maintained improbable-eng grpc library
+	// to the connect one. During the transition, some gRPC services are running on the
+	// improbable grpc server. Those calls are proxied through, but in a few PRs we'll have
+	// all services on the new server and can remove the proxy.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	gw, err := gatewayMux()
+	grpcSrv, gwArgs, listenerCMux, err := createImprobableGRPCServer(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to create gateway: %v", err)
+		return fmt.Errorf("failed to create gRPC server: %w", err)
 	}
-	gwArgs := core.GatewayHandlerArgs{
-		Ctx:         ctx,
-		Mux:         gw,
-		Addr:        listenAddr,
-		DialOptions: []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
-	}
+
+	// The connect service handler automatically handles grpc-web, connect and
+	// grpc for us, so we won't need all the extra code below once all services
+	// have been transitioned to the new mux (and we can remove the use of cmux
+	// once connect is used for all requests).
+
+	// During the transition we use the connect grpc mux by default and any unhandled paths
+	// are proxied to the old cmux handler's listener.
+	mux_connect := http.NewServeMux()
 
 	// Create the core.plugins.v1alpha1 server which handles registration of
 	// plugins, and register it for both grpc and http.
@@ -97,83 +103,33 @@ func Serve(serveOpts core.ServeOptions) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize plugins server: %v", err)
 	}
-	if err = registerPluginsServiceServer(grpcSrv, pluginsServer, gwArgs); err != nil {
-		return err
-	} else if err = registerPackagesServiceServer(grpcSrv, pluginsServer, gwArgs); err != nil {
-		return err
-	} else if err = registerRepositoriesServiceServer(grpcSrv, pluginsServer, gwArgs); err != nil {
-		return err
-	}
+	mux_connect.Handle(pluginsConnect.NewPluginsServiceHandler(pluginsServer))
 
-	lis, err := net.Listen("tcp", listenAddr)
-	if err != nil {
-		return fmt.Errorf("failed to listen: %v", err)
-	}
-
-	// Multiplex the connection between grpc and http.
-	// Note: due to a change in the grpc protocol, it's no longer possible to just match
-	// on the simpler cmux.HTTP2HeaderField("content-type", "application/grpc"). More details
-	// at https://github.com/soheilhy/cmux/issues/64
-	mux := cmux.New(lis)
-	grpcListener := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
-	grpcWebListener := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc-web"))
-	httpListener := mux.Match(cmux.Any())
-
-	webRpcProxy := grpcweb.WrapServer(grpcSrv,
-		grpcweb.WithOriginFunc(func(origin string) bool { return true }),
-		grpcweb.WithWebsockets(true),
-		grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool { return true }),
+	// The gRPC Health checker reports on all connected services.
+	checker := grpchealth.NewStaticChecker(
+		pluginsConnect.PluginsServiceName,
 	)
+	mux_connect.Handle(grpchealth.NewHandler(checker))
 
-	httpSrv := &http.Server{
-		ReadHeaderTimeout: 60 * time.Second, // mitigate slowloris attacks, set to nginx's default
-		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if webRpcProxy.IsGrpcWebRequest(r) || webRpcProxy.IsAcceptableGrpcCorsRequest(r) || webRpcProxy.IsGrpcWebSocketRequest(r) {
-				webRpcProxy.ServeHTTP(w, r)
-			} else {
-				gwArgs.Mux.ServeHTTP(w, r)
-			}
-		},
-		),
+	port, err := startImprobableHandler(pluginsServer, *listenerCMux, grpcSrv, gwArgs)
+	if err != nil {
+		return err
 	}
-
-	go func() {
-		err := grpcSrv.Serve(grpcListener)
-		if err != nil {
-			klogv2.Fatalf("failed to serve: %v", err)
-		}
-	}()
-	go func() {
-		err := grpcSrv.Serve(grpcWebListener)
-		if err != nil {
-			klogv2.Fatalf("failed to serve: %v", err)
-		}
-	}()
-	go func() {
-		err := httpSrv.Serve(httpListener)
-		if err != nil {
-			klogv2.Fatalf("failed to serve: %v", err)
-		}
-	}()
 
 	if serveOpts.UnsafeLocalDevKubeconfig {
 		klogv2.Warning("Using the local Kubeconfig file instead of the actual in-cluster's config. This is not recommended except for development purposes.")
 	}
 
-	klogv2.Infof("Starting server on :%d", serveOpts.Port)
-	if err := mux.Serve(); err != nil {
-		return fmt.Errorf("failed to serve: %v", err)
+	// Finally, link the new mux so that all other requests are proxied to the port on which
+	// the improbable gRPC server is listening.
+	mux_connect.Handle("/", createProxyToImprobableHandler(port))
+
+	listenPort := fmt.Sprintf(":%d", serveOpts.Port)
+	klogv2.Infof("Starting server on %q", listenPort)
+	if err := http.ListenAndServe(listenPort, h2c.NewHandler(mux_connect, &http2.Server{})); err != nil {
+		klogv2.Fatalf("failed to server: %+v", err)
 	}
 
-	return nil
-}
-
-func registerPluginsServiceServer(grpcSrv *grpc.Server, pluginsServer *pluginsv1alpha1.PluginsServer, gwArgs core.GatewayHandlerArgs) error {
-	pluginsGRPCv1alpha1.RegisterPluginsServiceServer(grpcSrv, pluginsServer)
-	err := pluginsGRPCv1alpha1.RegisterPluginsServiceHandlerFromEndpoint(gwArgs.Ctx, gwArgs.Mux, gwArgs.Addr, gwArgs.DialOptions)
-	if err != nil {
-		return fmt.Errorf("failed to register core.plugins handler for gateway: %v", err)
-	}
 	return nil
 }
 
@@ -282,4 +238,144 @@ func gatewayMux() (*runtime.ServeMux, error) {
 	}
 
 	return gwmux, nil
+}
+
+// createProxyToImprobableHandler returns a handler func that proxies requests
+// through to the improbable handler listening on a different port.
+//
+// It creates two reverse proxies, one with an h2c transport, the other with an http1 transport,
+// so that, depending on the request being handled, the request can be sent on the correct
+// transport.
+//
+// This function is temporary and will be removed once all code is switched to the connect
+// gRPC library.
+func createProxyToImprobableHandler(port int) http.HandlerFunc {
+	h2cProxy := &httputil.ReverseProxy{
+		Director: func(r *http.Request) {
+			r.URL.Scheme = "http"
+			r.URL.Host = fmt.Sprintf("127.0.0.1:%d", port)
+		},
+		Transport: &http2.Transport{
+			AllowHTTP: true,
+			DialTLS: func(network, addr string, cfg *tls.Config) (net.Conn, error) {
+				return net.Dial(network, addr)
+			},
+		},
+	}
+	http1Proxy := httputil.ReverseProxy{
+		Director: func(r *http.Request) {
+			r.URL.Scheme = "http"
+			r.URL.Host = fmt.Sprintf("127.0.0.1:%d", port)
+		},
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.ProtoMajor == 2 {
+			h2cProxy.ServeHTTP(w, r)
+		} else {
+			http1Proxy.ServeHTTP(w, r)
+		}
+	})
+}
+
+// createImprobableGRPCServer returns the created listener as well as the server and gateway arges.
+//
+// The latter are still required when registering plugins (though will be removed soon).
+func createImprobableGRPCServer(ctx context.Context) (*grpc.Server, core.GatewayHandlerArgs, *net.Listener, error) {
+	// Create the grpc server and register the reflection server (for now, useful for discovery
+	// using grpcurl) or similar.
+	grpcSrv := grpc.NewServer(grpc.ChainUnaryInterceptor(LogRequest))
+	reflection.Register(grpcSrv)
+
+	gw, err := gatewayMux()
+	if err != nil {
+		return nil, core.GatewayHandlerArgs{}, nil, err
+	}
+
+	// During the transition to the connect gRPC handlers, we'll continue to proxy unhandled
+	// gRPC requests through to the old improbable-eng-based handlers which used the cmux
+	// library to multiplex requests based on headers. The cmux listen address
+	// will be a random port. We'll send traffic through to this port from the main http.mux
+	// used by connect.
+	listenerCMux, err := net.Listen("tcp", ":0")
+	if err != nil {
+		return nil, core.GatewayHandlerArgs{}, nil, err
+	}
+
+	gwArgs := core.GatewayHandlerArgs{
+		Ctx:         ctx,
+		Mux:         gw,
+		Addr:        listenerCMux.Addr().String(),
+		DialOptions: []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
+	}
+
+	return grpcSrv, gwArgs, &listenerCMux, nil
+}
+
+// startImprobableHandler returns the port on which the improbable gRPC handler is listening.
+func startImprobableHandler(pluginsServer *pluginsv1alpha1.PluginsServer, listenerCMux net.Listener, grpcSrv *grpc.Server, gwArgs core.GatewayHandlerArgs) (int, error) {
+
+	if err := registerPackagesServiceServer(grpcSrv, pluginsServer, gwArgs); err != nil {
+		return 0, err
+	} else if err = registerRepositoriesServiceServer(grpcSrv, pluginsServer, gwArgs); err != nil {
+		return 0, err
+	}
+
+	// Multiplex the connection between grpc and http.
+	// Note: due to a change in the grpc protocol, it's no longer possible to just match
+	// on the simpler cmux.HTTP2HeaderField("content-type", "application/grpc"). More details
+	// at https://github.com/soheilhy/cmux/issues/64
+	mux := cmux.New(listenerCMux)
+	grpcListener := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
+	grpcWebListener := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc-web"))
+	httpListener := mux.Match(cmux.Any())
+
+	webRpcProxy := grpcweb.WrapServer(grpcSrv,
+		grpcweb.WithOriginFunc(func(origin string) bool { return true }),
+		grpcweb.WithWebsockets(true),
+		grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool { return true }),
+	)
+
+	httpSrv := &http.Server{
+		ReadHeaderTimeout: 60 * time.Second, // mitigate slowloris attacks, set to nginx's default
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if webRpcProxy.IsGrpcWebRequest(r) || webRpcProxy.IsAcceptableGrpcCorsRequest(r) || webRpcProxy.IsGrpcWebSocketRequest(r) {
+				webRpcProxy.ServeHTTP(w, r)
+			} else {
+				gwArgs.Mux.ServeHTTP(w, r)
+			}
+		},
+		),
+	}
+
+	go func() {
+		err := grpcSrv.Serve(grpcListener)
+		if err != nil {
+			klogv2.Fatalf("failed to serve: %v", err)
+		}
+	}()
+	go func() {
+		err := grpcSrv.Serve(grpcWebListener)
+		if err != nil {
+			klogv2.Fatalf("failed to serve: %v", err)
+		}
+	}()
+	go func() {
+		err := httpSrv.Serve(httpListener)
+		if err != nil {
+			klogv2.Fatalf("failed to serve: %v", err)
+		}
+	}()
+	go func() {
+		if err := mux.Serve(); err != nil {
+			klogv2.Fatalf("failed to serve: %v", err)
+		}
+	}()
+
+	parts := strings.SplitAfter(listenerCMux.Addr().String(), ":")
+	port, err := strconv.Atoi(parts[len(parts)-1])
+	if err != nil {
+		return 0, err
+	}
+	return port, nil
 }

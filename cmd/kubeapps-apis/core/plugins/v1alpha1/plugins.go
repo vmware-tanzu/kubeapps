@@ -15,6 +15,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
@@ -103,7 +104,7 @@ func ComparePlugin(pluginA *plugins.Plugin, pluginB *plugins.Plugin) bool {
 }
 
 // GetConfiguredPlugins returns details for each configured plugin.
-func (s *PluginsServer) GetConfiguredPlugins(ctx context.Context, in *plugins.GetConfiguredPluginsRequest) (*plugins.GetConfiguredPluginsResponse, error) {
+func (s *PluginsServer) GetConfiguredPlugins(ctx context.Context, in *connect.Request[plugins.GetConfiguredPluginsRequest]) (*connect.Response[plugins.GetConfiguredPluginsResponse], error) {
 	// this gets logged twice (liveness and readiness checks) every 10 seconds and
 	// really adds a lot of noise to the logs, so lowering verbosity
 	log.V(4).Infof("+core GetConfiguredPlugins")
@@ -111,9 +112,9 @@ func (s *PluginsServer) GetConfiguredPlugins(ctx context.Context, in *plugins.Ge
 	for i, p := range s.pluginsWithServers {
 		pluginDetails[i] = p.Plugin
 	}
-	return &plugins.GetConfiguredPluginsResponse{
+	return connect.NewResponse(&plugins.GetConfiguredPluginsResponse{
 		Plugins: pluginDetails,
-	}, nil
+	}), nil
 }
 
 // registerPlugins opens each plugin, looks up the register function and calls it with the registrar.
