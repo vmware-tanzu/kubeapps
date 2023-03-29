@@ -78,6 +78,11 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     -o /resources-v1alpha1-plugin.so -buildmode=plugin \
     ./cmd/kubeapps-apis/plugins/resources/v1alpha1/*.go
 
+# Remove and instead use built-in gRPC container probes once we're
+# supporting >= 1.24 only. https://kubernetes.io/blog/2022/05/13/grpc-probes-now-in-beta/
+RUN GRPC_HEALTH_PROBE_VERSION=v0.4.16 && \
+    curl -sSL "https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64" -o "/bin/grpc_health_probe" && chmod +x "/bin/grpc_health_probe"
+
 # Note: unlike the other docker images for go, we cannot use scratch as the plugins
 # are loaded using the dynamic linker.
 FROM bitnami/minideb:bullseye
@@ -87,6 +92,7 @@ COPY --from=builder /kapp-controller-packages-v1alpha1-plugin.so /plugins/kapp-c
 COPY --from=builder /fluxv2-packages-v1alpha1-plugin.so /plugins/fluxv2-packages/
 COPY --from=builder /helm-packages-v1alpha1-plugin.so /plugins/helm-packages/
 COPY --from=builder /resources-v1alpha1-plugin.so /plugins/resources/
+COPY --from=builder /bin/grpc_health_probe /bin/
 
 # Ensure the container user will be able to write to the k8s discovery client cache.
 RUN mkdir -p /.kube/cache && chown 1001:1001 /.kube/cache
