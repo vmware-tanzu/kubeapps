@@ -29,6 +29,7 @@ import (
 	packagesv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core/packages/v1alpha1"
 	pluginsv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
 	packagesGRPCv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	pluginsGRPCv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	pluginsConnect "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1/v1alpha1connect"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -77,13 +78,14 @@ func LogRequest(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo
 // Serve is the root command that is run when no other sub-commands are present.
 // It runs the gRPC service, registering the configured plugins.
 func Serve(serveOpts core.ServeOptions) error {
+	listenAddr := fmt.Sprintf(":%d", serveOpts.Port)
 	// Note: Currently transitioning from the un-maintained improbable-eng grpc library
 	// to the connect one. During the transition, some gRPC services are running on the
 	// improbable grpc server. Those calls are proxied through, but in a few PRs we'll have
 	// all services on the new server and can remove the proxy.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	grpcSrv, gwArgs, listenerCMux, err := createImprobableGRPCServer(ctx)
+	grpcSrv, gwArgs, listenerCMux, err := createImprobableGRPCServer(ctx, listenAddr)
 	if err != nil {
 		return fmt.Errorf("failed to create gRPC server: %w", err)
 	}
@@ -103,7 +105,10 @@ func Serve(serveOpts core.ServeOptions) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize plugins server: %v", err)
 	}
-	mux_connect.Handle(pluginsConnect.NewPluginsServiceHandler(pluginsServer))
+	err = registerPluginsServiceServer(mux_connect, pluginsServer, gwArgs)
+	if err != nil {
+		return fmt.Errorf("failed to register plugins server: %v", err)
+	}
 
 	// The gRPC Health checker reports on all connected services.
 	checker := grpchealth.NewStaticChecker(
@@ -124,9 +129,8 @@ func Serve(serveOpts core.ServeOptions) error {
 	// the improbable gRPC server is listening.
 	mux_connect.Handle("/", createProxyToImprobableHandler(port))
 
-	listenPort := fmt.Sprintf(":%d", serveOpts.Port)
-	klogv2.Infof("Starting server on %q", listenPort)
-	if err := http.ListenAndServe(listenPort, h2c.NewHandler(mux_connect, &http2.Server{})); err != nil {
+	klogv2.Infof("Starting server on %q", listenAddr)
+	if err := http.ListenAndServe(listenAddr, h2c.NewHandler(mux_connect, &http2.Server{})); err != nil {
 		klogv2.Fatalf("failed to server: %+v", err)
 	}
 
@@ -281,7 +285,7 @@ func createProxyToImprobableHandler(port int) http.HandlerFunc {
 // createImprobableGRPCServer returns the created listener as well as the server and gateway arges.
 //
 // The latter are still required when registering plugins (though will be removed soon).
-func createImprobableGRPCServer(ctx context.Context) (*grpc.Server, core.GatewayHandlerArgs, *net.Listener, error) {
+func createImprobableGRPCServer(ctx context.Context, listenAddr string) (*grpc.Server, core.GatewayHandlerArgs, *net.Listener, error) {
 	// Create the grpc server and register the reflection server (for now, useful for discovery
 	// using grpcurl) or similar.
 	grpcSrv := grpc.NewServer(grpc.ChainUnaryInterceptor(LogRequest))
@@ -302,10 +306,12 @@ func createImprobableGRPCServer(ctx context.Context) (*grpc.Server, core.Gateway
 		return nil, core.GatewayHandlerArgs{}, nil, err
 	}
 
+	// Note: we point the gateway at our *new* gRPC handler, so that we can continue to use
+	// the gateway for a ReST-ish API
 	gwArgs := core.GatewayHandlerArgs{
 		Ctx:         ctx,
 		Mux:         gw,
-		Addr:        listenerCMux.Addr().String(),
+		Addr:        listenAddr,
 		DialOptions: []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
 	}
 
@@ -378,4 +384,14 @@ func startImprobableHandler(pluginsServer *pluginsv1alpha1.PluginsServer, listen
 		return 0, err
 	}
 	return port, nil
+}
+
+// Registers the pluginsServer with the mux and gateway.
+func registerPluginsServiceServer(mux *http.ServeMux, pluginsServer *pluginsv1alpha1.PluginsServer, gwArgs core.GatewayHandlerArgs) error {
+	mux.Handle(pluginsConnect.NewPluginsServiceHandler(pluginsServer))
+	err := pluginsGRPCv1alpha1.RegisterPluginsServiceHandlerFromEndpoint(gwArgs.Ctx, gwArgs.Mux, gwArgs.Addr, gwArgs.DialOptions)
+	if err != nil {
+		return fmt.Errorf("failed to register core.plugins handler for gateway: %v", err)
+	}
+	return nil
 }
