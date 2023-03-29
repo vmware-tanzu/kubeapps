@@ -83,7 +83,10 @@ func Serve(serveOpts core.ServeOptions) error {
 	// all services on the new server and can remove the proxy.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	grpcSrv, gwArgs, listenerCMux := createImprobableGRPCServer(ctx)
+	grpcSrv, gwArgs, listenerCMux, err := createImprobableGRPCServer(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create gRPC server: %w", err)
+	}
 
 	// The connect service handler automatically handles grpc-web, connect and
 	// grpc for us, so we won't need all the extra code below once all services
@@ -278,7 +281,7 @@ func createProxyToImprobableHandler(port int) http.HandlerFunc {
 // createImprobableGRPCServer returns the created listener as well as the server and gateway arges.
 //
 // The latter are still required when registering plugins (though will be removed soon).
-func createImprobableGRPCServer(ctx context.Context) (*grpc.Server, core.GatewayHandlerArgs, *net.Listener) {
+func createImprobableGRPCServer(ctx context.Context) (*grpc.Server, core.GatewayHandlerArgs, *net.Listener, error) {
 	// Create the grpc server and register the reflection server (for now, useful for discovery
 	// using grpcurl) or similar.
 	grpcSrv := grpc.NewServer(grpc.ChainUnaryInterceptor(LogRequest))
@@ -286,7 +289,7 @@ func createImprobableGRPCServer(ctx context.Context) (*grpc.Server, core.Gateway
 
 	gw, err := gatewayMux()
 	if err != nil {
-		klogv2.Fatalf("failed to create gateway: %v", err)
+		return nil, core.GatewayHandlerArgs{}, nil, err
 	}
 
 	// During the transition to the connect gRPC handlers, we'll continue to proxy unhandled
@@ -296,7 +299,7 @@ func createImprobableGRPCServer(ctx context.Context) (*grpc.Server, core.Gateway
 	// used by connect.
 	listenerCMux, err := net.Listen("tcp", ":0")
 	if err != nil {
-		klogv2.Fatalf("failed to listen: %v", err)
+		return nil, core.GatewayHandlerArgs{}, nil, err
 	}
 
 	gwArgs := core.GatewayHandlerArgs{
@@ -306,7 +309,7 @@ func createImprobableGRPCServer(ctx context.Context) (*grpc.Server, core.Gateway
 		DialOptions: []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
 	}
 
-	return grpcSrv, gwArgs, &listenerCMux
+	return grpcSrv, gwArgs, &listenerCMux, nil
 }
 
 // startImprobableHandler returns the port on which the improbable gRPC handler is listening.
