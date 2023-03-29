@@ -106,6 +106,9 @@ func Serve(serveOpts core.ServeOptions) error {
 		return fmt.Errorf("failed to initialize plugins server: %v", err)
 	}
 	err = registerPluginsServiceServer(mux_connect, pluginsServer, gwArgs)
+	if err != nil {
+		return fmt.Errorf("failed to register plugins server: %v", err)
+	}
 
 	// The gRPC Health checker reports on all connected services.
 	checker := grpchealth.NewStaticChecker(
