@@ -5,7 +5,6 @@ package main
 
 import (
 	"context"
-	"reflect"
 	"testing"
 
 	"github.com/bufbuild/connect-go"
@@ -22,33 +21,32 @@ import (
 	typfake "k8s.io/client-go/kubernetes/fake"
 
 	pkgsGRPCv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	pluginsGRPCv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
 )
 
-const bufSize = 1024 * 1024
-
-var fakePkgsPlugin *pluginsGRPCv1alpha1.Plugin = &pluginsGRPCv1alpha1.Plugin{Name: "fake.packages", Version: "v1alpha1"}
-
-func resourceRefsForObjects(t *testing.T, objects ...runtime.Object) []*pkgsGRPCv1alpha1.ResourceRef {
-	refs := []*pkgsGRPCv1alpha1.ResourceRef{}
-	for _, obj := range objects {
-		k8sObjValue := reflect.ValueOf(obj).Elem()
-		objMeta, ok := k8sObjValue.FieldByName("ObjectMeta").Interface().(metav1.ObjectMeta)
-		if !ok {
-			t.Fatalf("failed to retrieve object metadata for: %+v", objMeta)
-		}
-		gvk := obj.GetObjectKind().GroupVersionKind()
-		refs = append(refs, &pkgsGRPCv1alpha1.ResourceRef{
-			ApiVersion: gvk.GroupVersion().String(),
-			Kind:       gvk.Kind,
-			Name:       objMeta.Name,
-			Namespace:  objMeta.Namespace,
-		})
-	}
-	return refs
-}
-
+// const bufSize = 1024 * 1024
+//
+// var fakePkgsPlugin *pluginsGRPCv1alpha1.Plugin = &pluginsGRPCv1alpha1.Plugin{Name: "fake.packages", Version: "v1alpha1"}
+//
+// func resourceRefsForObjects(t *testing.T, objects ...runtime.Object) []*pkgsGRPCv1alpha1.ResourceRef {
+// 	refs := []*pkgsGRPCv1alpha1.ResourceRef{}
+// 	for _, obj := range objects {
+// 		k8sObjValue := reflect.ValueOf(obj).Elem()
+// 		objMeta, ok := k8sObjValue.FieldByName("ObjectMeta").Interface().(metav1.ObjectMeta)
+// 		if !ok {
+// 			t.Fatalf("failed to retrieve object metadata for: %+v", objMeta)
+// 		}
+// 		gvk := obj.GetObjectKind().GroupVersionKind()
+// 		refs = append(refs, &pkgsGRPCv1alpha1.ResourceRef{
+// 			ApiVersion: gvk.GroupVersion().String(),
+// 			Kind:       gvk.Kind,
+// 			Name:       objMeta.Name,
+// 			Namespace:  objMeta.Namespace,
+// 		})
+// 	}
+// 	return refs
+// }
+//
 // getResourcesClient starts a GRPC server, serving both the resources service,
 // and a test core packages service, but using a buf connection (ie. no need for
 // slow network port etc.). More at
