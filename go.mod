@@ -43,11 +43,12 @@ require (
 	github.com/adhocore/gronx v1.1.2
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/bufbuild/connect-go v1.5.2
+	github.com/bufbuild/connect-grpchealth-go v1.0.0
 	github.com/containerd/containerd v1.7.0
 	github.com/cppforlife/go-cli-ui v0.0.0-20220622150351-995494831c6c
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/distribution v2.8.1+incompatible
-	github.com/docker/cli v23.0.1+incompatible
+	github.com/docker/cli v23.0.2+incompatible
 	github.com/fluxcd/helm-controller/api v0.31.2
 	github.com/fluxcd/pkg/apis/meta v1.0.0
 	github.com/fluxcd/pkg/oci v0.21.1
@@ -128,7 +129,6 @@ require (
 	github.com/aws/smithy-go v1.13.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
-	github.com/bufbuild/connect-grpchealth-go v1.0.0 // indirect
 	github.com/carvel-dev/semver/v4 v4.0.1-0.20230221220520-8090ce423695 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
