@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository"
 
@@ -61,7 +62,7 @@ func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.Pac
 	if repo.repoType == "" || !slices.Contains(ValidRepoTypes, repo.repoType) {
 		return nil, status.Errorf(codes.InvalidArgument, "repository type [%s] not supported", repo.repoType)
 	}
-	typedClient, err := s.clientGetter.Typed(ctx, repo.cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, repo.cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -310,7 +311,7 @@ func (s *Server) setOwnerReferencesForRepoSecret(
 	repo *apprepov1alpha1.AppRepository) error {
 
 	if secret != nil {
-		if typedClient, err := s.clientGetter.Typed(ctx, cluster); err != nil {
+		if typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, cluster); err != nil {
 			return err
 		} else {
 			secretsInterface := typedClient.CoreV1().Secrets(repo.Namespace)
@@ -343,7 +344,7 @@ func (s *Server) updateRepo(ctx context.Context,
 	if repo.name.Name == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "repository name may not be empty")
 	}
-	typedClient, err := s.clientGetter.Typed(ctx, repo.cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, repo.cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -585,7 +586,7 @@ func (s *Server) GetPkgRepositories(ctx context.Context, cluster, namespace stri
 // getAccessiblePackageRepositories gather list of repositories to which the user has access per namespace
 func (s *Server) getAccessiblePackageRepositories(ctx context.Context, cluster string) ([]*apprepov1alpha1.AppRepository, error) {
 	clusterTypedClientFunc := func() (kubernetes.Interface, error) {
-		return s.clientGetter.Typed(ctx, cluster)
+		return s.clientGetter.Typed(ctx, http.Header{}, cluster)
 	}
 	inClusterTypedClientFunc := func() (kubernetes.Interface, error) {
 		return s.localServiceAccountClientGetter.Typed(context.Background())
@@ -630,7 +631,7 @@ func (s *Server) deleteRepo(ctx context.Context, cluster string, repoRef *corev1
 	} else {
 		// Cross-namespace owner references are disallowed by design.
 		// We need to explicitly delete the repo secret from the namespace of the asset syncer.
-		typedClient, err := s.clientGetter.Typed(ctx, cluster)
+		typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, cluster)
 		if err != nil {
 			return err
 		}
@@ -650,7 +651,7 @@ func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *c
 	if cluster == "" && namespace != "" {
 		return nil, status.Errorf(codes.InvalidArgument, "cluster must be specified when namespace is present: %s", namespace)
 	}
-	typedClient, err := s.clientGetter.Typed(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, cluster)
 	if err != nil {
 		return nil, err
 	}

@@ -5,6 +5,8 @@ package main
 
 import (
 	"context"
+	"net/http"
+
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resources"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -349,7 +351,7 @@ func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *c
 	if cluster == "" && namespace != "" {
 		return nil, status.Errorf(codes.InvalidArgument, "cluster must be specified when namespace is present: %s", namespace)
 	}
-	typedClient, err := s.clientGetter.Typed(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, cluster)
 	if err != nil {
 		return nil, err
 	}

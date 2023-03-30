@@ -12,6 +12,7 @@ import (
 	pluginsv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
 	pluginsgrpcv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
+	resourcesConnect "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1/v1alpha1connect"
 )
 
 // Set the pluginDetail once during a module init function so the single struct
@@ -34,7 +35,8 @@ func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) 
 	if err != nil {
 		return nil, err
 	}
-	v1alpha1.RegisterResourcesServiceServer(opts.Registrar, svr)
+	// Up TO HERE
+	opts.Mux.Handle(resourcesConnect.NewResourcesServiceHandler(svr))
 	return svr, nil
 }
 

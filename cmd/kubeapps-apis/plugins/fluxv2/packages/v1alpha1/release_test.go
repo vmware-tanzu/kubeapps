@@ -685,7 +685,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			}
 
 			// check expected HelmReleass CRD has been created
-			if ctrlClient, err := s.clientGetter.ControllerRuntime(context.Background(), s.kubeappsCluster); err != nil {
+			if ctrlClient, err := s.clientGetter.ControllerRuntime(context.Background(), http.Header{}, s.kubeappsCluster); err != nil {
 				t.Fatal(err)
 			} else {
 				key := types.NamespacedName{Namespace: tc.request.TargetContext.Namespace, Name: tc.request.Name}
@@ -901,7 +901,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			}
 			ctx := context.Background()
 			var actualRel helmv2.HelmRelease
-			if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
+			if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, http.Header{}, s.kubeappsCluster); err != nil {
 				t.Fatal(err)
 			} else if err = ctrlClient.Get(ctx, key, &actualRel); err != nil {
 				t.Fatal(err)
@@ -989,7 +989,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 			}
 			ctx := context.Background()
 			var actualRel helmv2.HelmRelease
-			if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
+			if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, http.Header{}, s.kubeappsCluster); err != nil {
 				t.Fatal(err)
 			} else if err = ctrlClient.Get(ctx, key, &actualRel); !errors.IsNotFound(err) {
 				t.Errorf("mismatch expected, NotFound, got %+v", err)

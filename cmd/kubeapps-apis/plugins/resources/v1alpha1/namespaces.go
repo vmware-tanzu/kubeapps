@@ -5,10 +5,12 @@ package main
 
 import (
 	"context"
-	authorizationapi "k8s.io/api/authorization/v1"
-	"k8s.io/client-go/kubernetes"
 	"strings"
 
+	authorizationapi "k8s.io/api/authorization/v1"
+	"k8s.io/client-go/kubernetes"
+
+	"github.com/bufbuild/connect-go"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"google.golang.org/grpc/codes"
@@ -21,12 +23,12 @@ import (
 
 // CheckNamespaceExists returns whether a namespace exists on the cluster, or
 // an error if the user does not have the required RBAC.
-func (s *Server) CheckNamespaceExists(ctx context.Context, r *v1alpha1.CheckNamespaceExistsRequest) (*v1alpha1.CheckNamespaceExistsResponse, error) {
-	namespace := r.GetContext().GetNamespace()
-	cluster := r.GetContext().GetCluster()
+func (s *Server) CheckNamespaceExists(ctx context.Context, r *connect.Request[v1alpha1.CheckNamespaceExistsRequest]) (*connect.Response[v1alpha1.CheckNamespaceExistsResponse], error) {
+	namespace := r.Msg.GetContext().GetNamespace()
+	cluster := r.Msg.GetContext().GetCluster()
 	log.InfoS("+resources CheckNamespaceExists", "cluster", cluster, "namespace", namespace)
 
-	typedClient, err := s.clientGetter.Typed(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, r.Header(), cluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
@@ -34,26 +36,26 @@ func (s *Server) CheckNamespaceExists(ctx context.Context, r *v1alpha1.CheckName
 	_, err = typedClient.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return &v1alpha1.CheckNamespaceExistsResponse{
+			return connect.NewResponse(&v1alpha1.CheckNamespaceExistsResponse{
 				Exists: false,
-			}, nil
+			}), nil
 		}
 		return nil, statuserror.FromK8sError("get", "Namespace", namespace, err)
 	}
 
-	return &v1alpha1.CheckNamespaceExistsResponse{
+	return connect.NewResponse(&v1alpha1.CheckNamespaceExistsResponse{
 		Exists: true,
-	}, nil
+	}), nil
 }
 
 // CreateNamespace create the namespace for the given context
 // if the user has the required RBAC
-func (s *Server) CreateNamespace(ctx context.Context, r *v1alpha1.CreateNamespaceRequest) (*v1alpha1.CreateNamespaceResponse, error) {
-	namespace := r.GetContext().GetNamespace()
-	cluster := r.GetContext().GetCluster()
-	log.InfoS("+resources CreateNamespace", "cluster", cluster, "namespace", namespace, "labels", r.Labels)
+func (s *Server) CreateNamespace(ctx context.Context, r *connect.Request[v1alpha1.CreateNamespaceRequest]) (*connect.Response[v1alpha1.CreateNamespaceResponse], error) {
+	namespace := r.Msg.GetContext().GetNamespace()
+	cluster := r.Msg.GetContext().GetCluster()
+	log.InfoS("+resources CreateNamespace", "cluster", cluster, "namespace", namespace, "labels", r.Msg.Labels)
 
-	typedClient, err := s.clientGetter.Typed(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, r.Header(), cluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
@@ -65,20 +67,20 @@ func (s *Server) CreateNamespace(ctx context.Context, r *v1alpha1.CreateNamespac
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   namespace,
-			Labels: r.Labels,
+			Labels: r.Msg.Labels,
 		},
 	}, metav1.CreateOptions{})
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "Namespace", namespace, err)
 	}
 
-	return &v1alpha1.CreateNamespaceResponse{}, nil
+	return connect.NewResponse(&v1alpha1.CreateNamespaceResponse{}), nil
 }
 
 // GetNamespaceNames returns the list of namespace names from either the cluster or the incoming trusted namespaces.
 // In any case, only if the user has the required RBAC.
-func (s *Server) GetNamespaceNames(ctx context.Context, r *v1alpha1.GetNamespaceNamesRequest) (*v1alpha1.GetNamespaceNamesResponse, error) {
-	cluster := r.GetCluster()
+func (s *Server) GetNamespaceNames(ctx context.Context, r *connect.Request[v1alpha1.GetNamespaceNamesRequest]) (*connect.Response[v1alpha1.GetNamespaceNamesResponse], error) {
+	cluster := r.Msg.GetCluster()
 	log.InfoS("+resources GetNamespaceNames ", "cluster", cluster)
 
 	// Check if there are trusted namespaces in the request
@@ -87,7 +89,7 @@ func (s *Server) GetNamespaceNames(ctx context.Context, r *v1alpha1.GetNamespace
 		return nil, statuserror.FromK8sError("get", "Namespaces", "", err)
 	}
 
-	namespaceList, err := s.GetAccessibleNamespaces(ctx, cluster, trustedNamespaces)
+	namespaceList, err := s.GetAccessibleNamespaces(ctx, r.Header(), cluster, trustedNamespaces)
 	if err != nil {
 		return nil, statuserror.FromK8sError("list", "Namespaces", "", err)
 	}
@@ -97,30 +99,30 @@ func (s *Server) GetNamespaceNames(ctx context.Context, r *v1alpha1.GetNamespace
 		namespaces[i] = ns.Name
 	}
 
-	return &v1alpha1.GetNamespaceNamesResponse{
+	return connect.NewResponse(&v1alpha1.GetNamespaceNamesResponse{
 		NamespaceNames: namespaces,
-	}, nil
+	}), nil
 }
 
 // CanI Checks if the operation can be performed according to incoming auth rbac
-func (s *Server) CanI(ctx context.Context, r *v1alpha1.CanIRequest) (*v1alpha1.CanIResponse, error) {
-	if r.GetContext() == nil {
+func (s *Server) CanI(ctx context.Context, r *connect.Request[v1alpha1.CanIRequest]) (*connect.Response[v1alpha1.CanIResponse], error) {
+	if r.Msg.GetContext() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "context parameter is required")
 	}
-	namespace := r.GetContext().GetNamespace()
-	cluster := r.GetContext().GetCluster()
+	namespace := r.Msg.GetContext().GetNamespace()
+	cluster := r.Msg.GetContext().GetCluster()
 	if cluster == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "cluster parameter is required")
 	}
-	log.InfoS("+resources CanI", "cluster", cluster, "namespace", namespace, "group", r.GetGroup(), "resource", r.GetResource(), "verb", r.GetVerb())
+	log.InfoS("+resources CanI", "cluster", cluster, "namespace", namespace, "group", r.Msg.GetGroup(), "resource", r.Msg.GetResource(), "verb", r.Msg.GetVerb())
 
 	var typedClient kubernetes.Interface
 	var err error
-	if s.kubeappsCluster != cluster && strings.ToLower(r.GetVerb()) == "list" && strings.ToLower(r.GetResource()) == "namespaces" {
+	if s.kubeappsCluster != cluster && strings.ToLower(r.Msg.GetVerb()) == "list" && strings.ToLower(r.Msg.GetResource()) == "namespaces" {
 		// Listing namespaces in additional clusters might involve using the provided service account token
-		typedClient, err = s.clusterServiceAccountClientGetter.Typed(ctx, cluster)
+		typedClient, err = s.clusterServiceAccountClientGetter.Typed(ctx, r.Header(), cluster)
 	} else {
-		typedClient, err = s.clientGetter.Typed(ctx, cluster)
+		typedClient, err = s.clientGetter.Typed(ctx, r.Header(), cluster)
 	}
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
@@ -129,9 +131,9 @@ func (s *Server) CanI(ctx context.Context, r *v1alpha1.CanIRequest) (*v1alpha1.C
 	reviewResult, err := typedClient.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, &authorizationapi.SelfSubjectAccessReview{
 		Spec: authorizationapi.SelfSubjectAccessReviewSpec{
 			ResourceAttributes: &authorizationapi.ResourceAttributes{
-				Group:     r.Group,
-				Resource:  r.Resource,
-				Verb:      r.Verb,
+				Group:     r.Msg.Group,
+				Resource:  r.Msg.Resource,
+				Verb:      r.Msg.Verb,
 				Namespace: namespace,
 			},
 		},
@@ -140,7 +142,7 @@ func (s *Server) CanI(ctx context.Context, r *v1alpha1.CanIRequest) (*v1alpha1.C
 		return nil, err
 	}
 
-	return &v1alpha1.CanIResponse{
+	return connect.NewResponse(&v1alpha1.CanIResponse{
 		Allowed: reviewResult.Status.Allowed,
-	}, nil
+	}), nil
 }
