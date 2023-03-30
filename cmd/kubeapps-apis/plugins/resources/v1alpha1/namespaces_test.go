@@ -6,6 +6,8 @@ package main
 import (
 	"context"
 	"errors"
+
+	"github.com/bufbuild/connect-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/resources/v1alpha1/common"
@@ -125,13 +127,16 @@ func TestCheckNamespaceExists(t *testing.T) {
 					Build(),
 			}
 
-			response, err := s.CheckNamespaceExists(context.Background(), tc.request)
+			response, err := s.CheckNamespaceExists(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
+			if tc.expectedErrorCode != 0 {
+				return
+			}
 
-			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, ignoredUnexported) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoredUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredUnexported))
 			}
 		})
@@ -250,13 +255,16 @@ func TestCreateNamespace(t *testing.T) {
 					Build(),
 			}
 
-			response, err := s.CreateNamespace(context.Background(), tc.request)
+			response, err := s.CreateNamespace(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
+			if tc.expectedErrorCode != 0 {
+				return
+			}
 
-			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, ignoredUnexported) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoredUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredUnexported))
 			}
 		})
@@ -620,13 +628,16 @@ func TestGetNamespaceNames(t *testing.T) {
 				ctx = metadata.NewIncomingContext(ctx, metadata.Pairs(headerName, strings.Join(headerValue, ",")))
 			}
 
-			response, err := s.GetNamespaceNames(ctx, tc.request)
+			response, err := s.GetNamespaceNames(ctx, connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
+			if tc.expectedErrorCode != 0 {
+				return
+			}
 
-			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, ignoredUnexported) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoredUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredUnexported))
 			}
 		})
@@ -715,13 +726,16 @@ func TestCanI(t *testing.T) {
 				clientQPS:                       5,
 			}
 
-			response, err := s.CanI(context.Background(), tc.request)
+			response, err := s.CanI(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
+			if tc.expectedErrorCode != 0 {
+				return
+			}
 
-			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, ignoredUnexported) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoredUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredUnexported))
 			}
 		})

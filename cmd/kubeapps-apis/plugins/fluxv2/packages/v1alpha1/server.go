@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resources"
 
@@ -651,7 +652,7 @@ func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *c
 	if cluster == "" && namespace != "" {
 		return nil, status.Errorf(codes.InvalidArgument, "cluster must be specified when namespace is present: %s", namespace)
 	}
-	typedClient, err := s.clientGetter.Typed(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -687,7 +688,7 @@ func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *c
 func (s *Server) newRepoEventSink() repoEventSink {
 
 	cg := &clientgetter.FixedClusterClientProvider{ClientsFunc: func(ctx context.Context) (*clientgetter.ClientGetter, error) {
-		return s.clientGetter.GetClients(ctx, s.kubeappsCluster)
+		return s.clientGetter.GetClients(ctx, http.Header{}, s.kubeappsCluster)
 	}}
 
 	// notice a bit of inconsistency here, we are using the context
@@ -706,7 +707,7 @@ func (s *Server) newRepoEventSink() repoEventSink {
 }
 
 func (s *Server) getClient(ctx context.Context, namespace string) (ctrlclient.Client, error) {
-	client, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster)
+	client, err := s.clientGetter.ControllerRuntime(ctx, http.Header{}, s.kubeappsCluster)
 	if err != nil {
 		return nil, err
 	}
@@ -715,7 +716,7 @@ func (s *Server) getClient(ctx context.Context, namespace string) (ctrlclient.Cl
 
 // hasAccessToNamespace returns an error if the client does not have read access to a given namespace
 func (s *Server) hasAccessToNamespace(ctx context.Context, gvr schema.GroupVersionResource, namespace string) (bool, error) {
-	typedCli, err := s.clientGetter.Typed(ctx, s.kubeappsCluster)
+	typedCli, err := s.clientGetter.Typed(ctx, http.Header{}, s.kubeappsCluster)
 	if err != nil {
 		return false, err
 	}

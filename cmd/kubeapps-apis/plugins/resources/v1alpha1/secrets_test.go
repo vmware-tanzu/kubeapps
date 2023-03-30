@@ -6,8 +6,10 @@ package main
 import (
 	"context"
 	"errors"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"testing"
+
+	"github.com/bufbuild/connect-go"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -110,19 +112,20 @@ func TestCreateSecret(t *testing.T) {
 					Build(),
 			}
 
-			response, err := s.CreateSecret(context.Background(), tc.request)
+			response, err := s.CreateSecret(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
 
-			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, ignoredUnexported) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredUnexported))
-			}
-
 			if tc.expectedErrorCode != codes.OK {
 				return
 			}
+
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoredUnexported) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredUnexported))
+			}
+
 			secret, err := fakeClient.CoreV1().Secrets(tc.request.GetContext().GetNamespace()).Get(context.Background(), tc.request.GetName(), metav1.GetOptions{})
 			if err != nil {
 				t.Fatalf("%+v", err)
@@ -243,13 +246,16 @@ func TestGetSecretNames(t *testing.T) {
 					Build(),
 			}
 
-			response, err := s.GetSecretNames(context.Background(), tc.request)
+			response, err := s.GetSecretNames(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
+			if tc.expectedErrorCode != 0 {
+				return
+			}
 
-			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, ignoredUnexported) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoredUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredUnexported))
 			}
 		})

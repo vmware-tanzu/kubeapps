@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -61,7 +62,7 @@ func (s *Server) handleRepoSecretForCreate(
 		// in that order because to set an owner ref you need object (i.e. repo) UID, which you only get
 		// once the object's been created
 		// create a secret first, if applicable
-		if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
+		if typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, s.kubeappsCluster); err != nil {
 			return nil, false, err
 		} else if secret, err = typedClient.CoreV1().Secrets(repoName.Namespace).Create(ctx, secret, metav1.CreateOptions{}); err != nil {
 			return nil, false, statuserror.FromK8sError("create", "secret", secret.GetGenerateName(), err)
@@ -91,7 +92,7 @@ func (s *Server) handleRepoSecretForUpdate(
 		return nil, false, false, status.Errorf(codes.InvalidArgument, "Package repository cannot mix referenced secrets and user provided secret data")
 	}
 
-	typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster)
+	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, s.kubeappsCluster)
 	if err != nil {
 		return nil, false, false, err
 	}
@@ -184,7 +185,7 @@ func (s *Server) validateUserManagedRepoSecret(
 	var secret *apiv1.Secret
 	if secretRef != "" {
 		// check that the specified secret exists
-		if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
+		if typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, s.kubeappsCluster); err != nil {
 			return nil, err
 		} else if secret, err = typedClient.CoreV1().Secrets(repoName.Namespace).Get(ctx, secretRef, metav1.GetOptions{}); err != nil {
 			return nil, statuserror.FromK8sError("get", "secret", secretRef, err)
@@ -250,7 +251,7 @@ func (s *Server) setOwnerReferencesForRepoSecret(
 	repo *sourcev1.HelmRepository) error {
 
 	if repo.Spec.SecretRef != nil && secret != nil {
-		if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
+		if typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, s.kubeappsCluster); err != nil {
 			return err
 		} else {
 			secretsInterface := typedClient.CoreV1().Secrets(repo.Namespace)
@@ -280,7 +281,7 @@ func (s *Server) getRepoTlsConfigAndAuth(ctx context.Context, repo sourcev1.Helm
 		if s == nil || s.clientGetter == nil {
 			return nil, nil, status.Errorf(codes.Internal, "unexpected state in clientGetterHolder instance")
 		}
-		typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster)
+		typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, s.kubeappsCluster)
 		if err != nil {
 			return nil, nil, err
 		}

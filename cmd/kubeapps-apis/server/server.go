@@ -101,7 +101,7 @@ func Serve(serveOpts core.ServeOptions) error {
 
 	// Create the core.plugins.v1alpha1 server which handles registration of
 	// plugins, and register it for both grpc and http.
-	pluginsServer, err := pluginsv1alpha1.NewPluginsServer(serveOpts, grpcSrv, gwArgs)
+	pluginsServer, err := pluginsv1alpha1.NewPluginsServer(serveOpts, grpcSrv, gwArgs, mux_connect)
 	if err != nil {
 		return fmt.Errorf("failed to initialize plugins server: %v", err)
 	}

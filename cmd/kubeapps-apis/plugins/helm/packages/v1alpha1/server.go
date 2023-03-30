@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -437,7 +438,7 @@ func (s *Server) hasAccessToNamespace(ctx context.Context, cluster, namespace st
 	if namespace == s.GetGlobalPackagingNamespace() {
 		return nil
 	}
-	client, err := s.clientGetter.Typed(ctx, cluster)
+	client, err := s.clientGetter.Typed(ctx, http.Header{}, cluster)
 	if err != nil {
 		return err
 	}
@@ -693,7 +694,7 @@ func installedPkgDetailFromRelease(r *release.Release, ref *corev1.InstalledPack
 func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.CreateInstalledPackageRequest) (*corev1.CreateInstalledPackageResponse, error) {
 	log.InfoS("+helm CreateInstalledPackage", "cluster", request.GetTargetContext().GetCluster(), "namespace", request.GetTargetContext().GetNamespace())
 
-	typedClient, err := s.clientGetter.Typed(ctx, s.globalPackagingCluster)
+	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, s.globalPackagingCluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create kubernetes clientset: %v", err)
 	}
@@ -765,7 +766,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		return nil, status.Errorf(codes.FailedPrecondition, "Unable to find the available package used to deploy %q in the namespace %q.", releaseName, installedRef.GetContext().GetNamespace())
 	}
 
-	typedClient, err := s.clientGetter.Typed(ctx, s.globalPackagingCluster)
+	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, s.globalPackagingCluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create kubernetes clientset: %v", err)
 	}
@@ -817,12 +818,12 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, cluster, appRepoName, appRepoNamespace string) (*appRepov1.AppRepository, *corek8sv1.Secret, *corek8sv1.Secret, *corek8sv1.Secret, error) {
 
 	// We currently get app repositories on the kubeapps cluster only.
-	typedClient, err := s.clientGetter.Typed(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, cluster)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
 
-	dynClient, err := s.clientGetter.Dynamic(ctx, cluster)
+	dynClient, err := s.clientGetter.Dynamic(ctx, http.Header{}, cluster)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
@@ -1093,7 +1094,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 }
 
 func (s *Server) getClient(ctx context.Context, cluster string, namespace string) (ctrlclient.Client, error) {
-	client, err := s.clientGetter.ControllerRuntime(ctx, cluster)
+	client, err := s.clientGetter.ControllerRuntime(ctx, http.Header{}, cluster)
 	if err != nil {
 		return nil, err
 	}
