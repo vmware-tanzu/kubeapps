@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	. "github.com/ahmetb/go-linq/v3"
+	"github.com/bufbuild/connect-go"
 	pluginsv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
 	packages "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
@@ -54,12 +55,12 @@ func NewPackagesServer(pkgingPlugins []pluginsv1alpha1.PluginWithServer) (*packa
 }
 
 // GetAvailablePackageSummaries returns the packages based on the request.
-func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, request *packages.GetAvailablePackageSummariesRequest) (*packages.GetAvailablePackageSummariesResponse, error) {
-	log.InfoS("+core GetAvailablePackageSummaries", "cluster", request.GetContext().GetCluster(), "namespace", request.GetContext().GetNamespace())
+func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, request *connect.Request[packages.GetAvailablePackageSummariesRequest]) (*connect.Response[packages.GetAvailablePackageSummariesResponse], error) {
+	log.InfoS("+core GetAvailablePackageSummaries", "cluster", request.Msg.GetContext().GetCluster(), "namespace", request.Msg.GetContext().GetNamespace())
 
-	pageSize := request.GetPaginationOptions().GetPageSize()
+	pageSize := request.Msg.GetPaginationOptions().GetPageSize()
 
-	summariesWithOffsets, err := fanInAvailablePackageSummaries(ctx, s.pluginsWithServers, request)
+	summariesWithOffsets, err := fanInAvailablePackageSummaries(ctx, s.pluginsWithServers, request.Msg)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to request results from registered plugins: %v", err)
 	}
@@ -95,31 +96,31 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 	// Delete duplicate categories and sort by name
 	From(categories).Distinct().OrderBy(func(i interface{}) interface{} { return i }).ToSlice(&categories)
 
-	return &packages.GetAvailablePackageSummariesResponse{
+	return connect.NewResponse(&packages.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: pkgs,
 		Categories:                categories,
 		NextPageToken:             nextPageToken,
-	}, nil
+	}), nil
 }
 
 // GetAvailablePackageDetail returns the package details based on the request.
-func (s packagesServer) GetAvailablePackageDetail(ctx context.Context, request *packages.GetAvailablePackageDetailRequest) (*packages.GetAvailablePackageDetailResponse, error) {
-	log.InfoS("+core GetAvailablePackageDetail", "cluster", request.GetAvailablePackageRef().GetContext().GetCluster(), "namespace", request.GetAvailablePackageRef().GetContext().GetNamespace())
+func (s packagesServer) GetAvailablePackageDetail(ctx context.Context, request *connect.Request[packages.GetAvailablePackageDetailRequest]) (*connect.Response[packages.GetAvailablePackageDetailResponse], error) {
+	log.InfoS("+core GetAvailablePackageDetail", "cluster", request.Msg.GetAvailablePackageRef().GetContext().GetCluster(), "namespace", request.Msg.GetAvailablePackageRef().GetContext().GetNamespace())
 
-	if request.GetAvailablePackageRef().GetPlugin() == nil {
+	if request.Msg.GetAvailablePackageRef().GetPlugin() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing AvailablePackageRef.Plugin)")
 	}
 
 	// Retrieve the plugin with server matching the requested plugin name
-	pluginWithServer := s.getPluginWithServer(request.AvailablePackageRef.Plugin)
+	pluginWithServer := s.getPluginWithServer(request.Msg.AvailablePackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.AvailablePackageRef.Plugin)
+		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.Msg.AvailablePackageRef.Plugin)
 	}
 
 	// Get the response from the requested plugin
-	response, err := pluginWithServer.server.GetAvailablePackageDetail(ctx, request)
+	response, err := pluginWithServer.server.GetAvailablePackageDetail(ctx, request.Msg)
 	if err != nil {
-		return nil, status.Errorf(status.Convert(err).Code(), "Unable to get the available package detail for the package %q using the plugin %q: %v", request.AvailablePackageRef.Identifier, request.AvailablePackageRef.Plugin.Name, err)
+		return nil, status.Errorf(status.Convert(err).Code(), "Unable to get the available package detail for the package %q using the plugin %q: %v", request.Msg.AvailablePackageRef.Identifier, request.Msg.AvailablePackageRef.Plugin.Name, err)
 	}
 
 	// Validate the plugin response
@@ -128,18 +129,18 @@ func (s packagesServer) GetAvailablePackageDetail(ctx context.Context, request *
 	}
 
 	// Build the response
-	return &packages.GetAvailablePackageDetailResponse{
+	return connect.NewResponse(&packages.GetAvailablePackageDetailResponse{
 		AvailablePackageDetail: response.AvailablePackageDetail,
-	}, nil
+	}), nil
 }
 
 // GetInstalledPackageSummaries returns the installed package summaries based on the request.
-func (s packagesServer) GetInstalledPackageSummaries(ctx context.Context, request *packages.GetInstalledPackageSummariesRequest) (*packages.GetInstalledPackageSummariesResponse, error) {
-	log.InfoS("+core GetInstalledPackageSummaries", "cluster", request.GetContext().GetCluster(), "namespace", request.GetContext().GetNamespace())
+func (s packagesServer) GetInstalledPackageSummaries(ctx context.Context, request *connect.Request[packages.GetInstalledPackageSummariesRequest]) (*connect.Response[packages.GetInstalledPackageSummariesResponse], error) {
+	log.InfoS("+core GetInstalledPackageSummaries", "cluster", request.Msg.GetContext().GetCluster(), "namespace", request.Msg.GetContext().GetNamespace())
 
-	pageSize := request.GetPaginationOptions().GetPageSize()
+	pageSize := request.Msg.GetPaginationOptions().GetPageSize()
 
-	summariesWithOffsets, err := fanInInstalledPackageSummaries(ctx, s.pluginsWithServers, request)
+	summariesWithOffsets, err := fanInInstalledPackageSummaries(ctx, s.pluginsWithServers, request.Msg)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to request results from registered plugins: %v", err)
 	}
@@ -169,30 +170,30 @@ func (s packagesServer) GetInstalledPackageSummaries(ctx context.Context, reques
 		}
 	}
 
-	return &packages.GetInstalledPackageSummariesResponse{
+	return connect.NewResponse(&packages.GetInstalledPackageSummariesResponse{
 		InstalledPackageSummaries: pkgs,
 		NextPageToken:             nextPageToken,
-	}, nil
+	}), nil
 }
 
 // GetInstalledPackageDetail returns the package versions based on the request.
-func (s packagesServer) GetInstalledPackageDetail(ctx context.Context, request *packages.GetInstalledPackageDetailRequest) (*packages.GetInstalledPackageDetailResponse, error) {
-	log.InfoS("+core GetInstalledPackageDetail", "cluster", request.GetInstalledPackageRef().GetContext().GetCluster(), "namespace", request.GetInstalledPackageRef().GetContext().GetNamespace())
+func (s packagesServer) GetInstalledPackageDetail(ctx context.Context, request *connect.Request[packages.GetInstalledPackageDetailRequest]) (*connect.Response[packages.GetInstalledPackageDetailResponse], error) {
+	log.InfoS("+core GetInstalledPackageDetail", "cluster", request.Msg.GetInstalledPackageRef().GetContext().GetCluster(), "namespace", request.Msg.GetInstalledPackageRef().GetContext().GetNamespace())
 
-	if request.GetInstalledPackageRef().GetPlugin() == nil {
+	if request.Msg.GetInstalledPackageRef().GetPlugin() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing InstalledPackageRef.Plugin)")
 	}
 
 	// Retrieve the plugin with server matching the requested plugin name
-	pluginWithServer := s.getPluginWithServer(request.InstalledPackageRef.Plugin)
+	pluginWithServer := s.getPluginWithServer(request.Msg.InstalledPackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.InstalledPackageRef.Plugin)
+		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.Msg.InstalledPackageRef.Plugin)
 	}
 
 	// Get the response from the requested plugin
-	response, err := pluginWithServer.server.GetInstalledPackageDetail(ctx, request)
+	response, err := pluginWithServer.server.GetInstalledPackageDetail(ctx, request.Msg)
 	if err != nil {
-		return nil, status.Errorf(status.Convert(err).Code(), "Unable to get the installed package detail for the package %q using the plugin %q: %v", request.InstalledPackageRef.Identifier, request.InstalledPackageRef.Plugin.Name, err)
+		return nil, status.Errorf(status.Convert(err).Code(), "Unable to get the installed package detail for the package %q using the plugin %q: %v", request.Msg.InstalledPackageRef.Identifier, request.Msg.InstalledPackageRef.Plugin.Name, err)
 	}
 
 	// Validate the plugin response
@@ -201,29 +202,29 @@ func (s packagesServer) GetInstalledPackageDetail(ctx context.Context, request *
 	}
 
 	// Build the response
-	return &packages.GetInstalledPackageDetailResponse{
+	return connect.NewResponse(&packages.GetInstalledPackageDetailResponse{
 		InstalledPackageDetail: response.InstalledPackageDetail,
-	}, nil
+	}), nil
 }
 
 // GetAvailablePackageVersions returns the package versions based on the request.
-func (s packagesServer) GetAvailablePackageVersions(ctx context.Context, request *packages.GetAvailablePackageVersionsRequest) (*packages.GetAvailablePackageVersionsResponse, error) {
-	log.InfoS("+core GetAvailablePackageVersions", "cluster", request.GetAvailablePackageRef().GetContext().GetCluster(), "namespace", request.GetAvailablePackageRef().GetContext().GetNamespace())
+func (s packagesServer) GetAvailablePackageVersions(ctx context.Context, request *connect.Request[packages.GetAvailablePackageVersionsRequest]) (*connect.Response[packages.GetAvailablePackageVersionsResponse], error) {
+	log.InfoS("+core GetAvailablePackageVersions", "cluster", request.Msg.GetAvailablePackageRef().GetContext().GetCluster(), "namespace", request.Msg.GetAvailablePackageRef().GetContext().GetNamespace())
 
-	if request.GetAvailablePackageRef().GetPlugin() == nil {
+	if request.Msg.GetAvailablePackageRef().GetPlugin() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing AvailablePackageRef.Plugin)")
 	}
 
 	// Retrieve the plugin with server matching the requested plugin name
-	pluginWithServer := s.getPluginWithServer(request.AvailablePackageRef.Plugin)
+	pluginWithServer := s.getPluginWithServer(request.Msg.AvailablePackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.AvailablePackageRef.Plugin)
+		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.Msg.AvailablePackageRef.Plugin)
 	}
 
 	// Get the response from the requested plugin
-	response, err := pluginWithServer.server.GetAvailablePackageVersions(ctx, request)
+	response, err := pluginWithServer.server.GetAvailablePackageVersions(ctx, request.Msg)
 	if err != nil {
-		return nil, status.Errorf(status.Convert(err).Code(), "Unable to get the available package versions for the package %q using the plugin %q: %v", request.AvailablePackageRef.Identifier, request.AvailablePackageRef.Plugin.Name, err)
+		return nil, status.Errorf(status.Convert(err).Code(), "Unable to get the available package versions for the package %q using the plugin %q: %v", request.Msg.AvailablePackageRef.Identifier, request.Msg.AvailablePackageRef.Plugin.Name, err)
 	}
 
 	// Validate the plugin response
@@ -232,55 +233,55 @@ func (s packagesServer) GetAvailablePackageVersions(ctx context.Context, request
 	}
 
 	// Build the response
-	return &packages.GetAvailablePackageVersionsResponse{
+	return connect.NewResponse(&packages.GetAvailablePackageVersionsResponse{
 		PackageAppVersions: response.PackageAppVersions,
-	}, nil
+	}), nil
 }
 
 // GetInstalledPackageResourceRefs returns the references for the Kubernetes resources created by
 // an installed package.
-func (s *packagesServer) GetInstalledPackageResourceRefs(ctx context.Context, request *packages.GetInstalledPackageResourceRefsRequest) (*packages.GetInstalledPackageResourceRefsResponse, error) {
-	pkgRef := request.GetInstalledPackageRef()
+func (s *packagesServer) GetInstalledPackageResourceRefs(ctx context.Context, request *connect.Request[packages.GetInstalledPackageResourceRefsRequest]) (*connect.Response[packages.GetInstalledPackageResourceRefsResponse], error) {
+	pkgRef := request.Msg.GetInstalledPackageRef()
 	identifier := pkgRef.GetIdentifier()
 	log.InfoS("+core GetInstalledPackageResourceRefs", "cluster", pkgRef.GetContext().GetCluster(), "namespace", pkgRef.GetContext().GetNamespace(), "identifier", identifier)
 
-	if request.GetInstalledPackageRef().GetPlugin() == nil {
+	if request.Msg.GetInstalledPackageRef().GetPlugin() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing InstalledPackageRef.Plugin)")
 	}
 
 	// Retrieve the plugin with server matching the requested plugin name
-	pluginWithServer := s.getPluginWithServer(request.InstalledPackageRef.Plugin)
+	pluginWithServer := s.getPluginWithServer(request.Msg.InstalledPackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin %v", request.InstalledPackageRef.Plugin)
+		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin %v", request.Msg.InstalledPackageRef.Plugin)
 	}
 
 	// Get the response from the requested plugin
-	response, err := pluginWithServer.server.GetInstalledPackageResourceRefs(ctx, request)
+	response, err := pluginWithServer.server.GetInstalledPackageResourceRefs(ctx, request.Msg)
 	if err != nil {
-		return nil, status.Errorf(status.Convert(err).Code(), "Unable to get the resource refs for the package %q using the plugin %q: %v", request.InstalledPackageRef.Identifier, request.InstalledPackageRef.Plugin.Name, err)
+		return nil, status.Errorf(status.Convert(err).Code(), "Unable to get the resource refs for the package %q using the plugin %q: %v", request.Msg.InstalledPackageRef.Identifier, request.Msg.InstalledPackageRef.Plugin.Name, err)
 	}
 
-	return response, nil
+	return connect.NewResponse(response), nil
 }
 
 // CreateInstalledPackage creates an installed package using configured plugins.
-func (s packagesServer) CreateInstalledPackage(ctx context.Context, request *packages.CreateInstalledPackageRequest) (*packages.CreateInstalledPackageResponse, error) {
-	log.InfoS("+core CreateInstalledPackage", "cluster", request.GetTargetContext().GetCluster(), "namespace", request.GetTargetContext().GetNamespace())
+func (s packagesServer) CreateInstalledPackage(ctx context.Context, request *connect.Request[packages.CreateInstalledPackageRequest]) (*connect.Response[packages.CreateInstalledPackageResponse], error) {
+	log.InfoS("+core CreateInstalledPackage", "cluster", request.Msg.GetTargetContext().GetCluster(), "namespace", request.Msg.GetTargetContext().GetNamespace())
 
-	if request.GetAvailablePackageRef().GetPlugin() == nil {
+	if request.Msg.GetAvailablePackageRef().GetPlugin() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing AvailablePackageRef.Plugin)")
 	}
 
 	// Retrieve the plugin with server matching the requested plugin name
-	pluginWithServer := s.getPluginWithServer(request.AvailablePackageRef.Plugin)
+	pluginWithServer := s.getPluginWithServer(request.Msg.AvailablePackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.AvailablePackageRef.Plugin)
+		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.Msg.AvailablePackageRef.Plugin)
 	}
 
 	// Get the response from the requested plugin
-	response, err := pluginWithServer.server.CreateInstalledPackage(ctx, request)
+	response, err := pluginWithServer.server.CreateInstalledPackage(ctx, request.Msg)
 	if err != nil {
-		return nil, status.Errorf(status.Convert(err).Code(), "Unable to create the installed package for the package %q using the plugin %q: %v", request.AvailablePackageRef.Identifier, request.AvailablePackageRef.Plugin.Name, err)
+		return nil, status.Errorf(status.Convert(err).Code(), "Unable to create the installed package for the package %q using the plugin %q: %v", request.Msg.AvailablePackageRef.Identifier, request.Msg.AvailablePackageRef.Plugin.Name, err)
 	}
 
 	// Validate the plugin response
@@ -288,27 +289,27 @@ func (s packagesServer) CreateInstalledPackage(ctx context.Context, request *pac
 		return nil, status.Errorf(codes.Internal, "Invalid CreateInstalledPackage response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
 	}
 
-	return response, nil
+	return connect.NewResponse(response), nil
 }
 
 // UpdateInstalledPackage updates an installed package using configured plugins.
-func (s packagesServer) UpdateInstalledPackage(ctx context.Context, request *packages.UpdateInstalledPackageRequest) (*packages.UpdateInstalledPackageResponse, error) {
-	log.InfoS("+core UpdateInstalledPackage", "cluster", request.GetInstalledPackageRef().GetContext().GetCluster(), "namespace", request.GetInstalledPackageRef().GetContext().GetNamespace())
+func (s packagesServer) UpdateInstalledPackage(ctx context.Context, request *connect.Request[packages.UpdateInstalledPackageRequest]) (*connect.Response[packages.UpdateInstalledPackageResponse], error) {
+	log.InfoS("+core UpdateInstalledPackage", "cluster", request.Msg.GetInstalledPackageRef().GetContext().GetCluster(), "namespace", request.Msg.GetInstalledPackageRef().GetContext().GetNamespace())
 
-	if request.GetInstalledPackageRef().GetPlugin() == nil {
+	if request.Msg.GetInstalledPackageRef().GetPlugin() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing InstalledPackageRef.Plugin)")
 	}
 
 	// Retrieve the plugin with server matching the requested plugin name
-	pluginWithServer := s.getPluginWithServer(request.InstalledPackageRef.Plugin)
+	pluginWithServer := s.getPluginWithServer(request.Msg.InstalledPackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.InstalledPackageRef.Plugin)
+		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.Msg.InstalledPackageRef.Plugin)
 	}
 
 	// Get the response from the requested plugin
-	response, err := pluginWithServer.server.UpdateInstalledPackage(ctx, request)
+	response, err := pluginWithServer.server.UpdateInstalledPackage(ctx, request.Msg)
 	if err != nil {
-		return nil, status.Errorf(status.Convert(err).Code(), "Unable to update the installed package for the package %q using the plugin %q: %v", request.InstalledPackageRef.Identifier, request.InstalledPackageRef.Plugin.Name, err)
+		return nil, status.Errorf(status.Convert(err).Code(), "Unable to update the installed package for the package %q using the plugin %q: %v", request.Msg.InstalledPackageRef.Identifier, request.Msg.InstalledPackageRef.Plugin.Name, err)
 	}
 
 	// Validate the plugin response
@@ -316,30 +317,30 @@ func (s packagesServer) UpdateInstalledPackage(ctx context.Context, request *pac
 		return nil, status.Errorf(codes.Internal, "Invalid UpdateInstalledPackage response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
 	}
 
-	return response, nil
+	return connect.NewResponse(response), nil
 }
 
 // DeleteInstalledPackage deletes an installed package using configured plugins.
-func (s packagesServer) DeleteInstalledPackage(ctx context.Context, request *packages.DeleteInstalledPackageRequest) (*packages.DeleteInstalledPackageResponse, error) {
-	log.InfoS("+core DeleteInstalledPackage", "cluster", request.GetInstalledPackageRef().GetContext().GetCluster(), "namespace", request.GetInstalledPackageRef().GetContext().GetNamespace())
+func (s packagesServer) DeleteInstalledPackage(ctx context.Context, request *connect.Request[packages.DeleteInstalledPackageRequest]) (*connect.Response[packages.DeleteInstalledPackageResponse], error) {
+	log.InfoS("+core DeleteInstalledPackage", "cluster", request.Msg.GetInstalledPackageRef().GetContext().GetCluster(), "namespace", request.Msg.GetInstalledPackageRef().GetContext().GetNamespace())
 
-	if request.GetInstalledPackageRef().GetPlugin() == nil {
+	if request.Msg.GetInstalledPackageRef().GetPlugin() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing InstalledPackageRef.Plugin)")
 	}
 
 	// Retrieve the plugin with server matching the requested plugin name
-	pluginWithServer := s.getPluginWithServer(request.InstalledPackageRef.Plugin)
+	pluginWithServer := s.getPluginWithServer(request.Msg.InstalledPackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.InstalledPackageRef.Plugin)
+		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.Msg.InstalledPackageRef.Plugin)
 	}
 
 	// Get the response from the requested plugin
-	response, err := pluginWithServer.server.DeleteInstalledPackage(ctx, request)
+	response, err := pluginWithServer.server.DeleteInstalledPackage(ctx, request.Msg)
 	if err != nil {
-		return nil, status.Errorf(status.Convert(err).Code(), "Unable to delete the installed packagefor the package %q using the plugin %q: %v", request.InstalledPackageRef.Identifier, request.InstalledPackageRef.Plugin.Name, err)
+		return nil, status.Errorf(status.Convert(err).Code(), "Unable to delete the installed packagefor the package %q using the plugin %q: %v", request.Msg.InstalledPackageRef.Identifier, request.Msg.InstalledPackageRef.Plugin.Name, err)
 	}
 
-	return response, nil
+	return connect.NewResponse(response), nil
 }
 
 // getPluginWithServer returns the *pkgPluginsWithServer from a given packagesServer

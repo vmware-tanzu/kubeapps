@@ -7,6 +7,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -291,14 +292,17 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			server := &packagesServer{
 				pluginsWithServers: tc.configuredPlugins,
 			}
-			availablePackageSummaries, err := server.GetAvailablePackageSummaries(context.Background(), tc.request)
+			availablePackageSummaries, err := server.GetAvailablePackageSummaries(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
+			if tc.statusCode != codes.OK {
+				return
+			}
 
 			if tc.statusCode == codes.OK {
-				if got, want := availablePackageSummaries, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
+				if got, want := availablePackageSummaries.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}
 			}
@@ -365,14 +369,14 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			server := &packagesServer{
 				pluginsWithServers: tc.configuredPlugins,
 			}
-			availablePackageDetail, err := server.GetAvailablePackageDetail(context.Background(), tc.request)
+			availablePackageDetail, err := server.GetAvailablePackageDetail(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			if tc.statusCode == codes.OK {
-				if got, want := availablePackageDetail, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
+				if got, want := availablePackageDetail.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}
 			}
@@ -436,14 +440,14 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			server := &packagesServer{
 				pluginsWithServers: tc.configuredPlugins,
 			}
-			installedPackageSummaries, err := server.GetInstalledPackageSummaries(context.Background(), tc.request)
+			installedPackageSummaries, err := server.GetInstalledPackageSummaries(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			if tc.statusCode == codes.OK {
-				if got, want := installedPackageSummaries, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
+				if got, want := installedPackageSummaries.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}
 			}
@@ -508,14 +512,14 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			server := &packagesServer{
 				pluginsWithServers: tc.configuredPlugins,
 			}
-			installedPackageDetail, err := server.GetInstalledPackageDetail(context.Background(), tc.request)
+			installedPackageDetail, err := server.GetInstalledPackageDetail(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			if tc.statusCode == codes.OK {
-				if got, want := installedPackageDetail, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
+				if got, want := installedPackageDetail.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}
 			}
@@ -585,14 +589,14 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			server := &packagesServer{
 				pluginsWithServers: tc.configuredPlugins,
 			}
-			AvailablePackageVersions, err := server.GetAvailablePackageVersions(context.Background(), tc.request)
+			AvailablePackageVersions, err := server.GetAvailablePackageVersions(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			if tc.statusCode == codes.OK {
-				if got, want := AvailablePackageVersions, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
+				if got, want := AvailablePackageVersions.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}
 			}
@@ -680,14 +684,14 @@ func TestCreateInstalledPackage(t *testing.T) {
 				pluginsWithServers: configuredPluginServers,
 			}
 
-			installedPkgResponse, err := server.CreateInstalledPackage(context.Background(), tc.request)
+			installedPkgResponse, err := server.CreateInstalledPackage(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			if tc.statusCode == codes.OK {
-				if got, want := installedPkgResponse, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
+				if got, want := installedPkgResponse.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}
 			}
@@ -761,14 +765,14 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				pluginsWithServers: configuredPluginServers,
 			}
 
-			updatedPkgResponse, err := server.UpdateInstalledPackage(context.Background(), tc.request)
+			updatedPkgResponse, err := server.UpdateInstalledPackage(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			if tc.statusCode == codes.OK {
-				if got, want := updatedPkgResponse, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
+				if got, want := updatedPkgResponse.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}
 			}
@@ -834,7 +838,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 				pluginsWithServers: configuredPluginServers,
 			}
 
-			_, err := server.DeleteInstalledPackage(context.Background(), tc.request)
+			_, err := server.DeleteInstalledPackage(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -918,14 +922,14 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 				},
 			}
 
-			resourceRefs, err := server.GetInstalledPackageResourceRefs(context.Background(), tc.request)
+			resourceRefs, err := server.GetInstalledPackageResourceRefs(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			if tc.statusCode == codes.OK {
-				if got, want := resourceRefs, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
+				if got, want := resourceRefs.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}
 			}
