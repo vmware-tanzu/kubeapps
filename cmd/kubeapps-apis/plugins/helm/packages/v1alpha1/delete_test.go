@@ -7,6 +7,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
@@ -71,7 +72,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 			})
 			defer cleanup()
 
-			_, err := server.DeleteInstalledPackage(context.Background(), tc.request)
+			_, err := server.DeleteInstalledPackage(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)

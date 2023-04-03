@@ -7,6 +7,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository"
 
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -55,7 +56,7 @@ const HTTP_PROXY = "HTTP_PROXY"
 const HTTPS_PROXY = "HTTPS_PROXY"
 const NO_PROXY = "NO_PROXY"
 
-func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.PackageRepositoryReference, error) {
+func (s *Server) newRepo(ctx context.Context, headers http.Header, repo *HelmRepository) (*corev1.PackageRepositoryReference, error) {
 	if repo.url == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "repository url may not be empty")
 	}
@@ -119,7 +120,7 @@ func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.Pac
 	}
 
 	// Create repository CRD in K8s
-	if client, err := s.getClient(ctx, repo.cluster, repo.name.Namespace); err != nil {
+	if client, err := s.getClient(ctx, headers, repo.cluster, repo.name.Namespace); err != nil {
 		return nil, err
 	} else if err = client.Create(ctx, helmRepoCrd); err != nil {
 		return nil, statuserror.FromK8sError("create", AppRepositoryKind, repo.name.String(), err)
@@ -333,6 +334,7 @@ func (s *Server) setOwnerReferencesForRepoSecret(
 }
 
 func (s *Server) updateRepo(ctx context.Context,
+	headers http.Header,
 	appRepo *apprepov1alpha1.AppRepository,
 	caSecret *k8scorev1.Secret,
 	authSecret *k8scorev1.Secret,
@@ -487,7 +489,7 @@ func (s *Server) updateRepo(ctx context.Context,
 	}
 
 	// persist repository
-	err = s.updatePkgRepository(ctx, repo.cluster, repo.name.Namespace, appRepo)
+	err = s.updatePkgRepository(ctx, headers, repo.cluster, repo.name.Namespace, appRepo)
 	if err != nil {
 		return nil, statuserror.FromK8sError("update", AppRepositoryKind, repo.name.String(), err)
 	}
@@ -609,8 +611,8 @@ func (s *Server) getAccessiblePackageRepositories(ctx context.Context, cluster s
 	return accessibleRepos, nil
 }
 
-func (s *Server) deleteRepo(ctx context.Context, cluster string, repoRef *corev1.PackageRepositoryReference) error {
-	client, err := s.getClient(ctx, cluster, repoRef.Context.Namespace)
+func (s *Server) deleteRepo(ctx context.Context, headers http.Header, cluster string, repoRef *corev1.PackageRepositoryReference) error {
+	client, err := s.getClient(ctx, headers, cluster, repoRef.Context.Namespace)
 	if err != nil {
 		return err
 	}
@@ -643,11 +645,11 @@ func (s *Server) deleteRepo(ctx context.Context, cluster string, repoRef *corev1
 	}
 }
 
-func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *corev1.GetPackageRepositoryPermissionsRequest) (*corev1.GetPackageRepositoryPermissionsResponse, error) {
+func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *connect.Request[corev1.GetPackageRepositoryPermissionsRequest]) (*connect.Response[corev1.GetPackageRepositoryPermissionsResponse], error) {
 	log.Infof("+helm GetPackageRepositoryPermissions [%v]", request)
 
-	cluster := request.GetContext().GetCluster()
-	namespace := request.GetContext().GetNamespace()
+	cluster := request.Msg.GetContext().GetCluster()
+	namespace := request.Msg.GetContext().GetNamespace()
 	if cluster == "" && namespace != "" {
 		return nil, status.Errorf(codes.InvalidArgument, "cluster must be specified when namespace is present: %s", namespace)
 	}
@@ -673,13 +675,13 @@ func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *c
 
 	// Namespace permissions
 	if namespace != "" {
-		permissions.Namespace, err = resources.GetPermissionsOnResource(ctx, typedClient, resource, request.GetContext().GetNamespace())
+		permissions.Namespace, err = resources.GetPermissionsOnResource(ctx, typedClient, resource, request.Msg.GetContext().GetNamespace())
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return &corev1.GetPackageRepositoryPermissionsResponse{
+	return connect.NewResponse(&corev1.GetPackageRepositoryPermissionsResponse{
 		Permissions: []*corev1.PackageRepositoriesPermissions{permissions},
-	}, nil
+	}), nil
 }
