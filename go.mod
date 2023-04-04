@@ -51,13 +51,13 @@ require (
 	github.com/docker/cli v23.0.2+incompatible
 	github.com/fluxcd/helm-controller/api v0.31.2
 	github.com/fluxcd/pkg/apis/meta v1.0.0
-	github.com/fluxcd/pkg/oci v0.21.1
+	github.com/fluxcd/pkg/oci v0.22.0
 	github.com/fluxcd/pkg/version v0.2.1
 	github.com/fluxcd/source-controller/api v0.36.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.11.5
 	github.com/google/go-cmp v0.5.9
-	github.com/google/go-containerregistry v0.13.0
+	github.com/google/go-containerregistry v0.14.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.2
 	github.com/improbable-eng/grpc-web v0.15.0
@@ -103,29 +103,29 @@ require (
 
 require (
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230106234847-43070de90fa1 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.4.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.2.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.5.0-beta.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.3.0-beta.4 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.1.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v0.8.1 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v0.9.0 // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.3 // indirect
 	github.com/Masterminds/squirrel v1.5.3 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
-	github.com/aws/aws-sdk-go-v2 v1.17.5 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.18.15 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.13.15 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.23 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.29 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.23 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.30 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ecr v1.18.5 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.23 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.12.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.18.5 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.17.7 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.18.19 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.13.18 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.1 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.31 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.25 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.32 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ecr v1.18.7 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.25 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.12.6 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.6 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.18.7 // indirect
 	github.com/aws/smithy-go v1.13.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
@@ -169,7 +169,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.4.3 // indirect
 	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/gnostic v0.6.9 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
@@ -245,7 +245,7 @@ require (
 	go.starlark.net v0.0.0-20230128213706-3f75dec8e403 // indirect
 	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/image v0.5.0 // indirect
-	golang.org/x/oauth2 v0.5.0 // indirect
+	golang.org/x/oauth2 v0.6.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/term v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
