@@ -48,7 +48,7 @@ require (
 	github.com/cppforlife/go-cli-ui v0.0.0-20220622150351-995494831c6c
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/distribution v2.8.1+incompatible
-	github.com/docker/cli v23.0.2+incompatible
+	github.com/docker/cli v23.0.3+incompatible
 	github.com/fluxcd/helm-controller/api v0.31.2
 	github.com/fluxcd/pkg/apis/meta v1.0.0
 	github.com/fluxcd/pkg/oci v0.22.0
