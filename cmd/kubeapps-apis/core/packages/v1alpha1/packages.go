@@ -15,7 +15,6 @@ import (
 	packages "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	log "k8s.io/klog/v2"
@@ -64,7 +63,7 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 
 	summariesWithOffsets, err := fanInAvailablePackageSummaries(ctx, s.pluginsWithServers, request)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to request results from registered plugins: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to request results from registered plugins: %w", err))
 	}
 
 	pkgs := []*packages.AvailablePackageSummary{}
@@ -88,7 +87,7 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 		if v != CompleteToken {
 			token, err := json.Marshal(pkgWithOffsets.nextItemOffsets)
 			if err != nil {
-				return nil, status.Errorf(codes.Internal, "Unable to marshal next item offsets %v: %s", pkgWithOffsets.nextItemOffsets, err)
+				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to marshal next item offsets %v: %w", pkgWithOffsets.nextItemOffsets, err))
 			}
 			nextPageToken = string(token)
 			break
@@ -110,25 +109,25 @@ func (s packagesServer) GetAvailablePackageDetail(ctx context.Context, request *
 	log.InfoS("+core GetAvailablePackageDetail", "cluster", request.Msg.GetAvailablePackageRef().GetContext().GetCluster(), "namespace", request.Msg.GetAvailablePackageRef().GetContext().GetNamespace())
 
 	if request.Msg.GetAvailablePackageRef().GetPlugin() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing AvailablePackageRef.Plugin)")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Unable to retrieve the plugin (missing AvailablePackageRef.Plugin)"))
 	}
 
 	// Retrieve the plugin with server matching the requested plugin name
 	pluginWithServer := s.getPluginWithServer(request.Msg.AvailablePackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.Msg.AvailablePackageRef.Plugin)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the plugin %v", request.Msg.AvailablePackageRef.Plugin))
 	}
 
 	// Get the response from the requested plugin
 	ctxForPlugin := updateContextWithAuthz(ctx, request.Header())
 	response, err := pluginWithServer.server.GetAvailablePackageDetail(ctxForPlugin, request.Msg)
 	if err != nil {
-		return nil, status.Errorf(status.Convert(err).Code(), "Unable to get the available package detail for the package %q using the plugin %q: %v", request.Msg.AvailablePackageRef.Identifier, request.Msg.AvailablePackageRef.Plugin.Name, err)
+		return nil, connect.NewError(connect.Code(status.Convert(err).Code()), fmt.Errorf("Unable to get the available package detail for the package %q using the plugin %q: %w", request.Msg.AvailablePackageRef.Identifier, request.Msg.AvailablePackageRef.Plugin.Name, err))
 	}
 
 	// Validate the plugin response
 	if response.GetAvailablePackageDetail().GetAvailablePackageRef() == nil {
-		return nil, status.Errorf(codes.Internal, "Invalid available package detail response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Invalid available package detail response from the plugin %v: %w", pluginWithServer.plugin.Name, err))
 	}
 
 	// Build the response
@@ -145,7 +144,7 @@ func (s packagesServer) GetInstalledPackageSummaries(ctx context.Context, reques
 
 	summariesWithOffsets, err := fanInInstalledPackageSummaries(ctx, s.pluginsWithServers, request)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to request results from registered plugins: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to request results from registered plugins: %w", err))
 	}
 	pkgs := []*packages.InstalledPackageSummary{}
 	var pkgWithOffsets installedSummaryWithOffsets
@@ -166,7 +165,7 @@ func (s packagesServer) GetInstalledPackageSummaries(ctx context.Context, reques
 		if v != CompleteToken {
 			token, err := json.Marshal(pkgWithOffsets.nextItemOffsets)
 			if err != nil {
-				return nil, status.Errorf(codes.Internal, "Unable to marshal next item offsets %v: %s", pkgWithOffsets.nextItemOffsets, err)
+				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to marshal next item offsets %v: %w", pkgWithOffsets.nextItemOffsets, err))
 			}
 			nextPageToken = string(token)
 			break
@@ -184,25 +183,25 @@ func (s packagesServer) GetInstalledPackageDetail(ctx context.Context, request *
 	log.InfoS("+core GetInstalledPackageDetail", "cluster", request.Msg.GetInstalledPackageRef().GetContext().GetCluster(), "namespace", request.Msg.GetInstalledPackageRef().GetContext().GetNamespace())
 
 	if request.Msg.GetInstalledPackageRef().GetPlugin() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing InstalledPackageRef.Plugin)")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Unable to retrieve the plugin (missing InstalledPackageRef.Plugin)"))
 	}
 
 	// Retrieve the plugin with server matching the requested plugin name
 	pluginWithServer := s.getPluginWithServer(request.Msg.InstalledPackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.Msg.InstalledPackageRef.Plugin)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the plugin %v", request.Msg.InstalledPackageRef.Plugin))
 	}
 
 	// Get the response from the requested plugin
 	ctxForPlugin := updateContextWithAuthz(ctx, request.Header())
 	response, err := pluginWithServer.server.GetInstalledPackageDetail(ctxForPlugin, request.Msg)
 	if err != nil {
-		return nil, status.Errorf(status.Convert(err).Code(), "Unable to get the installed package detail for the package %q using the plugin %q: %v", request.Msg.InstalledPackageRef.Identifier, request.Msg.InstalledPackageRef.Plugin.Name, err)
+		return nil, connect.NewError(connect.Code(status.Convert(err).Code()), fmt.Errorf("Unable to get the installed package detail for the package %q using the plugin %q: %w", request.Msg.InstalledPackageRef.Identifier, request.Msg.InstalledPackageRef.Plugin.Name, err))
 	}
 
 	// Validate the plugin response
 	if response.GetInstalledPackageDetail() == nil {
-		return nil, status.Errorf(codes.Internal, "Invalid GetInstalledPackageDetail response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Invalid GetInstalledPackageDetail response from the plugin %v: %w", pluginWithServer.plugin.Name, err))
 	}
 
 	// Build the response
@@ -216,25 +215,25 @@ func (s packagesServer) GetAvailablePackageVersions(ctx context.Context, request
 	log.InfoS("+core GetAvailablePackageVersions", "cluster", request.Msg.GetAvailablePackageRef().GetContext().GetCluster(), "namespace", request.Msg.GetAvailablePackageRef().GetContext().GetNamespace())
 
 	if request.Msg.GetAvailablePackageRef().GetPlugin() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing AvailablePackageRef.Plugin)")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Unable to retrieve the plugin (missing AvailablePackageRef.Plugin)"))
 	}
 
 	// Retrieve the plugin with server matching the requested plugin name
 	pluginWithServer := s.getPluginWithServer(request.Msg.AvailablePackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.Msg.AvailablePackageRef.Plugin)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the plugin %v", request.Msg.AvailablePackageRef.Plugin))
 	}
 
 	// Get the response from the requested plugin
 	ctxForPlugin := updateContextWithAuthz(ctx, request.Header())
 	response, err := pluginWithServer.server.GetAvailablePackageVersions(ctxForPlugin, request.Msg)
 	if err != nil {
-		return nil, status.Errorf(status.Convert(err).Code(), "Unable to get the available package versions for the package %q using the plugin %q: %v", request.Msg.AvailablePackageRef.Identifier, request.Msg.AvailablePackageRef.Plugin.Name, err)
+		return nil, connect.NewError(connect.Code(status.Convert(err).Code()), fmt.Errorf("Unable to get the available package versions for the package %q using the plugin %q: %w", request.Msg.AvailablePackageRef.Identifier, request.Msg.AvailablePackageRef.Plugin.Name, err))
 	}
 
 	// Validate the plugin response
 	if response.PackageAppVersions == nil {
-		return nil, status.Errorf(codes.Internal, "Invalid GetAvailablePackageVersions response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Invalid GetAvailablePackageVersions response from the plugin %v: %w", pluginWithServer.plugin.Name, err))
 	}
 
 	// Build the response
@@ -251,13 +250,13 @@ func (s *packagesServer) GetInstalledPackageResourceRefs(ctx context.Context, re
 	log.InfoS("+core GetInstalledPackageResourceRefs", "cluster", pkgRef.GetContext().GetCluster(), "namespace", pkgRef.GetContext().GetNamespace(), "identifier", identifier)
 
 	if request.Msg.GetInstalledPackageRef().GetPlugin() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing InstalledPackageRef.Plugin)")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Unable to retrieve the plugin (missing InstalledPackageRef.Plugin)"))
 	}
 
 	// Retrieve the plugin with server matching the requested plugin name
 	pluginWithServer := s.getPluginWithServer(request.Msg.InstalledPackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin %v", request.Msg.InstalledPackageRef.Plugin)
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Unable to retrieve the plugin %v", request.Msg.InstalledPackageRef.Plugin))
 	}
 
 	// Get the response from the requested plugin
@@ -276,25 +275,25 @@ func (s packagesServer) CreateInstalledPackage(ctx context.Context, request *con
 	log.InfoS("+core CreateInstalledPackage", "cluster", request.Msg.GetTargetContext().GetCluster(), "namespace", request.Msg.GetTargetContext().GetNamespace())
 
 	if request.Msg.GetAvailablePackageRef().GetPlugin() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing AvailablePackageRef.Plugin)")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Unable to retrieve the plugin (missing AvailablePackageRef.Plugin)"))
 	}
 
 	// Retrieve the plugin with server matching the requested plugin name
 	pluginWithServer := s.getPluginWithServer(request.Msg.AvailablePackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.Msg.AvailablePackageRef.Plugin)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the plugin %v", request.Msg.AvailablePackageRef.Plugin))
 	}
 
 	// Get the response from the requested plugin
 	ctxForPlugin := updateContextWithAuthz(ctx, request.Header())
 	response, err := pluginWithServer.server.CreateInstalledPackage(ctxForPlugin, request.Msg)
 	if err != nil {
-		return nil, status.Errorf(status.Convert(err).Code(), "Unable to create the installed package for the package %q using the plugin %q: %v", request.Msg.AvailablePackageRef.Identifier, request.Msg.AvailablePackageRef.Plugin.Name, err)
+		return nil, connect.NewError(connect.Code(status.Convert(err).Code()), fmt.Errorf("Unable to create the installed package for the package %q using the plugin %q: %w", request.Msg.AvailablePackageRef.Identifier, request.Msg.AvailablePackageRef.Plugin.Name, err))
 	}
 
 	// Validate the plugin response
 	if response.InstalledPackageRef == nil {
-		return nil, status.Errorf(codes.Internal, "Invalid CreateInstalledPackage response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Invalid CreateInstalledPackage response from the plugin %v: %w", pluginWithServer.plugin.Name, err))
 	}
 
 	return connect.NewResponse(response), nil
@@ -305,25 +304,25 @@ func (s packagesServer) UpdateInstalledPackage(ctx context.Context, request *con
 	log.InfoS("+core UpdateInstalledPackage", "cluster", request.Msg.GetInstalledPackageRef().GetContext().GetCluster(), "namespace", request.Msg.GetInstalledPackageRef().GetContext().GetNamespace())
 
 	if request.Msg.GetInstalledPackageRef().GetPlugin() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing InstalledPackageRef.Plugin)")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Unable to retrieve the plugin (missing InstalledPackageRef.Plugin)"))
 	}
 
 	// Retrieve the plugin with server matching the requested plugin name
 	pluginWithServer := s.getPluginWithServer(request.Msg.InstalledPackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.Msg.InstalledPackageRef.Plugin)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the plugin %v", request.Msg.InstalledPackageRef.Plugin))
 	}
 
 	// Get the response from the requested plugin
 	ctxForPlugin := updateContextWithAuthz(ctx, request.Header())
 	response, err := pluginWithServer.server.UpdateInstalledPackage(ctxForPlugin, request.Msg)
 	if err != nil {
-		return nil, status.Errorf(status.Convert(err).Code(), "Unable to update the installed package for the package %q using the plugin %q: %v", request.Msg.InstalledPackageRef.Identifier, request.Msg.InstalledPackageRef.Plugin.Name, err)
+		return nil, connect.NewError(connect.Code(status.Convert(err).Code()), fmt.Errorf("Unable to update the installed package for the package %q using the plugin %q: %w", request.Msg.InstalledPackageRef.Identifier, request.Msg.InstalledPackageRef.Plugin.Name, err))
 	}
 
 	// Validate the plugin response
 	if response.InstalledPackageRef == nil {
-		return nil, status.Errorf(codes.Internal, "Invalid UpdateInstalledPackage response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Invalid UpdateInstalledPackage response from the plugin %v: %w", pluginWithServer.plugin.Name, err))
 	}
 
 	return connect.NewResponse(response), nil
@@ -334,20 +333,20 @@ func (s packagesServer) DeleteInstalledPackage(ctx context.Context, request *con
 	log.InfoS("+core DeleteInstalledPackage", "cluster", request.Msg.GetInstalledPackageRef().GetContext().GetCluster(), "namespace", request.Msg.GetInstalledPackageRef().GetContext().GetNamespace())
 
 	if request.Msg.GetInstalledPackageRef().GetPlugin() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing InstalledPackageRef.Plugin)")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Unable to retrieve the plugin (missing InstalledPackageRef.Plugin)"))
 	}
 
 	// Retrieve the plugin with server matching the requested plugin name
 	pluginWithServer := s.getPluginWithServer(request.Msg.InstalledPackageRef.Plugin)
 	if pluginWithServer == nil {
-		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.Msg.InstalledPackageRef.Plugin)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the plugin %v", request.Msg.InstalledPackageRef.Plugin))
 	}
 
 	// Get the response from the requested plugin
 	ctxForPlugin := updateContextWithAuthz(ctx, request.Header())
 	response, err := pluginWithServer.server.DeleteInstalledPackage(ctxForPlugin, request.Msg)
 	if err != nil {
-		return nil, status.Errorf(status.Convert(err).Code(), "Unable to delete the installed packagefor the package %q using the plugin %q: %v", request.Msg.InstalledPackageRef.Identifier, request.Msg.InstalledPackageRef.Plugin.Name, err)
+		return nil, connect.NewError(connect.Code(status.Convert(err).Code()), fmt.Errorf("Unable to delete the installed packagefor the package %q using the plugin %q: %w", request.Msg.InstalledPackageRef.Identifier, request.Msg.InstalledPackageRef.Plugin.Name, err))
 	}
 
 	return connect.NewResponse(response), nil
