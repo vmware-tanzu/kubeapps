@@ -35,7 +35,6 @@ func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) 
 	if err != nil {
 		return nil, err
 	}
-	// Up TO HERE
 	opts.Mux.Handle(resourcesConnect.NewResourcesServiceHandler(svr))
 	return svr, nil
 }

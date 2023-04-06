@@ -264,7 +264,8 @@ func (s *packagesServer) GetInstalledPackageResourceRefs(ctx context.Context, re
 	ctxForPlugin := updateContextWithAuthz(ctx, request.Header())
 	response, err := pluginWithServer.server.GetInstalledPackageResourceRefs(ctxForPlugin, request.Msg)
 	if err != nil {
-		return nil, status.Errorf(status.Convert(err).Code(), "Unable to get the resource refs for the package %q using the plugin %q: %v", request.Msg.InstalledPackageRef.Identifier, request.Msg.InstalledPackageRef.Plugin.Name, err)
+		// Plugins are still using gRPC here, not connect:
+		return nil, connect.NewError(connect.Code(status.Convert(err).Code()), fmt.Errorf("Unable to get the resource refs for the package %q using the plugin %q: %w", request.Msg.InstalledPackageRef.Identifier, request.Msg.InstalledPackageRef.Plugin.Name, err))
 	}
 
 	return connect.NewResponse(response), nil
