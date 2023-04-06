@@ -71,7 +71,7 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 	var pkgWithOffsets availableSummaryWithOffsets
 	for pkgWithOffsets = range summariesWithOffsets {
 		if pkgWithOffsets.err != nil {
-			return nil, pkgWithOffsets.err
+			return nil, connect.NewError(connect.Code(status.Convert(pkgWithOffsets.err).Code()), pkgWithOffsets.err)
 		}
 		pkgs = append(pkgs, pkgWithOffsets.availablePackageSummary)
 		categories = append(categories, pkgWithOffsets.categories...)
@@ -150,7 +150,7 @@ func (s packagesServer) GetInstalledPackageSummaries(ctx context.Context, reques
 	var pkgWithOffsets installedSummaryWithOffsets
 	for pkgWithOffsets = range summariesWithOffsets {
 		if pkgWithOffsets.err != nil {
-			return nil, pkgWithOffsets.err
+			return nil, connect.NewError(connect.Code(status.Code(pkgWithOffsets.err)), pkgWithOffsets.err)
 		}
 		pkgs = append(pkgs, pkgWithOffsets.installedPackageSummary)
 		if pageSize > 0 && len(pkgs) >= int(pageSize) {
