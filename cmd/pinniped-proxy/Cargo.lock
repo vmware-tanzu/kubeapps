@@ -920,9 +920,9 @@ dependencies = [
 
 [[package]]
 name = "json-patch"
-version = "0.3.0"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e712e62827c382a77b87f590532febb1f8b2fdbc3eefa1ee37fe7281687075ef"
+checksum = "1f54898088ccb91df1b492cc80029a6fdf1c48ca0db7c6822a8babad69c94658"
 dependencies = [
  "serde",
  "serde_json",
@@ -956,14 +956,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "k8s-openapi"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd990069640f9db34b3b0f7a1afc62a05ffaa3be9b66aa3c313f58346df7f788"
+dependencies = [
+ "base64 0.21.0",
+ "bytes",
+ "chrono",
+ "serde",
+ "serde-value",
+ "serde_json",
+]
+
+[[package]]
 name = "kube"
 version = "0.80.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "414d80c69906a91e8ecf4ae16d0fb504e19aa6b099135d35d85298b4e4be3ed3"
 dependencies = [
- "k8s-openapi",
- "kube-client",
- "kube-core",
+ "k8s-openapi 0.17.0",
+ "kube-client 0.80.0",
+ "kube-core 0.80.0",
 ]
 
 [[package]]
@@ -984,20 +998,53 @@ dependencies = [
  "hyper-openssl",
  "hyper-timeout",
  "jsonpath_lib",
- "k8s-openapi",
- "kube-core",
+ "k8s-openapi 0.17.0",
+ "kube-core 0.80.0",
  "openssl",
  "pem",
  "pin-project",
  "secrecy",
  "serde",
  "serde_json",
- "serde_yaml",
+ "serde_yaml 0.8.26",
  "thiserror",
  "tokio",
  "tokio-util",
  "tower",
- "tower-http",
+ "tower-http 0.3.5",
+ "tracing",
+]
+
+[[package]]
+name = "kube-client"
+version = "0.82.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "90b1d8deb705ef2463b2ce142b0ff98c815f8f0ac393d13c8f4c2b26491daf66"
+dependencies = [
+ "base64 0.20.0",
+ "bytes",
+ "chrono",
+ "dirs-next",
+ "either",
+ "futures",
+ "http",
+ "http-body",
+ "hyper",
+ "hyper-timeout",
+ "jsonpath_lib",
+ "k8s-openapi 0.18.0",
+ "kube-core 0.82.0",
+ "pem",
+ "pin-project",
+ "secrecy",
+ "serde",
+ "serde_json",
+ "serde_yaml 0.9.21",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "tower",
+ "tower-http 0.4.0",
  "tracing",
 ]
 
@@ -1010,8 +1057,24 @@ dependencies = [
  "chrono",
  "form_urlencoded",
  "http",
+ "k8s-openapi 0.17.0",
+ "once_cell",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "kube-core"
+version = "0.82.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b16c1653fd0bda69a6bdb363167edbb72d28817db340d2fe8cb89dc07d354e05"
+dependencies = [
+ "chrono",
+ "form_urlencoded",
+ "http",
  "json-patch",
- "k8s-openapi",
+ "k8s-openapi 0.18.0",
  "once_cell",
  "serde",
  "serde_json",
@@ -1033,9 +1096,9 @@ dependencies = [
 
 [[package]]
 name = "kube-runtime"
-version = "0.80.0"
+version = "0.82.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b698eb8998b46683b0dc3c2ce72c80bc308fc8159f25afa719668c290a037a57"
+checksum = "ed8442b2f1d6c1d630677ade9e5d5ebe793dec099a75fb582d56d77b8eb8cee8"
 dependencies = [
  "ahash",
  "async-trait",
@@ -1043,8 +1106,8 @@ dependencies = [
  "derivative",
  "futures",
  "json-patch",
- "k8s-openapi",
- "kube-client",
+ "k8s-openapi 0.18.0",
+ "kube-client 0.82.0",
  "parking_lot",
  "pin-project",
  "serde",
@@ -1369,7 +1432,7 @@ dependencies = [
  "http",
  "hyper",
  "hyper-tls",
- "k8s-openapi",
+ "k8s-openapi 0.17.0",
  "kube",
  "kube-derive",
  "kube-runtime",
@@ -1737,6 +1800,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_yaml"
+version = "0.9.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9d684e3ec7de3bf5466b32bd75303ac16f0736426e5a4e0d6e489559ce1249c"
+dependencies = [
+ "indexmap",
+ "itoa",
+ "ryu",
+ "serde",
+ "unsafe-libyaml",
+]
+
+[[package]]
 name = "shlex"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2083,6 +2159,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "tower-http"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d1d42a9b3f3ec46ba828e8d376aec14592ea199f70a06a548587ecd1c4ab658"
+dependencies = [
+ "base64 0.20.0",
+ "bitflags 1.3.2",
+ "bytes",
+ "futures-core",
+ "futures-util",
+ "http",
+ "http-body",
+ "http-range-header",
+ "mime",
+ "pin-project-lite",
+ "tower-layer",
+ "tower-service",
+ "tracing",
+]
+
+[[package]]
 name = "tower-layer"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2184,6 +2281,12 @@ name = "unicode-width"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c0edd1e5b14653f783770bce4a4dabb4a5108a5370a5f5d8cfe8710c361f6c8b"
+
+[[package]]
+name = "unsafe-libyaml"
+version = "0.2.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1865806a559042e51ab5414598446a5871b561d21b6764f2eabb0dd481d880a6"
 
 [[package]]
 name = "url"
