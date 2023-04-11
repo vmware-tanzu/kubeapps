@@ -29,6 +29,7 @@ import (
 	packagesv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core/packages/v1alpha1"
 	pluginsv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
 	packagesGRPCv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	packagesConnect "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1/v1alpha1connect"
 	pluginsGRPCv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	pluginsConnect "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1/v1alpha1connect"
 	"google.golang.org/grpc"
@@ -105,9 +106,11 @@ func Serve(serveOpts core.ServeOptions) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize plugins server: %v", err)
 	}
-	err = registerPluginsServiceServer(mux_connect, pluginsServer, gwArgs)
-	if err != nil {
+	if err := registerPluginsServiceServer(mux_connect, pluginsServer, gwArgs); err != nil {
 		return fmt.Errorf("failed to register plugins server: %v", err)
+	}
+	if err := registerPackagesServiceServer(mux_connect, pluginsServer, gwArgs); err != nil {
+		return err
 	}
 
 	// The gRPC Health checker reports on all connected services.
@@ -137,7 +140,7 @@ func Serve(serveOpts core.ServeOptions) error {
 	return nil
 }
 
-func registerPackagesServiceServer(grpcSrv *grpc.Server, pluginsServer *pluginsv1alpha1.PluginsServer, gwArgs core.GatewayHandlerArgs) error {
+func registerPackagesServiceServer(mux *http.ServeMux, pluginsServer *pluginsv1alpha1.PluginsServer, gwArgs core.GatewayHandlerArgs) error {
 	// Ask the plugins server for plugins with GRPC servers that fulfil the core
 	// packaging v1alpha1 API, then pass to the constructor below.
 	// The argument for the reflect.TypeOf is based on what grpc-go
@@ -150,7 +153,9 @@ func registerPackagesServiceServer(grpcSrv *grpc.Server, pluginsServer *pluginsv
 	if err != nil {
 		return fmt.Errorf("failed to create core.packages.v1alpha1 server: %w", err)
 	}
-	packagesGRPCv1alpha1.RegisterPackagesServiceServer(grpcSrv, packagesServer)
+
+	mux.Handle(packagesConnect.NewPackagesServiceHandler(packagesServer))
+
 	err = packagesGRPCv1alpha1.RegisterPackagesServiceHandlerFromEndpoint(gwArgs.Ctx, gwArgs.Mux, gwArgs.Addr, gwArgs.DialOptions)
 	if err != nil {
 		return fmt.Errorf("failed to register core.packages handler for gateway: %v", err)
@@ -321,9 +326,7 @@ func createImprobableGRPCServer(ctx context.Context, listenAddr string) (*grpc.S
 // startImprobableHandler returns the port on which the improbable gRPC handler is listening.
 func startImprobableHandler(pluginsServer *pluginsv1alpha1.PluginsServer, listenerCMux net.Listener, grpcSrv *grpc.Server, gwArgs core.GatewayHandlerArgs) (int, error) {
 
-	if err := registerPackagesServiceServer(grpcSrv, pluginsServer, gwArgs); err != nil {
-		return 0, err
-	} else if err = registerRepositoriesServiceServer(grpcSrv, pluginsServer, gwArgs); err != nil {
+	if err := registerRepositoriesServiceServer(grpcSrv, pluginsServer, gwArgs); err != nil {
 		return 0, err
 	}
 

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/bufbuild/connect-go"
 	packages "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 )
@@ -55,28 +56,30 @@ type availableSummaryWithOffsets struct {
 // pagination of individual plugins, it will be possible that this returns
 // duplicates or missing data if data is added or removed between paginated
 // requests.
-func fanInAvailablePackageSummaries(ctx context.Context, pkgPlugins []pkgPluginWithServer, request *packages.GetAvailablePackageSummariesRequest) (<-chan availableSummaryWithOffsets, error) {
+func fanInAvailablePackageSummaries(ctx context.Context, pkgPlugins []pkgPluginWithServer, request *connect.Request[packages.GetAvailablePackageSummariesRequest]) (<-chan availableSummaryWithOffsets, error) {
 	summariesCh := make(chan availableSummaryWithOffsets)
 
-	pluginPageOffsets, pluginPageSize, err := getPluginPageOffsets(request.GetPaginationOptions(), len(pkgPlugins))
+	pluginPageOffsets, pluginPageSize, err := getPluginPageOffsets(request.Msg.GetPaginationOptions(), len(pkgPlugins))
 	if err != nil {
 		return nil, err
 	}
+
+	ctxForPlugin := updateContextWithAuthz(ctx, request.Header())
 
 	fanInput := []<-chan *availableSummaryWithOffset{}
 	for _, pluginWithSrv := range pkgPlugins {
 		// Importantly, each plugin needs its own request, with its own pagination
 		// options.
 		r := &packages.GetAvailablePackageSummariesRequest{
-			Context:       request.Context,
-			FilterOptions: request.FilterOptions,
+			Context:       request.Msg.Context,
+			FilterOptions: request.Msg.FilterOptions,
 			PaginationOptions: &packages.PaginationOptions{
 				PageSize:  int32(pluginPageSize),
 				PageToken: fmt.Sprintf("%d", pluginPageOffsets[pluginWithSrv.plugin.Name]),
 			},
 		}
 
-		ch, err := sendAvailablePackageSummariesForPlugin(ctx, pluginWithSrv, r)
+		ch, err := sendAvailablePackageSummariesForPlugin(ctxForPlugin, pluginWithSrv, r)
 		if err != nil {
 			return nil, err
 		}
@@ -148,7 +151,7 @@ func fanInAvailablePackageSummaries(ctx context.Context, pkgPlugins []pkgPluginW
 			nextItems[minIndex] = nil
 
 			numSent += 1
-			if numSent == int(request.GetPaginationOptions().GetPageSize()) {
+			if numSent == int(request.Msg.GetPaginationOptions().GetPageSize()) {
 				close(summariesCh)
 				return
 			}
@@ -251,27 +254,29 @@ type installedSummaryWithOffsets struct {
 // pagination of individual plugins, it will be possible that this returns
 // duplicates or missing data if data is added or removed between paginated
 // requests.
-func fanInInstalledPackageSummaries(ctx context.Context, pkgPlugins []pkgPluginWithServer, request *packages.GetInstalledPackageSummariesRequest) (<-chan installedSummaryWithOffsets, error) {
+func fanInInstalledPackageSummaries(ctx context.Context, pkgPlugins []pkgPluginWithServer, request *connect.Request[packages.GetInstalledPackageSummariesRequest]) (<-chan installedSummaryWithOffsets, error) {
 	summariesCh := make(chan installedSummaryWithOffsets)
 
-	pluginPageOffsets, pluginPageSize, err := getPluginPageOffsets(request.GetPaginationOptions(), len(pkgPlugins))
+	pluginPageOffsets, pluginPageSize, err := getPluginPageOffsets(request.Msg.GetPaginationOptions(), len(pkgPlugins))
 	if err != nil {
 		return nil, err
 	}
+
+	ctxForPlugin := updateContextWithAuthz(ctx, request.Header())
 
 	fanInput := []<-chan *installedSummaryWithOffset{}
 	for _, pluginWithSrv := range pkgPlugins {
 		// Importantly, each plugin needs its own request, with its own pagination
 		// options.
 		r := &packages.GetInstalledPackageSummariesRequest{
-			Context: request.Context,
+			Context: request.Msg.Context,
 			PaginationOptions: &packages.PaginationOptions{
 				PageSize:  int32(pluginPageSize),
 				PageToken: fmt.Sprintf("%d", pluginPageOffsets[pluginWithSrv.plugin.Name]),
 			},
 		}
 
-		ch, err := sendInstalledPackageSummariesForPlugin(ctx, pluginWithSrv, r)
+		ch, err := sendInstalledPackageSummariesForPlugin(ctxForPlugin, pluginWithSrv, r)
 		if err != nil {
 			return nil, err
 		}
@@ -342,7 +347,7 @@ func fanInInstalledPackageSummaries(ctx context.Context, pkgPlugins []pkgPluginW
 			nextItems[minIndex] = nil
 
 			numSent += 1
-			if numSent == int(request.GetPaginationOptions().GetPageSize()) {
+			if numSent == int(request.Msg.GetPaginationOptions().GetPageSize()) {
 				close(summariesCh)
 				return
 			}
