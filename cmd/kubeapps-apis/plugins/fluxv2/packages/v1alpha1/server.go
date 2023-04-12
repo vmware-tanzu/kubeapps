@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resources"
 
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm"
@@ -22,6 +23,7 @@ import (
 
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	corev1connect "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1/v1alpha1connect"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
@@ -37,8 +39,8 @@ import (
 )
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
-var _ corev1.PackagesServiceServer = (*Server)(nil)
-var _ corev1.RepositoriesServiceServer = (*Server)(nil)
+var _ corev1connect.PackagesServiceHandler = (*Server)(nil)
+var _ corev1connect.RepositoriesServiceHandler = (*Server)(nil)
 
 // Server implements the fluxv2 packages v1alpha1 interface.
 type Server struct {
@@ -170,38 +172,38 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 //   - otherwise the request context namespace (the target
 //     namespace) is not relevant since charts from a repository in any namespace
 //     accessible to the user are available to be installed in the target namespace.
-func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
+func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *connect.Request[corev1.GetAvailablePackageSummariesRequest]) (*connect.Response[corev1.GetAvailablePackageSummariesResponse], error) {
 	log.Infof("+fluxv2 GetAvailablePackageSummaries(request: [%v])", request)
 	defer log.Info("-fluxv2 GetAvailablePackageSummaries")
 
 	// grpc compiles in getters for you which automatically return a default (empty) struct
 	// if the pointer was nil
-	cluster := request.GetContext().GetCluster()
+	cluster := request.Msg.GetContext().GetCluster()
 	if request != nil && cluster != "" && cluster != s.kubeappsCluster {
 		return nil, status.Errorf(
 			codes.Unimplemented,
 			"not supported yet: request.Context.Cluster: [%v]",
-			request.Context.Cluster)
+			request.Msg.Context.Cluster)
 	}
 
-	itemOffset, err := paginate.ItemOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	itemOffset, err := paginate.ItemOffsetFromPageToken(request.Msg.GetPaginationOptions().GetPageToken())
 	if err != nil {
 		return nil, err
 	}
 
 	ns := metav1.NamespaceAll
 	if s.pluginConfig.NoCrossNamespaceRefs {
-		ns = request.Context.Namespace
+		ns = request.Msg.Context.Namespace
 	}
 
-	charts, err := s.getChartsForRepos(ctx, ns, request.GetFilterOptions().GetRepositories())
+	charts, err := s.getChartsForRepos(ctx, ns, request.Msg.GetFilterOptions().GetRepositories())
 	if err != nil {
 		return nil, err
 	}
 
-	pageSize := request.GetPaginationOptions().GetPageSize()
+	pageSize := request.Msg.GetPaginationOptions().GetPageSize()
 	packageSummaries, err := filterAndPaginateCharts(
-		request.GetFilterOptions(), pageSize, itemOffset, charts)
+		request.Msg.GetFilterOptions(), pageSize, itemOffset, charts)
 	if err != nil {
 		return nil, err
 	}
@@ -218,26 +220,26 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		nextPageToken = fmt.Sprintf("%d", itemOffset+int(pageSize))
 	}
 
-	return &corev1.GetAvailablePackageSummariesResponse{
+	return connect.NewResponse(&corev1.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: packageSummaries,
 		NextPageToken:             nextPageToken,
 		// TODO (gfichtenholt) Categories?
 		// Just happened to notice that helm plug-in returning this.
 		// Never discussed this and the design doc appears to have a lot of back-and-forth comments
 		// about this, semantics aren't very clear
-	}, nil
+	}), nil
 }
 
 // GetAvailablePackageDetail returns the package metadata managed by the 'fluxv2' plugin
-func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
+func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect.Request[corev1.GetAvailablePackageDetailRequest]) (*connect.Response[corev1.GetAvailablePackageDetailResponse], error) {
 	log.Infof("+fluxv2 GetAvailablePackageDetail(request: [%v])", request)
 	defer log.Info("-fluxv2 GetAvailablePackageDetail")
 
-	if request == nil || request.AvailablePackageRef == nil {
+	if request == nil || request.Msg.AvailablePackageRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
 	}
 
-	packageRef := request.AvailablePackageRef
+	packageRef := request.Msg.AvailablePackageRef
 	// flux CRDs require a namespace, cluster-wide resources are not supported
 	if packageRef.Context == nil || len(packageRef.Context.Namespace) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "AvailablePackageReference is missing required 'namespace' field")
@@ -251,29 +253,29 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 			cluster)
 	}
 
-	pkgDetail, err := s.availableChartDetail(ctx, request.GetAvailablePackageRef(), request.GetPkgVersion())
+	pkgDetail, err := s.availableChartDetail(ctx, request.Msg.GetAvailablePackageRef(), request.Msg.GetPkgVersion())
 	if err != nil {
 		return nil, err
 	}
 
-	return &corev1.GetAvailablePackageDetailResponse{
+	return connect.NewResponse(&corev1.GetAvailablePackageDetailResponse{
 		AvailablePackageDetail: pkgDetail,
-	}, nil
+	}), nil
 }
 
 // GetAvailablePackageVersions returns the package versions managed by the 'fluxv2' plugin
-func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev1.GetAvailablePackageVersionsRequest) (*corev1.GetAvailablePackageVersionsResponse, error) {
+func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *connect.Request[corev1.GetAvailablePackageVersionsRequest]) (*connect.Response[corev1.GetAvailablePackageVersionsResponse], error) {
 	log.Infof("+fluxv2 GetAvailablePackageVersions [%v]", request)
 	defer log.Info("-fluxv2 GetAvailablePackageVersions")
 
-	if request.GetPkgVersion() != "" {
+	if request.Msg.GetPkgVersion() != "" {
 		return nil, status.Errorf(
 			codes.Unimplemented,
 			"not supported yet: request.GetPkgVersion(): [%v]",
-			request.GetPkgVersion())
+			request.Msg.GetPkgVersion())
 	}
 
-	packageRef := request.GetAvailablePackageRef()
+	packageRef := request.Msg.GetAvailablePackageRef()
 	namespace := packageRef.GetContext().GetNamespace()
 	if namespace == "" || packageRef.GetIdentifier() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "required context or identifier not provided")
@@ -299,25 +301,25 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 		return nil, err
 	} else if chart != nil {
 		// found it
-		return &corev1.GetAvailablePackageVersionsResponse{
+		return connect.NewResponse(&corev1.GetAvailablePackageVersionsResponse{
 			PackageAppVersions: pkgutils.PackageAppVersionsSummary(
 				chart.ChartVersions,
 				s.pluginConfig.VersionsInSummary),
-		}, nil
+		}), nil
 	} else {
 		return nil, status.Errorf(codes.Internal, "unable to retrieve versions for chart: [%s]", packageRef.Identifier)
 	}
 }
 
 // GetInstalledPackageSummaries returns the installed packages managed by the 'fluxv2' plugin
-func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
+func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *connect.Request[corev1.GetInstalledPackageSummariesRequest]) (*connect.Response[corev1.GetInstalledPackageSummariesResponse], error) {
 	log.Infof("+fluxv2 GetInstalledPackageSummaries [%v]", request)
-	itemOffset, err := paginate.ItemOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	itemOffset, err := paginate.ItemOffsetFromPageToken(request.Msg.GetPaginationOptions().GetPageToken())
 	if err != nil {
 		return nil, err
 	}
 
-	cluster := request.GetContext().GetCluster()
+	cluster := request.Msg.GetContext().GetCluster()
 	if cluster != "" && cluster != s.kubeappsCluster {
 		return nil, status.Errorf(
 			codes.Unimplemented,
@@ -325,9 +327,9 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 			cluster)
 	}
 
-	pageSize := request.GetPaginationOptions().GetPageSize()
+	pageSize := request.Msg.GetPaginationOptions().GetPageSize()
 	installedPkgSummaries, err := s.paginatedInstalledPkgSummaries(
-		ctx, request.GetContext().GetNamespace(), pageSize, itemOffset)
+		ctx, request.Msg.GetContext().GetNamespace(), pageSize, itemOffset)
 	if err != nil {
 		return nil, err
 	}
@@ -343,18 +345,18 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 		InstalledPackageSummaries: installedPkgSummaries,
 		NextPageToken:             nextPageToken,
 	}
-	return response, nil
+	return connect.NewResponse(response), nil
 }
 
 // GetInstalledPackageDetail returns the package metadata managed by the 'fluxv2' plugin
-func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.GetInstalledPackageDetailRequest) (*corev1.GetInstalledPackageDetailResponse, error) {
+func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *connect.Request[corev1.GetInstalledPackageDetailRequest]) (*connect.Response[corev1.GetInstalledPackageDetailResponse], error) {
 	log.Infof("+fluxv2 GetInstalledPackageDetail [%v]", request)
 
-	if request == nil || request.InstalledPackageRef == nil {
+	if request == nil || request.Msg.InstalledPackageRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request InstalledPackageRef provided")
 	}
 
-	packageRef := request.InstalledPackageRef
+	packageRef := request.Msg.InstalledPackageRef
 	// flux CRDs require a namespace, cluster-wide resources are not supported
 	if packageRef.Context == nil || len(packageRef.Context.Namespace) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "InstalledPackageReference is missing required 'namespace' field")
@@ -369,24 +371,24 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 	}
 
 	key := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: packageRef.Identifier}
-	pkgDetail, err := s.installedPackageDetail(ctx, key)
+	pkgDetail, err := s.installedPackageDetail(ctx, request.Header(), key)
 	if err != nil {
 		return nil, err
 	}
 
-	return &corev1.GetInstalledPackageDetailResponse{
+	return connect.NewResponse(&corev1.GetInstalledPackageDetailResponse{
 		InstalledPackageDetail: pkgDetail,
-	}, nil
+	}), nil
 }
 
 // CreateInstalledPackage creates an installed package based on the request.
-func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.CreateInstalledPackageRequest) (*corev1.CreateInstalledPackageResponse, error) {
+func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Request[corev1.CreateInstalledPackageRequest]) (*connect.Response[corev1.CreateInstalledPackageResponse], error) {
 	log.Infof("+fluxv2 CreateInstalledPackage [%v]", request)
 
-	if request == nil || request.AvailablePackageRef == nil {
+	if request == nil || request.Msg.AvailablePackageRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
 	}
-	packageRef := request.AvailablePackageRef
+	packageRef := request.Msg.AvailablePackageRef
 	if packageRef.GetContext().GetNamespace() == "" || packageRef.GetIdentifier() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "required context or identifier not provided")
 	}
@@ -397,46 +399,46 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 			"not supported yet: request.AvailablePackageRef.Context.Cluster: [%v]",
 			cluster)
 	}
-	if request.Name == "" {
+	if request.Msg.Name == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
 	}
-	if request.TargetContext == nil || request.TargetContext.Namespace == "" {
+	if request.Msg.TargetContext == nil || request.Msg.TargetContext.Namespace == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "no request TargetContext namespace provided")
 	}
-	cluster = request.TargetContext.GetCluster()
+	cluster = request.Msg.TargetContext.GetCluster()
 	if cluster != "" && cluster != s.kubeappsCluster {
 		return nil, status.Errorf(
 			codes.Unimplemented,
 			"not supported yet: request.TargetContext.Cluster: [%v]",
-			request.TargetContext.Cluster)
+			request.Msg.TargetContext.Cluster)
 	}
 
-	name := types.NamespacedName{Name: request.Name, Namespace: request.TargetContext.Namespace}
+	name := types.NamespacedName{Name: request.Msg.Name, Namespace: request.Msg.TargetContext.Namespace}
 
 	if installedRef, err := s.newRelease(
 		ctx,
-		request.AvailablePackageRef,
+		request.Msg.AvailablePackageRef,
 		name,
-		request.PkgVersionReference,
-		request.ReconciliationOptions,
-		request.Values); err != nil {
+		request.Msg.PkgVersionReference,
+		request.Msg.ReconciliationOptions,
+		request.Msg.Values); err != nil {
 		return nil, err
 	} else {
-		return &corev1.CreateInstalledPackageResponse{
+		return connect.NewResponse(&corev1.CreateInstalledPackageResponse{
 			InstalledPackageRef: installedRef,
-		}, nil
+		}), nil
 	}
 }
 
 // UpdateInstalledPackage updates an installed package based on the request.
-func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.UpdateInstalledPackageRequest) (*corev1.UpdateInstalledPackageResponse, error) {
+func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Request[corev1.UpdateInstalledPackageRequest]) (*connect.Response[corev1.UpdateInstalledPackageResponse], error) {
 	log.Infof("+fluxv2 UpdateInstalledPackage [%v]", request)
 
-	if request == nil || request.InstalledPackageRef == nil {
+	if request == nil || request.Msg.InstalledPackageRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request InstalledPackageRef provided")
 	}
 
-	installedPackageRef := request.InstalledPackageRef
+	installedPackageRef := request.Msg.InstalledPackageRef
 	cluster := installedPackageRef.GetContext().GetCluster()
 	if cluster != "" && cluster != s.kubeappsCluster {
 		return nil, status.Errorf(
@@ -448,26 +450,26 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	if installedRef, err := s.updateRelease(
 		ctx,
 		installedPackageRef,
-		request.PkgVersionReference,
-		request.ReconciliationOptions,
-		request.Values); err != nil {
+		request.Msg.PkgVersionReference,
+		request.Msg.ReconciliationOptions,
+		request.Msg.Values); err != nil {
 		return nil, err
 	} else {
-		return &corev1.UpdateInstalledPackageResponse{
+		return connect.NewResponse(&corev1.UpdateInstalledPackageResponse{
 			InstalledPackageRef: installedRef,
-		}, nil
+		}), nil
 	}
 }
 
 // DeleteInstalledPackage deletes an installed package.
-func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.DeleteInstalledPackageRequest) (*corev1.DeleteInstalledPackageResponse, error) {
+func (s *Server) DeleteInstalledPackage(ctx context.Context, request *connect.Request[corev1.DeleteInstalledPackageRequest]) (*connect.Response[corev1.DeleteInstalledPackageResponse], error) {
 	log.Infof("+fluxv2 DeleteInstalledPackage [%v]", request)
 
-	if request == nil || request.InstalledPackageRef == nil {
+	if request == nil || request.Msg.InstalledPackageRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request InstalledPackageRef provided")
 	}
 
-	installedPackageRef := request.InstalledPackageRef
+	installedPackageRef := request.Msg.InstalledPackageRef
 	cluster := installedPackageRef.GetContext().GetCluster()
 	if cluster != "" && cluster != s.kubeappsCluster {
 		return nil, status.Errorf(
@@ -476,17 +478,17 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 			cluster)
 	}
 
-	if err := s.deleteRelease(ctx, request.InstalledPackageRef); err != nil {
+	if err := s.deleteRelease(ctx, request.Msg.InstalledPackageRef); err != nil {
 		return nil, err
 	} else {
-		return &corev1.DeleteInstalledPackageResponse{}, nil
+		return connect.NewResponse(&corev1.DeleteInstalledPackageResponse{}), nil
 	}
 }
 
 // GetInstalledPackageResourceRefs returns the references for the Kubernetes
 // resources created by an installed package.
-func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *corev1.GetInstalledPackageResourceRefsRequest) (*corev1.GetInstalledPackageResourceRefsResponse, error) {
-	pkgRef := request.GetInstalledPackageRef()
+func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *connect.Request[corev1.GetInstalledPackageResourceRefsRequest]) (*connect.Response[corev1.GetInstalledPackageResourceRefsResponse], error) {
+	pkgRef := request.Msg.GetInstalledPackageRef()
 	identifier := pkgRef.GetIdentifier()
 	log.InfoS("+fluxv2 GetInstalledPackageResourceRefs", "cluster", pkgRef.GetContext().GetCluster(), "namespace", pkgRef.GetContext().GetNamespace(), "id", identifier)
 
@@ -496,63 +498,64 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 		return nil, err
 	}
 	hrName := helmReleaseName(key, rel)
-	refs, err := resourcerefs.GetInstalledPackageResourceRefs(ctx, hrName, s.actionConfigGetter)
+	refs, err := resourcerefs.GetInstalledPackageResourceRefs(request.Header(), hrName, s.actionConfigGetter)
 	if err != nil {
 		return nil, err
 	} else {
-		return &corev1.GetInstalledPackageResourceRefsResponse{
-			Context: &corev1.Context{
-				Cluster: s.kubeappsCluster,
-				// TODO (gfichtenholt) it is not specifically called out in the spec why there is a
-				// need for a Context in the response and MORE imporantly what the value of Namespace
-				// field should be. In particular, there is use case when Flux Helm Release in
-				// installed in ns1 but specifies targetNamespace as test2. Should we:
-				//  (a) return ns1 (the namespace where CRs are installed) OR
-				//  (b) return ns2 (the namespace where flux installs the resources specified by the
-				//    release).
-				// For now lets use (a)
-				Namespace: key.Namespace,
-			},
-			ResourceRefs: refs,
-		}, nil
+		return connect.NewResponse(
+			&corev1.GetInstalledPackageResourceRefsResponse{
+				Context: &corev1.Context{
+					Cluster: s.kubeappsCluster,
+					// TODO (gfichtenholt) it is not specifically called out in the spec why there is a
+					// need for a Context in the response and MORE imporantly what the value of Namespace
+					// field should be. In particular, there is use case when Flux Helm Release in
+					// installed in ns1 but specifies targetNamespace as test2. Should we:
+					//  (a) return ns1 (the namespace where CRs are installed) OR
+					//  (b) return ns2 (the namespace where flux installs the resources specified by the
+					//    release).
+					// For now lets use (a)
+					Namespace: key.Namespace,
+				},
+				ResourceRefs: refs,
+			}), nil
 	}
 }
 
-func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPackageRepositoryRequest) (*corev1.AddPackageRepositoryResponse, error) {
+func (s *Server) AddPackageRepository(ctx context.Context, request *connect.Request[corev1.AddPackageRepositoryRequest]) (*connect.Response[corev1.AddPackageRepositoryResponse], error) {
 	if request == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request provided")
 	}
-	if request.Context == nil || request.Context.Namespace == "" {
+	if request.Msg.Context == nil || request.Msg.Context.Namespace == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "no request Context namespace provided")
 	}
 
-	cluster := request.GetContext().GetCluster()
-	namespace := request.GetContext().GetNamespace()
-	repoName := request.GetName()
+	cluster := request.Msg.GetContext().GetCluster()
+	namespace := request.Msg.GetContext().GetNamespace()
+	repoName := request.Msg.GetName()
 	log.InfoS("+fluxv2 AddPackageRepository", "cluster", cluster, "namespace", namespace, "name", repoName)
 
 	if cluster != "" && cluster != s.kubeappsCluster {
 		return nil, status.Errorf(
 			codes.Unimplemented,
 			"not supported yet: request.Context.Cluster: [%v]",
-			request.Context.Cluster)
+			request.Msg.Context.Cluster)
 	}
 
-	if repoRef, err := s.newRepo(ctx, request); err != nil {
+	if repoRef, err := s.newRepo(ctx, request.Msg); err != nil {
 		return nil, err
 	} else {
-		return &corev1.AddPackageRepositoryResponse{PackageRepoRef: repoRef}, nil
+		return connect.NewResponse(&corev1.AddPackageRepositoryResponse{PackageRepoRef: repoRef}), nil
 	}
 }
 
-func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1.GetPackageRepositoryDetailRequest) (*corev1.GetPackageRepositoryDetailResponse, error) {
+func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *connect.Request[corev1.GetPackageRepositoryDetailRequest]) (*connect.Response[corev1.GetPackageRepositoryDetailResponse], error) {
 	log.Infof("+fluxv2 GetPackageRepositoryDetail [%v]", request)
 	defer log.Info("-fluxv2 GetPackageRepositoryDetail")
-	if request == nil || request.PackageRepoRef == nil {
+	if request == nil || request.Msg.PackageRepoRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
 	}
 
-	repoRef := request.PackageRepoRef
+	repoRef := request.Msg.PackageRepoRef
 	// flux CRDs require a namespace, cluster-wide resources are not supported
 	if repoRef.Context == nil || len(repoRef.Context.Namespace) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "PackageRepositoryReference is missing required namespace")
@@ -571,15 +574,15 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1
 		return nil, err
 	}
 
-	return &corev1.GetPackageRepositoryDetailResponse{
+	return connect.NewResponse(&corev1.GetPackageRepositoryDetailResponse{
 		Detail: repoDetail,
-	}, nil
+	}), nil
 }
 
 // GetPackageRepositorySummaries returns the package repositories managed by the 'fluxv2' plugin
-func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *corev1.GetPackageRepositorySummariesRequest) (*corev1.GetPackageRepositorySummariesResponse, error) {
+func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *connect.Request[corev1.GetPackageRepositorySummariesRequest]) (*connect.Response[corev1.GetPackageRepositorySummariesResponse], error) {
 	log.Infof("+fluxv2 GetPackageRepositorySummaries [%v]", request)
-	cluster := request.GetContext().GetCluster()
+	cluster := request.Msg.GetContext().GetCluster()
 	if cluster != "" && cluster != s.kubeappsCluster {
 		return nil, status.Errorf(
 			codes.Unimplemented,
@@ -587,23 +590,23 @@ func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *cor
 			cluster)
 	}
 
-	if summaries, err := s.repoSummaries(ctx, request.GetContext().GetNamespace()); err != nil {
+	if summaries, err := s.repoSummaries(ctx, request.Msg.GetContext().GetNamespace()); err != nil {
 		return nil, err
 	} else {
-		return &corev1.GetPackageRepositorySummariesResponse{
+		return connect.NewResponse(&corev1.GetPackageRepositorySummariesResponse{
 			PackageRepositorySummaries: summaries,
-		}, nil
+		}), nil
 	}
 }
 
 // UpdatePackageRepository updates a package repository based on the request.
-func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.UpdatePackageRepositoryRequest) (*corev1.UpdatePackageRepositoryResponse, error) {
+func (s *Server) UpdatePackageRepository(ctx context.Context, request *connect.Request[corev1.UpdatePackageRepositoryRequest]) (*connect.Response[corev1.UpdatePackageRepositoryResponse], error) {
 	log.Infof("+fluxv2 UpdatePackageRepository [%v]", request)
-	if request == nil || request.PackageRepoRef == nil {
+	if request == nil || request.Msg.PackageRepoRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request PackageRepoRef provided")
 	}
 
-	repoRef := request.PackageRepoRef
+	repoRef := request.Msg.PackageRepoRef
 	cluster := repoRef.GetContext().GetCluster()
 	if cluster != "" && cluster != s.kubeappsCluster {
 		return nil, status.Errorf(
@@ -612,23 +615,23 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 			cluster)
 	}
 
-	if responseRef, err := s.updateRepo(ctx, repoRef, request); err != nil {
+	if responseRef, err := s.updateRepo(ctx, repoRef, request.Msg); err != nil {
 		return nil, err
 	} else {
-		return &corev1.UpdatePackageRepositoryResponse{
+		return connect.NewResponse(&corev1.UpdatePackageRepositoryResponse{
 			PackageRepoRef: responseRef,
-		}, nil
+		}), nil
 	}
 }
 
 // DeletePackageRepository deletes a package repository based on the request.
-func (s *Server) DeletePackageRepository(ctx context.Context, request *corev1.DeletePackageRepositoryRequest) (*corev1.DeletePackageRepositoryResponse, error) {
+func (s *Server) DeletePackageRepository(ctx context.Context, request *connect.Request[corev1.DeletePackageRepositoryRequest]) (*connect.Response[corev1.DeletePackageRepositoryResponse], error) {
 	log.Infof("+fluxv2 DeletePackageRepository [%v]", request)
-	if request == nil || request.PackageRepoRef == nil {
+	if request == nil || request.Msg.PackageRepoRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request PackageRepoRef provided")
 	}
 
-	repoRef := request.PackageRepoRef
+	repoRef := request.Msg.PackageRepoRef
 	cluster := repoRef.GetContext().GetCluster()
 	if cluster != "" && cluster != s.kubeappsCluster {
 		return nil, status.Errorf(
@@ -640,15 +643,15 @@ func (s *Server) DeletePackageRepository(ctx context.Context, request *corev1.De
 	if err := s.deleteRepo(ctx, repoRef); err != nil {
 		return nil, err
 	} else {
-		return &corev1.DeletePackageRepositoryResponse{}, nil
+		return connect.NewResponse(&corev1.DeletePackageRepositoryResponse{}), nil
 	}
 }
 
-func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *corev1.GetPackageRepositoryPermissionsRequest) (*corev1.GetPackageRepositoryPermissionsResponse, error) {
+func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *connect.Request[corev1.GetPackageRepositoryPermissionsRequest]) (*connect.Response[corev1.GetPackageRepositoryPermissionsResponse], error) {
 	log.Infof("+fluxv2 GetPackageRepositoryPermissions [%v]", request)
 
-	cluster := request.GetContext().GetCluster()
-	namespace := request.GetContext().GetNamespace()
+	cluster := request.Msg.GetContext().GetCluster()
+	namespace := request.Msg.GetContext().GetNamespace()
 	if cluster == "" && namespace != "" {
 		return nil, status.Errorf(codes.InvalidArgument, "cluster must be specified when namespace is present: %s", namespace)
 	}
@@ -670,15 +673,15 @@ func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *c
 
 	// Namespace permissions
 	if namespace != "" {
-		permissions.Namespace, err = resources.GetPermissionsOnResource(ctx, typedClient, resource, request.GetContext().GetNamespace())
+		permissions.Namespace, err = resources.GetPermissionsOnResource(ctx, typedClient, resource, request.Msg.GetContext().GetNamespace())
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return &corev1.GetPackageRepositoryPermissionsResponse{
+	return connect.NewResponse(&corev1.GetPackageRepositoryPermissionsResponse{
 		Permissions: []*corev1.PackageRepositoriesPermissions{permissions},
-	}, nil
+	}), nil
 }
 
 // makes the server look like a repo event sink. Facilitates code reuse between

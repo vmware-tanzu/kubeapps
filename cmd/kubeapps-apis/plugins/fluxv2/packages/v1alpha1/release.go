@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -209,7 +210,7 @@ func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, rel helmv2.
 	}, nil
 }
 
-func (s *Server) installedPackageDetail(ctx context.Context, key types.NamespacedName) (*corev1.InstalledPackageDetail, error) {
+func (s *Server) installedPackageDetail(ctx context.Context, headers http.Header, key types.NamespacedName) (*corev1.InstalledPackageDetail, error) {
 	rel, err := s.getReleaseInCluster(ctx, key)
 	if err != nil {
 		return nil, err
@@ -249,7 +250,7 @@ func (s *Server) installedPackageDetail(ctx context.Context, key types.Namespace
 	availablePackageRef.Context.Cluster = s.kubeappsCluster
 
 	appVersion, postInstallNotes := "", ""
-	rel2, err := s.getReleaseViaHelmApi(ctx, key, rel)
+	rel2, err := s.getReleaseViaHelmApi(headers, key, rel)
 	// err maybe NotFound if this object has just been created and flux hasn't had time
 	// to invoke helm layer yet
 	if err == nil && rel != nil {
@@ -287,7 +288,7 @@ func (s *Server) installedPackageDetail(ctx context.Context, key types.Namespace
 	}, nil
 }
 
-func (s *Server) getReleaseViaHelmApi(ctx context.Context, key types.NamespacedName, rel *helmv2.HelmRelease) (*release.Release, error) {
+func (s *Server) getReleaseViaHelmApi(headers http.Header, key types.NamespacedName, rel *helmv2.HelmRelease) (*release.Release, error) {
 	// post installation notes can only be retrieved via helm APIs, flux doesn't do it
 	// see discussion in https://cloud-native.slack.com/archives/CLAJ40HV3/p1629244025187100
 	if s.actionConfigGetter == nil {
@@ -295,7 +296,7 @@ func (s *Server) getReleaseViaHelmApi(ctx context.Context, key types.NamespacedN
 	}
 
 	helmRel := helmReleaseName(key, rel)
-	actionConfig, err := s.actionConfigGetter(ctx, helmRel.Namespace)
+	actionConfig, err := s.actionConfigGetter(headers, helmRel.Namespace)
 	if err != nil || actionConfig == nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config in namespace [%s] due to: %v", key.Namespace, err)
 	}
