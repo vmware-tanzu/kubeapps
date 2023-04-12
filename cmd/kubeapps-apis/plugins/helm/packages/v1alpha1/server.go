@@ -54,6 +54,7 @@ type helmActionConfigGetter func(headers http.Header, pkgContext *corev1.Context
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
 var _ corev1connect.PackagesServiceHandler = (*Server)(nil)
+var _ corev1connect.RepositoriesServiceHandler = (*Server)(nil)
 
 const (
 	UserAgentPrefix = "kubeapps-apis/plugins"

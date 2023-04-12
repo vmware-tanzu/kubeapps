@@ -18,7 +18,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
-	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	corev1connect "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1/v1alpha1connect"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
@@ -41,8 +41,8 @@ func fallbackDefaultPrereleasesVersionSelection() []string {
 }
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
-var _ corev1.PackagesServiceServer = (*Server)(nil)
-var _ corev1.RepositoriesServiceServer = (*Server)(nil)
+var _ corev1connect.PackagesServiceHandler = (*Server)(nil)
+var _ corev1connect.RepositoriesServiceHandler = (*Server)(nil)
 
 // Server implements the kapp-controller packages v1alpha1 interface.
 type Server struct {

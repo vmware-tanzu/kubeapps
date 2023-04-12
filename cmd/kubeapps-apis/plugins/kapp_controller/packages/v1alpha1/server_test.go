@@ -7,10 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
-	authorizationv1 "k8s.io/api/authorization/v1"
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-	k8stesting "k8s.io/client-go/testing"
 	"log"
 	"os"
 	"runtime"
@@ -19,6 +15,12 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/bufbuild/connect-go"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
+	authorizationv1 "k8s.io/api/authorization/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	k8stesting "k8s.io/client-go/testing"
 
 	"google.golang.org/protobuf/types/known/anypb"
 
@@ -1134,11 +1136,11 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Build(),
 			}
 
-			response, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{
+			response, err := s.GetAvailablePackageSummaries(context.Background(), connect.NewRequest(&corev1.GetAvailablePackageSummariesRequest{
 				Context:           defaultContext,
 				PaginationOptions: &tc.paginationOptions,
 				FilterOptions:     &tc.filterOptions,
-			})
+			}))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
@@ -1148,7 +1150,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				return
 			}
 
-			if got, want := response.AvailablePackageSummaries, tc.expectedPackages; !cmp.Equal(got, want, ignoreUnexported) {
+			if got, want := response.Msg.AvailablePackageSummaries, tc.expectedPackages; !cmp.Equal(got, want, ignoreUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 			}
 		})
@@ -1296,7 +1298,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 					Build(),
 			}
 
-			response, err := s.GetAvailablePackageVersions(context.Background(), tc.request)
+			response, err := s.GetAvailablePackageVersions(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -1307,7 +1309,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				return
 			}
 
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 			}
 		})
@@ -1680,14 +1682,14 @@ Some support information
 						unstructuredObjects...,
 					)).Build(),
 			}
-			availablePackageDetail, err := s.GetAvailablePackageDetail(context.Background(), tc.request)
+			availablePackageDetail, err := s.GetAvailablePackageDetail(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			if tc.statusCode == codes.OK {
-				if got, want := availablePackageDetail.AvailablePackageDetail, tc.expectedPackage; !cmp.Equal(got, want, ignoreUnexported) {
+				if got, want := availablePackageDetail.Msg.AvailablePackageDetail, tc.expectedPackage; !cmp.Equal(got, want, ignoreUnexported) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 				}
 			}
@@ -2817,7 +2819,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					)).Build(),
 			}
 
-			response, err := s.GetInstalledPackageSummaries(context.Background(), tc.request)
+			response, err := s.GetInstalledPackageSummaries(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
@@ -2827,7 +2829,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				return
 			}
 
-			if got, want := response.InstalledPackageSummaries, tc.expectedPackages; !cmp.Equal(got, want, ignoreUnexported) {
+			if got, want := response.Msg.InstalledPackageSummaries, tc.expectedPackages; !cmp.Equal(got, want, ignoreUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 			}
 		})
@@ -3529,14 +3531,14 @@ fetchStderr
 						unstructuredObjects...,
 					)).Build(),
 			}
-			installedPackageDetail, err := s.GetInstalledPackageDetail(context.Background(), tc.request)
+			installedPackageDetail, err := s.GetInstalledPackageDetail(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			if tc.statusCode == codes.OK {
-				if got, want := installedPackageDetail.InstalledPackageDetail, tc.expectedPackage; !cmp.Equal(got, want, ignoreUnexported) {
+				if got, want := installedPackageDetail.Msg.InstalledPackageDetail, tc.expectedPackage; !cmp.Equal(got, want, ignoreUnexported) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 				}
 			}
@@ -5510,7 +5512,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					Build(),
 			}
 
-			createInstalledPackageResponse, err := s.CreateInstalledPackage(context.Background(), tc.request)
+			createInstalledPackageResponse, err := s.CreateInstalledPackage(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
@@ -5520,11 +5522,11 @@ func TestCreateInstalledPackage(t *testing.T) {
 				return
 			}
 			if tc.expectedPackageInstall != nil {
-				if got, want := createInstalledPackageResponse, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
+				if got, want := createInstalledPackageResponse.Msg, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 				}
 
-				createdPkgInstall, err := s.getPkgInstall(context.Background(), "default", tc.request.TargetContext.Namespace, createInstalledPackageResponse.InstalledPackageRef.Identifier)
+				createdPkgInstall, err := s.getPkgInstall(context.Background(), "default", tc.request.TargetContext.Namespace, createInstalledPackageResponse.Msg.InstalledPackageRef.Identifier)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -5868,7 +5870,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					)).Build(),
 			}
 
-			updateInstalledPackageResponse, err := s.UpdateInstalledPackage(context.Background(), tc.request)
+			updateInstalledPackageResponse, err := s.UpdateInstalledPackage(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
@@ -5878,11 +5880,11 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				return
 			}
 			if tc.expectedPackageInstall != nil {
-				if got, want := updateInstalledPackageResponse, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
+				if got, want := updateInstalledPackageResponse.Msg, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 				}
 
-				updatedPkgInstall, err := s.getPkgInstall(context.Background(), "default", updateInstalledPackageResponse.InstalledPackageRef.Context.Namespace, updateInstalledPackageResponse.InstalledPackageRef.Identifier)
+				updatedPkgInstall, err := s.getPkgInstall(context.Background(), "default", updateInstalledPackageResponse.Msg.InstalledPackageRef.Context.Namespace, updateInstalledPackageResponse.Msg.InstalledPackageRef.Identifier)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -6070,7 +6072,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 					Build(),
 			}
 
-			deleteInstalledPackageResponse, err := s.DeleteInstalledPackage(context.Background(), tc.request)
+			deleteInstalledPackageResponse, err := s.DeleteInstalledPackage(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
@@ -6079,7 +6081,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 			if tc.expectedStatusCode != codes.OK {
 				return
 			}
-			if got, want := deleteInstalledPackageResponse, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
+			if got, want := deleteInstalledPackageResponse.Msg, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 			}
 		})
@@ -6498,7 +6500,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 				},
 			}
 
-			getInstalledPackageResourceRefsResponse, err := s.GetInstalledPackageResourceRefs(context.Background(), tc.request)
+			getInstalledPackageResourceRefsResponse, err := s.GetInstalledPackageResourceRefs(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
@@ -6507,7 +6509,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 			if tc.expectedStatusCode != codes.OK {
 				return
 			}
-			if got, want := getInstalledPackageResourceRefsResponse, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
+			if got, want := getInstalledPackageResourceRefsResponse.Msg, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 			}
 		})
@@ -7169,7 +7171,7 @@ func TestAddPackageRepository(t *testing.T) {
 			}
 
 			request := tc.requestCustomizer(defaultRequest())
-			response, err := s.AddPackageRepository(context.Background(), request)
+			response, err := s.AddPackageRepository(context.Background(), connect.NewRequest(request))
 
 			// check status
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
@@ -7182,7 +7184,7 @@ func TestAddPackageRepository(t *testing.T) {
 			}
 
 			// check ref
-			if got, want := response.GetPackageRepoRef(), tc.expectedRef; !cmp.Equal(want, got, ignoreUnexported) {
+			if got, want := response.Msg.GetPackageRepoRef(), tc.expectedRef; !cmp.Equal(want, got, ignoreUnexported) {
 				t.Errorf("response mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 			}
 
@@ -8139,7 +8141,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			}
 
 			// invoke
-			response, err := s.UpdatePackageRepository(context.Background(), request)
+			response, err := s.UpdatePackageRepository(context.Background(), connect.NewRequest(request))
 
 			// check status
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
@@ -8152,7 +8154,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			}
 
 			// check ref
-			if got, want := response.GetPackageRepoRef(), tc.expectedRef; !cmp.Equal(want, got, ignoreUnexported) {
+			if got, want := response.Msg.GetPackageRepoRef(), tc.expectedRef; !cmp.Equal(want, got, ignoreUnexported) {
 				t.Errorf("response mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 			}
 
@@ -8296,7 +8298,7 @@ func TestDeletePackageRepository(t *testing.T) {
 				globalPackagingCluster: defaultGlobalContext.Cluster,
 			}
 
-			_, err := s.DeletePackageRepository(context.Background(), tc.request)
+			_, err := s.DeletePackageRepository(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
@@ -8864,7 +8866,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				request = tc.requestCustomizer(request)
 			}
 
-			response, err := s.GetPackageRepositoryDetail(context.Background(), request)
+			response, err := s.GetPackageRepositoryDetail(context.Background(), connect.NewRequest(request))
 
 			// checks
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
@@ -8873,7 +8875,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				return
 			}
 
-			if got, want := request.PackageRepoRef, response.Detail.PackageRepoRef; !cmp.Equal(want, got, ignoreUnexported) {
+			if got, want := request.PackageRepoRef, response.Msg.Detail.PackageRepoRef; !cmp.Equal(want, got, ignoreUnexported) {
 				t.Errorf("ref mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 			}
 
@@ -8882,7 +8884,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				expectedResponse = tc.responseCustomizer(expectedResponse)
 			}
 
-			if got, want := response, expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
+			if got, want := response.Msg, expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 			}
 		})
@@ -9210,18 +9212,18 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 			}
 
 			// query repositories
-			response, err := s.GetPackageRepositorySummaries(context.Background(), &corev1.GetPackageRepositorySummariesRequest{
+			response, err := s.GetPackageRepositorySummaries(context.Background(), connect.NewRequest(&corev1.GetPackageRepositorySummariesRequest{
 				Context: &corev1.Context{Namespace: ""},
-			})
+			}))
 			if err != nil {
 				t.Fatalf("received unexpected error: %+v", err)
 			}
 
 			// fail fast
-			if len(response.GetPackageRepositorySummaries()) != 1 {
-				t.Fatalf("mistmatch on number of summaries received, expected 1 but got %d", len(response.PackageRepositorySummaries))
+			if len(response.Msg.GetPackageRepositorySummaries()) != 1 {
+				t.Fatalf("mistmatch on number of summaries received, expected 1 but got %d", len(response.Msg.PackageRepositorySummaries))
 			}
-			if got, want := response.PackageRepositorySummaries[0], tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexported) {
+			if got, want := response.Msg.PackageRepositorySummaries[0], tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 			}
 		})
@@ -9367,7 +9369,7 @@ func TestGetPackageRepositorySummariesNamespaces(t *testing.T) {
 				globalPackagingCluster: defaultGlobalContext.Cluster,
 			}
 
-			response, err := s.GetPackageRepositorySummaries(context.Background(), tc.request)
+			response, err := s.GetPackageRepositorySummaries(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -9378,7 +9380,7 @@ func TestGetPackageRepositorySummariesNamespaces(t *testing.T) {
 				return
 			}
 
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 			}
 		})
@@ -9484,26 +9486,26 @@ func TestGetPackageRepositorySummariesFiltering(t *testing.T) {
 			}
 
 			// should not happen
-			response, err := s.GetPackageRepositorySummaries(context.Background(), tc.request)
+			response, err := s.GetPackageRepositorySummaries(context.Background(), connect.NewRequest(tc.request))
 			if err != nil {
 				t.Fatalf("received unexpected error: %+v", err)
 			}
 
 			// fail fast
-			if len(response.PackageRepositorySummaries) != len(tc.expectedResponse) {
-				t.Fatalf("mistmatch on number of summaries received, expected %d but got %d", len(tc.expectedResponse), len(response.PackageRepositorySummaries))
+			if len(response.Msg.PackageRepositorySummaries) != len(tc.expectedResponse) {
+				t.Fatalf("mistmatch on number of summaries received, expected %d but got %d", len(tc.expectedResponse), len(response.Msg.PackageRepositorySummaries))
 			}
 
 			// sort response
-			sort.Slice(response.PackageRepositorySummaries, func(i, j int) bool {
-				refi := response.PackageRepositorySummaries[i].GetPackageRepoRef()
-				refj := response.PackageRepositorySummaries[j].GetPackageRepoRef()
+			sort.Slice(response.Msg.PackageRepositorySummaries, func(i, j int) bool {
+				refi := response.Msg.PackageRepositorySummaries[i].GetPackageRepoRef()
+				refj := response.Msg.PackageRepositorySummaries[j].GetPackageRepoRef()
 				return refi.GetIdentifier() < refj.GetIdentifier()
 			})
 
 			for i := 0; i < len(tc.expectedResponse); i++ {
 				expected := tc.expectedResponse[i]
-				receivedRef := response.PackageRepositorySummaries[i].GetPackageRepoRef()
+				receivedRef := response.Msg.PackageRepositorySummaries[i].GetPackageRepoRef()
 				if expected.Name != receivedRef.GetIdentifier() {
 					t.Fatalf("expected to received repository named %s but received name %s", expected.Name, receivedRef.GetIdentifier())
 				}
@@ -9697,18 +9699,18 @@ func TestGetPackageRepositoryStatus(t *testing.T) {
 			}
 
 			// should not happen
-			response, err := s.GetPackageRepositorySummaries(context.Background(), &corev1.GetPackageRepositorySummariesRequest{
+			response, err := s.GetPackageRepositorySummaries(context.Background(), connect.NewRequest(&corev1.GetPackageRepositorySummariesRequest{
 				Context: &corev1.Context{Namespace: ""},
-			})
+			}))
 			if err != nil {
 				t.Fatalf("received unexpected error: %+v", err)
 			}
 
 			// fail fast
-			if len(response.GetPackageRepositorySummaries()) != 1 {
-				t.Fatalf("mistmatch on number of summaries received, expected 1 but got %d", len(response.PackageRepositorySummaries))
+			if len(response.Msg.GetPackageRepositorySummaries()) != 1 {
+				t.Fatalf("mistmatch on number of summaries received, expected 1 but got %d", len(response.Msg.PackageRepositorySummaries))
 			}
-			if got, want := response.PackageRepositorySummaries[0].Status, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexported) {
+			if got, want := response.Msg.PackageRepositorySummaries[0].Status, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 			}
 		})
@@ -10164,7 +10166,7 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 				globalPackagingCluster: defaultGlobalContext.Cluster,
 			}
 
-			response, err := s.GetPackageRepositoryPermissions(context.Background(), tc.request)
+			response, err := s.GetPackageRepositoryPermissions(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -10175,7 +10177,7 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 				return
 			}
 
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 			}
 		})

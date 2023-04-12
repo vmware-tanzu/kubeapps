@@ -12,6 +12,7 @@ import (
 	pluginsv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
 	pluginsgrpcv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
+	packagesConnect "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1/v1alpha1connect"
 )
 
 // Set the pluginDetail once during a module init function so the single struct
@@ -31,7 +32,8 @@ func init() {
 //nolint:deadcode
 func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) (interface{}, error) {
 	svr := NewServer(opts.ConfigGetter, opts.ClientQPS, opts.ClientBurst, opts.ClustersConfig.KubeappsClusterName, opts.PluginConfigPath)
-	v1alpha1.RegisterKappControllerPackagesServiceServer(opts.Registrar, svr)
+	opts.Mux.Handle(packagesConnect.NewKappControllerPackagesServiceHandler(svr))
+	opts.Mux.Handle(packagesConnect.NewKappControllerRepositoriesServiceHandler(svr))
 	return svr, nil
 }
 
