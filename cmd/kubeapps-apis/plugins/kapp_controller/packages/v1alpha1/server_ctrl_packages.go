@@ -671,16 +671,16 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 
 // UpdateInstalledPackage Updates an installed package managed by the 'kapp_controller' plugin
 func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Request[corev1.UpdateInstalledPackageRequest]) (*connect.Response[corev1.UpdateInstalledPackageResponse], error) {
+	// Validate the request
+	if request == nil || request.Msg.GetInstalledPackageRef() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
+	}
 	// Retrieve parameters from the request
 	packageCluster := request.Msg.GetInstalledPackageRef().GetContext().GetCluster()
 	packageNamespace := request.Msg.GetInstalledPackageRef().GetContext().GetNamespace()
 	installedPackageName := request.Msg.GetInstalledPackageRef().GetIdentifier()
 	log.InfoS("+kapp-controller UpdateInstalledPackage", "cluster", packageCluster, "namespace", "packageNamespace", "id", installedPackageName)
 
-	// Validate the request
-	if request == nil || request.Msg.GetInstalledPackageRef() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
-	}
 	if request.Msg.GetInstalledPackageRef().GetContext().GetNamespace() == "" || request.Msg.GetInstalledPackageRef().GetIdentifier() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "required context or identifier not provided")
 	}
@@ -808,16 +808,16 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Re
 
 // DeleteInstalledPackage Deletes an installed package managed by the 'kapp_controller' plugin
 func (s *Server) DeleteInstalledPackage(ctx context.Context, request *connect.Request[corev1.DeleteInstalledPackageRequest]) (*connect.Response[corev1.DeleteInstalledPackageResponse], error) {
+	// Validate the request
+	if request == nil || request.Msg.GetInstalledPackageRef() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request InstalledPackageRef provided")
+	}
 	// Retrieve parameters from the request
 	namespace := request.Msg.GetInstalledPackageRef().GetContext().GetNamespace()
 	cluster := request.Msg.GetInstalledPackageRef().GetContext().GetCluster()
 	identifier := request.Msg.GetInstalledPackageRef().GetIdentifier()
 	log.InfoS("+kapp-controller DeleteInstalledPackage", "namespace", namespace, "cluster", cluster, "id", identifier)
 
-	// Validate the request
-	if request == nil || request.Msg.GetInstalledPackageRef() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "no request InstalledPackageRef provided")
-	}
 	if request.Msg.GetInstalledPackageRef().GetContext().GetNamespace() == "" || request.Msg.GetInstalledPackageRef().GetIdentifier() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "required context or identifier not provided")
 	}

@@ -178,8 +178,11 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *conn
 
 	// grpc compiles in getters for you which automatically return a default (empty) struct
 	// if the pointer was nil
+	if request == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "request was nil")
+	}
 	cluster := request.Msg.GetContext().GetCluster()
-	if request != nil && cluster != "" && cluster != s.kubeappsCluster {
+	if cluster != "" && cluster != s.kubeappsCluster {
 		return nil, status.Errorf(
 			codes.Unimplemented,
 			"not supported yet: request.Context.Cluster: [%v]",
