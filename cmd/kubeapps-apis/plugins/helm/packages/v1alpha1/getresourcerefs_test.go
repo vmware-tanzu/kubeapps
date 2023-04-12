@@ -115,8 +115,11 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
 
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, ignoredFields) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(want, got, ignoredFields) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredFields))
 			}
 		})

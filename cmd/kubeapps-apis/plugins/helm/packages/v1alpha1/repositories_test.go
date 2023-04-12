@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	appRepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -840,7 +841,7 @@ func TestAddPackageRepository(t *testing.T) {
 
 			nsname := types.NamespacedName{Namespace: tc.request.Context.Namespace, Name: tc.request.Name}
 			ctx := context.Background()
-			response, err := s.AddPackageRepository(ctx, tc.request)
+			response, err := s.AddPackageRepository(ctx, connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -857,7 +858,7 @@ func TestAddPackageRepository(t *testing.T) {
 						corev1.PackageRepositoryReference{},
 						plugins.Plugin{},
 					)
-					if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
+					if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
 						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 					}
 				}
@@ -1067,7 +1068,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 
 			s := newServerWithAppRepoReactors(unstructuredObjects, nil, typedObjects, nil, tc.reactors)
 
-			response, err := s.GetPackageRepositorySummaries(context.Background(), tc.request)
+			response, err := s.GetPackageRepositorySummaries(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -1088,7 +1089,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				corev1.PackageRepositoryAuth{},
 			)
 			opts2 := cmpopts.SortSlices(lessPackageRepositorySummaryFunc)
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts, opts2) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(want, got, opts, opts2) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
 			}
 		})
@@ -1237,7 +1238,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 
 			s := newServerWithSecretsAndRepos(t, secrets, unstructuredObjects, nil)
 
-			actualResponse, err := s.GetPackageRepositoryDetail(context.Background(), tc.request)
+			actualResponse, err := s.GetPackageRepositoryDetail(context.Background(), connect.NewRequest(tc.request))
 
 			// checks
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
@@ -1263,11 +1264,11 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				corev1.UsernamePassword{},
 			)
 
-			if got, want := tc.request.PackageRepoRef, actualResponse.Detail.PackageRepoRef; !cmp.Equal(want, got, opts) {
+			if got, want := tc.request.PackageRepoRef, actualResponse.Msg.Detail.PackageRepoRef; !cmp.Equal(want, got, opts) {
 				t.Errorf("ref mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
 
-			if got, want := actualResponse, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+			if got, want := actualResponse.Msg, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
 		})
@@ -1997,7 +1998,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			s := newServerWithSecretsAndRepos(t, secrets, unstructuredObjects, repos)
 
 			request := tc.requestCustomizer(commonRequest())
-			response, err := s.UpdatePackageRepository(context.Background(), request)
+			response, err := s.UpdatePackageRepository(context.Background(), connect.NewRequest(request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got error: %d, want: %d, err: %+v", got, want, err)
@@ -2023,12 +2024,12 @@ func TestUpdatePackageRepository(t *testing.T) {
 			)
 
 			// check ref
-			if got, want := response.GetPackageRepoRef(), tc.expectedRef; !cmp.Equal(want, got, opts) {
+			if got, want := response.Msg.GetPackageRepoRef(), tc.expectedRef; !cmp.Equal(want, got, opts) {
 				t.Errorf("response mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
 
 			// check repository
-			appRepo, _, _, err := s.getPkgRepository(context.Background(), tc.expectedRef.Context.Cluster, tc.expectedRef.Context.Namespace, tc.expectedRef.Identifier)
+			appRepo, _, _, err := s.getPkgRepository(context.Background(), http.Header{}, tc.expectedRef.Context.Cluster, tc.expectedRef.Context.Namespace, tc.expectedRef.Identifier)
 			if err != nil {
 				t.Fatalf("unexpected error retrieving repository: %+v", err)
 			}
@@ -2122,7 +2123,7 @@ func TestDeletePackageRepository(t *testing.T) {
 
 			s := newServerWithSecretsAndRepos(t, nil, unstructuredObjects, repos)
 
-			_, err := s.DeletePackageRepository(context.Background(), tc.request)
+			_, err := s.DeletePackageRepository(context.Background(), connect.NewRequest(tc.request))
 
 			// checks
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
@@ -2294,7 +2295,7 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := newServerWithAppRepoReactors(nil, nil, nil, tc.reactors, nil)
 
-			response, err := s.GetPackageRepositoryPermissions(context.Background(), tc.request)
+			response, err := s.GetPackageRepositoryPermissions(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -2311,7 +2312,7 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 				corev1.GetPackageRepositoryPermissionsResponse{},
 				corev1.PackageRepositoriesPermissions{},
 			)
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
 		})

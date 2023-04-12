@@ -1198,7 +1198,7 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *connect.R
 		auth:         request.Msg.GetAuth(),
 		customDetail: customDetail,
 	}
-	if responseRef, err := s.updateRepo(ctx, appRepo, caCertSecret, authSecret, imagesPullSecret, helmRepo); err != nil {
+	if responseRef, err := s.updateRepo(ctx, request.Header(), appRepo, caCertSecret, authSecret, imagesPullSecret, helmRepo); err != nil {
 		return nil, err
 	} else {
 		return connect.NewResponse(&corev1.UpdatePackageRepositoryResponse{

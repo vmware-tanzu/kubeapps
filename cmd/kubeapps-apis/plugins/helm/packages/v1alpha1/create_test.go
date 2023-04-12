@@ -123,8 +123,12 @@ func TestCreateInstalledPackage(t *testing.T) {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
 			// Verify the expected response (our contract to the caller).
-			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, ignoredUnexported) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoredUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredUnexported))
 			}
 

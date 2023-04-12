@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -173,14 +174,17 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			if tc.expectedRelease != nil {
 				populateAssetForTarball(t, mockDB, fmt.Sprintf("bitnami%%%s", tc.expectedRelease.Chart.Metadata.Name), globalPackagingNamespace, tc.expectedRelease.Chart.Metadata.Version)
 			}
-			response, err := server.UpdateInstalledPackage(context.Background(), tc.request)
+			response, err := server.UpdateInstalledPackage(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
+			if err != nil {
+				return
+			}
 
 			// Verify the expected response (our contract to the caller).
-			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, ignoredUnexported) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoredUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredUnexported))
 			}
 
