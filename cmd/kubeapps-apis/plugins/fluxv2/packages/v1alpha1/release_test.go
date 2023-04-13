@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bufbuild/connect-go"
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
@@ -235,7 +236,7 @@ func TestGetInstalledPackageSummariesWithoutPagination(t *testing.T) {
 				}
 			}
 
-			response, err := s.GetInstalledPackageSummaries(context.Background(), tc.request)
+			response, err := s.GetInstalledPackageSummaries(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -245,7 +246,7 @@ func TestGetInstalledPackageSummariesWithoutPagination(t *testing.T) {
 			if tc.expectedStatusCode != codes.OK {
 				return
 			}
-			compareInstalledPackageSummaries(t, response, tc.expectedResponse)
+			compareInstalledPackageSummaries(t, response.Msg, tc.expectedResponse)
 
 			if err := mock.ExpectationsWereMet(); err != nil {
 				t.Errorf("there were unfulfilled expectations: %s", err)
@@ -290,7 +291,7 @@ func TestGetInstalledPackageSummariesWithPagination(t *testing.T) {
 				PageSize:  1,
 			},
 		}
-		response1, err := s.GetInstalledPackageSummaries(context.Background(), request1)
+		response1, err := s.GetInstalledPackageSummaries(context.Background(), connect.NewRequest(request1))
 
 		if got, want := status.Code(err), codes.OK; got != want {
 			t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -322,11 +323,11 @@ func TestGetInstalledPackageSummariesWithPagination(t *testing.T) {
 
 		match := false
 		var nextExpectedResp *corev1.GetInstalledPackageSummariesResponse
-		if got, want := response1, expectedResp1; cmp.Equal(want, got, opts, opts2) {
+		if got, want := response1.Msg, expectedResp1; cmp.Equal(want, got, opts, opts2) {
 			match = true
 			nextExpectedResp = expectedResp2
 			nextExpectedResp.NextPageToken = "2"
-		} else if got, want := response1, expectedResp2; cmp.Equal(want, got, opts, opts2) {
+		} else if got, want := response1.Msg, expectedResp2; cmp.Equal(want, got, opts, opts2) {
 			match = true
 			nextExpectedResp = expectedResp1
 			nextExpectedResp.NextPageToken = "2"
@@ -343,12 +344,12 @@ func TestGetInstalledPackageSummariesWithPagination(t *testing.T) {
 			},
 		}
 
-		response2, err := s.GetInstalledPackageSummaries(context.Background(), request2)
+		response2, err := s.GetInstalledPackageSummaries(context.Background(), connect.NewRequest(request2))
 
 		if got, want := status.Code(err), codes.OK; got != want {
 			t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 		}
-		if got, want := response2, nextExpectedResp; !cmp.Equal(want, got, opts, opts2) {
+		if got, want := response2.Msg, nextExpectedResp; !cmp.Equal(want, got, opts, opts2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
 		}
 
@@ -365,13 +366,13 @@ func TestGetInstalledPackageSummariesWithPagination(t *testing.T) {
 			NextPageToken:             "",
 		}
 
-		response3, err := s.GetInstalledPackageSummaries(context.Background(), request3)
+		response3, err := s.GetInstalledPackageSummaries(context.Background(), connect.NewRequest(request3))
 
 		if got, want := status.Code(err), codes.OK; got != want {
 			t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 		}
 
-		compareInstalledPackageSummaries(t, response3, nextExpectedResp)
+		compareInstalledPackageSummaries(t, response3.Msg, nextExpectedResp)
 
 		if err := mock.ExpectationsWereMet(); err != nil {
 			t.Errorf("there were unfulfilled expectations: %s", err)
@@ -476,7 +477,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			response, err := s.GetInstalledPackageDetail(context.Background(), tc.request)
+			response, err := s.GetInstalledPackageDetail(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -491,7 +492,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				InstalledPackageDetail: tc.expectedDetail,
 			}
 
-			compareInstalledPackageDetail(t, response, expectedResp)
+			compareInstalledPackageDetail(t, response.Msg, expectedResp)
 
 			// we make sure that all expectations were met
 			if err := mock.ExpectationsWereMet(); err != nil {
@@ -658,7 +659,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				}
 			}
 
-			response, err := s.CreateInstalledPackage(context.Background(), tc.request)
+			response, err := s.CreateInstalledPackage(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -675,7 +676,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				plugins.Plugin{},
 				corev1.Context{})
 
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
 
@@ -868,7 +869,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				}
 			}
 
-			response, err := s.UpdateInstalledPackage(context.Background(), tc.request)
+			response, err := s.UpdateInstalledPackage(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -885,7 +886,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				plugins.Plugin{},
 				corev1.Context{})
 
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
 
@@ -960,7 +961,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			response, err := s.DeleteInstalledPackage(context.Background(), tc.request)
+			response, err := s.DeleteInstalledPackage(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -973,7 +974,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 
 			opts := cmpopts.IgnoreUnexported(corev1.DeleteInstalledPackageResponse{})
 
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
 
@@ -1111,13 +1112,16 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			response, err := server.GetInstalledPackageResourceRefs(context.Background(), tc.request)
+			response, err := server.GetInstalledPackageResourceRefs(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
 
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, ignoredFields) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(want, got, ignoredFields) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredFields))
 			}
 

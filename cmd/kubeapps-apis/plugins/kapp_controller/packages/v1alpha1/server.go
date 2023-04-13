@@ -18,7 +18,7 @@ import (
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
-	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	corev1connect "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1/v1alpha1connect"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
@@ -27,7 +27,7 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-type kappClientsGetter func(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error)
+type kappClientsGetter func(ctx context.Context, headers http.Header, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error)
 
 const (
 	fallbackGlobalPackagingNamespace                        = "kapp-controller-packaging-global"
@@ -41,8 +41,8 @@ func fallbackDefaultPrereleasesVersionSelection() []string {
 }
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
-var _ corev1.PackagesServiceServer = (*Server)(nil)
-var _ corev1.RepositoriesServiceServer = (*Server)(nil)
+var _ corev1connect.PackagesServiceHandler = (*Server)(nil)
+var _ corev1connect.RepositoriesServiceHandler = (*Server)(nil)
 
 // Server implements the kapp-controller packages v1alpha1 interface.
 type Server struct {
@@ -122,12 +122,12 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 		clientQPS:                       clientQPS,
 		globalPackagingCluster:          globalPackagingCluster,
 		pluginConfig:                    pluginConfig,
-		kappClientsGetter: func(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error) {
+		kappClientsGetter: func(ctx context.Context, headers http.Header, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error) {
 			if configGetter == nil {
 				return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.Internal, "configGetter arg required")
 			}
 			// Retrieve the k8s REST client from the configGetter
-			config, err := configGetter(ctx, http.Header{}, cluster)
+			config, err := configGetter(ctx, headers, cluster)
 			if err != nil {
 				return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
 			}
@@ -174,11 +174,11 @@ func (s *Server) MaxWorkers() int {
 }
 
 // GetKappClients ensures a client getter is available and uses it to return a Kapp Factory.
-func (s *Server) GetKappClients(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error) {
+func (s *Server) GetKappClients(ctx context.Context, headers http.Header, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error) {
 	if s.clientGetter == nil {
 		return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}
-	appsClient, resourcesClient, failingAPIServicesPolicy, resourceFilter, err := s.kappClientsGetter(ctx, cluster, namespace)
+	appsClient, resourcesClient, failingAPIServicesPolicy, resourceFilter, err := s.kappClientsGetter(ctx, headers, cluster, namespace)
 	if err != nil {
 		return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get Kapp Factory : %v", err))
 	}

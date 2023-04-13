@@ -7,6 +7,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -116,14 +117,18 @@ func TestCreateInstalledPackage(t *testing.T) {
 			defer cleanup()
 			populateAssetDB(t, mockDB, []releaseStub{tc.releaseStub})
 
-			response, err := server.CreateInstalledPackage(context.Background(), tc.request)
+			response, err := server.CreateInstalledPackage(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
 			// Verify the expected response (our contract to the caller).
-			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, ignoredUnexported) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoredUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredUnexported))
 			}
 
@@ -210,7 +215,7 @@ func TestTimeoutCreateInstalledPackage(t *testing.T) {
 			}
 			populateAssetDB(t, mockDB, []releaseStub{rStub})
 
-			_, err := server.CreateInstalledPackage(context.Background(), request)
+			_, err := server.CreateInstalledPackage(context.Background(), connect.NewRequest(request))
 
 			if got, want := effectiveTimeout, tc.timeoutSeconds; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)

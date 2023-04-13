@@ -8,10 +8,12 @@ import (
 	"context"
 	"encoding/gob"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
 
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
@@ -52,7 +54,7 @@ var (
 // returns a list of HelmRepositories from specified namespace.
 // ns can be "", in which case all namespaces (cluster-wide), excluding
 // the ones that the caller has no read access to
-func (s *Server) listReposInNamespace(ctx context.Context, ns string) ([]sourcev1.HelmRepository, error) {
+func (s *Server) listReposInNamespace(ctx context.Context, headers http.Header, ns string) ([]sourcev1.HelmRepository, error) {
 	// the actual List(...) call will be executed in the context of
 	// kubeapps-internal-kubeappsapis service account
 	// ref https://github.com/vmware-tanzu/kubeapps/issues/4390 for explanation
@@ -77,7 +79,7 @@ func (s *Server) listReposInNamespace(ctx context.Context, ns string) ([]sourcev
 		allowedNamespaces := sets.Set[string]{}
 		gvr := common.GetRepositoriesGvr()
 		for ns := range namespaces {
-			if ok, err := s.hasAccessToNamespace(ctx, gvr, ns); err == nil && ok {
+			if ok, err := s.hasAccessToNamespace(ctx, headers, gvr, ns); err == nil && ok {
 				allowedNamespaces.Insert(ns)
 			} else if err != nil {
 				return nil, err
@@ -93,13 +95,13 @@ func (s *Server) listReposInNamespace(ctx context.Context, ns string) ([]sourcev
 	}
 }
 
-func (s *Server) getRepoInCluster(ctx context.Context, key types.NamespacedName) (*sourcev1.HelmRepository, error) {
+func (s *Server) getRepoInCluster(ctx context.Context, headers http.Header, key types.NamespacedName) (*sourcev1.HelmRepository, error) {
 	// unlike List(), there is no need to execute Get() in the context of
 	// kubeapps-internal-kubeappsapis service account and then filter out results based on
 	// whether or not the caller hasAccessToNamespace(). We can just pass the caller
 	// context into Get() and if the caller isn't allowed, Get will raise an error, which is what we
 	// want
-	client, err := s.getClient(ctx, key.Namespace)
+	client, err := s.getClient(ctx, headers, key.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -151,8 +153,8 @@ func (s *Server) filterReadyReposByName(repoList []sourcev1.HelmRepository, matc
 // Notes:
 //  1. can't rely on cache as a real source of truth for key names
 //     because redis may evict cache entries due to memory pressure to make room for new ones
-func (s *Server) getChartsForRepos(ctx context.Context, ns string, match []string) (map[string][]models.Chart, error) {
-	repoList, err := s.listReposInNamespace(ctx, ns)
+func (s *Server) getChartsForRepos(ctx context.Context, headers http.Header, ns string, match []string) (map[string][]models.Chart, error) {
+	repoList, err := s.listReposInNamespace(ctx, headers, ns)
 	if err != nil {
 		return nil, err
 	}
@@ -217,8 +219,8 @@ func (s *Server) repoCacheEntryFromUntyped(key string, value interface{}) (*repo
 	return &typedValue, nil
 }
 
-func (s *Server) httpClientOptionsForRepo(ctx context.Context, repoName types.NamespacedName) (*common.HttpClientOptions, error) {
-	repo, err := s.getRepoInCluster(ctx, repoName)
+func (s *Server) httpClientOptionsForRepo(ctx context.Context, headers http.Header, repoName types.NamespacedName) (*common.HttpClientOptions, error) {
+	repo, err := s.getRepoInCluster(ctx, headers, repoName)
 	if err != nil {
 		return nil, err
 	}
@@ -226,25 +228,25 @@ func (s *Server) httpClientOptionsForRepo(ctx context.Context, repoName types.Na
 	return sink.clientOptionsForHttpRepo(ctx, *repo)
 }
 
-func (s *Server) newRepo(ctx context.Context, request *corev1.AddPackageRepositoryRequest) (*corev1.PackageRepositoryReference, error) {
-	if request.Name == "" {
+func (s *Server) newRepo(ctx context.Context, request *connect.Request[corev1.AddPackageRepositoryRequest]) (*connect.Response[corev1.PackageRepositoryReference], error) {
+	if request.Msg.Name == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
 	}
 
 	// flux repositories are now considered to be namespaced, to support the most common cases.
 	// see discussion at https://github.com/vmware-tanzu/kubeapps/issues/5542
-	if !request.GetNamespaceScoped() {
+	if !request.Msg.GetNamespaceScoped() {
 		return nil, status.Errorf(codes.Unimplemented, "global-scoped repositories are not supported")
 	}
 
-	typ := request.GetType()
+	typ := request.Msg.GetType()
 	if typ != "helm" && typ != sourcev1.HelmRepositoryTypeOCI {
 		return nil, status.Errorf(codes.Unimplemented, "repository type [%s] not supported", typ)
 	}
 
-	description := request.GetDescription()
-	url := request.GetUrl()
-	tlsConfig := request.GetTlsConfig()
+	description := request.Msg.GetDescription()
+	url := request.Msg.GetUrl()
+	tlsConfig := request.Msg.GetTlsConfig()
 	if url == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "repository url may not be empty")
 	} else if tlsConfig != nil && tlsConfig.InsecureSkipVerify {
@@ -252,24 +254,24 @@ func (s *Server) newRepo(ctx context.Context, request *corev1.AddPackageReposito
 		return nil, status.Errorf(codes.InvalidArgument, "TLS flag insecureSkipVerify is not supported")
 	}
 
-	name := types.NamespacedName{Name: request.Name, Namespace: request.Context.Namespace}
-	auth := request.GetAuth()
+	name := types.NamespacedName{Name: request.Msg.Name, Namespace: request.Msg.Context.Namespace}
+	auth := request.Msg.GetAuth()
 
 	// Get or validate secret resource for auth (stored in K8s in this method)
-	secret, isSecretKubeappsManaged, err := s.handleRepoSecretForCreate(ctx, name, typ, tlsConfig, auth)
+	secret, isSecretKubeappsManaged, err := s.handleRepoSecretForCreate(ctx, request.Header(), name, typ, tlsConfig, auth)
 	if err != nil {
 		return nil, err
 	}
 
 	passCredentials := auth != nil && auth.PassCredentials
-	interval := request.GetInterval()
+	interval := request.Msg.GetInterval()
 
 	// Get Flux-specific values
 	provider := ""
 	var customDetail *v1alpha1.FluxPackageRepositoryCustomDetail
-	if request.CustomDetail != nil {
+	if request.Msg.CustomDetail != nil {
 		customDetail = &v1alpha1.FluxPackageRepositoryCustomDetail{}
-		if err := request.CustomDetail.UnmarshalTo(customDetail); err != nil {
+		if err := request.Msg.CustomDetail.UnmarshalTo(customDetail); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "customDetail could not be parsed due to: %v", err)
 		}
 		provider = customDetail.Provider
@@ -283,36 +285,36 @@ func (s *Server) newRepo(ctx context.Context, request *corev1.AddPackageReposito
 
 	if fluxRepo, err := newFluxHelmRepo(name, description, typ, url, interval, secret, passCredentials, provider); err != nil {
 		return nil, err
-	} else if client, err := s.getClient(ctx, name.Namespace); err != nil {
+	} else if client, err := s.getClient(ctx, request.Header(), name.Namespace); err != nil {
 		return nil, err
 	} else if err = client.Create(ctx, fluxRepo); err != nil {
 		return nil, statuserror.FromK8sError("create", "HelmRepository", name.String(), err)
 	} else {
 		if isSecretKubeappsManaged {
-			if err = s.setOwnerReferencesForRepoSecret(ctx, secret, fluxRepo); err != nil {
+			if err = s.setOwnerReferencesForRepoSecret(ctx, request.Header(), secret, fluxRepo); err != nil {
 				return nil, err
 			}
 		}
-		return &corev1.PackageRepositoryReference{
+		return connect.NewResponse(&corev1.PackageRepositoryReference{
 			Context: &corev1.Context{
 				Namespace: fluxRepo.Namespace,
 				Cluster:   s.kubeappsCluster,
 			},
 			Identifier: fluxRepo.Name,
 			Plugin:     GetPluginDetail(),
-		}, nil
+		}), nil
 	}
 }
 
-func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageRepositoryReference) (*corev1.PackageRepositoryDetail, error) {
+func (s *Server) repoDetail(ctx context.Context, headers http.Header, repoRef *corev1.PackageRepositoryReference) (*corev1.PackageRepositoryDetail, error) {
 	key := types.NamespacedName{Namespace: repoRef.Context.Namespace, Name: repoRef.Identifier}
 
-	repo, err := s.getRepoInCluster(ctx, key)
+	repo, err := s.getRepoInCluster(ctx, headers, key)
 	if err != nil {
 		return nil, err
 	}
 
-	tlsConfig, auth, err := s.getRepoTlsConfigAndAuth(ctx, *repo)
+	tlsConfig, auth, err := s.getRepoTlsConfigAndAuth(ctx, headers, *repo)
 	if err != nil {
 		return nil, err
 	}
@@ -361,12 +363,12 @@ func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageReposito
 	}, nil
 }
 
-func (s *Server) repoSummaries(ctx context.Context, ns string) ([]*corev1.PackageRepositorySummary, error) {
+func (s *Server) repoSummaries(ctx context.Context, headers http.Header, ns string) ([]*corev1.PackageRepositorySummary, error) {
 	summaries := []*corev1.PackageRepositorySummary{}
 	var repos []sourcev1.HelmRepository
 	var err error
 	if ns == apiv1.NamespaceAll {
-		if repos, err = s.listReposInNamespace(ctx, ns); err != nil {
+		if repos, err = s.listReposInNamespace(ctx, headers, ns); err != nil {
 			return nil, err
 		}
 	} else {
@@ -376,7 +378,7 @@ func (s *Server) repoSummaries(ctx context.Context, ns string) ([]*corev1.Packag
 		// error should be raised, as opposed to returning an empty list with no error
 		var repoList sourcev1.HelmRepositoryList
 		var client ctrlclient.Client
-		if client, err = s.getClient(ctx, ns); err != nil {
+		if client, err = s.getClient(ctx, headers, ns); err != nil {
 			return nil, err
 		} else if err = client.List(ctx, &repoList); err != nil {
 			return nil, statuserror.FromK8sError("list", "HelmRepository", "", err)
@@ -414,9 +416,9 @@ func (s *Server) repoSummaries(ctx context.Context, ns string) ([]*corev1.Packag
 	return summaries, nil
 }
 
-func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageRepositoryReference, request *corev1.UpdatePackageRepositoryRequest) (*corev1.PackageRepositoryReference, error) {
+func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageRepositoryReference, request *connect.Request[corev1.UpdatePackageRepositoryRequest]) (*corev1.PackageRepositoryReference, error) {
 	key := types.NamespacedName{Namespace: repoRef.GetContext().GetNamespace(), Name: repoRef.GetIdentifier()}
-	repo, err := s.getRepoInCluster(ctx, key)
+	repo, err := s.getRepoInCluster(ctx, request.Header(), key)
 	if err != nil {
 		return nil, err
 	}
@@ -429,16 +431,16 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 		return nil, status.Errorf(codes.Internal, "updates to repositories pending reconciliation are not supported")
 	}
 
-	if request.Url == "" {
+	if request.Msg.Url == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "repository url may not be empty")
 	}
-	repo.Spec.URL = request.Url
+	repo.Spec.URL = request.Msg.Url
 
 	// description now supported via annotation
-	k8sutils.SetDescription(&repo.ObjectMeta, request.Description)
+	k8sutils.SetDescription(&repo.ObjectMeta, request.Msg.Description)
 
-	if request.Interval != "" {
-		if duration, err := pkgutils.ToDuration(request.Interval); err != nil {
+	if request.Msg.Interval != "" {
+		if duration, err := pkgutils.ToDuration(request.Msg.Interval); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "interval is invalid: %v", err)
 		} else {
 			repo.Spec.Interval = *duration
@@ -448,13 +450,13 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 		repo.Spec.Interval = defaultPollInterval
 	}
 
-	if request.TlsConfig != nil && request.TlsConfig.InsecureSkipVerify {
+	if request.Msg.TlsConfig != nil && request.Msg.TlsConfig.InsecureSkipVerify {
 		// ref https://github.com/fluxcd/source-controller/issues/807
 		return nil, status.Errorf(codes.InvalidArgument, "TLS flag insecureSkipVerify is not supported")
 	}
 
 	// validate and get updated (or newly created) secret
-	secret, isKubeappsManagedSecret, isSecretUpdated, err := s.handleRepoSecretForUpdate(ctx, repo, request.TlsConfig, request.Auth)
+	secret, isKubeappsManagedSecret, isSecretUpdated, err := s.handleRepoSecretForUpdate(ctx, request.Header(), repo, request.Msg.TlsConfig, request.Msg.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -467,19 +469,19 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 		}
 	}
 
-	repo.Spec.PassCredentials = request.Auth != nil && request.Auth.PassCredentials
+	repo.Spec.PassCredentials = request.Msg.Auth != nil && request.Msg.Auth.PassCredentials
 
 	// Get Flux-specific values
-	if request.CustomDetail != nil {
+	if request.Msg.CustomDetail != nil {
 		customDetail := &v1alpha1.FluxPackageRepositoryCustomDetail{}
-		if err := request.CustomDetail.UnmarshalTo(customDetail); err != nil {
+		if err := request.Msg.CustomDetail.UnmarshalTo(customDetail); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "customDetail could not be parsed due to: %v", err)
 		}
 		provider := customDetail.Provider
 
 		// following fixes for issue5746, the provider is allowed to be configured on update if not previously configured
 		if provider != "" && provider != "generic" {
-			if request.Auth != nil && request.Auth.Type != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED {
+			if request.Msg.Auth != nil && request.Msg.Auth.Type != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED {
 				return nil, status.Errorf(codes.InvalidArgument, "Auth provider cannot be configured in combination with another auth method")
 			}
 			if repo.Spec.Provider != "" && repo.Spec.Provider != "generic" && repo.Spec.Provider != provider {
@@ -497,7 +499,7 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 	// even other changes made by the user.
 	repo.Status = sourcev1.HelmRepositoryStatus{}
 
-	if client, err := s.getClient(ctx, key.Namespace); err != nil {
+	if client, err := s.getClient(ctx, request.Header(), key.Namespace); err != nil {
 		return nil, err
 	} else if err = client.Update(ctx, repo); err != nil {
 		return nil, statuserror.FromK8sError("update", "HelmRepository", key.String(), err)
@@ -505,7 +507,7 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 
 		if isKubeappsManagedSecret && isSecretUpdated {
 			// new secret => will need to set the owner
-			if err = s.setOwnerReferencesForRepoSecret(ctx, secret, repo); err != nil {
+			if err = s.setOwnerReferencesForRepoSecret(ctx, request.Header(), secret, repo); err != nil {
 				return nil, err
 			}
 		}
@@ -522,8 +524,8 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 	}
 }
 
-func (s *Server) deleteRepo(ctx context.Context, repoRef *corev1.PackageRepositoryReference) error {
-	client, err := s.getClient(ctx, repoRef.Context.Namespace)
+func (s *Server) deleteRepo(ctx context.Context, headers http.Header, repoRef *corev1.PackageRepositoryReference) error {
+	client, err := s.getClient(ctx, headers, repoRef.Context.Namespace)
 	if err != nil {
 		return err
 	}

@@ -7,6 +7,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -139,14 +140,14 @@ func TestAddPackageRepository(t *testing.T) {
 				pluginsWithServers: configuredPluginServers,
 			}
 
-			addRepoResponse, err := server.AddPackageRepository(context.Background(), tc.request)
+			addRepoResponse, err := server.AddPackageRepository(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			if tc.statusCode == codes.OK {
-				if got, want := addRepoResponse, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedRepoOpts) {
+				if got, want := addRepoResponse.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedRepoOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedRepoOpts))
 				}
 			}
@@ -209,14 +210,14 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				pluginsWithServers: tc.configuredPlugins,
 			}
 			packageRepoDetail, err := server.GetPackageRepositoryDetail(
-				context.Background(), tc.request)
+				context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			if tc.statusCode == codes.OK {
-				if got, want := packageRepoDetail, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedRepoOpts) {
+				if got, want := packageRepoDetail.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedRepoOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedRepoOpts))
 				}
 			}
@@ -275,14 +276,14 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 			server := &repositoriesServer{
 				pluginsWithServers: tc.configuredPlugins,
 			}
-			repoSummaries, err := server.GetPackageRepositorySummaries(context.Background(), tc.request)
+			repoSummaries, err := server.GetPackageRepositorySummaries(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			if tc.statusCode == codes.OK {
-				if got, want := repoSummaries, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedRepoOpts) {
+				if got, want := repoSummaries.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedRepoOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedRepoOpts))
 				}
 			}
@@ -356,14 +357,14 @@ func TestUpdatePackageRepository(t *testing.T) {
 				pluginsWithServers: configuredPluginServers,
 			}
 
-			updatedRepoResponse, err := server.UpdatePackageRepository(context.Background(), tc.request)
+			updatedRepoResponse, err := server.UpdatePackageRepository(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			if tc.statusCode == codes.OK {
-				if got, want := updatedRepoResponse, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedRepoOpts) {
+				if got, want := updatedRepoResponse.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedRepoOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedRepoOpts))
 				}
 			}
@@ -429,7 +430,7 @@ func TestDeletePackageRepository(t *testing.T) {
 				pluginsWithServers: configuredPluginServers,
 			}
 
-			_, err := server.DeletePackageRepository(context.Background(), tc.request)
+			_, err := server.DeletePackageRepository(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -500,14 +501,14 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 				pluginsWithServers: configuredPluginServers,
 			}
 
-			updatedRepoResponse, err := server.GetPackageRepositoryPermissions(context.Background(), tc.request)
+			updatedRepoResponse, err := server.GetPackageRepositoryPermissions(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			if tc.statusCode == codes.OK {
-				if got, want := updatedRepoResponse, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedRepoOpts) {
+				if got, want := updatedRepoResponse.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedRepoOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedRepoOpts))
 				}
 			}

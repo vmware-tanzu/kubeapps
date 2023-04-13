@@ -11,6 +11,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	pluginsv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	packagesConnect "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1/v1alpha1connect"
 	log "k8s.io/klog/v2"
 )
 
@@ -30,8 +31,8 @@ func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) 
 	if err != nil {
 		return nil, err
 	}
-	v1alpha1.RegisterFluxV2PackagesServiceServer(opts.Registrar, svr)
-	v1alpha1.RegisterFluxV2RepositoriesServiceServer(opts.Registrar, svr)
+	opts.Mux.Handle(packagesConnect.NewFluxV2PackagesServiceHandler(svr))
+	opts.Mux.Handle(packagesConnect.NewFluxV2RepositoriesServiceHandler(svr))
 	return svr, nil
 }
 

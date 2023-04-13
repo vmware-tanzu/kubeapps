@@ -7,6 +7,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -109,13 +110,16 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 			})
 			defer cleanup()
 
-			response, err := server.GetInstalledPackageResourceRefs(context.Background(), tc.request)
+			response, err := server.GetInstalledPackageResourceRefs(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
 
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, ignoredFields) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(want, got, ignoredFields) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredFields))
 			}
 		})

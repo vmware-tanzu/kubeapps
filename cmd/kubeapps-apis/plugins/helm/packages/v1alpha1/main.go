@@ -10,6 +10,7 @@ import (
 	pluginsv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
 	pluginsgrpcv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
+	packagesConnect "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1/v1alpha1connect"
 	"google.golang.org/grpc"
 )
 
@@ -35,8 +36,8 @@ func init() {
 //nolint:deadcode
 func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) (interface{}, error) {
 	svr := NewServer(opts.ConfigGetter, opts.ClustersConfig.KubeappsClusterName, opts.ClustersConfig.GlobalPackagingNamespace, opts.ClientQPS, opts.ClientBurst, opts.PluginConfigPath)
-	v1alpha1.RegisterHelmPackagesServiceServer(opts.Registrar, svr)
-	v1alpha1.RegisterHelmRepositoriesServiceServer(opts.Registrar, svr)
+	opts.Mux.Handle(packagesConnect.NewHelmPackagesServiceHandler(svr))
+	opts.Mux.Handle(packagesConnect.NewHelmRepositoriesServiceHandler(svr))
 	return svr, nil
 }
 

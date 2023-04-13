@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bufbuild/connect-go"
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
@@ -174,12 +175,12 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 			response, err := s.GetAvailablePackageSummaries(
 				context.Background(),
-				&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+				connect.NewRequest(&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}}))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, error: %v, want: %+v", got, err, want)
 			} else if got == codes.OK {
-				if response == nil || len(response.AvailablePackageSummaries) != 0 {
+				if response == nil || len(response.Msg.AvailablePackageSummaries) != 0 {
 					t.Fatalf("unexpected response: %v", response)
 				}
 			}
@@ -395,7 +396,7 @@ func newServer(t *testing.T,
 	s := &Server{
 		clientGetter:               clientGetter,
 		serviceAccountClientGetter: backgroundClientGetter,
-		actionConfigGetter: func(context.Context, string) (*action.Configuration, error) {
+		actionConfigGetter: func(http.Header, string) (*action.Configuration, error) {
 			return actionConfig, nil
 		},
 		repoCache:       repoCache,

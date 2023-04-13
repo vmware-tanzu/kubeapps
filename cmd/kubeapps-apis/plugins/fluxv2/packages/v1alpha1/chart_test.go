@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bufbuild/connect-go"
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	redismock "github.com/go-redis/redismock/v8"
@@ -225,12 +226,12 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			response, err := s.GetAvailablePackageDetail(context.Background(), tc.request)
+			response, err := s.GetAvailablePackageDetail(context.Background(), connect.NewRequest(tc.request))
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			compareAvailablePackageDetail(t, response.AvailablePackageDetail, tc.expectedPackageDetail)
+			compareAvailablePackageDetail(t, response.Msg.AvailablePackageDetail, tc.expectedPackageDetail)
 
 			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatalf("%v", err)
@@ -318,15 +319,15 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 
 		response, err := s.GetAvailablePackageDetail(
 			context.Background(),
-			&corev1.GetAvailablePackageDetailRequest{
+			connect.NewRequest(&corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: availableRef(packageIdentifier, repoNamespace),
-			})
+			}))
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
 
 		compareAvailablePackageDetail(t,
-			response.AvailablePackageDetail, expected_detail_redis_1)
+			response.Msg.AvailablePackageDetail, expected_detail_redis_1)
 
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
@@ -365,7 +366,7 @@ func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			response, err := s.GetAvailablePackageDetail(context.Background(), tc.request)
+			response, err := s.GetAvailablePackageDetail(context.Background(), connect.NewRequest(tc.request))
 			if err == nil {
 				t.Fatalf("got nil, want error")
 			}
@@ -501,7 +502,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 				}
 			}
 
-			response, err := s.GetAvailablePackageDetail(context.Background(), tc.request)
+			response, err := s.GetAvailablePackageDetail(context.Background(), connect.NewRequest(tc.request))
 			if err == nil {
 				t.Fatalf("got nil, want error")
 			}
@@ -562,7 +563,7 @@ func TestNegativeGetAvailablePackageVersions(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			response, err := s.GetAvailablePackageVersions(context.Background(), tc.request)
+			response, err := s.GetAvailablePackageVersions(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -572,7 +573,7 @@ func TestNegativeGetAvailablePackageVersions(t *testing.T) {
 			if tc.expectedStatusCode != codes.OK {
 				return
 			}
-			compareAvailablePackageVersions(t, response, tc.expectedResponse)
+			compareAvailablePackageVersions(t, response.Msg, tc.expectedResponse)
 
 			// we make sure that all expectations were met
 			if err := mock.ExpectationsWereMet(); err != nil {
@@ -664,7 +665,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			response, err := s.GetAvailablePackageVersions(context.Background(), tc.request)
+			response, err := s.GetAvailablePackageVersions(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -679,7 +680,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			if tc.expectedStatusCode != codes.OK {
 				return
 			}
-			compareAvailablePackageVersions(t, response, tc.expectedResponse)
+			compareAvailablePackageVersions(t, response.Msg, tc.expectedResponse)
 		})
 	}
 }
@@ -752,7 +753,7 @@ func TestGetOciAvailablePackageVersions(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			response, err := s.GetAvailablePackageVersions(context.Background(), tc.request)
+			response, err := s.GetAvailablePackageVersions(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -767,7 +768,7 @@ func TestGetOciAvailablePackageVersions(t *testing.T) {
 			if tc.expectedStatusCode != codes.OK {
 				return
 			}
-			compareAvailablePackageVersions(t, response, tc.expectedResponse)
+			compareAvailablePackageVersions(t, response.Msg, tc.expectedResponse)
 		})
 	}
 }
@@ -1023,14 +1024,14 @@ func TestChartWithRelativeURL(t *testing.T) {
 	}
 
 	response, err := s.GetAvailablePackageVersions(
-		context.Background(), &corev1.GetAvailablePackageVersionsRequest{
+		context.Background(), connect.NewRequest(&corev1.GetAvailablePackageVersionsRequest{
 			AvailablePackageRef: availableRef(repoName+"/airflow", repoNamespace),
-		})
+		}))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	compareAvailablePackageVersions(t, response, expected_versions_airflow)
+	compareAvailablePackageVersions(t, response.Msg, expected_versions_airflow)
 	if err = mock.ExpectationsWereMet(); err != nil {
 		t.Fatal(err)
 	}
@@ -1117,12 +1118,12 @@ func TestGetOciAvailablePackageDetail(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			response, err := s.GetAvailablePackageDetail(context.Background(), tc.request)
+			response, err := s.GetAvailablePackageDetail(context.Background(), connect.NewRequest(tc.request))
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			compareAvailablePackageDetail(t, response.AvailablePackageDetail, tc.expectedPackageDetail)
+			compareAvailablePackageDetail(t, response.Msg.AvailablePackageDetail, tc.expectedPackageDetail)
 
 			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatal(err)

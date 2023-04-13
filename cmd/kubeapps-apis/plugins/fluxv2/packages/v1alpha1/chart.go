@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
@@ -27,8 +28,8 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func (s *Server) getChartInCluster(ctx context.Context, key types.NamespacedName) (*sourcev1.HelmChart, error) {
-	client, err := s.getClient(ctx, key.Namespace)
+func (s *Server) getChartInCluster(ctx context.Context, headers http.Header, key types.NamespacedName) (*sourcev1.HelmChart, error) {
+	client, err := s.getClient(ctx, headers, key.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +41,7 @@ func (s *Server) getChartInCluster(ctx context.Context, key types.NamespacedName
 }
 
 // TODO (gfichtenholt) this func is too long. Break it up
-func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.AvailablePackageReference, chartVersion string) (*corev1.AvailablePackageDetail, error) {
+func (s *Server) availableChartDetail(ctx context.Context, headers http.Header, packageRef *corev1.AvailablePackageReference, chartVersion string) (*corev1.AvailablePackageDetail, error) {
 	log.Infof("+availableChartDetail(%s, %s)", packageRef, chartVersion)
 
 	repoN, chartName, err := pkgutils.SplitPackageIdentifier(packageRef.Identifier)
@@ -52,7 +53,7 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 	repoName := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: repoN}
 
 	// this verifies that the repo exists
-	repo, err := s.getRepoInCluster(ctx, repoName)
+	repo, err := s.getRepoInCluster(ctx, headers, repoName)
 	if err != nil {
 		return nil, err
 	} else if !isRepoReady(*repo) {
@@ -73,7 +74,7 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 
 	if byteArray == nil {
 		// no specific chart version was provided or a cache miss, need to do a bit of work
-		chartModel, err := s.getChartModel(ctx, repoName, chartName)
+		chartModel, err := s.getChartModel(ctx, headers, repoName, chartName)
 		if err != nil {
 			return nil, err
 		} else if chartModel == nil {
@@ -97,7 +98,7 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 				fn = downloadOCIChartFn(ociRepo)
 			}
 		} else {
-			if opts, err := s.httpClientOptionsForRepo(ctx, repoName); err != nil {
+			if opts, err := s.httpClientOptionsForRepo(ctx, headers, repoName); err != nil {
 				return nil, err
 			} else {
 				fn = downloadHttpChartFn(opts)
@@ -135,10 +136,10 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 	return pkgDetail, nil
 }
 
-func (s *Server) getChartModel(ctx context.Context, repoName types.NamespacedName, chartName string) (*models.Chart, error) {
+func (s *Server) getChartModel(ctx context.Context, headers http.Header, repoName types.NamespacedName, chartName string) (*models.Chart, error) {
 	if s.repoCache == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
-	} else if ok, err := s.hasAccessToNamespace(ctx, common.GetChartsGvr(), repoName.Namespace); err != nil {
+	} else if ok, err := s.hasAccessToNamespace(ctx, headers, common.GetChartsGvr(), repoName.Namespace); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, status.Errorf(codes.PermissionDenied, "user has no [get] access for HelmCharts in namespace [%s]", repoName.Namespace)

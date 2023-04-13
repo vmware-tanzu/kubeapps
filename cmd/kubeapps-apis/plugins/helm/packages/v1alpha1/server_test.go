@@ -17,6 +17,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/utils/fake"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm/agent"
 
@@ -261,7 +262,7 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 		kubeappsNamespace:        kubeappsNamespace,
 		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
-		actionConfigGetter: func(context.Context, *corev1.Context) (*action.Configuration, error) {
+		actionConfigGetter: func(http.Header, *corev1.Context) (*action.Configuration, error) {
 			return actionConfig, nil
 		},
 		chartClientFactory: &fake.ChartClientFactory{},
@@ -828,7 +829,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					WillReturnRows(rows)
 			}
 
-			availablePackageSummaries, err := server.GetAvailablePackageSummaries(context.Background(), tc.request)
+			availablePackageSummaries, err := server.GetAvailablePackageSummaries(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -836,7 +837,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 			if tc.statusCode == codes.OK {
 				opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
-				if got, want := availablePackageSummaries, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
+				if got, want := availablePackageSummaries.Msg, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
 			}
@@ -1147,7 +1148,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					WillReturnRows(fileRows)
 			}
 
-			availablePackageDetails, err := server.GetAvailablePackageDetail(context.Background(), tc.request)
+			availablePackageDetails, err := server.GetAvailablePackageDetail(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -1155,7 +1156,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 
 			if tc.statusCode == codes.OK {
 				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
-				if got, want := availablePackageDetails.AvailablePackageDetail, tc.expectedPackage; !cmp.Equal(got, want, opt1) {
+				if got, want := availablePackageDetails.Msg.AvailablePackageDetail, tc.expectedPackage; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 				}
 			}
@@ -1264,7 +1265,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 					WillReturnRows(rows)
 			}
 
-			response, err := server.GetAvailablePackageVersions(context.Background(), tc.request)
+			response, err := server.GetAvailablePackageVersions(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -1276,7 +1277,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			}
 
 			opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.PackageAppVersion{})
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
 			// we make sure that all expectations were met
@@ -1873,7 +1874,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				populateAssetDBWithSummaries(t, mock, tc.expectedResponse.InstalledPackageSummaries)
 			}
 
-			response, err := server.GetInstalledPackageSummaries(context.Background(), tc.request)
+			response, err := server.GetInstalledPackageSummaries(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -1885,7 +1886,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			}
 
 			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{}, corev1.PackageAppVersion{}, plugins.Plugin{})
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
 
@@ -2017,7 +2018,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				populateAssetDBWithDetail(t, mock, tc.expectedResponse.InstalledPackageDetail)
 			}
 
-			response, err := server.GetInstalledPackageDetail(context.Background(), tc.request)
+			response, err := server.GetInstalledPackageDetail(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -2029,7 +2030,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			}
 
 			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageDetailResponse{}, corev1.InstalledPackageDetail{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{}, corev1.AvailablePackageReference{}, plugins.Plugin{}, corev1.PackageAppVersion{}, anypb.Any{})
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
 

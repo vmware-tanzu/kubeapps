@@ -4,9 +4,9 @@
 package resourcerefs
 
 import (
-	"context"
 	goerrs "errors"
 	"io"
+	"net/http"
 	"strings"
 
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm"
@@ -90,13 +90,13 @@ func ResourceRefsFromManifest(m, pkgNamespace string) ([]*corev1.ResourceRef, er
 }
 
 func GetInstalledPackageResourceRefs(
-	ctx context.Context,
+	headers http.Header,
 	helmReleaseName types.NamespacedName,
 	actionConfigGetter helm.HelmActionConfigGetterFunc) ([]*corev1.ResourceRef, error) {
 	log.InfoS("+resourcerefs GetInstalledPackageResourceRefs", "helmReleaseName", helmReleaseName)
 	namespace := helmReleaseName.Namespace
 
-	actionConfig, err := actionConfigGetter(ctx, namespace)
+	actionConfig, err := actionConfigGetter(headers, namespace)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
 	}

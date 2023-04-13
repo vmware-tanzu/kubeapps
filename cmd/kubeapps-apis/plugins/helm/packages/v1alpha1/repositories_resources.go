@@ -18,8 +18,8 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-func (s *Server) getPkgRepositoryResource(ctx context.Context, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	dynClient, err := s.clientGetter.Dynamic(ctx, http.Header{}, cluster)
+func (s *Server) getPkgRepositoryResource(ctx context.Context, headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
+	dynClient, err := s.clientGetter.Dynamic(ctx, headers, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -33,8 +33,8 @@ func (s *Server) getPkgRepositoryResource(ctx context.Context, cluster, namespac
 }
 
 // getPkgRepository returns the package repository for the given cluster, namespace and identifier
-func (s *Server) getPkgRepository(ctx context.Context, cluster, namespace, identifier string) (*apprepov1alpha1.AppRepository, *k8scorev1.Secret, *k8scorev1.Secret, error) {
-	client, err := s.getClient(ctx, cluster, namespace)
+func (s *Server) getPkgRepository(ctx context.Context, headers http.Header, cluster, namespace, identifier string) (*apprepov1alpha1.AppRepository, *k8scorev1.Secret, *k8scorev1.Secret, error) {
+	client, err := s.getClient(ctx, headers, cluster, namespace)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -49,7 +49,7 @@ func (s *Server) getPkgRepository(ctx context.Context, cluster, namespace, ident
 	}
 
 	// Auth and TLS
-	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, headers, cluster)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -77,9 +77,9 @@ func (s *Server) getPkgRepository(ctx context.Context, cluster, namespace, ident
 }
 
 // updatePkgRepository updates a package repository for the given cluster, namespace and identifier
-func (s *Server) updatePkgRepository(ctx context.Context, cluster, namespace string, newPkgRepository *apprepov1alpha1.AppRepository) error {
+func (s *Server) updatePkgRepository(ctx context.Context, headers http.Header, cluster, namespace string, newPkgRepository *apprepov1alpha1.AppRepository) error {
 
-	client, err := s.getClient(ctx, cluster, namespace)
+	client, err := s.getClient(ctx, headers, cluster, namespace)
 	if err != nil {
 		return err
 	}

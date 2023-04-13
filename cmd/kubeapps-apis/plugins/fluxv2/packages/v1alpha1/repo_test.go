@@ -16,6 +16,7 @@ import (
 	authorizationv1 "k8s.io/api/authorization/v1"
 	k8stesting "k8s.io/client-go/testing"
 
+	"github.com/bufbuild/connect-go"
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	redismock "github.com/go-redis/redismock/v8"
@@ -445,7 +446,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 				}
 			}
 
-			response, err := s.GetAvailablePackageSummaries(context.Background(), tc.request)
+			response, err := s.GetAvailablePackageSummaries(context.Background(), connect.NewRequest(tc.request))
 			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
 				t.Fatalf("got: %v, want: %v", got, want)
 			}
@@ -458,7 +459,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatal(err)
 			}
-			compareAvailablePackageSummaries(t, response, tc.expectedResponse)
+			compareAvailablePackageSummaries(t, response.Msg, tc.expectedResponse)
 		})
 	}
 }
@@ -506,7 +507,7 @@ func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
 			},
 		}
 
-		response1, err := s.GetAvailablePackageSummaries(context.Background(), request1)
+		response1, err := s.GetAvailablePackageSummaries(context.Background(), connect.NewRequest(request1))
 		if got, want := status.Code(err), codes.OK; got != want {
 			t.Fatalf("got: %v, want: %v", got, want)
 		}
@@ -535,11 +536,11 @@ func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
 
 		match := false
 		var nextExpectedResp *corev1.GetAvailablePackageSummariesResponse
-		if got, want := response1, expectedResp1; cmp.Equal(want, got, opts, opts2) {
+		if got, want := response1.Msg, expectedResp1; cmp.Equal(want, got, opts, opts2) {
 			match = true
 			nextExpectedResp = expectedResp2
 			nextExpectedResp.NextPageToken = "2"
-		} else if got, want := response1, expectedResp2; cmp.Equal(want, got, opts, opts2) {
+		} else if got, want := response1.Msg, expectedResp2; cmp.Equal(want, got, opts, opts2) {
 			match = true
 			nextExpectedResp = expectedResp1
 			nextExpectedResp.NextPageToken = "2"
@@ -559,11 +560,11 @@ func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
 		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repos...); err != nil {
 			t.Fatal(err)
 		}
-		response2, err := s.GetAvailablePackageSummaries(context.Background(), request2)
+		response2, err := s.GetAvailablePackageSummaries(context.Background(), connect.NewRequest(request2))
 		if got, want := status.Code(err), codes.OK; got != want {
 			t.Fatalf("got: %v, want: %v", err, want)
 		}
-		compareAvailablePackageSummaries(t, response2, nextExpectedResp)
+		compareAvailablePackageSummaries(t, response2.Msg, nextExpectedResp)
 
 		request3 := &corev1.GetAvailablePackageSummariesRequest{
 			Context: &corev1.Context{Namespace: "blah"},
@@ -579,11 +580,11 @@ func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
 		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repos...); err != nil {
 			t.Fatal(err)
 		}
-		response3, err := s.GetAvailablePackageSummaries(context.Background(), request3)
+		response3, err := s.GetAvailablePackageSummaries(context.Background(), connect.NewRequest(request3))
 		if got, want := status.Code(err), codes.OK; got != want {
 			t.Fatalf("got: %v, want: %v", err, want)
 		}
-		compareAvailablePackageSummaries(t, response3, nextExpectedResp)
+		compareAvailablePackageSummaries(t, response3.Msg, nextExpectedResp)
 
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatal(err)
@@ -650,7 +651,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		ctx := context.Background()
 		responseBeforeUpdate, err := s.GetAvailablePackageSummaries(
 			ctx,
-			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+			connect.NewRequest(&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}}))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -659,7 +660,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		compareAvailablePackageSummaries(t, responseBeforeUpdate, expected_summaries_before_update)
+		compareAvailablePackageSummaries(t, responseBeforeUpdate.Msg, expected_summaries_before_update)
 
 		// see below
 		key, oldValue, err := s.redisKeyValueForRepo(repo)
@@ -702,11 +703,11 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 
 			responsePackagesAfterUpdate, err := s.GetAvailablePackageSummaries(
 				ctx,
-				&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+				connect.NewRequest(&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}}))
 			if err != nil {
 				t.Fatal(err)
 			}
-			compareAvailablePackageSummaries(t, responsePackagesAfterUpdate, expected_summaries_after_update)
+			compareAvailablePackageSummaries(t, responsePackagesAfterUpdate.Msg, expected_summaries_after_update)
 
 			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatal(err)
@@ -766,7 +767,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 
 		responseBeforeDelete, err := s.GetAvailablePackageSummaries(
 			context.Background(),
-			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+			connect.NewRequest(&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}}))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -775,7 +776,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		compareAvailablePackageSummaries(t, responseBeforeDelete, valid_index_available_package_summaries_resp)
+		compareAvailablePackageSummaries(t, responseBeforeDelete.Msg, valid_index_available_package_summaries_resp)
 
 		// now we are going to simulate the user deleting a HelmRepository CR which, in turn,
 		// causes k8s server to fire a DELETE event
@@ -821,12 +822,12 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 
 		responseAfterDelete, err := s.GetAvailablePackageSummaries(
 			context.Background(),
-			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+			connect.NewRequest(&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}}))
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if len(responseAfterDelete.AvailablePackageSummaries) != 0 {
+		if len(responseAfterDelete.Msg.AvailablePackageSummaries) != 0 {
 			t.Errorf("expected empty array, got: %s", responseAfterDelete)
 		}
 
@@ -856,7 +857,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 
 		responseBeforeResync, err := s.GetAvailablePackageSummaries(
 			context.Background(),
-			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+			connect.NewRequest(&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}}))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -865,7 +866,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		compareAvailablePackageSummaries(t, responseBeforeResync, valid_index_available_package_summaries_resp)
+		compareAvailablePackageSummaries(t, responseBeforeResync.Msg, valid_index_available_package_summaries_resp)
 
 		resyncCh, err := s.repoCache.ExpectResync()
 		if err != nil {
@@ -906,7 +907,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 
 		responseAfterResync, err := s.GetAvailablePackageSummaries(
 			context.Background(),
-			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
+			connect.NewRequest(&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}}))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -915,7 +916,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		compareAvailablePackageSummaries(t, responseAfterResync, valid_index_available_package_summaries_resp)
+		compareAvailablePackageSummaries(t, responseAfterResync.Msg, valid_index_available_package_summaries_resp)
 	})
 }
 
@@ -1032,7 +1033,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 		}
 
 		resp, err := s.GetAvailablePackageSummaries(context.TODO(),
-			&corev1.GetAvailablePackageSummariesRequest{})
+			connect.NewRequest(&corev1.GetAvailablePackageSummariesRequest{}))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -1044,7 +1045,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 			repo := fmt.Sprintf("bitnami-%d", i)
 			expected.Insert(repo)
 		}
-		for _, s := range resp.AvailablePackageSummaries {
+		for _, s := range resp.Msg.AvailablePackageSummaries {
 			id := strings.Split(s.AvailablePackageRef.Identifier, "/")
 			expected.Delete(id[0])
 		}
@@ -1145,7 +1146,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 		mock.ExpectGet(key).SetVal(string(byteArray))
 
 		resp, err := s.GetAvailablePackageSummaries(context.TODO(),
-			&corev1.GetAvailablePackageSummariesRequest{})
+			connect.NewRequest(&corev1.GetAvailablePackageSummariesRequest{}))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -1154,7 +1155,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 		// regardless whether they're in the cache or not
 		expected := sets.Set[string]{}
 		expected.Insert(repoName)
-		for _, s := range resp.AvailablePackageSummaries {
+		for _, s := range resp.Msg.AvailablePackageSummaries {
 			id := strings.Split(s.AvailablePackageRef.Identifier, "/")
 			expected.Delete(id[0])
 		}
@@ -1382,7 +1383,7 @@ func TestAddPackageRepository(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			response, err := s.AddPackageRepository(ctx, tc.request)
+			response, err := s.AddPackageRepository(ctx, connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -1399,7 +1400,7 @@ func TestAddPackageRepository(t *testing.T) {
 						corev1.PackageRepositoryReference{},
 						plugins.Plugin{},
 					)
-					if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
+					if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
 						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 					}
 				}
@@ -1697,7 +1698,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			actualResp, err := s.GetPackageRepositoryDetail(ctx, tc.request)
+			actualResp, err := s.GetPackageRepositoryDetail(ctx, connect.NewRequest(tc.request))
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
@@ -1706,7 +1707,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				if actualResp == nil {
 					t.Fatalf("got: nil, want: response")
 				} else {
-					comparePackageRepositoryDetail(t, actualResp, tc.expectedResponse)
+					comparePackageRepositoryDetail(t, actualResp.Msg, tc.expectedResponse)
 				}
 			}
 		})
@@ -1756,7 +1757,7 @@ func TestGetOciPackageRepositoryDetail(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			actualResp, err := s.GetPackageRepositoryDetail(ctx, tc.request)
+			actualResp, err := s.GetPackageRepositoryDetail(ctx, connect.NewRequest(tc.request))
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
@@ -1765,7 +1766,7 @@ func TestGetOciPackageRepositoryDetail(t *testing.T) {
 				if actualResp == nil {
 					t.Fatalf("got: nil, want: response")
 				} else {
-					comparePackageRepositoryDetail(t, actualResp, tc.expectedResponse)
+					comparePackageRepositoryDetail(t, actualResp.Msg, tc.expectedResponse)
 				}
 			}
 
@@ -1844,7 +1845,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			response, err := s.GetPackageRepositorySummaries(context.Background(), tc.request)
+			response, err := s.GetPackageRepositorySummaries(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -1855,7 +1856,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				return
 			}
 
-			comparePackageRepositorySummaries(t, response, tc.expectedResponse)
+			comparePackageRepositorySummaries(t, response.Msg, tc.expectedResponse)
 
 			if err := mock.ExpectationsWereMet(); err != nil {
 				t.Errorf("there were unfulfilled expectations: %s", err)
@@ -2185,7 +2186,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			actualResp, err := s.UpdatePackageRepository(ctx, tc.request)
+			actualResp, err := s.UpdatePackageRepository(ctx, connect.NewRequest(tc.request))
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
@@ -2200,7 +2201,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 						plugins.Plugin{},
 						corev1.UpdatePackageRepositoryResponse{},
 					)
-					if got, want := actualResp, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
+					if got, want := actualResp.Msg, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
 						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 					}
 				}
@@ -2209,9 +2210,9 @@ func TestUpdatePackageRepository(t *testing.T) {
 				return
 			}
 
-			actualDetail, err := s.GetPackageRepositoryDetail(ctx, &corev1.GetPackageRepositoryDetailRequest{
-				PackageRepoRef: actualResp.PackageRepoRef,
-			})
+			actualDetail, err := s.GetPackageRepositoryDetail(ctx, connect.NewRequest(&corev1.GetPackageRepositoryDetailRequest{
+				PackageRepoRef: actualResp.Msg.PackageRepoRef,
+			}))
 			if got, want := status.Code(err), codes.OK; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
@@ -2219,7 +2220,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			if actualDetail == nil {
 				t.Fatalf("got: nil, want: detail")
 			} else {
-				comparePackageRepositoryDetail(t, actualDetail, tc.expectedDetail)
+				comparePackageRepositoryDetail(t, actualDetail.Msg, tc.expectedDetail)
 			}
 
 			// ensures the secret has been created/updated correctly
@@ -2360,7 +2361,7 @@ func TestDeletePackageRepository(t *testing.T) {
 				}
 			}
 
-			_, err = s.DeletePackageRepository(ctx, tc.request)
+			_, err = s.DeletePackageRepository(ctx, connect.NewRequest(tc.request))
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
@@ -2457,7 +2458,7 @@ func TestGetOciAvailablePackageSummariesWithoutPagination(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			response, err := s.GetAvailablePackageSummaries(context.Background(), tc.request)
+			response, err := s.GetAvailablePackageSummaries(context.Background(), connect.NewRequest(tc.request))
 			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
 				t.Fatalf("got: %v, want: %v, err: %v", got, want, err)
 			}
@@ -2470,7 +2471,7 @@ func TestGetOciAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatal(err)
 			}
-			compareAvailablePackageSummaries(t, response, tc.expectedResponse)
+			compareAvailablePackageSummaries(t, response.Msg, tc.expectedResponse)
 		})
 	}
 }
@@ -2839,7 +2840,7 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := newServerWithReactors(t, tc.reactors)
 
-			response, err := s.GetPackageRepositoryPermissions(context.Background(), tc.request)
+			response, err := s.GetPackageRepositoryPermissions(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
@@ -2856,7 +2857,7 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 				corev1.GetPackageRepositoryPermissionsResponse{},
 				corev1.PackageRepositoriesPermissions{},
 			)
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
 		})

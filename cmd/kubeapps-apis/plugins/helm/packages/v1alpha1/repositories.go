@@ -7,6 +7,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository"
 
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -55,14 +56,14 @@ const HTTP_PROXY = "HTTP_PROXY"
 const HTTPS_PROXY = "HTTPS_PROXY"
 const NO_PROXY = "NO_PROXY"
 
-func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.PackageRepositoryReference, error) {
+func (s *Server) newRepo(ctx context.Context, headers http.Header, repo *HelmRepository) (*corev1.PackageRepositoryReference, error) {
 	if repo.url == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "repository url may not be empty")
 	}
 	if repo.repoType == "" || !slices.Contains(ValidRepoTypes, repo.repoType) {
 		return nil, status.Errorf(codes.InvalidArgument, "repository type [%s] not supported", repo.repoType)
 	}
-	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, repo.cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, headers, repo.cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -119,18 +120,18 @@ func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.Pac
 	}
 
 	// Create repository CRD in K8s
-	if client, err := s.getClient(ctx, repo.cluster, repo.name.Namespace); err != nil {
+	if client, err := s.getClient(ctx, headers, repo.cluster, repo.name.Namespace); err != nil {
 		return nil, err
 	} else if err = client.Create(ctx, helmRepoCrd); err != nil {
 		return nil, statuserror.FromK8sError("create", AppRepositoryKind, repo.name.String(), err)
 	} else {
 		if secretIsKubeappsManaged {
-			if err = s.setOwnerReferencesForRepoSecret(ctx, secret, repo.cluster, helmRepoCrd); err != nil {
+			if err = s.setOwnerReferencesForRepoSecret(ctx, headers, secret, repo.cluster, helmRepoCrd); err != nil {
 				return nil, err
 			}
 		}
 		if imagePullSecretIsKubeappsManaged {
-			if err = s.setOwnerReferencesForRepoSecret(ctx, imagePullSecret, repo.cluster, helmRepoCrd); err != nil {
+			if err = s.setOwnerReferencesForRepoSecret(ctx, headers, imagePullSecret, repo.cluster, helmRepoCrd); err != nil {
 				return nil, err
 			}
 		}
@@ -306,12 +307,13 @@ func (s *Server) mapToPackageRepositoryDetail(source *apprepov1alpha1.AppReposit
 // See https://github.com/vmware-tanzu/kubeapps/pull/4630#discussion_r861446394 for details
 func (s *Server) setOwnerReferencesForRepoSecret(
 	ctx context.Context,
+	headers http.Header,
 	secret *k8scorev1.Secret,
 	cluster string,
 	repo *apprepov1alpha1.AppRepository) error {
 
 	if secret != nil {
-		if typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, cluster); err != nil {
+		if typedClient, err := s.clientGetter.Typed(ctx, headers, cluster); err != nil {
 			return err
 		} else {
 			secretsInterface := typedClient.CoreV1().Secrets(repo.Namespace)
@@ -333,6 +335,7 @@ func (s *Server) setOwnerReferencesForRepoSecret(
 }
 
 func (s *Server) updateRepo(ctx context.Context,
+	headers http.Header,
 	appRepo *apprepov1alpha1.AppRepository,
 	caSecret *k8scorev1.Secret,
 	authSecret *k8scorev1.Secret,
@@ -344,7 +347,7 @@ func (s *Server) updateRepo(ctx context.Context,
 	if repo.name.Name == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "repository name may not be empty")
 	}
-	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, repo.cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, headers, repo.cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -487,19 +490,19 @@ func (s *Server) updateRepo(ctx context.Context,
 	}
 
 	// persist repository
-	err = s.updatePkgRepository(ctx, repo.cluster, repo.name.Namespace, appRepo)
+	err = s.updatePkgRepository(ctx, headers, repo.cluster, repo.name.Namespace, appRepo)
 	if err != nil {
 		return nil, statuserror.FromK8sError("update", AppRepositoryKind, repo.name.String(), err)
 	}
 
 	// update owner references
 	if secretIsKubeappsManaged {
-		if err = s.setOwnerReferencesForRepoSecret(ctx, secret, repo.cluster, appRepo); err != nil {
+		if err = s.setOwnerReferencesForRepoSecret(ctx, headers, secret, repo.cluster, appRepo); err != nil {
 			return nil, err
 		}
 	}
 	if imagePullSecretIsKubeappsManaged {
-		if err = s.setOwnerReferencesForRepoSecret(ctx, imagePullSecret, repo.cluster, appRepo); err != nil {
+		if err = s.setOwnerReferencesForRepoSecret(ctx, headers, imagePullSecret, repo.cluster, appRepo); err != nil {
 			return nil, err
 		}
 	}
@@ -516,15 +519,15 @@ func (s *Server) updateRepo(ctx context.Context,
 	}, nil
 }
 
-func (s *Server) repoSummaries(ctx context.Context, cluster string, namespace string) ([]*corev1.PackageRepositorySummary, error) {
+func (s *Server) repoSummaries(ctx context.Context, headers http.Header, cluster string, namespace string) ([]*corev1.PackageRepositorySummary, error) {
 	var summaries []*corev1.PackageRepositorySummary
 
-	repos, err := s.GetPkgRepositories(ctx, cluster, namespace)
+	repos, err := s.GetPkgRepositories(ctx, headers, cluster, namespace)
 	if err != nil {
 		// Catch forbidden errors in cluster-wide listings
 		if errors.IsForbidden(err) && namespace == "" {
 			log.Warningf("+helm unable to list package repositories at the cluster scope in '%s' due to [%v]", cluster, err)
-			repos, err = s.getAccessiblePackageRepositories(ctx, cluster)
+			repos, err = s.getAccessiblePackageRepositories(ctx, headers, cluster)
 			if err != nil {
 				return nil, err
 			}
@@ -561,8 +564,8 @@ func (s *Server) repoSummaries(ctx context.Context, cluster string, namespace st
 }
 
 // GetPkgRepositories returns the list of package repositories for the given cluster and namespace
-func (s *Server) GetPkgRepositories(ctx context.Context, cluster, namespace string) ([]*apprepov1alpha1.AppRepository, error) {
-	resource, err := s.getPkgRepositoryResource(ctx, cluster, namespace)
+func (s *Server) GetPkgRepositories(ctx context.Context, headers http.Header, cluster, namespace string) ([]*apprepov1alpha1.AppRepository, error) {
+	resource, err := s.getPkgRepositoryResource(ctx, headers, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -584,9 +587,9 @@ func (s *Server) GetPkgRepositories(ctx context.Context, cluster, namespace stri
 }
 
 // getAccessiblePackageRepositories gather list of repositories to which the user has access per namespace
-func (s *Server) getAccessiblePackageRepositories(ctx context.Context, cluster string) ([]*apprepov1alpha1.AppRepository, error) {
+func (s *Server) getAccessiblePackageRepositories(ctx context.Context, headers http.Header, cluster string) ([]*apprepov1alpha1.AppRepository, error) {
 	clusterTypedClientFunc := func() (kubernetes.Interface, error) {
-		return s.clientGetter.Typed(ctx, http.Header{}, cluster)
+		return s.clientGetter.Typed(ctx, headers, cluster)
 	}
 	inClusterTypedClientFunc := func() (kubernetes.Interface, error) {
 		return s.localServiceAccountClientGetter.Typed(context.Background())
@@ -599,7 +602,7 @@ func (s *Server) getAccessiblePackageRepositories(ctx context.Context, cluster s
 	namespaceList = resources.FilterActiveNamespaces(namespaceList)
 	var accessibleRepos []*apprepov1alpha1.AppRepository
 	for _, ns := range namespaceList {
-		nsRepos, err := s.GetPkgRepositories(ctx, cluster, ns.Name)
+		nsRepos, err := s.GetPkgRepositories(ctx, headers, cluster, ns.Name)
 		if err != nil {
 			log.Warningf("+helm could not list AppRepository in namespace %s", ns.Name)
 			// Continue. Error in a single namespace should not block the whole list
@@ -609,8 +612,8 @@ func (s *Server) getAccessiblePackageRepositories(ctx context.Context, cluster s
 	return accessibleRepos, nil
 }
 
-func (s *Server) deleteRepo(ctx context.Context, cluster string, repoRef *corev1.PackageRepositoryReference) error {
-	client, err := s.getClient(ctx, cluster, repoRef.Context.Namespace)
+func (s *Server) deleteRepo(ctx context.Context, headers http.Header, cluster string, repoRef *corev1.PackageRepositoryReference) error {
+	client, err := s.getClient(ctx, headers, cluster, repoRef.Context.Namespace)
 	if err != nil {
 		return err
 	}
@@ -631,7 +634,7 @@ func (s *Server) deleteRepo(ctx context.Context, cluster string, repoRef *corev1
 	} else {
 		// Cross-namespace owner references are disallowed by design.
 		// We need to explicitly delete the repo secret from the namespace of the asset syncer.
-		typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, cluster)
+		typedClient, err := s.clientGetter.Typed(ctx, headers, cluster)
 		if err != nil {
 			return err
 		}
@@ -643,15 +646,15 @@ func (s *Server) deleteRepo(ctx context.Context, cluster string, repoRef *corev1
 	}
 }
 
-func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *corev1.GetPackageRepositoryPermissionsRequest) (*corev1.GetPackageRepositoryPermissionsResponse, error) {
+func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *connect.Request[corev1.GetPackageRepositoryPermissionsRequest]) (*connect.Response[corev1.GetPackageRepositoryPermissionsResponse], error) {
 	log.Infof("+helm GetPackageRepositoryPermissions [%v]", request)
 
-	cluster := request.GetContext().GetCluster()
-	namespace := request.GetContext().GetNamespace()
+	cluster := request.Msg.GetContext().GetCluster()
+	namespace := request.Msg.GetContext().GetNamespace()
 	if cluster == "" && namespace != "" {
 		return nil, status.Errorf(codes.InvalidArgument, "cluster must be specified when namespace is present: %s", namespace)
 	}
-	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, request.Header(), cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -673,13 +676,13 @@ func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *c
 
 	// Namespace permissions
 	if namespace != "" {
-		permissions.Namespace, err = resources.GetPermissionsOnResource(ctx, typedClient, resource, request.GetContext().GetNamespace())
+		permissions.Namespace, err = resources.GetPermissionsOnResource(ctx, typedClient, resource, request.Msg.GetContext().GetNamespace())
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return &corev1.GetPackageRepositoryPermissionsResponse{
+	return connect.NewResponse(&corev1.GetPackageRepositoryPermissionsResponse{
 		Permissions: []*corev1.PackageRepositoriesPermissions{permissions},
-	}, nil
+	}), nil
 }

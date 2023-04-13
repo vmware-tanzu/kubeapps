@@ -112,6 +112,9 @@ func Serve(serveOpts core.ServeOptions) error {
 	if err := registerPackagesServiceServer(mux_connect, pluginsServer, gwArgs); err != nil {
 		return err
 	}
+	if err := registerRepositoriesServiceServer(mux_connect, pluginsServer, gwArgs); err != nil {
+		return err
+	}
 
 	// The gRPC Health checker reports on all connected services.
 	checker := grpchealth.NewStaticChecker(
@@ -146,7 +149,7 @@ func registerPackagesServiceServer(mux *http.ServeMux, pluginsServer *pluginsv1a
 	// The argument for the reflect.TypeOf is based on what grpc-go
 	// does itself at:
 	// https://github.com/grpc/grpc-go/blob/v1.38.0/server.go#L621
-	packagingPlugins := pluginsServer.GetPluginsSatisfyingInterface(reflect.TypeOf((*packagesGRPCv1alpha1.PackagesServiceServer)(nil)).Elem())
+	packagingPlugins := pluginsServer.GetPluginsSatisfyingInterface(reflect.TypeOf((*packagesConnect.PackagesServiceHandler)(nil)).Elem())
 
 	// Create the core.packages server and register it for both grpc and http.
 	packagesServer, err := packagesv1alpha1.NewPackagesServer(packagingPlugins)
@@ -163,16 +166,17 @@ func registerPackagesServiceServer(mux *http.ServeMux, pluginsServer *pluginsv1a
 	return nil
 }
 
-func registerRepositoriesServiceServer(grpcSrv *grpc.Server, pluginsServer *pluginsv1alpha1.PluginsServer, gwArgs core.GatewayHandlerArgs) error {
+func registerRepositoriesServiceServer(mux *http.ServeMux, pluginsServer *pluginsv1alpha1.PluginsServer, gwArgs core.GatewayHandlerArgs) error {
 	// see comment in registerPackagesServiceServer
-	repositoriesPlugins := pluginsServer.GetPluginsSatisfyingInterface(reflect.TypeOf((*packagesGRPCv1alpha1.RepositoriesServiceServer)(nil)).Elem())
+	repositoriesPlugins := pluginsServer.GetPluginsSatisfyingInterface(reflect.TypeOf((*packagesConnect.RepositoriesServiceHandler)(nil)).Elem())
 
 	// Create the core.packages server and register it for both grpc and http.
 	repoServer, err := packagesv1alpha1.NewRepositoriesServer(repositoriesPlugins)
 	if err != nil {
 		return fmt.Errorf("failed to create core.packages.v1alpha1 server: %w", err)
 	}
-	packagesGRPCv1alpha1.RegisterRepositoriesServiceServer(grpcSrv, repoServer)
+	mux.Handle(packagesConnect.NewRepositoriesServiceHandler(repoServer))
+
 	err = packagesGRPCv1alpha1.RegisterRepositoriesServiceHandlerFromEndpoint(gwArgs.Ctx, gwArgs.Mux, gwArgs.Addr, gwArgs.DialOptions)
 	if err != nil {
 		return fmt.Errorf("failed to register core.packages handler for gateway: %v", err)
@@ -325,10 +329,6 @@ func createImprobableGRPCServer(ctx context.Context, listenAddr string) (*grpc.S
 
 // startImprobableHandler returns the port on which the improbable gRPC handler is listening.
 func startImprobableHandler(pluginsServer *pluginsv1alpha1.PluginsServer, listenerCMux net.Listener, grpcSrv *grpc.Server, gwArgs core.GatewayHandlerArgs) (int, error) {
-
-	if err := registerRepositoriesServiceServer(grpcSrv, pluginsServer, gwArgs); err != nil {
-		return 0, err
-	}
 
 	// Multiplex the connection between grpc and http.
 	// Note: due to a change in the grpc protocol, it's no longer possible to just match

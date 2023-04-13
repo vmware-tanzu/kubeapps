@@ -17,14 +17,15 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-type HelmActionConfigGetterFunc func(ctx context.Context, namespace string) (*action.Configuration, error)
+type HelmActionConfigGetterFunc func(headers http.Header, namespace string) (*action.Configuration, error)
 
 func NewHelmActionConfigGetter(configGetter core.KubernetesConfigGetter, cluster string) HelmActionConfigGetterFunc {
-	return func(ctx context.Context, namespace string) (*action.Configuration, error) {
+	return func(headers http.Header, namespace string) (*action.Configuration, error) {
 		if configGetter == nil {
 			return nil, status.Errorf(codes.Internal, "configGetter arg required")
 		}
-		config, err := configGetter(ctx, http.Header{}, cluster)
+		// TODO(minelson): Remove context from signature of configGetter.
+		config, err := configGetter(context.TODO(), headers, cluster)
 		if err != nil {
 			return nil, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
 		}
