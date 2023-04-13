@@ -52,7 +52,6 @@ func NewRepositoriesServer(pkgingPlugins []pluginsv1alpha1.PluginWithServer) (*r
 		}
 		log.Infof("Registered %v for core.packaging.v1alpha1 repositories aggregation.", p.Plugin)
 	}
-	log.Errorf("pluginsWithServers for repos: %+v", pluginsWithServer)
 	return &repositoriesServer{
 		pluginsWithServers: pluginsWithServer,
 	}, nil
@@ -123,7 +122,6 @@ func (s repositoriesServer) GetPackageRepositorySummaries(ctx context.Context, r
 	summaries := []*packages.PackageRepositorySummary{}
 	// TODO: We can do these in parallel in separate go routines.
 	for _, p := range s.pluginsWithServers {
-		log.Errorf("requesting repos using headers: %+v", request.Header())
 		response, err := p.server.GetPackageRepositorySummaries(ctx, request)
 		if err != nil {
 			return nil, status.Errorf(status.Convert(err).Code(), "Invalid GetPackageRepositorySummaries response from the plugin %v: %v", p.plugin.Name, err)

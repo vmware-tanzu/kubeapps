@@ -40,7 +40,6 @@ func NewPackagesServer(pkgingPlugins []pluginsv1alpha1.PluginWithServer) (*packa
 	// Verify that each plugin is indeed a packaging plugin while
 	// casting.
 	pluginsWithServer := make([]pkgPluginWithServer, len(pkgingPlugins))
-	log.Errorf("Number of pkgingPlugins: %d", len(pkgingPlugins))
 	for i, p := range pkgingPlugins {
 		pkgsSrv, ok := p.Server.(connectpackages.PackagesServiceHandler)
 		if !ok {
@@ -52,7 +51,6 @@ func NewPackagesServer(pkgingPlugins []pluginsv1alpha1.PluginWithServer) (*packa
 		}
 		log.Infof("Registered %v for core.packaging.v1alpha1 packages aggregation.", p.Plugin)
 	}
-	log.Errorf("Number of pluginsWithServer: %d", len(pluginsWithServer))
 	return &packagesServer{
 		pluginsWithServers: pluginsWithServer,
 	}, nil
