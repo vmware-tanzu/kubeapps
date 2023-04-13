@@ -64,8 +64,6 @@ func fanInAvailablePackageSummaries(ctx context.Context, pkgPlugins []pkgPluginW
 		return nil, err
 	}
 
-	ctxForPlugin := updateContextWithAuthz(ctx, request.Header())
-
 	fanInput := []<-chan *availableSummaryWithOffset{}
 	for _, pluginWithSrv := range pkgPlugins {
 		// Importantly, each plugin needs its own request, with its own pagination
@@ -78,8 +76,10 @@ func fanInAvailablePackageSummaries(ctx context.Context, pkgPlugins []pkgPluginW
 				PageToken: fmt.Sprintf("%d", pluginPageOffsets[pluginWithSrv.plugin.Name]),
 			},
 		}
+		connectRequest := connect.NewRequest(r)
+		connectRequest.Header().Set("Authorization", request.Header().Get("Authorization"))
 
-		ch, err := sendAvailablePackageSummariesForPlugin(ctxForPlugin, pluginWithSrv, r)
+		ch, err := sendAvailablePackageSummariesForPlugin(ctx, pluginWithSrv, connectRequest)
 		if err != nil {
 			return nil, err
 		}
@@ -172,10 +172,10 @@ type availableSummaryWithOffset struct {
 
 // sendAvailablePackageSummariesForPlugin returns a channel and sends the
 // available package summaries returned by the plugin for the given request.
-func sendAvailablePackageSummariesForPlugin(ctx context.Context, pkgPlugin pkgPluginWithServer, request *packages.GetAvailablePackageSummariesRequest) (<-chan *availableSummaryWithOffset, error) {
+func sendAvailablePackageSummariesForPlugin(ctx context.Context, pkgPlugin pkgPluginWithServer, request *connect.Request[packages.GetAvailablePackageSummariesRequest]) (<-chan *availableSummaryWithOffset, error) {
 	summaryCh := make(chan *availableSummaryWithOffset)
 
-	itemOffset, err := paginate.ItemOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	itemOffset, err := paginate.ItemOffsetFromPageToken(request.Msg.GetPaginationOptions().GetPageToken())
 	if err != nil {
 		return nil, err
 	}
@@ -198,8 +198,8 @@ func sendAvailablePackageSummariesForPlugin(ctx context.Context, pkgPlugin pkgPl
 				close(summaryCh)
 				return
 			}
-			categories := response.Categories
-			for _, summary := range response.AvailablePackageSummaries {
+			categories := response.Msg.Categories
+			for _, summary := range response.Msg.AvailablePackageSummaries {
 				itemOffset = itemOffset + 1
 				summaryCh <- &availableSummaryWithOffset{
 					availablePackageSummary: summary,
@@ -209,18 +209,18 @@ func sendAvailablePackageSummariesForPlugin(ctx context.Context, pkgPlugin pkgPl
 				// We only need to send the categories once per response.
 				categories = nil
 			}
-			if response.GetNextPageToken() == "" {
+			if response.Msg.GetNextPageToken() == "" {
 				close(summaryCh)
 				return
 			}
 			// We can sanity check here to be sure the next page token
 			// corresponds to the current value of itemOffset.
-			if fmt.Sprintf("%d", itemOffset) != response.GetNextPageToken() {
+			if fmt.Sprintf("%d", itemOffset) != response.Msg.GetNextPageToken() {
 				summaryCh <- &availableSummaryWithOffset{
-					err: fmt.Errorf("inconsistent item offset: got: %q, expected: %d", response.GetNextPageToken(), itemOffset),
+					err: fmt.Errorf("inconsistent item offset: got: %q, expected: %d", response.Msg.GetNextPageToken(), itemOffset),
 				}
 			}
-			request.PaginationOptions.PageToken = response.GetNextPageToken()
+			request.Msg.PaginationOptions.PageToken = response.Msg.GetNextPageToken()
 		}
 	}()
 
@@ -262,8 +262,6 @@ func fanInInstalledPackageSummaries(ctx context.Context, pkgPlugins []pkgPluginW
 		return nil, err
 	}
 
-	ctxForPlugin := updateContextWithAuthz(ctx, request.Header())
-
 	fanInput := []<-chan *installedSummaryWithOffset{}
 	for _, pluginWithSrv := range pkgPlugins {
 		// Importantly, each plugin needs its own request, with its own pagination
@@ -275,8 +273,10 @@ func fanInInstalledPackageSummaries(ctx context.Context, pkgPlugins []pkgPluginW
 				PageToken: fmt.Sprintf("%d", pluginPageOffsets[pluginWithSrv.plugin.Name]),
 			},
 		}
+		connectRequest := connect.NewRequest(r)
+		connectRequest.Header().Set("Authorization", request.Header().Get("Authorization"))
 
-		ch, err := sendInstalledPackageSummariesForPlugin(ctxForPlugin, pluginWithSrv, r)
+		ch, err := sendInstalledPackageSummariesForPlugin(ctx, pluginWithSrv, connectRequest)
 		if err != nil {
 			return nil, err
 		}
@@ -367,10 +367,10 @@ type installedSummaryWithOffset struct {
 
 // sendInstalledPackageSummariesForPlugin returns a channel and sends the
 // available package summaries returned by the plugin for the given request.
-func sendInstalledPackageSummariesForPlugin(ctx context.Context, pkgPlugin pkgPluginWithServer, request *packages.GetInstalledPackageSummariesRequest) (<-chan *installedSummaryWithOffset, error) {
+func sendInstalledPackageSummariesForPlugin(ctx context.Context, pkgPlugin pkgPluginWithServer, request *connect.Request[packages.GetInstalledPackageSummariesRequest]) (<-chan *installedSummaryWithOffset, error) {
 	summaryCh := make(chan *installedSummaryWithOffset)
 
-	itemOffset, err := paginate.ItemOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	itemOffset, err := paginate.ItemOffsetFromPageToken(request.Msg.GetPaginationOptions().GetPageToken())
 	if err != nil {
 		return nil, err
 	}
@@ -393,25 +393,25 @@ func sendInstalledPackageSummariesForPlugin(ctx context.Context, pkgPlugin pkgPl
 				close(summaryCh)
 				return
 			}
-			for _, summary := range response.InstalledPackageSummaries {
+			for _, summary := range response.Msg.InstalledPackageSummaries {
 				itemOffset = itemOffset + 1
 				summaryCh <- &installedSummaryWithOffset{
 					installedPackageSummary: summary,
 					nextItemOffset:          itemOffset,
 				}
 			}
-			if response.GetNextPageToken() == "" {
+			if response.Msg.GetNextPageToken() == "" {
 				close(summaryCh)
 				return
 			}
 			// We can sanity check here to be sure the next page token
 			// corresponds to the current value of itemOffset.
-			if fmt.Sprintf("%d", itemOffset) != response.GetNextPageToken() {
+			if fmt.Sprintf("%d", itemOffset) != response.Msg.GetNextPageToken() {
 				summaryCh <- &installedSummaryWithOffset{
-					err: fmt.Errorf("inconsistent item offset: got: %q, expected: %d", response.GetNextPageToken(), itemOffset),
+					err: fmt.Errorf("inconsistent item offset: got: %q, expected: %d", response.Msg.GetNextPageToken(), itemOffset),
 				}
 			}
-			request.PaginationOptions.PageToken = response.GetNextPageToken()
+			request.Msg.PaginationOptions.PageToken = response.Msg.GetNextPageToken()
 		}
 	}()
 
