@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"runtime"
 	"sort"
@@ -5526,7 +5527,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 				}
 
-				createdPkgInstall, err := s.getPkgInstall(context.Background(), "default", tc.request.TargetContext.Namespace, createInstalledPackageResponse.Msg.InstalledPackageRef.Identifier)
+				createdPkgInstall, err := s.getPkgInstall(context.Background(), http.Header{}, "default", tc.request.TargetContext.Namespace, createInstalledPackageResponse.Msg.InstalledPackageRef.Identifier)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -5884,7 +5885,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 				}
 
-				updatedPkgInstall, err := s.getPkgInstall(context.Background(), "default", updateInstalledPackageResponse.Msg.InstalledPackageRef.Context.Namespace, updateInstalledPackageResponse.Msg.InstalledPackageRef.Identifier)
+				updatedPkgInstall, err := s.getPkgInstall(context.Background(), http.Header{}, "default", updateInstalledPackageResponse.Msg.InstalledPackageRef.Context.Namespace, updateInstalledPackageResponse.Msg.InstalledPackageRef.Identifier)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -6472,7 +6473,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					WithTyped(typedClient).
 					WithDynamic(dynClient).
 					Build(),
-				kappClientsGetter: func(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error) {
+				kappClientsGetter: func(ctx context.Context, headers http.Header, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error) {
 					// Create a fake Kapp DepsFactory and configure there the fake k8s clients the hereinbefore created
 					depsFactory := NewFakeDepsFactoryImpl()
 					depsFactory.SetCoreClient(typedClient)
@@ -7065,7 +7066,7 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedRef:        defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
-				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
+				secret, err := s.getSecret(context.Background(), http.Header{}, defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
 					t.Fatalf("error fetching newly created secret:%+v", err)
 				}
@@ -7095,7 +7096,7 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedRef:        defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
-				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
+				secret, err := s.getSecret(context.Background(), http.Header{}, defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
 					t.Fatalf("error fetching newly created secret:%+v", err)
 				}
@@ -7130,7 +7131,7 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedRef:        defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
-				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
+				secret, err := s.getSecret(context.Background(), http.Header{}, defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
 					t.Fatalf("error fetching newly created secret:%+v", err)
 				}
@@ -7189,7 +7190,7 @@ func TestAddPackageRepository(t *testing.T) {
 			}
 
 			// check repository
-			repository, err := s.getPkgRepository(context.Background(), tc.expectedRef.Context.Cluster, tc.expectedRef.Context.Namespace, tc.expectedRef.Identifier)
+			repository, err := s.getPkgRepository(context.Background(), http.Header{}, tc.expectedRef.Context.Cluster, tc.expectedRef.Context.Namespace, tc.expectedRef.Identifier)
 			if err != nil {
 				t.Fatalf("unexpected error retrieving repository: %+v", err)
 			}
@@ -7849,7 +7850,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedRef:        defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
-				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
+				secret, err := s.getSecret(context.Background(), http.Header{}, defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
 					t.Fatalf("error fetching newly created secret:%+v", err)
 				}
@@ -7879,7 +7880,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedRef:        defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
-				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
+				secret, err := s.getSecret(context.Background(), http.Header{}, defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
 					t.Fatalf("error fetching newly created secret:%+v", err)
 				}
@@ -7941,7 +7942,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedRef:        defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
-				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "my-secret")
+				secret, err := s.getSecret(context.Background(), http.Header{}, defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "my-secret")
 				if err != nil {
 					t.Fatalf("error fetching secret:%+v", err)
 				}
@@ -7981,7 +7982,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedRef:        defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
-				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
+				secret, err := s.getSecret(context.Background(), http.Header{}, defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
 					t.Fatalf("error fetching secret:%+v", err)
 				}
@@ -8017,7 +8018,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedRef:        defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
-				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
+				secret, err := s.getSecret(context.Background(), http.Header{}, defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
 					t.Fatalf("error fetching secret:%+v", err)
 				}
@@ -8092,7 +8093,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedRef:        defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
-				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
+				secret, err := s.getSecret(context.Background(), http.Header{}, defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
 					t.Fatalf("error fetching secret:%+v", err)
 				}
@@ -8159,7 +8160,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			}
 
 			// check repository
-			pkgrepository, err := s.getPkgRepository(context.Background(), tc.expectedRef.Context.Cluster, tc.expectedRef.Context.Namespace, tc.expectedRef.Identifier)
+			pkgrepository, err := s.getPkgRepository(context.Background(), http.Header{}, tc.expectedRef.Context.Cluster, tc.expectedRef.Context.Namespace, tc.expectedRef.Identifier)
 			if err != nil {
 				t.Fatalf("unexpected error retrieving repository: %+v", err)
 			}

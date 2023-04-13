@@ -18,8 +18,8 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-func (s *Server) getPkgRepositoryResource(ctx context.Context, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	dynClient, err := s.clientGetter.Dynamic(ctx, http.Header{}, cluster)
+func (s *Server) getPkgRepositoryResource(ctx context.Context, headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
+	dynClient, err := s.clientGetter.Dynamic(ctx, headers, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (s *Server) getPkgRepository(ctx context.Context, headers http.Header, clus
 	}
 
 	// Auth and TLS
-	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, headers, cluster)
 	if err != nil {
 		return nil, nil, nil, err
 	}

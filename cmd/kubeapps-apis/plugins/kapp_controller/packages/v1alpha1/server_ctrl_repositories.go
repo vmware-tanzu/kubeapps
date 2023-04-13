@@ -5,7 +5,6 @@ package main
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/bufbuild/connect-go"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
@@ -39,7 +38,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *connect.Requ
 	if cluster != s.globalPackagingCluster {
 		return nil, status.Errorf(codes.InvalidArgument, "installing package repositories in other clusters in not supported yet")
 	}
-	if err := s.validatePackageRepositoryCreate(ctx, cluster, request.Msg); err != nil {
+	if err := s.validatePackageRepositoryCreate(ctx, cluster, request); err != nil {
 		return nil, err
 	}
 
@@ -52,7 +51,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *connect.Requ
 			return nil, status.Errorf(codes.Internal, "unable to build the associated secret: %v", err)
 		}
 
-		pkgSecret, err = s.createSecret(ctx, cluster, pkgSecret)
+		pkgSecret, err = s.createSecret(ctx, request.Header(), cluster, pkgSecret)
 		if err != nil {
 			return nil, statuserror.FromK8sError("create", "Secret", request.Msg.Name, err)
 		}
@@ -63,7 +62,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *connect.Requ
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to build the PackageRepository: %v", err)
 	}
-	pkgRepository, err = s.createPkgRepository(ctx, cluster, namespace, pkgRepository)
+	pkgRepository, err = s.createPkgRepository(ctx, request.Header(), cluster, namespace, pkgRepository)
 	if err != nil {
 		return nil, statuserror.FromK8sError("create", "PackageRepository", request.Msg.Name, err)
 	}
@@ -71,7 +70,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *connect.Requ
 	// update secret with owner reference if needed
 	if pkgSecret != nil {
 		setOwnerReference(pkgSecret, pkgRepository)
-		_, err = s.updateSecret(ctx, cluster, pkgSecret)
+		_, err = s.updateSecret(ctx, request.Header(), cluster, pkgSecret)
 		if err != nil {
 			return nil, statuserror.FromK8sError("update", "Secret", request.Msg.Name, err)
 		}
@@ -110,7 +109,7 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *connec
 	log.InfoS("+kapp-controller GetPackageRepositoryDetail", "cluster", cluster, "namespace", namespace, "name", name)
 
 	// fetch repository
-	pkgRepository, err := s.getPkgRepository(ctx, cluster, namespace, name)
+	pkgRepository, err := s.getPkgRepository(ctx, request.Header(), cluster, namespace, name)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "PackageRepository", name, err)
 	}
@@ -118,7 +117,7 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *connec
 	// fetch repository secret
 	var pkgSecret *k8scorev1.Secret
 	if pkgSecretRef := repositorySecretRef(pkgRepository); pkgSecretRef != nil {
-		pkgSecret, err = s.getSecret(ctx, cluster, namespace, pkgSecretRef.Name)
+		pkgSecret, err = s.getSecret(ctx, request.Header(), cluster, namespace, pkgSecretRef.Name)
 		if err != nil {
 			return nil, statuserror.FromK8sError("get", "Secret", pkgSecretRef.Name, err)
 		}
@@ -155,11 +154,11 @@ func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *con
 	var pkgRepositories []*packagingv1alpha1.PackageRepository
 	if namespace == "" {
 		// find globally, either via cluster access or by enumerating through namespaces
-		if repos, err := s.getPkgRepositories(ctx, cluster, ""); err == nil {
+		if repos, err := s.getPkgRepositories(ctx, request.Header(), cluster, ""); err == nil {
 			pkgRepositories = append(pkgRepositories, repos...)
 		} else {
 			log.Warningf("+kapp-controller unable to list package repositories at the cluster scope in '%s' due to [%v]", cluster, err)
-			if repos, err = s.getAccessiblePackageRepositories(ctx, cluster); err == nil {
+			if repos, err = s.getAccessiblePackageRepositories(ctx, request.Header(), cluster); err == nil {
 				pkgRepositories = append(pkgRepositories, repos...)
 			} else {
 				return nil, err
@@ -167,7 +166,7 @@ func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *con
 		}
 	} else {
 		// include namespace specific  repositories
-		if repos, err := s.getPkgRepositories(ctx, cluster, namespace); err == nil {
+		if repos, err := s.getPkgRepositories(ctx, request.Header(), cluster, namespace); err == nil {
 			pkgRepositories = append(pkgRepositories, repos...)
 		} else {
 			return nil, err
@@ -175,7 +174,7 @@ func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *con
 
 		// try to also include global repositories
 		if namespace != s.pluginConfig.globalPackagingNamespace {
-			if repos, err := s.getPkgRepositories(ctx, cluster, s.pluginConfig.globalPackagingNamespace); err == nil {
+			if repos, err := s.getPkgRepositories(ctx, request.Header(), cluster, s.pluginConfig.globalPackagingNamespace); err == nil {
 				pkgRepositories = append(pkgRepositories, repos...)
 			}
 		}
@@ -226,7 +225,7 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *connect.R
 	}
 
 	// fetch existing repository
-	pkgRepository, err := s.getPkgRepository(ctx, cluster, namespace, name)
+	pkgRepository, err := s.getPkgRepository(ctx, request.Header(), cluster, namespace, name)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "PackageRepository", name, err)
 	}
@@ -234,14 +233,14 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *connect.R
 	// fetch existing secret
 	var pkgSecret *k8scorev1.Secret
 	if pkgSecretRef := repositorySecretRef(pkgRepository); pkgSecretRef != nil {
-		pkgSecret, err = s.getSecret(ctx, cluster, namespace, pkgSecretRef.Name)
+		pkgSecret, err = s.getSecret(ctx, request.Header(), cluster, namespace, pkgSecretRef.Name)
 		if err != nil {
 			return nil, statuserror.FromK8sError("get", "Secret", pkgSecretRef.Name, err)
 		}
 	}
 
 	// validate for update
-	if err := s.validatePackageRepositoryUpdate(ctx, cluster, request.Msg, pkgRepository, pkgSecret); err != nil {
+	if err := s.validatePackageRepositoryUpdate(ctx, cluster, request, pkgRepository, pkgSecret); err != nil {
 		return nil, err
 	}
 
@@ -252,7 +251,7 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *connect.R
 	if request.Msg.Auth == nil || request.Msg.Auth.Type == corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED {
 		// delete existing secret, if plugin managed
 		if pkgSecret != nil && isPluginManaged(pkgRepository, pkgSecret) {
-			if err := s.deleteSecret(ctx, cluster, pkgSecret.GetNamespace(), pkgSecret.GetName()); err != nil {
+			if err := s.deleteSecret(ctx, request.Header(), cluster, pkgSecret.GetNamespace(), pkgSecret.GetName()); err != nil {
 				return nil, statuserror.FromK8sError("delete", "Secret", pkgSecret.GetName(), err)
 			}
 		}
@@ -274,7 +273,7 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *connect.R
 		if newSecret != nil {
 			// delete old one
 			if pkgSecret != nil {
-				if err := s.deleteSecret(ctx, cluster, pkgSecret.GetNamespace(), pkgSecret.GetName()); err != nil {
+				if err := s.deleteSecret(ctx, request.Header(), cluster, pkgSecret.GetNamespace(), pkgSecret.GetName()); err != nil {
 					log.Errorf("Error deleting existing secret: [%s] due to %v", err)
 				}
 				pkgSecret = nil
@@ -282,7 +281,7 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *connect.R
 
 			// create new one
 			setOwnerReference(newSecret, pkgRepository)
-			if pkgSecret, err = s.createSecret(ctx, cluster, newSecret); err != nil {
+			if pkgSecret, err = s.createSecret(ctx, request.Header(), cluster, newSecret); err != nil {
 				return nil, statuserror.FromK8sError("create", "Secret", name, err)
 			}
 		}
@@ -293,7 +292,7 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *connect.R
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to build the PackageRepository: %v", err)
 	}
-	_, err = s.updatePkgRepository(ctx, cluster, namespace, pkgRepository)
+	_, err = s.updatePkgRepository(ctx, request.Header(), cluster, namespace, pkgRepository)
 	if err != nil {
 		return nil, statuserror.FromK8sError("update", "PackageRepository", name, err)
 	}
@@ -331,7 +330,7 @@ func (s *Server) DeletePackageRepository(ctx context.Context, request *connect.R
 	log.InfoS("+kapp-controller DeletePackageRepository", "cluster", cluster, "namespace", namespace, "name", name)
 
 	// delete
-	err := s.deletePkgRepository(ctx, cluster, namespace, name)
+	err := s.deletePkgRepository(ctx, request.Header(), cluster, namespace, name)
 	if err != nil {
 		return nil, statuserror.FromK8sError("delete", "PackageRepository", name, err)
 	}
@@ -352,7 +351,7 @@ func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *c
 	if cluster == "" && namespace != "" {
 		return nil, status.Errorf(codes.InvalidArgument, "cluster must be specified when namespace is present: %s", namespace)
 	}
-	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, request.Header(), cluster)
 	if err != nil {
 		return nil, err
 	}

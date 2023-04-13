@@ -6,7 +6,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
@@ -48,7 +47,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *conn
 		cluster = s.globalPackagingCluster
 	}
 	// fetch all the package metadatas
-	pkgMetadatas, err := s.getPkgMetadatas(ctx, cluster, namespace)
+	pkgMetadatas, err := s.getPkgMetadatas(ctx, request.Header(), cluster, namespace)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "PackageMetadata", "", err)
 	}
@@ -79,7 +78,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *conn
 		getPkgsChannel := make(chan *datapackagingv1alpha1.Package, PACKAGES_CHANNEL_BUFFER_SIZE)
 		var getPkgsError error
 		go func() {
-			getPkgsError = s.getPkgs(ctx, cluster, namespace, getPkgsChannel)
+			getPkgsError = s.getPkgs(ctx, request.Header(), cluster, namespace, getPkgsChannel)
 		}()
 
 		// Skip through the packages until we get to the first item in our
@@ -176,7 +175,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *conne
 
 	// Use the field selector to return only Package CRs that match on the spec.refName.
 	fieldSelector := fmt.Sprintf("spec.refName=%s", pkgName)
-	pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, namespace, fieldSelector)
+	pkgs, err := s.getPkgsWithFieldSelector(ctx, request.Header(), cluster, namespace, fieldSelector)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "Package", "", err)
 	}
@@ -229,14 +228,14 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect
 	}
 
 	// fetch the package metadata
-	pkgMetadata, err := s.getPkgMetadata(ctx, cluster, namespace, pkgName)
+	pkgMetadata, err := s.getPkgMetadata(ctx, request.Header(), cluster, namespace, pkgName)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "PackageMetadata", pkgName, err)
 	}
 
 	// Use the field selector to return only Package CRs that match on the spec.refName.
 	fieldSelector := fmt.Sprintf("spec.refName=%s", pkgName)
-	pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, namespace, fieldSelector)
+	pkgs, err := s.getPkgsWithFieldSelector(ctx, request.Header(), cluster, namespace, fieldSelector)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "Package", pkgName, err)
 	}
@@ -300,7 +299,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *conn
 
 	// retrieve the paginated list of installed packages
 	// TODO(agamez): we should be paginating this request rather than requesting everything every time
-	pkgInstalls, err := s.getPkgInstalls(ctx, cluster, namespace)
+	pkgInstalls, err := s.getPkgInstalls(ctx, request.Header(), cluster, namespace)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "PackageInstall", "", err)
 	}
@@ -365,7 +364,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *conn
 		// First get all the package metadatas for the namespace (or across
 		// namespaces) and filter to match the pkgInstalls. While filtering, we
 		// populate the collected package data with the metadata.
-		pkgMetadatas, err := s.getPkgMetadatas(ctx, cluster, namespace)
+		pkgMetadatas, err := s.getPkgMetadatas(ctx, request.Header(), cluster, namespace)
 		if err != nil {
 			return nil, statuserror.FromK8sError("get", "PackageMetadata", "", err)
 		}
@@ -383,7 +382,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *conn
 		getPkgsChannel := make(chan *datapackagingv1alpha1.Package, PACKAGES_CHANNEL_BUFFER_SIZE)
 		var getPkgsError error
 		go func() {
-			getPkgsError = s.getPkgs(ctx, cluster, namespace, getPkgsChannel)
+			getPkgsError = s.getPkgs(ctx, request.Header(), cluster, namespace, getPkgsChannel)
 		}()
 
 		// For each package, we check if we need it to populate our
@@ -472,33 +471,33 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *connect
 		cluster = s.globalPackagingCluster
 	}
 
-	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, request.Header(), cluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
 
 	// fetch the package install
-	pkgInstall, err := s.getPkgInstall(ctx, cluster, namespace, installedPackageRefId)
+	pkgInstall, err := s.getPkgInstall(ctx, request.Header(), cluster, namespace, installedPackageRefId)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "PackageInstall", installedPackageRefId, err)
 	}
 
 	// fetch the resulting deployed app after the installation
-	app, err := s.getApp(ctx, cluster, namespace, installedPackageRefId)
+	app, err := s.getApp(ctx, request.Header(), cluster, namespace, installedPackageRefId)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "App", installedPackageRefId, err)
 	}
 
 	// retrieve the package metadata associated with this installed package
 	pkgName := pkgInstall.Spec.PackageRef.RefName
-	pkgMetadata, err := s.getPkgMetadata(ctx, cluster, namespace, pkgName)
+	pkgMetadata, err := s.getPkgMetadata(ctx, request.Header(), cluster, namespace, pkgName)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "PackageMetadata", pkgName, err)
 	}
 
 	// Use the field selector to return only Package CRs that match on the spec.refName.
 	fieldSelector := fmt.Sprintf("spec.refName=%s", pkgMetadata.Name)
-	pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, namespace, fieldSelector)
+	pkgs, err := s.getPkgsWithFieldSelector(ctx, request.Header(), cluster, namespace, fieldSelector)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "Package", "", err)
 	}
@@ -591,13 +590,13 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 		return nil, status.Errorf(codes.InvalidArgument, "installing packages in other clusters in not supported yet")
 	}
 
-	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, targetCluster)
+	typedClient, err := s.clientGetter.Typed(ctx, request.Header(), targetCluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
 
 	// fetch the package metadata
-	pkgMetadata, err := s.getPkgMetadata(ctx, packageCluster, packageNamespace, pkgName)
+	pkgMetadata, err := s.getPkgMetadata(ctx, request.Header(), packageCluster, packageNamespace, pkgName)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "PackageMetadata", pkgName, err)
 	}
@@ -623,7 +622,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 	}
 
 	// create the PackageInstall in the cluster
-	createdPkgInstall, err := s.createPkgInstall(ctx, targetCluster, targetNamespace, newPkgInstall)
+	createdPkgInstall, err := s.createPkgInstall(ctx, request.Header(), targetCluster, targetNamespace, newPkgInstall)
 	if err != nil {
 		// clean-up the secret if something fails
 		err := typedClient.CoreV1().Secrets(targetNamespace).Delete(ctx, secret.Name, metav1.DeleteOptions{})
@@ -633,7 +632,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 		return nil, statuserror.FromK8sError("create", "PackageInstall", newPkgInstall.Name, err)
 	}
 
-	resource, err := s.getAppResource(ctx, targetCluster, targetNamespace)
+	resource, err := s.getAppResource(ctx, request.Header(), targetCluster, targetNamespace)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the App resource: '%v'", err)
 	}
@@ -647,7 +646,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 			return nil, statuserror.FromK8sError("delete", "Secret", secret.Name, err)
 		}
 		// clean-up the package install if something fails
-		err = s.deletePkgInstall(ctx, targetCluster, targetNamespace, newPkgInstall.Name)
+		err = s.deletePkgInstall(ctx, request.Header(), targetCluster, targetNamespace, newPkgInstall.Name)
 		if err != nil {
 			return nil, statuserror.FromK8sError("delete", "PackageInstall", newPkgInstall.Name, err)
 		}
@@ -697,13 +696,13 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Re
 		packageCluster = s.globalPackagingCluster
 	}
 
-	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, packageCluster)
+	typedClient, err := s.clientGetter.Typed(ctx, request.Header(), packageCluster)
 	if err != nil {
 		return nil, err
 	}
 
 	// fetch the package install
-	pkgInstall, err := s.getPkgInstall(ctx, packageCluster, packageNamespace, installedPackageName)
+	pkgInstall, err := s.getPkgInstall(ctx, request.Header(), packageCluster, packageNamespace, installedPackageName)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "PackageInstall", installedPackageName, err)
 	}
@@ -750,7 +749,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Re
 	}
 
 	// update the pkgInstall in the server
-	updatedPkgInstall, err := s.updatePkgInstall(ctx, packageCluster, packageNamespace, pkgInstall)
+	updatedPkgInstall, err := s.updatePkgInstall(ctx, request.Header(), packageCluster, packageNamespace, pkgInstall)
 	if err != nil {
 		return nil, statuserror.FromK8sError("update", "PackageInstall", installedPackageName, err)
 	}
@@ -826,18 +825,18 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *connect.Re
 		cluster = s.globalPackagingCluster
 	}
 
-	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, request.Header(), cluster)
 	if err != nil {
 		return nil, err
 	}
 
-	pkgInstall, err := s.getPkgInstall(ctx, cluster, namespace, identifier)
+	pkgInstall, err := s.getPkgInstall(ctx, request.Header(), cluster, namespace, identifier)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "PackageInstall", identifier, err)
 	}
 
 	// Delete the package install
-	err = s.deletePkgInstall(ctx, cluster, namespace, identifier)
+	err = s.deletePkgInstall(ctx, request.Header(), cluster, namespace, identifier)
 	if err != nil {
 		return nil, statuserror.FromK8sError("delete", "PackageInstall", identifier, err)
 	}
@@ -872,7 +871,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	}
 
 	// get the list of every k8s resource matching ResourceRef
-	refs, err := s.inspectKappK8sResources(ctx, cluster, namespace, installedPackageRefId)
+	refs, err := s.inspectKappK8sResources(ctx, request.Header(), cluster, namespace, installedPackageRefId)
 	if err != nil {
 		return nil, err
 	}

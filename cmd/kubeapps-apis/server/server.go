@@ -149,7 +149,7 @@ func registerPackagesServiceServer(mux *http.ServeMux, pluginsServer *pluginsv1a
 	// The argument for the reflect.TypeOf is based on what grpc-go
 	// does itself at:
 	// https://github.com/grpc/grpc-go/blob/v1.38.0/server.go#L621
-	packagingPlugins := pluginsServer.GetPluginsSatisfyingInterface(reflect.TypeOf((*packagesGRPCv1alpha1.PackagesServiceServer)(nil)).Elem())
+	packagingPlugins := pluginsServer.GetPluginsSatisfyingInterface(reflect.TypeOf((*packagesConnect.PackagesServiceHandler)(nil)).Elem())
 
 	// Create the core.packages server and register it for both grpc and http.
 	packagesServer, err := packagesv1alpha1.NewPackagesServer(packagingPlugins)
@@ -168,7 +168,7 @@ func registerPackagesServiceServer(mux *http.ServeMux, pluginsServer *pluginsv1a
 
 func registerRepositoriesServiceServer(mux *http.ServeMux, pluginsServer *pluginsv1alpha1.PluginsServer, gwArgs core.GatewayHandlerArgs) error {
 	// see comment in registerPackagesServiceServer
-	repositoriesPlugins := pluginsServer.GetPluginsSatisfyingInterface(reflect.TypeOf((*packagesGRPCv1alpha1.RepositoriesServiceServer)(nil)).Elem())
+	repositoriesPlugins := pluginsServer.GetPluginsSatisfyingInterface(reflect.TypeOf((*packagesConnect.RepositoriesServiceHandler)(nil)).Elem())
 
 	// Create the core.packages server and register it for both grpc and http.
 	repoServer, err := packagesv1alpha1.NewRepositoriesServer(repositoriesPlugins)

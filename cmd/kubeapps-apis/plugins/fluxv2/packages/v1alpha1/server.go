@@ -199,7 +199,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *conn
 		ns = request.Msg.Context.Namespace
 	}
 
-	charts, err := s.getChartsForRepos(ctx, ns, request.Msg.GetFilterOptions().GetRepositories())
+	charts, err := s.getChartsForRepos(ctx, request.Header(), ns, request.Msg.GetFilterOptions().GetRepositories())
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +256,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect
 			cluster)
 	}
 
-	pkgDetail, err := s.availableChartDetail(ctx, request.Msg.GetAvailablePackageRef(), request.Msg.GetPkgVersion())
+	pkgDetail, err := s.availableChartDetail(ctx, request.Header(), request.Msg.GetAvailablePackageRef(), request.Msg.GetPkgVersion())
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +299,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *conne
 
 	log.Infof("Requesting chart [%s] in namespace [%s]", chartName, namespace)
 	repo := types.NamespacedName{Namespace: namespace, Name: repoName}
-	chart, err := s.getChartModel(ctx, repo, chartName)
+	chart, err := s.getChartModel(ctx, request.Header(), repo, chartName)
 	if err != nil {
 		return nil, err
 	} else if chart != nil {
@@ -332,7 +332,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *conn
 
 	pageSize := request.Msg.GetPaginationOptions().GetPageSize()
 	installedPkgSummaries, err := s.paginatedInstalledPkgSummaries(
-		ctx, request.Msg.GetContext().GetNamespace(), pageSize, itemOffset)
+		ctx, request.Header(), request.Msg.GetContext().GetNamespace(), pageSize, itemOffset)
 	if err != nil {
 		return nil, err
 	}
@@ -420,6 +420,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 
 	if installedRef, err := s.newRelease(
 		ctx,
+		request.Header(),
 		request.Msg.AvailablePackageRef,
 		name,
 		request.Msg.PkgVersionReference,
@@ -452,6 +453,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Re
 
 	if installedRef, err := s.updateRelease(
 		ctx,
+		request.Header(),
 		installedPackageRef,
 		request.Msg.PkgVersionReference,
 		request.Msg.ReconciliationOptions,
@@ -481,7 +483,7 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *connect.Re
 			cluster)
 	}
 
-	if err := s.deleteRelease(ctx, request.Msg.InstalledPackageRef); err != nil {
+	if err := s.deleteRelease(ctx, request.Header(), request.Msg.InstalledPackageRef); err != nil {
 		return nil, err
 	} else {
 		return connect.NewResponse(&corev1.DeleteInstalledPackageResponse{}), nil
@@ -496,7 +498,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	log.InfoS("+fluxv2 GetInstalledPackageResourceRefs", "cluster", pkgRef.GetContext().GetCluster(), "namespace", pkgRef.GetContext().GetNamespace(), "id", identifier)
 
 	key := types.NamespacedName{Namespace: pkgRef.Context.Namespace, Name: identifier}
-	rel, err := s.getReleaseInCluster(ctx, key)
+	rel, err := s.getReleaseInCluster(ctx, request.Header(), key)
 	if err != nil {
 		return nil, err
 	}
@@ -544,10 +546,10 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *connect.Requ
 			request.Msg.Context.Cluster)
 	}
 
-	if repoRef, err := s.newRepo(ctx, request.Msg); err != nil {
+	if repoRef, err := s.newRepo(ctx, request); err != nil {
 		return nil, err
 	} else {
-		return connect.NewResponse(&corev1.AddPackageRepositoryResponse{PackageRepoRef: repoRef}), nil
+		return connect.NewResponse(&corev1.AddPackageRepositoryResponse{PackageRepoRef: repoRef.Msg}), nil
 	}
 }
 
@@ -572,7 +574,7 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *connec
 			cluster)
 	}
 
-	repoDetail, err := s.repoDetail(ctx, repoRef)
+	repoDetail, err := s.repoDetail(ctx, request.Header(), repoRef)
 	if err != nil {
 		return nil, err
 	}
@@ -593,7 +595,7 @@ func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *con
 			cluster)
 	}
 
-	if summaries, err := s.repoSummaries(ctx, request.Msg.GetContext().GetNamespace()); err != nil {
+	if summaries, err := s.repoSummaries(ctx, request.Header(), request.Msg.GetContext().GetNamespace()); err != nil {
 		return nil, err
 	} else {
 		return connect.NewResponse(&corev1.GetPackageRepositorySummariesResponse{
@@ -618,7 +620,7 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *connect.R
 			cluster)
 	}
 
-	if responseRef, err := s.updateRepo(ctx, repoRef, request.Msg); err != nil {
+	if responseRef, err := s.updateRepo(ctx, repoRef, request); err != nil {
 		return nil, err
 	} else {
 		return connect.NewResponse(&corev1.UpdatePackageRepositoryResponse{
@@ -643,7 +645,7 @@ func (s *Server) DeletePackageRepository(ctx context.Context, request *connect.R
 			cluster)
 	}
 
-	if err := s.deleteRepo(ctx, repoRef); err != nil {
+	if err := s.deleteRepo(ctx, request.Header(), repoRef); err != nil {
 		return nil, err
 	} else {
 		return connect.NewResponse(&corev1.DeletePackageRepositoryResponse{}), nil
@@ -658,7 +660,7 @@ func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *c
 	if cluster == "" && namespace != "" {
 		return nil, status.Errorf(codes.InvalidArgument, "cluster must be specified when namespace is present: %s", namespace)
 	}
-	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, request.Header(), cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -694,6 +696,8 @@ func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *c
 func (s *Server) newRepoEventSink() repoEventSink {
 
 	cg := &clientgetter.FixedClusterClientProvider{ClientsFunc: func(ctx context.Context) (*clientgetter.ClientGetter, error) {
+		// Empty headers used here since this getter is for a service account
+		// only.
 		return s.clientGetter.GetClients(ctx, http.Header{}, s.kubeappsCluster)
 	}}
 
@@ -712,8 +716,8 @@ func (s *Server) newRepoEventSink() repoEventSink {
 	}
 }
 
-func (s *Server) getClient(ctx context.Context, namespace string) (ctrlclient.Client, error) {
-	client, err := s.clientGetter.ControllerRuntime(ctx, http.Header{}, s.kubeappsCluster)
+func (s *Server) getClient(ctx context.Context, headers http.Header, namespace string) (ctrlclient.Client, error) {
+	client, err := s.clientGetter.ControllerRuntime(ctx, headers, s.kubeappsCluster)
 	if err != nil {
 		return nil, err
 	}
@@ -721,8 +725,8 @@ func (s *Server) getClient(ctx context.Context, namespace string) (ctrlclient.Cl
 }
 
 // hasAccessToNamespace returns an error if the client does not have read access to a given namespace
-func (s *Server) hasAccessToNamespace(ctx context.Context, gvr schema.GroupVersionResource, namespace string) (bool, error) {
-	typedCli, err := s.clientGetter.Typed(ctx, http.Header{}, s.kubeappsCluster)
+func (s *Server) hasAccessToNamespace(ctx context.Context, headers http.Header, gvr schema.GroupVersionResource, namespace string) (bool, error) {
+	typedCli, err := s.clientGetter.Typed(ctx, headers, s.kubeappsCluster)
 	if err != nil {
 		return false, err
 	}

@@ -6,8 +6,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
+	"net/http"
 	"strings"
+
+	"github.com/bufbuild/connect-go"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
 
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
@@ -760,24 +763,24 @@ func (s *Server) buildPkgRepositorySpec(rptype string, interval string, url stri
 
 // package repositories validation
 
-func (s *Server) validatePackageRepositoryCreate(ctx context.Context, cluster string, request *corev1.AddPackageRepositoryRequest) error {
-	namespace := request.GetContext().GetNamespace()
+func (s *Server) validatePackageRepositoryCreate(ctx context.Context, cluster string, request *connect.Request[corev1.AddPackageRepositoryRequest]) error {
+	namespace := request.Msg.GetContext().GetNamespace()
 	if namespace == "" {
 		namespace = s.pluginConfig.globalPackagingNamespace
 	}
 
-	if request.TlsConfig != nil {
+	if request.Msg.TlsConfig != nil {
 		return status.Errorf(codes.InvalidArgument, "TLS Config is not supported")
 	}
 
-	if request.Name == "" {
+	if request.Msg.Name == "" {
 		return status.Errorf(codes.InvalidArgument, "no request Name provided")
 	}
-	if request.NamespaceScoped != (namespace != s.pluginConfig.globalPackagingNamespace) {
+	if request.Msg.NamespaceScoped != (namespace != s.pluginConfig.globalPackagingNamespace) {
 		return status.Errorf(codes.InvalidArgument, "Namespace Scope is inconsistent with the provided Namespace")
 	}
 
-	switch request.Type {
+	switch request.Msg.Type {
 	case typeImgPkgBundle, typeImage, typeGIT, typeHTTP:
 		// valid types
 	case typeInline:
@@ -788,19 +791,19 @@ func (s *Server) validatePackageRepositoryCreate(ctx context.Context, cluster st
 		return status.Errorf(codes.InvalidArgument, "invalid repository Type")
 	}
 
-	if _, err := pkgutils.ToDuration(request.Interval); err != nil {
+	if _, err := pkgutils.ToDuration(request.Msg.Interval); err != nil {
 		return status.Errorf(codes.InvalidArgument, "invalid interval: %v", err)
 	}
-	if request.Url == "" {
+	if request.Msg.Url == "" {
 		return status.Errorf(codes.InvalidArgument, "no request Url provided")
 	}
-	if request.Auth != nil {
-		if err := s.validatePackageRepositoryAuth(ctx, cluster, namespace, request.Type, request.Auth, nil, nil); err != nil {
+	if request.Msg.Auth != nil {
+		if err := s.validatePackageRepositoryAuth(ctx, request.Header(), cluster, namespace, request.Msg.Type, request.Msg.Auth, nil, nil); err != nil {
 			return err
 		}
 	}
-	if request.CustomDetail != nil {
-		if err := s.validatePackageRepositoryDetails(request.Type, request.CustomDetail); err != nil {
+	if request.Msg.CustomDetail != nil {
+		if err := s.validatePackageRepositoryDetails(request.Msg.Type, request.Msg.CustomDetail); err != nil {
 			return err
 		}
 	}
@@ -808,7 +811,7 @@ func (s *Server) validatePackageRepositoryCreate(ctx context.Context, cluster st
 	return nil
 }
 
-func (s *Server) validatePackageRepositoryUpdate(ctx context.Context, cluster string, request *corev1.UpdatePackageRepositoryRequest, pkgRepository *packagingv1alpha1.PackageRepository, pkgSecret *k8scorev1.Secret) error {
+func (s *Server) validatePackageRepositoryUpdate(ctx context.Context, cluster string, request *connect.Request[corev1.UpdatePackageRepositoryRequest], pkgRepository *packagingv1alpha1.PackageRepository, pkgSecret *k8scorev1.Secret) error {
 	var rptype string
 	switch {
 	case pkgRepository.Spec.Fetch.ImgpkgBundle != nil:
@@ -825,23 +828,23 @@ func (s *Server) validatePackageRepositoryUpdate(ctx context.Context, cluster st
 		return status.Errorf(codes.Internal, "the package repository has a fetch directive that is not supported")
 	}
 
-	if request.TlsConfig != nil {
+	if request.Msg.TlsConfig != nil {
 		return status.Errorf(codes.InvalidArgument, "TLS Config is not supported")
 	}
 
-	if _, err := pkgutils.ToDuration(request.Interval); err != nil {
+	if _, err := pkgutils.ToDuration(request.Msg.Interval); err != nil {
 		return status.Errorf(codes.InvalidArgument, "invalid interval: %v", err)
 	}
-	if request.Url == "" {
+	if request.Msg.Url == "" {
 		return status.Errorf(codes.InvalidArgument, "no request Url provided")
 	}
-	if request.Auth != nil {
-		if err := s.validatePackageRepositoryAuth(ctx, cluster, pkgRepository.GetNamespace(), rptype, request.Auth, pkgRepository, pkgSecret); err != nil {
+	if request.Msg.Auth != nil {
+		if err := s.validatePackageRepositoryAuth(ctx, request.Header(), cluster, pkgRepository.GetNamespace(), rptype, request.Msg.Auth, pkgRepository, pkgSecret); err != nil {
 			return err
 		}
 	}
-	if request.CustomDetail != nil {
-		if err := s.validatePackageRepositoryDetails(rptype, request.CustomDetail); err != nil {
+	if request.Msg.CustomDetail != nil {
+		if err := s.validatePackageRepositoryDetails(rptype, request.Msg.CustomDetail); err != nil {
 			return err
 		}
 	}
@@ -890,7 +893,7 @@ func (s *Server) validatePackageRepositoryDetails(rptype string, any *anypb.Any)
 	return nil
 }
 
-func (s *Server) validatePackageRepositoryAuth(ctx context.Context, cluster, namespace string, rptype string, auth *corev1.PackageRepositoryAuth, pkgRepository *packagingv1alpha1.PackageRepository, pkgSecret *k8scorev1.Secret) error {
+func (s *Server) validatePackageRepositoryAuth(ctx context.Context, headers http.Header, cluster, namespace string, rptype string, auth *corev1.PackageRepositoryAuth, pkgRepository *packagingv1alpha1.PackageRepository, pkgSecret *k8scorev1.Secret) error {
 	// ignore auth if type is not specified
 	if auth.Type == corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED {
 		if auth.GetPackageRepoAuthOneOf() != nil {
@@ -933,7 +936,7 @@ func (s *Server) validatePackageRepositoryAuth(ctx context.Context, cluster, nam
 			return status.Errorf(codes.InvalidArgument, "invalid auth, the secret name is not provided")
 		}
 
-		secret, err := s.getSecret(ctx, cluster, namespace, name)
+		secret, err := s.getSecret(ctx, headers, cluster, namespace, name)
 		if err != nil {
 			err = statuserror.FromK8sError("get", "Secret", name, err)
 			return status.Errorf(codes.InvalidArgument, "invalid auth, the secret could not be accessed: %v", err)

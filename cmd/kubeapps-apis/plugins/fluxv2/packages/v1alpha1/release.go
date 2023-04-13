@@ -41,8 +41,8 @@ var (
 )
 
 // namespace maybe "", in which case releases from all namespaces are returned
-func (s *Server) listReleasesInCluster(ctx context.Context, namespace string) ([]helmv2.HelmRelease, error) {
-	client, err := s.getClient(ctx, namespace)
+func (s *Server) listReleasesInCluster(ctx context.Context, headers http.Header, namespace string) ([]helmv2.HelmRelease, error) {
+	client, err := s.getClient(ctx, headers, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -62,8 +62,8 @@ func (s *Server) listReleasesInCluster(ctx context.Context, namespace string) ([
 	}
 }
 
-func (s *Server) getReleaseInCluster(ctx context.Context, key types.NamespacedName) (*helmv2.HelmRelease, error) {
-	client, err := s.getClient(ctx, key.Namespace)
+func (s *Server) getReleaseInCluster(ctx context.Context, headers http.Header, key types.NamespacedName) (*helmv2.HelmRelease, error) {
+	client, err := s.getClient(ctx, headers, key.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -75,8 +75,8 @@ func (s *Server) getReleaseInCluster(ctx context.Context, key types.NamespacedNa
 	return &rel, nil
 }
 
-func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace string, pageSize int32, itemOffset int) ([]*corev1.InstalledPackageSummary, error) {
-	releasesFromCluster, err := s.listReleasesInCluster(ctx, namespace)
+func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, headers http.Header, namespace string, pageSize int32, itemOffset int) ([]*corev1.InstalledPackageSummary, error) {
+	releasesFromCluster, err := s.listReleasesInCluster(ctx, headers, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace s
 
 		for i, r := range releasesFromCluster {
 			if startAt <= i {
-				summary, err := s.installedPkgSummaryFromRelease(ctx, r)
+				summary, err := s.installedPkgSummaryFromRelease(ctx, headers, r)
 				if err != nil {
 					return nil, err
 				} else if summary == nil {
@@ -107,7 +107,7 @@ func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace s
 	return installedPkgSummaries, nil
 }
 
-func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, rel helmv2.HelmRelease) (*corev1.InstalledPackageSummary, error) {
+func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, headers http.Header, rel helmv2.HelmRelease) (*corev1.InstalledPackageSummary, error) {
 	name, err := common.NamespacedName(&rel)
 	if err != nil {
 		return nil, err
@@ -142,7 +142,7 @@ func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, rel helmv2.
 		} else {
 			chartKey := types.NamespacedName{Name: parts[1], Namespace: parts[0]}
 			// not important to use the chart cache here, since the tar URL will be from a local cluster
-			if chart, err := s.getChartInCluster(ctx, chartKey); err != nil {
+			if chart, err := s.getChartInCluster(ctx, headers, chartKey); err != nil {
 				log.Warningf("Failed to get HelmChart [%s] due to: %+v", helmChartRef, err)
 			} else {
 				tarUrl := chart.Status.URL
@@ -173,7 +173,7 @@ func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, rel helmv2.
 		repoNamespace = name.Namespace
 	}
 	repo := types.NamespacedName{Namespace: repoNamespace, Name: repoName}
-	chartFromCache, err := s.getChartModel(ctx, repo, chartName)
+	chartFromCache, err := s.getChartModel(ctx, headers, repo, chartName)
 	if err != nil {
 		log.Warningf("%v", err)
 	} else if chartFromCache != nil && len(chartFromCache.ChartVersions) > 0 {
@@ -211,7 +211,7 @@ func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, rel helmv2.
 }
 
 func (s *Server) installedPackageDetail(ctx context.Context, headers http.Header, key types.NamespacedName) (*corev1.InstalledPackageDetail, error) {
-	rel, err := s.getReleaseInCluster(ctx, key)
+	rel, err := s.getReleaseInCluster(ctx, headers, key)
 	if err != nil {
 		return nil, err
 	}
@@ -311,14 +311,14 @@ func (s *Server) getReleaseViaHelmApi(headers http.Header, key types.NamespacedN
 	return release, nil
 }
 
-func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePackageReference, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, valuesString string) (*corev1.InstalledPackageReference, error) {
+func (s *Server) newRelease(ctx context.Context, headers http.Header, packageRef *corev1.AvailablePackageReference, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, valuesString string) (*corev1.InstalledPackageReference, error) {
 	repoName, chartName, err := pkgutils.SplitPackageIdentifier(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
 
 	repo := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: repoName}
-	chart, err := s.getChartModel(ctx, repo, chartName)
+	chart, err := s.getChartModel(ctx, headers, repo, chartName)
 	if err != nil {
 		return nil, err
 	}
@@ -350,7 +350,7 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 	// per https://github.com/vmware-tanzu/kubeapps/pull/3640#issuecomment-949315105
 	// the helm release CR to also be created in the target namespace (where the helm
 	// release itself is currently created)
-	client, err := s.getClient(ctx, targetName.Namespace)
+	client, err := s.getClient(ctx, headers, targetName.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -369,10 +369,10 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 	}, nil
 }
 
-func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.InstalledPackageReference, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, valuesString string) (*corev1.InstalledPackageReference, error) {
+func (s *Server) updateRelease(ctx context.Context, headers http.Header, packageRef *corev1.InstalledPackageReference, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, valuesString string) (*corev1.InstalledPackageReference, error) {
 	key := types.NamespacedName{Name: packageRef.Identifier, Namespace: packageRef.Context.Namespace}
 
-	rel, err := s.getReleaseInCluster(ctx, key)
+	rel, err := s.getReleaseInCluster(ctx, headers, key)
 	if err != nil {
 		return nil, err
 	}
@@ -460,7 +460,7 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 	// even other changes made by the user.
 	rel.Status = helmv2.HelmReleaseStatus{}
 
-	client, err := s.getClient(ctx, packageRef.Context.Namespace)
+	client, err := s.getClient(ctx, headers, packageRef.Context.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -481,8 +481,8 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 	}, nil
 }
 
-func (s *Server) deleteRelease(ctx context.Context, packageRef *corev1.InstalledPackageReference) error {
-	client, err := s.getClient(ctx, packageRef.Context.Namespace)
+func (s *Server) deleteRelease(ctx context.Context, headers http.Header, packageRef *corev1.InstalledPackageReference) error {
+	client, err := s.getClient(ctx, headers, packageRef.Context.Namespace)
 	if err != nil {
 		return err
 	}

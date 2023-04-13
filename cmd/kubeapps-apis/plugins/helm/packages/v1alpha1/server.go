@@ -697,7 +697,7 @@ func installedPkgDetailFromRelease(r *release.Release, ref *corev1.InstalledPack
 func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Request[corev1.CreateInstalledPackageRequest]) (*connect.Response[corev1.CreateInstalledPackageResponse], error) {
 	log.InfoS("+helm CreateInstalledPackage", "cluster", request.Msg.GetTargetContext().GetCluster(), "namespace", request.Msg.GetTargetContext().GetNamespace())
 
-	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, s.globalPackagingCluster)
+	typedClient, err := s.clientGetter.Typed(ctx, request.Header(), s.globalPackagingCluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create kubernetes clientset: %v", err)
 	}
@@ -771,7 +771,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Re
 		return nil, status.Errorf(codes.FailedPrecondition, "Unable to find the available package used to deploy %q in the namespace %q.", releaseName, installedRef.GetContext().GetNamespace())
 	}
 
-	typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, s.globalPackagingCluster)
+	typedClient, err := s.clientGetter.Typed(ctx, request.Header(), s.globalPackagingCluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create kubernetes clientset: %v", err)
 	}
@@ -1145,7 +1145,7 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *connec
 func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *connect.Request[corev1.GetPackageRepositorySummariesRequest]) (*connect.Response[corev1.GetPackageRepositorySummariesResponse], error) {
 	log.Infof("+helm GetPackageRepositorySummaries [%v]", request)
 
-	if summaries, err := s.repoSummaries(ctx, request.Msg.GetContext().GetCluster(), request.Msg.GetContext().GetNamespace()); err != nil {
+	if summaries, err := s.repoSummaries(ctx, request.Header(), request.Msg.GetContext().GetCluster(), request.Msg.GetContext().GetNamespace()); err != nil {
 		return nil, err
 	} else {
 		return connect.NewResponse(&corev1.GetPackageRepositorySummariesResponse{
