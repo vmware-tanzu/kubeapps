@@ -920,9 +920,9 @@ dependencies = [
 
 [[package]]
 name = "json-patch"
-version = "0.3.0"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e712e62827c382a77b87f590532febb1f8b2fdbc3eefa1ee37fe7281687075ef"
+checksum = "1f54898088ccb91df1b492cc80029a6fdf1c48ca0db7c6822a8babad69c94658"
 dependencies = [
  "serde",
  "serde_json",
@@ -943,11 +943,11 @@ dependencies = [
 
 [[package]]
 name = "k8s-openapi"
-version = "0.17.0"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d1985030683a2bac402cbda61222195de80d3f66b4c87ab56e5fea379bd98c3"
+checksum = "cd990069640f9db34b3b0f7a1afc62a05ffaa3be9b66aa3c313f58346df7f788"
 dependencies = [
- "base64 0.20.0",
+ "base64 0.21.0",
  "bytes",
  "chrono",
  "serde",
@@ -957,9 +957,9 @@ dependencies = [
 
 [[package]]
 name = "kube"
-version = "0.80.0"
+version = "0.82.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "414d80c69906a91e8ecf4ae16d0fb504e19aa6b099135d35d85298b4e4be3ed3"
+checksum = "ca82ee1786dc8770d1ad4e319003e3d68cd86bc1204ed9e40f591ffef8e6492c"
 dependencies = [
  "k8s-openapi",
  "kube-client",
@@ -968,9 +968,9 @@ dependencies = [
 
 [[package]]
 name = "kube-client"
-version = "0.80.0"
+version = "0.82.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6dc5ae0b9148b4e2ebb0dabda06a0cd65b1eed2f41d792d49787841a68050283"
+checksum = "90b1d8deb705ef2463b2ce142b0ff98c815f8f0ac393d13c8f4c2b26491daf66"
 dependencies = [
  "base64 0.20.0",
  "bytes",
@@ -1003,9 +1003,9 @@ dependencies = [
 
 [[package]]
 name = "kube-core"
-version = "0.80.0"
+version = "0.82.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98331c6f1354893f7c50da069e43a3fd1c84e55bbedc7765d9db22ec3291d07d"
+checksum = "b16c1653fd0bda69a6bdb363167edbb72d28817db340d2fe8cb89dc07d354e05"
 dependencies = [
  "chrono",
  "form_urlencoded",
@@ -1020,9 +1020,9 @@ dependencies = [
 
 [[package]]
 name = "kube-derive"
-version = "0.80.0"
+version = "0.82.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4be6ff26b9a34ce831d341e8b33bc78986a33c1be88f5bf9ca84e92e98b1dfb"
+checksum = "47f6f25cba90928fd269fec0c5c22bea5f0d48d4376dadef90ce9a8e71f92803"
 dependencies = [
  "darling",
  "proc-macro2",
@@ -1033,9 +1033,9 @@ dependencies = [
 
 [[package]]
 name = "kube-runtime"
-version = "0.80.0"
+version = "0.82.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b698eb8998b46683b0dc3c2ce72c80bc308fc8159f25afa719668c290a037a57"
+checksum = "ed8442b2f1d6c1d630677ade9e5d5ebe793dec099a75fb582d56d77b8eb8cee8"
 dependencies = [
  "ahash",
  "async-trait",
@@ -1726,14 +1726,15 @@ dependencies = [
 
 [[package]]
 name = "serde_yaml"
-version = "0.8.26"
+version = "0.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "578a7433b776b56a35785ed5ce9a7e777ac0598aac5a6dd1b4b18a307c7fc71b"
+checksum = "d9d684e3ec7de3bf5466b32bd75303ac16f0736426e5a4e0d6e489559ce1249c"
 dependencies = [
  "indexmap",
+ "itoa",
  "ryu",
  "serde",
- "yaml-rust",
+ "unsafe-libyaml",
 ]
 
 [[package]]
@@ -2064,11 +2065,11 @@ dependencies = [
 
 [[package]]
 name = "tower-http"
-version = "0.3.5"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f873044bf02dd1e8239e9c1293ea39dad76dc594ec16185d0a1bf31d8dc8d858"
+checksum = "5d1d42a9b3f3ec46ba828e8d376aec14592ea199f70a06a548587ecd1c4ab658"
 dependencies = [
- "base64 0.13.1",
+ "base64 0.20.0",
  "bitflags 1.3.2",
  "bytes",
  "futures-core",
@@ -2076,6 +2077,7 @@ dependencies = [
  "http",
  "http-body",
  "http-range-header",
+ "mime",
  "pin-project-lite",
  "tower-layer",
  "tower-service",
@@ -2184,6 +2186,12 @@ name = "unicode-width"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c0edd1e5b14653f783770bce4a4dabb4a5108a5370a5f5d8cfe8710c361f6c8b"
+
+[[package]]
+name = "unsafe-libyaml"
+version = "0.2.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1865806a559042e51ab5414598446a5871b561d21b6764f2eabb0dd481d880a6"
 
 [[package]]
 name = "url"
@@ -2445,15 +2453,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "80d0f4e272c85def139476380b12f9ac60926689dd2e01d4923222f40580869d"
 dependencies = [
  "winapi",
-]
-
-[[package]]
-name = "yaml-rust"
-version = "0.4.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56c1936c4cc7a1c9ab21a1ebb602eb942ba868cbd44a99cb7cdc5892335e1c85"
-dependencies = [
- "linked-hash-map",
 ]
 
 [[package]]
