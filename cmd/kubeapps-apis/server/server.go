@@ -114,6 +114,11 @@ func Serve(serveOpts core.ServeOptions) error {
 	)
 	mux.Handle(grpchealth.NewHandler(checker))
 
+	// Finally, link the new mux so that all other requests are handled by the gateway
+	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gwArgs.Mux.ServeHTTP(w, r)
+	}))
+
 	if serveOpts.UnsafeLocalDevKubeconfig {
 		klogv2.Warning("Using the local Kubeconfig file instead of the actual in-cluster's config. This is not recommended except for development purposes.")
 	}
