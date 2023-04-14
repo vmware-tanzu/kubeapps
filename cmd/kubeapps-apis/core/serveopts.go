@@ -37,5 +37,5 @@ type GatewayHandlerArgs struct {
 
 // KubernetesConfigGetter is a function type used throughout the apis server so
 // that call-sites don't need to know how to obtain an authenticated client, but
-// rather can just pass the request context and the cluster to get one.
-type KubernetesConfigGetter func(ctx context.Context, headers http.Header, cluster string) (*rest.Config, error)
+// rather can just pass the headers and the cluster to get one.
+type KubernetesConfigGetter func(headers http.Header, cluster string) (*rest.Config, error)

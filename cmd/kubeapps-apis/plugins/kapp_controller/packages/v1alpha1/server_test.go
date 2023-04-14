@@ -6473,7 +6473,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					WithTyped(typedClient).
 					WithDynamic(dynClient).
 					Build(),
-				kappClientsGetter: func(ctx context.Context, headers http.Header, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error) {
+				kappClientsGetter: func(headers http.Header, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error) {
 					// Create a fake Kapp DepsFactory and configure there the fake k8s clients the hereinbefore created
 					depsFactory := NewFakeDepsFactoryImpl()
 					depsFactory.SetCoreClient(typedClient)

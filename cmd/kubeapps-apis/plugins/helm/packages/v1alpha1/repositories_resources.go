@@ -18,8 +18,9 @@ import (
 	log "k8s.io/klog/v2"
 )
 
+// TODO: remove ctx
 func (s *Server) getPkgRepositoryResource(ctx context.Context, headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	dynClient, err := s.clientGetter.Dynamic(ctx, headers, cluster)
+	dynClient, err := s.clientGetter.Dynamic(headers, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +50,7 @@ func (s *Server) getPkgRepository(ctx context.Context, headers http.Header, clus
 	}
 
 	// Auth and TLS
-	typedClient, err := s.clientGetter.Typed(ctx, headers, cluster)
+	typedClient, err := s.clientGetter.Typed(headers, cluster)
 	if err != nil {
 		return nil, nil, nil, err
 	}

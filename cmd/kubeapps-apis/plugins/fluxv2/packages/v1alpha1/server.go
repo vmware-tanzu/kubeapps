@@ -660,7 +660,7 @@ func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *c
 	if cluster == "" && namespace != "" {
 		return nil, status.Errorf(codes.InvalidArgument, "cluster must be specified when namespace is present: %s", namespace)
 	}
-	typedClient, err := s.clientGetter.Typed(ctx, request.Header(), cluster)
+	typedClient, err := s.clientGetter.Typed(request.Header(), cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -698,7 +698,9 @@ func (s *Server) newRepoEventSink() repoEventSink {
 	cg := &clientgetter.FixedClusterClientProvider{ClientsFunc: func(ctx context.Context) (*clientgetter.ClientGetter, error) {
 		// Empty headers used here since this getter is for a service account
 		// only.
-		return s.clientGetter.GetClients(ctx, http.Header{}, s.kubeappsCluster)
+		// TODO: (minelson) We need to pass the headers of the request down to
+		// here, updating the ClientsFunc signature.
+		return s.clientGetter.GetClients(http.Header{}, s.kubeappsCluster)
 	}}
 
 	// notice a bit of inconsistency here, we are using the context
@@ -726,7 +728,7 @@ func (s *Server) getClient(ctx context.Context, headers http.Header, namespace s
 
 // hasAccessToNamespace returns an error if the client does not have read access to a given namespace
 func (s *Server) hasAccessToNamespace(ctx context.Context, headers http.Header, gvr schema.GroupVersionResource, namespace string) (bool, error) {
-	typedCli, err := s.clientGetter.Typed(ctx, headers, s.kubeappsCluster)
+	typedCli, err := s.clientGetter.Typed(headers, s.kubeappsCluster)
 	if err != nil {
 		return false, err
 	}

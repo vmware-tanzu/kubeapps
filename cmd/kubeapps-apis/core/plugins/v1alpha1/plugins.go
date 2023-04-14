@@ -316,7 +316,7 @@ func createConfigGetter(serveOpts core.ServeOptions, clustersConfig kube.Cluster
 func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.ServeOptions, clustersConfig kube.ClustersConfig) (core.KubernetesConfigGetter, error) {
 	// return the closure function that takes the context, but preserving the required scope,
 	// 'inClusterConfig' and 'config'
-	return func(ctx context.Context, headers http.Header, cluster string) (*rest.Config, error) {
+	return func(headers http.Header, cluster string) (*rest.Config, error) {
 		log.V(4).Infof("+clientGetter.GetClient")
 		var err error
 		token, err := extractToken(headers)

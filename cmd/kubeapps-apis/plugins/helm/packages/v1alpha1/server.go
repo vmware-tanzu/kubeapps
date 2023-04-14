@@ -441,7 +441,7 @@ func (s *Server) hasAccessToNamespace(headers http.Header, cluster, namespace st
 	if namespace == s.GetGlobalPackagingNamespace() {
 		return nil
 	}
-	client, err := s.clientGetter.Typed(context.TODO(), headers, cluster)
+	client, err := s.clientGetter.Typed(headers, cluster)
 	if err != nil {
 		return err
 	}
@@ -697,7 +697,7 @@ func installedPkgDetailFromRelease(r *release.Release, ref *corev1.InstalledPack
 func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Request[corev1.CreateInstalledPackageRequest]) (*connect.Response[corev1.CreateInstalledPackageResponse], error) {
 	log.InfoS("+helm CreateInstalledPackage", "cluster", request.Msg.GetTargetContext().GetCluster(), "namespace", request.Msg.GetTargetContext().GetNamespace())
 
-	typedClient, err := s.clientGetter.Typed(ctx, request.Header(), s.globalPackagingCluster)
+	typedClient, err := s.clientGetter.Typed(request.Header(), s.globalPackagingCluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create kubernetes clientset: %v", err)
 	}
@@ -771,7 +771,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Re
 		return nil, status.Errorf(codes.FailedPrecondition, "Unable to find the available package used to deploy %q in the namespace %q.", releaseName, installedRef.GetContext().GetNamespace())
 	}
 
-	typedClient, err := s.clientGetter.Typed(ctx, request.Header(), s.globalPackagingCluster)
+	typedClient, err := s.clientGetter.Typed(request.Header(), s.globalPackagingCluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create kubernetes clientset: %v", err)
 	}
@@ -823,12 +823,12 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Re
 func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, headers http.Header, cluster, appRepoName, appRepoNamespace string) (*appRepov1.AppRepository, *corek8sv1.Secret, *corek8sv1.Secret, *corek8sv1.Secret, error) {
 
 	// We currently get app repositories on the kubeapps cluster only.
-	typedClient, err := s.clientGetter.Typed(ctx, headers, cluster)
+	typedClient, err := s.clientGetter.Typed(headers, cluster)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
 
-	dynClient, err := s.clientGetter.Dynamic(ctx, headers, cluster)
+	dynClient, err := s.clientGetter.Dynamic(headers, cluster)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}

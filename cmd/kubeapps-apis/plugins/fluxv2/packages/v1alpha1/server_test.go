@@ -328,13 +328,13 @@ func newServer(t *testing.T,
 	if clientGetter != nil {
 		// if client getter returns an error, FLUSHDB call does not take place, because
 		// newCacheWithRedisClient() raises an error before redisCli.FlushDB() call
-		if _, err := clientGetter.GetClients(context.TODO(), http.Header{}, ""); err == nil {
+		if _, err := clientGetter.GetClients(http.Header{}, ""); err == nil {
 			mock.ExpectFlushDB().SetVal("OK")
 		}
 	}
 
 	backgroundClientGetter := &clientgetter.FixedClusterClientProvider{ClientsFunc: func(ctx context.Context) (*clientgetter.ClientGetter, error) {
-		return clientGetter.GetClients(ctx, http.Header{}, KubeappsCluster)
+		return clientGetter.GetClients(http.Header{}, KubeappsCluster)
 	}}
 
 	sink := repoEventSink{

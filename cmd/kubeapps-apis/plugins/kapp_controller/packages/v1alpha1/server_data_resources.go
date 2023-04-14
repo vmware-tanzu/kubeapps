@@ -46,8 +46,9 @@ const (
 // Dynamic ResourceInterface getters to encapsulate the logic of getting the proper group version API resources
 
 // See https://carvel.dev/kapp-controller/docs/latest/packaging/#package-cr
+// TODO: remove ctx
 func (s *Server) getPkgResource(ctx context.Context, headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	dynClient, err := s.clientGetter.Dynamic(ctx, headers, cluster)
+	dynClient, err := s.clientGetter.Dynamic(headers, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -60,8 +61,9 @@ func (s *Server) getPkgResource(ctx context.Context, headers http.Header, cluste
 }
 
 // See https://carvel.dev/kapp-controller/docs/latest/packaging/#package-metadata
+// TODO: remove ctx
 func (s *Server) getPkgMetadataResource(ctx context.Context, headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	dynClient, err := s.clientGetter.Dynamic(ctx, headers, cluster)
+	dynClient, err := s.clientGetter.Dynamic(headers, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -74,8 +76,9 @@ func (s *Server) getPkgMetadataResource(ctx context.Context, headers http.Header
 }
 
 // See https://carvel.dev/kapp-controller/docs/latest/packaging/#package-install
+// TODO: remove ctx
 func (s *Server) getPkgInstallResource(ctx context.Context, headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	dynClient, err := s.clientGetter.Dynamic(ctx, headers, cluster)
+	dynClient, err := s.clientGetter.Dynamic(headers, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -88,8 +91,9 @@ func (s *Server) getPkgInstallResource(ctx context.Context, headers http.Header,
 }
 
 // See https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
+// TODO: remove ctx
 func (s *Server) getPkgRepositoryResource(ctx context.Context, headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	dynClient, err := s.clientGetter.Dynamic(ctx, headers, cluster)
+	dynClient, err := s.clientGetter.Dynamic(headers, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -102,8 +106,9 @@ func (s *Server) getPkgRepositoryResource(ctx context.Context, headers http.Head
 }
 
 // See https://carvel.dev/kapp-controller/docs/latest/app-spec/
+// TODO: remove ctx
 func (s *Server) getAppResource(ctx context.Context, headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	dynClient, err := s.clientGetter.Dynamic(ctx, headers, cluster)
+	dynClient, err := s.clientGetter.Dynamic(headers, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +216,7 @@ func (s *Server) getApp(ctx context.Context, headers http.Header, cluster, names
 
 // get Secret
 func (s *Server) getSecret(ctx context.Context, headers http.Header, cluster, namespace, name string) (*k8scorev1.Secret, error) {
-	typedClient, err := s.clientGetter.Typed(ctx, headers, cluster)
+	typedClient, err := s.clientGetter.Typed(headers, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -349,7 +354,7 @@ func (s *Server) getPkgRepositories(ctx context.Context, headers http.Header, cl
 // getAccessiblePackageRepositories gather list of repositories to which the user has access per namespace
 func (s *Server) getAccessiblePackageRepositories(ctx context.Context, headers http.Header, cluster string) ([]*packagingv1alpha1.PackageRepository, error) {
 	clusterTypedClientFunc := func() (kubernetes.Interface, error) {
-		return s.clientGetter.Typed(ctx, headers, cluster)
+		return s.clientGetter.Typed(headers, cluster)
 	}
 	inClusterTypedClientFunc := func() (kubernetes.Interface, error) {
 		return s.localServiceAccountClientGetter.Typed(context.Background())
@@ -472,7 +477,7 @@ func (s *Server) createPkgRepository(ctx context.Context, headers http.Header, c
 
 // create Secret
 func (s *Server) createSecret(ctx context.Context, headers http.Header, cluster string, secret *k8scorev1.Secret) (*k8scorev1.Secret, error) {
-	typedClient, err := s.clientGetter.Typed(ctx, headers, cluster)
+	typedClient, err := s.clientGetter.Typed(headers, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -513,7 +518,7 @@ func (s *Server) deletePkgRepository(ctx context.Context, headers http.Header, c
 
 // create Secret
 func (s *Server) deleteSecret(ctx context.Context, headers http.Header, cluster, namespace, name string) error {
-	typedClient, err := s.clientGetter.Typed(ctx, headers, cluster)
+	typedClient, err := s.clientGetter.Typed(headers, cluster)
 	if err != nil {
 		return err
 	}
@@ -594,11 +599,11 @@ func getAppUsedGVs(appsClient ctlapp.Apps, packageId string, namespace string, u
 }
 
 // inspectKappK8sResources returns the list of k8s resources matching the given listOptions
-func (s *Server) inspectKappK8sResources(ctx context.Context, headers http.Header, cluster, namespace, packageId string) ([]*corev1.ResourceRef, error) {
+func (s *Server) inspectKappK8sResources(headers http.Header, cluster, namespace, packageId string) ([]*corev1.ResourceRef, error) {
 	refs := []*corev1.ResourceRef{}
 
 	// Get the Kapp different clients
-	appsClient, resourcesClient, failingAPIServicesPolicy, _, err := s.GetKappClients(ctx, headers, cluster, namespace)
+	appsClient, resourcesClient, failingAPIServicesPolicy, _, err := s.GetKappClients(headers, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -669,7 +674,7 @@ func (s *Server) updatePkgRepository(ctx context.Context, headers http.Header, c
 
 // create Secret
 func (s *Server) updateSecret(ctx context.Context, headers http.Header, cluster string, secret *k8scorev1.Secret) (*k8scorev1.Secret, error) {
-	typedClient, err := s.clientGetter.Typed(ctx, headers, cluster)
+	typedClient, err := s.clientGetter.Typed(headers, cluster)
 	if err != nil {
 		return nil, err
 	}

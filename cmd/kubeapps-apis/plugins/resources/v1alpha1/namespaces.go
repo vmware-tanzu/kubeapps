@@ -28,7 +28,7 @@ func (s *Server) CheckNamespaceExists(ctx context.Context, r *connect.Request[v1
 	cluster := r.Msg.GetContext().GetCluster()
 	log.InfoS("+resources CheckNamespaceExists", "cluster", cluster, "namespace", namespace)
 
-	typedClient, err := s.clientGetter.Typed(ctx, r.Header(), cluster)
+	typedClient, err := s.clientGetter.Typed(r.Header(), cluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
@@ -55,7 +55,7 @@ func (s *Server) CreateNamespace(ctx context.Context, r *connect.Request[v1alpha
 	cluster := r.Msg.GetContext().GetCluster()
 	log.InfoS("+resources CreateNamespace", "cluster", cluster, "namespace", namespace, "labels", r.Msg.Labels)
 
-	typedClient, err := s.clientGetter.Typed(ctx, r.Header(), cluster)
+	typedClient, err := s.clientGetter.Typed(r.Header(), cluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
@@ -120,9 +120,9 @@ func (s *Server) CanI(ctx context.Context, r *connect.Request[v1alpha1.CanIReque
 	var err error
 	if s.kubeappsCluster != cluster && strings.ToLower(r.Msg.GetVerb()) == "list" && strings.ToLower(r.Msg.GetResource()) == "namespaces" {
 		// Listing namespaces in additional clusters might involve using the provided service account token
-		typedClient, err = s.clusterServiceAccountClientGetter.Typed(ctx, r.Header(), cluster)
+		typedClient, err = s.clusterServiceAccountClientGetter.Typed(r.Header(), cluster)
 	} else {
-		typedClient, err = s.clientGetter.Typed(ctx, r.Header(), cluster)
+		typedClient, err = s.clientGetter.Typed(r.Header(), cluster)
 	}
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)

@@ -388,7 +388,7 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 				t.Fatalf("in %s: fail creating the configGetter:  %+v", tc.name, err)
 			}
 
-			restConfig, err := configGetter(context.TODO(), tc.headers, tc.cluster)
+			restConfig, err := configGetter(tc.headers, tc.cluster)
 			if tc.expectedErrMsg != nil && err != nil {
 				if got, want := err.Error(), tc.expectedErrMsg.Error(); !cmp.Equal(want, got) {
 					t.Errorf("in %s: mismatch (-want +got):\n%s", tc.name, cmp.Diff(want, got))
