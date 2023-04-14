@@ -23,7 +23,6 @@ import (
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -320,7 +319,7 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.S
 	return func(ctx context.Context, headers http.Header, cluster string) (*rest.Config, error) {
 		log.V(4).Infof("+clientGetter.GetClient")
 		var err error
-		token, err := extractToken(ctx, headers)
+		token, err := extractToken(headers)
 		if err != nil {
 			return nil, status.Errorf(codes.Unauthenticated, "invalid authorization metadata: %v", err)
 		}
@@ -351,27 +350,10 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.S
 }
 
 // extractToken returns the token passed through the gRPC request in the
-// "authorization" metadata in the context (improbable-eng grpc) or headers
-// (connect gRPC)
-// It is equivalent to the "Authorization" usual HTTP 1 header
+// "authorization" metadata, in the headers for connect gRPC.
 // For instance: authorization="Bearer abc" will return "abc"
-func extractToken(ctx context.Context, headers http.Header) (string, error) {
+func extractToken(headers http.Header) (string, error) {
 	bearerToken := headers.Get("Authorization")
-
-	if bearerToken == "" {
-		// per https://github.com/vmware-tanzu/kubeapps/issues/3560
-		// extractToken() to raise an error if there is no metadata with the context.
-		// note, the caller will wrap this as a codes.Unauthenticated status
-		md, ok := metadata.FromIncomingContext(ctx)
-		if !ok {
-			return "", fmt.Errorf("missing authorization metadata")
-		}
-
-		// metadata is always lowercased
-		if len(md["authorization"]) > 0 {
-			bearerToken = md["authorization"][0]
-		}
-	}
 
 	if len(bearerToken) > 0 {
 		if strings.HasPrefix(bearerToken, "Bearer ") {
