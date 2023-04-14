@@ -17,8 +17,8 @@ In addition to these three packaging plugins, the Kubeapps APIs service is also 
 We chose to use [gRPC/protobuf](https://grpc.io/) to manage our API definitions and implementations together with the [buf.build](https://buf.build/) tool for lint and other niceties. In that regard, it's a pretty standard stack using:
 
 - [grpc-gateway](https://grpc-ecosystem.github.io/grpc-gateway/) to enable a RESTful JSON version of our API (we don't use this in our client, but not everyone uses gRPC either, so we want to ensure the API is accessible to others who would like to use it)
-- Improbable's [grpc-web](https://github.com/improbable-eng/grpc-web) to enable TypeScript gRPC client generation as well as translating gRPC-web requests into plain gRPC calls in the backend (rather than requiring something heavier like [Envoy](https://grpc.io/docs/platforms/web/basics/#configure-the-envoy-proxy) to do the translation),
-- We multiplex on a single port to serve gRPC, gRPC-web as well as JSON HTTP requests.
+- [Connect grpc-web](https://connect.build/docs/web/getting-started) to enable TypeScript gRPC client generation as well as translating gRPC-web requests into plain gRPC calls in the backend (rather than requiring something heavier like [Envoy](https://grpc.io/docs/platforms/web/basics/#configure-the-envoy-proxy) to do the translation),
+- Connect multiplexes on a single port to serve gRPC, gRPC-web, and we multiplex the Gateway JSON HTTP requests on the same port.
 
 ### A pluggable API server - loading plugins dynamically
 
