@@ -42,7 +42,6 @@ const (
 // a plugin's RegisterWithGRPCServer function must accept. This allows
 // the arguments to be defined (or modified) in the one place.
 type GRPCPluginRegistrationOptions struct {
-	Registrar        grpc.ServiceRegistrar
 	ConfigGetter     core.KubernetesConfigGetter
 	ClustersConfig   kube.ClustersConfig
 	PluginConfigPath string
@@ -72,7 +71,7 @@ type PluginsServer struct {
 	clustersConfig kube.ClustersConfig
 }
 
-func NewPluginsServer(serveOpts core.ServeOptions, registrar grpc.ServiceRegistrar, gwArgs core.GatewayHandlerArgs, mux *http.ServeMux) (*PluginsServer, error) {
+func NewPluginsServer(serveOpts core.ServeOptions, gwArgs core.GatewayHandlerArgs, mux *http.ServeMux) (*PluginsServer, error) {
 	// Store the serveOptions in the global 'pluginsServeOpts' variable
 
 	// Find all .so plugins in the specified plugins directory.
@@ -90,7 +89,7 @@ func NewPluginsServer(serveOpts core.ServeOptions, registrar grpc.ServiceRegistr
 	}
 	ps.clustersConfig = clustersConfig
 
-	err = ps.registerPlugins(pluginPaths, registrar, gwArgs, serveOpts, mux)
+	err = ps.registerPlugins(pluginPaths, gwArgs, serveOpts, mux)
 	if err != nil {
 		return nil, fmt.Errorf("failed to register plugins: %w", err)
 	}
@@ -122,7 +121,7 @@ func (s *PluginsServer) GetConfiguredPlugins(ctx context.Context, in *connect.Re
 }
 
 // registerPlugins opens each plugin, looks up the register function and calls it with the registrar.
-func (s *PluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.ServiceRegistrar, gwArgs core.GatewayHandlerArgs, serveOpts core.ServeOptions, mux *http.ServeMux) error {
+func (s *PluginsServer) registerPlugins(pluginPaths []string, gwArgs core.GatewayHandlerArgs, serveOpts core.ServeOptions, mux *http.ServeMux) error {
 	pluginsWithServers := []PluginWithServer{}
 
 	configGetter, err := createConfigGetter(serveOpts, s.clustersConfig)
@@ -141,7 +140,7 @@ func (s *PluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.Servi
 			return err
 		}
 
-		if grpcServer, err := s.registerGRPC(p, pluginDetail, grpcReg, configGetter, serveOpts, mux); err != nil {
+		if grpcServer, err := s.registerGRPC(p, pluginDetail, configGetter, serveOpts, mux); err != nil {
 			return err
 		} else {
 			pluginsWithServers = append(pluginsWithServers, PluginWithServer{
@@ -165,8 +164,7 @@ func (s *PluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.Servi
 }
 
 // registerGRPC finds and calls the required function for registering the plugin for the GRPC server.
-func (s *PluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plugin, registrar grpc.ServiceRegistrar,
-	configGetter core.KubernetesConfigGetter, serveOpts core.ServeOptions, mux *http.ServeMux) (interface{}, error) {
+func (s *PluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plugin, configGetter core.KubernetesConfigGetter, serveOpts core.ServeOptions, mux *http.ServeMux) (interface{}, error) {
 	grpcRegFn, err := p.Lookup(grpcRegisterFunction)
 	if err != nil {
 		return nil, fmt.Errorf("unable to lookup %q for %v: %w", grpcRegisterFunction, pluginDetail, err)
@@ -182,7 +180,6 @@ func (s *PluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plu
 	}
 
 	server, err := grpcFn(GRPCPluginRegistrationOptions{
-		Registrar:        registrar,
 		ConfigGetter:     configGetter,
 		ClustersConfig:   s.clustersConfig,
 		PluginConfigPath: serveOpts.PluginConfigPath,
