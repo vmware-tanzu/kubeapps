@@ -29,7 +29,7 @@ import (
 )
 
 func (s *Server) getChartInCluster(ctx context.Context, headers http.Header, key types.NamespacedName) (*sourcev1.HelmChart, error) {
-	client, err := s.getClient(ctx, headers, key.Namespace)
+	client, err := s.getClient(headers, key.Namespace)
 	if err != nil {
 		return nil, err
 	}

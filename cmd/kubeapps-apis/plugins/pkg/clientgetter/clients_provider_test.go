@@ -4,7 +4,6 @@
 package clientgetter
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"testing"
@@ -25,7 +24,7 @@ import (
 
 func TestGetClientProvider(t *testing.T) {
 
-	clientGetter := &ClientProvider{ClientsFunc: func(ctx context.Context, headers http.Header, cluster string) (*ClientGetter, error) {
+	clientGetter := &ClientProvider{ClientsFunc: func(headers http.Header, cluster string) (*ClientGetter, error) {
 		return &ClientGetter{
 			Typed: func() (kubernetes.Interface, error) { return typfake.NewSimpleClientset(), nil },
 			Dynamic: func() (dynamic.Interface, error) {
@@ -46,7 +45,7 @@ func TestGetClientProvider(t *testing.T) {
 
 	}}
 
-	badClientGetter := &ClientProvider{ClientsFunc: func(ctx context.Context, headers http.Header, cluster string) (*ClientGetter, error) {
+	badClientGetter := &ClientProvider{ClientsFunc: func(headers http.Header, cluster string) (*ClientGetter, error) {
 		return nil, fmt.Errorf("Bang!")
 	}}
 
@@ -70,28 +69,28 @@ func TestGetClientProvider(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.statusCode == codes.OK {
-				dynamicClient, err := tc.clientGetter.Dynamic(context.Background(), http.Header{}, "")
+				dynamicClient, err := tc.clientGetter.Dynamic(http.Header{}, "")
 				if err != nil {
 					t.Fatal(err)
 				} else if dynamicClient == nil {
 					t.Errorf("got: nil, want: dynamic.Interface")
 				}
 
-				typedClient, err := tc.clientGetter.Typed(context.Background(), http.Header{}, "")
+				typedClient, err := tc.clientGetter.Typed(http.Header{}, "")
 				if err != nil {
 					t.Fatal(err)
 				} else if typedClient == nil {
 					t.Errorf("got: nil, want: kubernetes.Interface")
 				}
 
-				apiExClient, err := tc.clientGetter.ApiExt(context.Background(), http.Header{}, "")
+				apiExClient, err := tc.clientGetter.ApiExt(http.Header{}, "")
 				if err != nil {
 					t.Fatal(err)
 				} else if apiExClient == nil {
 					t.Errorf("got: nil, want: clientset.Interface")
 				}
 
-				ctrlClient, err := tc.clientGetter.ControllerRuntime(context.Background(), http.Header{}, "")
+				ctrlClient, err := tc.clientGetter.ControllerRuntime(http.Header{}, "")
 				if err != nil {
 					t.Fatal(err)
 				} else if ctrlClient == nil {

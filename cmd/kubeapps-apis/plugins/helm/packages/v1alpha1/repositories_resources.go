@@ -18,8 +18,8 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-func (s *Server) getPkgRepositoryResource(ctx context.Context, headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	dynClient, err := s.clientGetter.Dynamic(ctx, headers, cluster)
+func (s *Server) getPkgRepositoryResource(headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
+	dynClient, err := s.clientGetter.Dynamic(headers, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func (s *Server) getPkgRepositoryResource(ctx context.Context, headers http.Head
 
 // getPkgRepository returns the package repository for the given cluster, namespace and identifier
 func (s *Server) getPkgRepository(ctx context.Context, headers http.Header, cluster, namespace, identifier string) (*apprepov1alpha1.AppRepository, *k8scorev1.Secret, *k8scorev1.Secret, error) {
-	client, err := s.getClient(ctx, headers, cluster, namespace)
+	client, err := s.getClient(headers, cluster, namespace)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -49,7 +49,7 @@ func (s *Server) getPkgRepository(ctx context.Context, headers http.Header, clus
 	}
 
 	// Auth and TLS
-	typedClient, err := s.clientGetter.Typed(ctx, headers, cluster)
+	typedClient, err := s.clientGetter.Typed(headers, cluster)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -79,7 +79,7 @@ func (s *Server) getPkgRepository(ctx context.Context, headers http.Header, clus
 // updatePkgRepository updates a package repository for the given cluster, namespace and identifier
 func (s *Server) updatePkgRepository(ctx context.Context, headers http.Header, cluster, namespace string, newPkgRepository *apprepov1alpha1.AppRepository) error {
 
-	client, err := s.getClient(ctx, headers, cluster, namespace)
+	client, err := s.getClient(headers, cluster, namespace)
 	if err != nil {
 		return err
 	}

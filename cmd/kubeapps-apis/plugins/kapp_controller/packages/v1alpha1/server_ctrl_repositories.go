@@ -351,7 +351,7 @@ func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *c
 	if cluster == "" && namespace != "" {
 		return nil, status.Errorf(codes.InvalidArgument, "cluster must be specified when namespace is present: %s", namespace)
 	}
-	typedClient, err := s.clientGetter.Typed(ctx, request.Header(), cluster)
+	typedClient, err := s.clientGetter.Typed(request.Header(), cluster)
 	if err != nil {
 		return nil, err
 	}

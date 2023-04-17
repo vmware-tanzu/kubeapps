@@ -166,8 +166,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 }
 
 func newClientGetter(configGetter core.KubernetesConfigGetter, useServiceAccount bool, clustersConfig kube.ClustersConfig) (clientgetter.ClientProviderInterface, error) {
-
-	customConfigGetter := func(ctx context.Context, headers http.Header, cluster string) (*rest.Config, error) {
+	customConfigGetter := func(headers http.Header, cluster string) (*rest.Config, error) {
 		if useServiceAccount {
 			// If a service account client getter has been requested, the service account
 			// to use depends on which cluster is targeted.
@@ -181,7 +180,7 @@ func newClientGetter(configGetter core.KubernetesConfigGetter, useServiceAccount
 			}
 			return restConfig, nil
 		}
-		restConfig, err := configGetter(ctx, headers, cluster)
+		restConfig, err := configGetter(headers, cluster)
 		if err != nil {
 			return nil, status.Errorf(codes.FailedPrecondition, "unable to get config : %v", err.Error())
 		}
@@ -233,7 +232,9 @@ func (s *Server) GetResources(incomingCtx context.Context, r *connect.Request[v1
 		return err
 	}
 	// TODO: Add the Authorization token to the header here when switching
-	// the packaging plugins.
+	// the packaging plugins. Currently it's being encoded into the
+	// context which is still checked by the core client (? Otherwise, how
+	// is the auth working)
 	refsResponse, err := coreClient.GetInstalledPackageResourceRefs(ctx, &pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsRequest{
 		InstalledPackageRef: r.Msg.InstalledPackageRef,
 	})
@@ -267,7 +268,7 @@ func (s *Server) GetResources(incomingCtx context.Context, r *connect.Request[v1
 	}
 
 	// Then look up each referenced resource and send it down the stream.
-	dynamicClient, err := s.clientGetter.Dynamic(incomingCtx, r.Header(), cluster)
+	dynamicClient, err := s.clientGetter.Dynamic(r.Header(), cluster)
 	if err != nil {
 		return err
 	}
@@ -347,7 +348,7 @@ func (s *Server) GetServiceAccountNames(ctx context.Context, r *connect.Request[
 	cluster := r.Msg.GetContext().GetCluster()
 	log.InfoS("+resources GetServiceAccountNames ", "cluster", cluster, "namespace", namespace)
 
-	typedClient, err := s.clientGetter.Typed(ctx, r.Header(), cluster)
+	typedClient, err := s.clientGetter.Typed(r.Header(), cluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}

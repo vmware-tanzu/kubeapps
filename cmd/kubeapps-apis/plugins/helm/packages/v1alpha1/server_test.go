@@ -114,7 +114,7 @@ func TestGetClient(t *testing.T) {
 		{
 			name:    "it returns whatever error the clients getter function returns",
 			manager: manager,
-			clientGetter: &clientgetter.ClientProvider{ClientsFunc: func(ctx context.Context, headers http.Header, cluster string) (*clientgetter.ClientGetter, error) {
+			clientGetter: &clientgetter.ClientProvider{ClientsFunc: func(headers http.Header, cluster string) (*clientgetter.ClientGetter, error) {
 				return nil, status.Errorf(codes.FailedPrecondition, "Bang!")
 			}},
 			statusCodeClient:  codes.FailedPrecondition,
@@ -138,7 +138,7 @@ func TestGetClient(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter, manager: tc.manager}
 
-			clientsProvider, errClient := s.clientGetter.GetClients(context.Background(), http.Header{}, "")
+			clientsProvider, errClient := s.clientGetter.GetClients(http.Header{}, "")
 			if got, want := status.Code(errClient), tc.statusCodeClient; got != want {
 				t.Errorf("got: %+v, want: %+v", got, want)
 			}

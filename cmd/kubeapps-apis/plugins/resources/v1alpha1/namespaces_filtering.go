@@ -29,7 +29,7 @@ func (s *Server) GetAccessibleNamespaces(ctx context.Context, headers http.Heade
 		namespaceList = append(namespaceList, trustedNamespaces...)
 	} else {
 		userTypedClientFunc := func() (kubernetes.Interface, error) {
-			return s.clientGetter.Typed(ctx, headers, cluster)
+			return s.clientGetter.Typed(headers, cluster)
 		}
 
 		// The service account client returned for fetching namespaces depends on whether
@@ -45,7 +45,7 @@ func (s *Server) GetAccessibleNamespaces(ctx context.Context, headers http.Heade
 			}
 		} else {
 			serviceAccountTypedClientFunc = func() (kubernetes.Interface, error) {
-				return s.clusterServiceAccountClientGetter.Typed(ctx, headers, cluster)
+				return s.clusterServiceAccountClientGetter.Typed(headers, cluster)
 			}
 		}
 

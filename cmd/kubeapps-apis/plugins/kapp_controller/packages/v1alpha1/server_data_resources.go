@@ -46,8 +46,8 @@ const (
 // Dynamic ResourceInterface getters to encapsulate the logic of getting the proper group version API resources
 
 // See https://carvel.dev/kapp-controller/docs/latest/packaging/#package-cr
-func (s *Server) getPkgResource(ctx context.Context, headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	dynClient, err := s.clientGetter.Dynamic(ctx, headers, cluster)
+func (s *Server) getPkgResource(headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
+	dynClient, err := s.clientGetter.Dynamic(headers, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -60,8 +60,8 @@ func (s *Server) getPkgResource(ctx context.Context, headers http.Header, cluste
 }
 
 // See https://carvel.dev/kapp-controller/docs/latest/packaging/#package-metadata
-func (s *Server) getPkgMetadataResource(ctx context.Context, headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	dynClient, err := s.clientGetter.Dynamic(ctx, headers, cluster)
+func (s *Server) getPkgMetadataResource(headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
+	dynClient, err := s.clientGetter.Dynamic(headers, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -74,8 +74,8 @@ func (s *Server) getPkgMetadataResource(ctx context.Context, headers http.Header
 }
 
 // See https://carvel.dev/kapp-controller/docs/latest/packaging/#package-install
-func (s *Server) getPkgInstallResource(ctx context.Context, headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	dynClient, err := s.clientGetter.Dynamic(ctx, headers, cluster)
+func (s *Server) getPkgInstallResource(headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
+	dynClient, err := s.clientGetter.Dynamic(headers, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -88,8 +88,8 @@ func (s *Server) getPkgInstallResource(ctx context.Context, headers http.Header,
 }
 
 // See https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
-func (s *Server) getPkgRepositoryResource(ctx context.Context, headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	dynClient, err := s.clientGetter.Dynamic(ctx, headers, cluster)
+func (s *Server) getPkgRepositoryResource(headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
+	dynClient, err := s.clientGetter.Dynamic(headers, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -102,8 +102,8 @@ func (s *Server) getPkgRepositoryResource(ctx context.Context, headers http.Head
 }
 
 // See https://carvel.dev/kapp-controller/docs/latest/app-spec/
-func (s *Server) getAppResource(ctx context.Context, headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	dynClient, err := s.clientGetter.Dynamic(ctx, headers, cluster)
+func (s *Server) getAppResource(headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
+	dynClient, err := s.clientGetter.Dynamic(headers, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func (s *Server) getAppResource(ctx context.Context, headers http.Header, cluste
 //nolint:unused
 func (s *Server) getPkg(ctx context.Context, headers http.Header, cluster, namespace, identifier string) (*datapackagingv1alpha1.Package, error) {
 	var pkg datapackagingv1alpha1.Package
-	resource, err := s.getPkgResource(ctx, headers, cluster, namespace)
+	resource, err := s.getPkgResource(headers, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func (s *Server) getPkg(ctx context.Context, headers http.Header, cluster, names
 // getPkgMetadata returns the package metadata for the given cluster, namespace and identifier
 func (s *Server) getPkgMetadata(ctx context.Context, headers http.Header, cluster, namespace, identifier string) (*datapackagingv1alpha1.PackageMetadata, error) {
 	var pkgMetadata datapackagingv1alpha1.PackageMetadata
-	resource, err := s.getPkgMetadataResource(ctx, headers, cluster, namespace)
+	resource, err := s.getPkgMetadataResource(headers, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +158,7 @@ func (s *Server) getPkgMetadata(ctx context.Context, headers http.Header, cluste
 // getPkgInstall returns the package install for the given cluster, namespace and identifier
 func (s *Server) getPkgInstall(ctx context.Context, headers http.Header, cluster, namespace, identifier string) (*packagingv1alpha1.PackageInstall, error) {
 	var pkgInstall packagingv1alpha1.PackageInstall
-	resource, err := s.getPkgInstallResource(ctx, headers, cluster, namespace)
+	resource, err := s.getPkgInstallResource(headers, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func (s *Server) getPkgInstall(ctx context.Context, headers http.Header, cluster
 // getPkgRepository returns the package repository for the given cluster, namespace and identifier
 func (s *Server) getPkgRepository(ctx context.Context, headers http.Header, cluster, namespace, identifier string) (*packagingv1alpha1.PackageRepository, error) {
 	var pkgRepository packagingv1alpha1.PackageRepository
-	resource, err := s.getPkgRepositoryResource(ctx, headers, cluster, namespace)
+	resource, err := s.getPkgRepositoryResource(headers, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +194,7 @@ func (s *Server) getPkgRepository(ctx context.Context, headers http.Header, clus
 // getApp returns the app for the given cluster, namespace and identifier
 func (s *Server) getApp(ctx context.Context, headers http.Header, cluster, namespace, identifier string) (*kappctrlv1alpha1.App, error) {
 	var app kappctrlv1alpha1.App
-	resource, err := s.getAppResource(ctx, headers, cluster, namespace)
+	resource, err := s.getAppResource(headers, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func (s *Server) getApp(ctx context.Context, headers http.Header, cluster, names
 
 // get Secret
 func (s *Server) getSecret(ctx context.Context, headers http.Header, cluster, namespace, name string) (*k8scorev1.Secret, error) {
-	typedClient, err := s.clientGetter.Typed(ctx, headers, cluster)
+	typedClient, err := s.clientGetter.Typed(headers, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +229,7 @@ func (s *Server) getSecret(ctx context.Context, headers http.Header, cluster, na
 // when finished or when an error is returned.
 func (s *Server) getPkgs(ctx context.Context, headers http.Header, cluster, namespace string, ch chan<- *datapackagingv1alpha1.Package) error {
 	defer close(ch)
-	resource, err := s.getPkgResource(ctx, headers, cluster, namespace)
+	resource, err := s.getPkgResource(headers, cluster, namespace)
 	if err != nil {
 		return err
 	}
@@ -253,7 +253,7 @@ func (s *Server) getPkgs(ctx context.Context, headers http.Header, cluster, name
 
 // getPkgs returns the list of packages for the given cluster and namespace
 func (s *Server) getPkgsWithFieldSelector(ctx context.Context, headers http.Header, cluster, namespace, fieldSelector string) ([]*datapackagingv1alpha1.Package, error) {
-	resource, err := s.getPkgResource(ctx, headers, cluster, namespace)
+	resource, err := s.getPkgResource(headers, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -282,7 +282,7 @@ func (s *Server) getPkgsWithFieldSelector(ctx context.Context, headers http.Head
 
 // getPkgMetadatas returns the list of package metadatas for the given cluster and namespace
 func (s *Server) getPkgMetadatas(ctx context.Context, headers http.Header, cluster, namespace string) ([]*datapackagingv1alpha1.PackageMetadata, error) {
-	resource, err := s.getPkgMetadataResource(ctx, headers, cluster, namespace)
+	resource, err := s.getPkgMetadataResource(headers, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +304,7 @@ func (s *Server) getPkgMetadatas(ctx context.Context, headers http.Header, clust
 
 // getPkgInstalls returns the list of package installs for the given cluster and namespace
 func (s *Server) getPkgInstalls(ctx context.Context, headers http.Header, cluster, namespace string) ([]*packagingv1alpha1.PackageInstall, error) {
-	resource, err := s.getPkgInstallResource(ctx, headers, cluster, namespace)
+	resource, err := s.getPkgInstallResource(headers, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -326,7 +326,7 @@ func (s *Server) getPkgInstalls(ctx context.Context, headers http.Header, cluste
 
 // getPkgRepositories returns the list of package repositories for the given cluster and namespace
 func (s *Server) getPkgRepositories(ctx context.Context, headers http.Header, cluster, namespace string) ([]*packagingv1alpha1.PackageRepository, error) {
-	resource, err := s.getPkgRepositoryResource(ctx, headers, cluster, namespace)
+	resource, err := s.getPkgRepositoryResource(headers, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -349,7 +349,7 @@ func (s *Server) getPkgRepositories(ctx context.Context, headers http.Header, cl
 // getAccessiblePackageRepositories gather list of repositories to which the user has access per namespace
 func (s *Server) getAccessiblePackageRepositories(ctx context.Context, headers http.Header, cluster string) ([]*packagingv1alpha1.PackageRepository, error) {
 	clusterTypedClientFunc := func() (kubernetes.Interface, error) {
-		return s.clientGetter.Typed(ctx, headers, cluster)
+		return s.clientGetter.Typed(headers, cluster)
 	}
 	inClusterTypedClientFunc := func() (kubernetes.Interface, error) {
 		return s.localServiceAccountClientGetter.Typed(context.Background())
@@ -394,7 +394,7 @@ func (s *Server) getAccessiblePackageRepositories(ctx context.Context, headers h
 //
 //nolint:unused
 func (s *Server) getApps(ctx context.Context, headers http.Header, cluster, namespace, identifier string) ([]*kappctrlv1alpha1.App, error) {
-	resource, err := s.getAppResource(ctx, headers, cluster, namespace)
+	resource, err := s.getAppResource(headers, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -419,7 +419,7 @@ func (s *Server) getApps(ctx context.Context, headers http.Header, cluster, name
 // createPkgInstall creates a package install for the given cluster, namespace and identifier
 func (s *Server) createPkgInstall(ctx context.Context, headers http.Header, cluster, namespace string, newPkgInstall *packagingv1alpha1.PackageInstall) (*packagingv1alpha1.PackageInstall, error) {
 	var pkgInstall packagingv1alpha1.PackageInstall
-	resource, err := s.getPkgInstallResource(ctx, headers, cluster, namespace)
+	resource, err := s.getPkgInstallResource(headers, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -446,7 +446,7 @@ func (s *Server) createPkgInstall(ctx context.Context, headers http.Header, clus
 // createPkgRepository creates a package repository for the given cluster, namespace and identifier
 func (s *Server) createPkgRepository(ctx context.Context, headers http.Header, cluster, namespace string, newPkgRepository *packagingv1alpha1.PackageRepository) (*packagingv1alpha1.PackageRepository, error) {
 	var pkgRepository packagingv1alpha1.PackageRepository
-	resource, err := s.getPkgRepositoryResource(ctx, headers, cluster, namespace)
+	resource, err := s.getPkgRepositoryResource(headers, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -472,7 +472,7 @@ func (s *Server) createPkgRepository(ctx context.Context, headers http.Header, c
 
 // create Secret
 func (s *Server) createSecret(ctx context.Context, headers http.Header, cluster string, secret *k8scorev1.Secret) (*k8scorev1.Secret, error) {
-	typedClient, err := s.clientGetter.Typed(ctx, headers, cluster)
+	typedClient, err := s.clientGetter.Typed(headers, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -487,7 +487,7 @@ func (s *Server) createSecret(ctx context.Context, headers http.Header, cluster 
 
 // deletePkgInstall deletes a package install for the given cluster, namespace and identifier
 func (s *Server) deletePkgInstall(ctx context.Context, headers http.Header, cluster, namespace, identifier string) error {
-	resource, err := s.getPkgInstallResource(ctx, headers, cluster, namespace)
+	resource, err := s.getPkgInstallResource(headers, cluster, namespace)
 	if err != nil {
 		return err
 	}
@@ -500,7 +500,7 @@ func (s *Server) deletePkgInstall(ctx context.Context, headers http.Header, clus
 
 // deletePkgRepository deletes a package repository for the given cluster, namespace and identifier
 func (s *Server) deletePkgRepository(ctx context.Context, headers http.Header, cluster, namespace, identifier string) error {
-	resource, err := s.getPkgRepositoryResource(ctx, headers, cluster, namespace)
+	resource, err := s.getPkgRepositoryResource(headers, cluster, namespace)
 	if err != nil {
 		return err
 	}
@@ -513,7 +513,7 @@ func (s *Server) deletePkgRepository(ctx context.Context, headers http.Header, c
 
 // create Secret
 func (s *Server) deleteSecret(ctx context.Context, headers http.Header, cluster, namespace, name string) error {
-	typedClient, err := s.clientGetter.Typed(ctx, headers, cluster)
+	typedClient, err := s.clientGetter.Typed(headers, cluster)
 	if err != nil {
 		return err
 	}
@@ -529,7 +529,7 @@ func (s *Server) deleteSecret(ctx context.Context, headers http.Header, cluster,
 // createPkgInstall creates a package install for the given cluster, namespace and identifier
 func (s *Server) updatePkgInstall(ctx context.Context, headers http.Header, cluster, namespace string, newPkgInstall *packagingv1alpha1.PackageInstall) (*packagingv1alpha1.PackageInstall, error) {
 	var pkgInstall packagingv1alpha1.PackageInstall
-	resource, err := s.getPkgInstallResource(ctx, headers, cluster, namespace)
+	resource, err := s.getPkgInstallResource(headers, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -594,11 +594,11 @@ func getAppUsedGVs(appsClient ctlapp.Apps, packageId string, namespace string, u
 }
 
 // inspectKappK8sResources returns the list of k8s resources matching the given listOptions
-func (s *Server) inspectKappK8sResources(ctx context.Context, headers http.Header, cluster, namespace, packageId string) ([]*corev1.ResourceRef, error) {
+func (s *Server) inspectKappK8sResources(headers http.Header, cluster, namespace, packageId string) ([]*corev1.ResourceRef, error) {
 	refs := []*corev1.ResourceRef{}
 
 	// Get the Kapp different clients
-	appsClient, resourcesClient, failingAPIServicesPolicy, _, err := s.GetKappClients(ctx, headers, cluster, namespace)
+	appsClient, resourcesClient, failingAPIServicesPolicy, _, err := s.GetKappClients(headers, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -643,7 +643,7 @@ func (s *Server) inspectKappK8sResources(ctx context.Context, headers http.Heade
 // updatePkgRepository updates a package repository for the given cluster, namespace and identifier
 func (s *Server) updatePkgRepository(ctx context.Context, headers http.Header, cluster, namespace string, newPkgRepository *packagingv1alpha1.PackageRepository) (*packagingv1alpha1.PackageRepository, error) {
 	var pkgRepository packagingv1alpha1.PackageRepository
-	resource, err := s.getPkgRepositoryResource(ctx, headers, cluster, namespace)
+	resource, err := s.getPkgRepositoryResource(headers, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -669,7 +669,7 @@ func (s *Server) updatePkgRepository(ctx context.Context, headers http.Header, c
 
 // create Secret
 func (s *Server) updateSecret(ctx context.Context, headers http.Header, cluster string, secret *k8scorev1.Secret) (*k8scorev1.Secret, error) {
-	typedClient, err := s.clientGetter.Typed(ctx, headers, cluster)
+	typedClient, err := s.clientGetter.Typed(headers, cluster)
 	if err != nil {
 		return nil, err
 	}

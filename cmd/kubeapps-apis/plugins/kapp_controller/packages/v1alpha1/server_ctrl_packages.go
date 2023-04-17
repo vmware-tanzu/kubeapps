@@ -471,7 +471,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *connect
 		cluster = s.globalPackagingCluster
 	}
 
-	typedClient, err := s.clientGetter.Typed(ctx, request.Header(), cluster)
+	typedClient, err := s.clientGetter.Typed(request.Header(), cluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
@@ -590,7 +590,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 		return nil, status.Errorf(codes.InvalidArgument, "installing packages in other clusters in not supported yet")
 	}
 
-	typedClient, err := s.clientGetter.Typed(ctx, request.Header(), targetCluster)
+	typedClient, err := s.clientGetter.Typed(request.Header(), targetCluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
@@ -632,7 +632,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 		return nil, statuserror.FromK8sError("create", "PackageInstall", newPkgInstall.Name, err)
 	}
 
-	resource, err := s.getAppResource(ctx, request.Header(), targetCluster, targetNamespace)
+	resource, err := s.getAppResource(request.Header(), targetCluster, targetNamespace)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the App resource: '%v'", err)
 	}
@@ -696,7 +696,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Re
 		packageCluster = s.globalPackagingCluster
 	}
 
-	typedClient, err := s.clientGetter.Typed(ctx, request.Header(), packageCluster)
+	typedClient, err := s.clientGetter.Typed(request.Header(), packageCluster)
 	if err != nil {
 		return nil, err
 	}
@@ -825,7 +825,7 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *connect.Re
 		cluster = s.globalPackagingCluster
 	}
 
-	typedClient, err := s.clientGetter.Typed(ctx, request.Header(), cluster)
+	typedClient, err := s.clientGetter.Typed(request.Header(), cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -871,7 +871,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	}
 
 	// get the list of every k8s resource matching ResourceRef
-	refs, err := s.inspectKappK8sResources(ctx, request.Header(), cluster, namespace, installedPackageRefId)
+	refs, err := s.inspectKappK8sResources(request.Header(), cluster, namespace, installedPackageRefId)
 	if err != nil {
 		return nil, err
 	}

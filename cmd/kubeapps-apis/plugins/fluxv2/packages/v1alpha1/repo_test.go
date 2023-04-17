@@ -805,7 +805,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		}
 
 		ctx := context.Background()
-		if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, http.Header{}, s.kubeappsCluster); err != nil {
+		if ctrlClient, err := s.clientGetter.ControllerRuntime(http.Header{}, s.kubeappsCluster); err != nil {
 			t.Fatal(err)
 		} else if err = ctrlClient.Delete(ctx, repo); err != nil {
 			t.Fatal(err)
@@ -1417,7 +1417,7 @@ func TestAddPackageRepository(t *testing.T) {
 			}
 
 			// check expected HelmReleass CRD has been created
-			if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, http.Header{}, s.kubeappsCluster); err != nil {
+			if ctrlClient, err := s.clientGetter.ControllerRuntime(http.Header{}, s.kubeappsCluster); err != nil {
 				t.Fatal(err)
 			} else {
 				var actualRepo sourcev1.HelmRepository
@@ -1445,7 +1445,7 @@ func TestAddPackageRepository(t *testing.T) {
 							}
 							opt2 := cmpopts.IgnoreFields(metav1.ObjectMeta{}, "Name", "GenerateName")
 							// check expected secret has been created
-							if typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, s.kubeappsCluster); err != nil {
+							if typedClient, err := s.clientGetter.Typed(http.Header{}, s.kubeappsCluster); err != nil {
 								t.Fatal(err)
 							} else if secret, err := typedClient.CoreV1().Secrets(nsname.Namespace).Get(ctx, actualRepo.Spec.SecretRef.Name, metav1.GetOptions{}); err != nil {
 								t.Fatal(err)
@@ -2225,11 +2225,11 @@ func TestUpdatePackageRepository(t *testing.T) {
 
 			// ensures the secret has been created/updated correctly
 			if !tc.userManagedSecrets && (tc.oldRepoSecret != nil || tc.expectedCreatedSecret != nil) {
-				typedClient, err := s.clientGetter.Typed(ctx, http.Header{}, s.kubeappsCluster)
+				typedClient, err := s.clientGetter.Typed(http.Header{}, s.kubeappsCluster)
 				if err != nil {
 					t.Fatal(err)
 				}
-				ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, http.Header{}, s.kubeappsCluster)
+				ctrlClient, err := s.clientGetter.ControllerRuntime(http.Header{}, s.kubeappsCluster)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -2346,7 +2346,7 @@ func TestDeletePackageRepository(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, http.Header{}, s.kubeappsCluster)
+			ctrlClient, err := s.clientGetter.ControllerRuntime(http.Header{}, s.kubeappsCluster)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -2559,7 +2559,7 @@ func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filt
 
 func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository, oldValue []byte) (key string, bytes []byte, err error) {
 	bg := &clientgetter.FixedClusterClientProvider{ClientsFunc: func(ctx context.Context) (*clientgetter.ClientGetter, error) {
-		return s.clientGetter.GetClients(ctx, http.Header{}, s.kubeappsCluster)
+		return s.clientGetter.GetClients(http.Header{}, s.kubeappsCluster)
 	}}
 	sinkNoCache := repoEventSink{clientGetter: bg}
 	return sinkNoCache.redisMockSetValueForRepo(mock, repo, oldValue)
@@ -2592,7 +2592,7 @@ func redisMockSetValueForRepo(mock redismock.ClientMock, key string, newValue, o
 
 func (s *Server) redisKeyValueForRepo(r sourcev1.HelmRepository) (key string, byteArray []byte, err error) {
 	cg := &clientgetter.FixedClusterClientProvider{ClientsFunc: func(ctx context.Context) (*clientgetter.ClientGetter, error) {
-		return s.clientGetter.GetClients(ctx, http.Header{}, s.kubeappsCluster)
+		return s.clientGetter.GetClients(http.Header{}, s.kubeappsCluster)
 	}}
 	sinkNoChartCache := repoEventSink{clientGetter: cg}
 	return sinkNoChartCache.redisKeyValueForRepo(r)

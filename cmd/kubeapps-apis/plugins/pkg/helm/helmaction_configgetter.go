@@ -4,7 +4,6 @@
 package helm
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
@@ -24,8 +23,7 @@ func NewHelmActionConfigGetter(configGetter core.KubernetesConfigGetter, cluster
 		if configGetter == nil {
 			return nil, status.Errorf(codes.Internal, "configGetter arg required")
 		}
-		// TODO(minelson): Remove context from signature of configGetter.
-		config, err := configGetter(context.TODO(), headers, cluster)
+		config, err := configGetter(headers, cluster)
 		if err != nil {
 			return nil, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
 		}

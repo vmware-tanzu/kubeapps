@@ -392,8 +392,7 @@ func newCtrlClient(repos []sourcev1.HelmRepository, charts []sourcev1.HelmChart,
 }
 
 func ctrlClientAndWatcher(t *testing.T, s *Server) (client.WithWatch, *watch.RaceFreeFakeWatcher, error) {
-	ctx := context.Background()
-	if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, http.Header{}, s.kubeappsCluster); err != nil {
+	if ctrlClient, err := s.clientGetter.ControllerRuntime(http.Header{}, s.kubeappsCluster); err != nil {
 		return nil, nil, err
 	} else if ww, ok := ctrlClient.(*withWatchWrapper); !ok {
 		return nil, nil, fmt.Errorf("Could not cast %T to: *withWatchWrapper", ctrlClient)

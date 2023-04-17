@@ -36,7 +36,7 @@ type ClientGetter struct {
 }
 
 // GetClientsFunc is a function that provides a ClientGetter per cluster
-type GetClientsFunc func(ctx context.Context, headers http.Header, cluster string) (*ClientGetter, error)
+type GetClientsFunc func(headers http.Header, cluster string) (*ClientGetter, error)
 
 // Options are creation options for a Client.
 type Options struct {
@@ -49,20 +49,20 @@ type Options struct {
 
 type ClientProviderInterface interface {
 	// Typed returns "typed" API client for k8s that works with strongly-typed objects
-	Typed(ctx context.Context, headers http.Header, cluster string) (kubernetes.Interface, error)
+	Typed(headers http.Header, cluster string) (kubernetes.Interface, error)
 
 	// Dynamic returns "untyped" API client for k8s that works with
 	// k8s.io/apimachinery/pkg/apis/meta/v1/unstructured objects
-	Dynamic(ctx context.Context, headers http.Header, cluster string) (dynamic.Interface, error)
+	Dynamic(headers http.Header, cluster string) (dynamic.Interface, error)
 
 	// ControllerRuntime returns an instance of https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/client#Client
 	// that also supports Watch operations
-	ControllerRuntime(ctx context.Context, headers http.Header, cluster string) (client.WithWatch, error)
+	ControllerRuntime(headers http.Header, cluster string) (client.WithWatch, error)
 
 	// ApiExt returns k8s API Extensions client interface, that can be used to query the
 	// status of particular CRD in a cluster
-	ApiExt(ctx context.Context, headers http.Header, cluster string) (apiext.Interface, error)
-	GetClients(ctx context.Context, headers http.Header, cluster string) (*ClientGetter, error)
+	ApiExt(headers http.Header, cluster string) (apiext.Interface, error)
+	GetClients(headers http.Header, cluster string) (*ClientGetter, error)
 }
 
 // ClientProvider provides a real implementation of the ClientProviderInterface interface
@@ -70,8 +70,8 @@ type ClientProvider struct {
 	ClientsFunc GetClientsFunc
 }
 
-func (cp ClientProvider) Typed(ctx context.Context, headers http.Header, cluster string) (kubernetes.Interface, error) {
-	clientGetter, err := cp.GetClients(ctx, headers, cluster)
+func (cp ClientProvider) Typed(headers http.Header, cluster string) (kubernetes.Interface, error) {
+	clientGetter, err := cp.GetClients(headers, cluster)
 	if err != nil {
 		code := codes.FailedPrecondition
 		if status.Code(err) == codes.Unauthenticated {
@@ -83,8 +83,8 @@ func (cp ClientProvider) Typed(ctx context.Context, headers http.Header, cluster
 	return clientGetter.Typed()
 }
 
-func (cp ClientProvider) Dynamic(ctx context.Context, headers http.Header, cluster string) (dynamic.Interface, error) {
-	clientGetter, err := cp.GetClients(ctx, headers, cluster)
+func (cp ClientProvider) Dynamic(headers http.Header, cluster string) (dynamic.Interface, error) {
+	clientGetter, err := cp.GetClients(headers, cluster)
 	if err != nil {
 		code := codes.FailedPrecondition
 		if status.Code(err) == codes.Unauthenticated {
@@ -96,8 +96,8 @@ func (cp ClientProvider) Dynamic(ctx context.Context, headers http.Header, clust
 	return clientGetter.Dynamic()
 }
 
-func (cp ClientProvider) ControllerRuntime(ctx context.Context, headers http.Header, cluster string) (client.WithWatch, error) {
-	clientGetter, err := cp.GetClients(ctx, headers, cluster)
+func (cp ClientProvider) ControllerRuntime(headers http.Header, cluster string) (client.WithWatch, error) {
+	clientGetter, err := cp.GetClients(headers, cluster)
 	if err != nil {
 		code := codes.FailedPrecondition
 		if status.Code(err) == codes.Unauthenticated {
@@ -109,8 +109,8 @@ func (cp ClientProvider) ControllerRuntime(ctx context.Context, headers http.Hea
 	return clientGetter.ControllerRuntime()
 }
 
-func (cp ClientProvider) ApiExt(ctx context.Context, headers http.Header, cluster string) (apiext.Interface, error) {
-	clientGetter, err := cp.GetClients(ctx, headers, cluster)
+func (cp ClientProvider) ApiExt(headers http.Header, cluster string) (apiext.Interface, error) {
+	clientGetter, err := cp.GetClients(headers, cluster)
 	if err != nil {
 		code := codes.FailedPrecondition
 		if status.Code(err) == codes.Unauthenticated {
@@ -122,11 +122,11 @@ func (cp ClientProvider) ApiExt(ctx context.Context, headers http.Header, cluste
 	return clientGetter.ApiExt()
 }
 
-func (cp ClientProvider) GetClients(ctx context.Context, headers http.Header, cluster string) (*ClientGetter, error) {
+func (cp ClientProvider) GetClients(headers http.Header, cluster string) (*ClientGetter, error) {
 	if cp.ClientsFunc == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "clients provider function is not set")
 	}
-	return cp.ClientsFunc(ctx, headers, cluster)
+	return cp.ClientsFunc(headers, cluster)
 }
 
 type FixedClusterClientGetterFunc func(ctx context.Context) (*ClientGetter, error)
@@ -184,11 +184,11 @@ func (bcp FixedClusterClientProvider) GetClients(ctx context.Context) (*ClientGe
 
 // buildClientsProviderFunction Creates the default function for obtaining a ClientGetter
 func buildClientsProviderFunction(configGetter core.KubernetesConfigGetter, options Options) (GetClientsFunc, error) {
-	return func(ctx context.Context, headers http.Header, cluster string) (*ClientGetter, error) {
+	return func(headers http.Header, cluster string) (*ClientGetter, error) {
 		if configGetter == nil {
 			return nil, status.Errorf(codes.Internal, "configGetter arg required")
 		}
-		config, err := configGetter(ctx, headers, cluster)
+		config, err := configGetter(headers, cluster)
 		if err != nil {
 			code := codes.FailedPrecondition
 			if status.Code(err) == codes.Unauthenticated {
@@ -320,7 +320,7 @@ func (b *Builder) WithControllerRuntime(c client.WithWatch) *Builder {
 
 // Build builds and returns a new instance of ClientProviderInterface.
 func (b *Builder) Build() ClientProviderInterface {
-	return &ClientProvider{ClientsFunc: func(ctx context.Context, headers http.Header, cluster string) (*ClientGetter, error) {
+	return &ClientProvider{ClientsFunc: func(headers http.Header, cluster string) (*ClientGetter, error) {
 		return &b.ClientGetter, nil
 	}}
 }

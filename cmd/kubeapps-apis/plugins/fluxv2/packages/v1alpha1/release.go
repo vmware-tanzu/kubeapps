@@ -42,7 +42,7 @@ var (
 
 // namespace maybe "", in which case releases from all namespaces are returned
 func (s *Server) listReleasesInCluster(ctx context.Context, headers http.Header, namespace string) ([]helmv2.HelmRelease, error) {
-	client, err := s.getClient(ctx, headers, namespace)
+	client, err := s.getClient(headers, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (s *Server) listReleasesInCluster(ctx context.Context, headers http.Header,
 }
 
 func (s *Server) getReleaseInCluster(ctx context.Context, headers http.Header, key types.NamespacedName) (*helmv2.HelmRelease, error) {
-	client, err := s.getClient(ctx, headers, key.Namespace)
+	client, err := s.getClient(headers, key.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -350,7 +350,7 @@ func (s *Server) newRelease(ctx context.Context, headers http.Header, packageRef
 	// per https://github.com/vmware-tanzu/kubeapps/pull/3640#issuecomment-949315105
 	// the helm release CR to also be created in the target namespace (where the helm
 	// release itself is currently created)
-	client, err := s.getClient(ctx, headers, targetName.Namespace)
+	client, err := s.getClient(headers, targetName.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -460,7 +460,7 @@ func (s *Server) updateRelease(ctx context.Context, headers http.Header, package
 	// even other changes made by the user.
 	rel.Status = helmv2.HelmReleaseStatus{}
 
-	client, err := s.getClient(ctx, headers, packageRef.Context.Namespace)
+	client, err := s.getClient(headers, packageRef.Context.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -482,7 +482,7 @@ func (s *Server) updateRelease(ctx context.Context, headers http.Header, package
 }
 
 func (s *Server) deleteRelease(ctx context.Context, headers http.Header, packageRef *corev1.InstalledPackageReference) error {
-	client, err := s.getClient(ctx, headers, packageRef.Context.Namespace)
+	client, err := s.getClient(headers, packageRef.Context.Namespace)
 	if err != nil {
 		return err
 	}
