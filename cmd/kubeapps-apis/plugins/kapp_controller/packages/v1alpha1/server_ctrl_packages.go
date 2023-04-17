@@ -632,7 +632,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 		return nil, statuserror.FromK8sError("create", "PackageInstall", newPkgInstall.Name, err)
 	}
 
-	resource, err := s.getAppResource(ctx, request.Header(), targetCluster, targetNamespace)
+	resource, err := s.getAppResource(request.Header(), targetCluster, targetNamespace)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the App resource: '%v'", err)
 	}

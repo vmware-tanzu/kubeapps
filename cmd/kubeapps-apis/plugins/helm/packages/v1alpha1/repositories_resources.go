@@ -18,8 +18,7 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-// TODO: remove ctx
-func (s *Server) getPkgRepositoryResource(ctx context.Context, headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
+func (s *Server) getPkgRepositoryResource(headers http.Header, cluster, namespace string) (dynamic.ResourceInterface, error) {
 	dynClient, err := s.clientGetter.Dynamic(headers, cluster)
 	if err != nil {
 		return nil, err

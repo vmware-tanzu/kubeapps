@@ -565,7 +565,7 @@ func (s *Server) repoSummaries(ctx context.Context, headers http.Header, cluster
 
 // GetPkgRepositories returns the list of package repositories for the given cluster and namespace
 func (s *Server) GetPkgRepositories(ctx context.Context, headers http.Header, cluster, namespace string) ([]*apprepov1alpha1.AppRepository, error) {
-	resource, err := s.getPkgRepositoryResource(ctx, headers, cluster, namespace)
+	resource, err := s.getPkgRepositoryResource(headers, cluster, namespace)
 	if err != nil {
 		return nil, err
 	}

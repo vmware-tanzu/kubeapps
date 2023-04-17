@@ -4,7 +4,6 @@
 package clientgetter
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"testing"
@@ -84,14 +83,14 @@ func TestGetClientProvider(t *testing.T) {
 					t.Errorf("got: nil, want: kubernetes.Interface")
 				}
 
-				apiExClient, err := tc.clientGetter.ApiExt(context.Background(), http.Header{}, "")
+				apiExClient, err := tc.clientGetter.ApiExt(http.Header{}, "")
 				if err != nil {
 					t.Fatal(err)
 				} else if apiExClient == nil {
 					t.Errorf("got: nil, want: clientset.Interface")
 				}
 
-				ctrlClient, err := tc.clientGetter.ControllerRuntime(context.Background(), http.Header{}, "")
+				ctrlClient, err := tc.clientGetter.ControllerRuntime(http.Header{}, "")
 				if err != nil {
 					t.Fatal(err)
 				} else if ctrlClient == nil {

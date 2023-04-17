@@ -57,11 +57,11 @@ type ClientProviderInterface interface {
 
 	// ControllerRuntime returns an instance of https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/client#Client
 	// that also supports Watch operations
-	ControllerRuntime(ctx context.Context, headers http.Header, cluster string) (client.WithWatch, error)
+	ControllerRuntime(headers http.Header, cluster string) (client.WithWatch, error)
 
 	// ApiExt returns k8s API Extensions client interface, that can be used to query the
 	// status of particular CRD in a cluster
-	ApiExt(ctx context.Context, headers http.Header, cluster string) (apiext.Interface, error)
+	ApiExt(headers http.Header, cluster string) (apiext.Interface, error)
 	GetClients(headers http.Header, cluster string) (*ClientGetter, error)
 }
 
@@ -96,8 +96,7 @@ func (cp ClientProvider) Dynamic(headers http.Header, cluster string) (dynamic.I
 	return clientGetter.Dynamic()
 }
 
-// TODO: remove ctx
-func (cp ClientProvider) ControllerRuntime(ctx context.Context, headers http.Header, cluster string) (client.WithWatch, error) {
+func (cp ClientProvider) ControllerRuntime(headers http.Header, cluster string) (client.WithWatch, error) {
 	clientGetter, err := cp.GetClients(headers, cluster)
 	if err != nil {
 		code := codes.FailedPrecondition
@@ -110,8 +109,7 @@ func (cp ClientProvider) ControllerRuntime(ctx context.Context, headers http.Hea
 	return clientGetter.ControllerRuntime()
 }
 
-// TODO: remove ctx
-func (cp ClientProvider) ApiExt(ctx context.Context, headers http.Header, cluster string) (apiext.Interface, error) {
+func (cp ClientProvider) ApiExt(headers http.Header, cluster string) (apiext.Interface, error) {
 	clientGetter, err := cp.GetClients(headers, cluster)
 	if err != nil {
 		code := codes.FailedPrecondition

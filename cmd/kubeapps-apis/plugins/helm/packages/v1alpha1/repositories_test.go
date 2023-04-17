@@ -875,7 +875,7 @@ func TestAddPackageRepository(t *testing.T) {
 			}
 
 			// check expected HelmRelease CRD has been created
-			if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, http.Header{}, s.kubeappsCluster); err != nil {
+			if ctrlClient, err := s.clientGetter.ControllerRuntime(http.Header{}, s.kubeappsCluster); err != nil {
 				t.Fatal(err)
 			} else {
 				var actualRepo appRepov1alpha1.AppRepository

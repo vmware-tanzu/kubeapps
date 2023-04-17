@@ -805,7 +805,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		}
 
 		ctx := context.Background()
-		if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, http.Header{}, s.kubeappsCluster); err != nil {
+		if ctrlClient, err := s.clientGetter.ControllerRuntime(http.Header{}, s.kubeappsCluster); err != nil {
 			t.Fatal(err)
 		} else if err = ctrlClient.Delete(ctx, repo); err != nil {
 			t.Fatal(err)
@@ -1417,7 +1417,7 @@ func TestAddPackageRepository(t *testing.T) {
 			}
 
 			// check expected HelmReleass CRD has been created
-			if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, http.Header{}, s.kubeappsCluster); err != nil {
+			if ctrlClient, err := s.clientGetter.ControllerRuntime(http.Header{}, s.kubeappsCluster); err != nil {
 				t.Fatal(err)
 			} else {
 				var actualRepo sourcev1.HelmRepository
@@ -2229,7 +2229,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, http.Header{}, s.kubeappsCluster)
+				ctrlClient, err := s.clientGetter.ControllerRuntime(http.Header{}, s.kubeappsCluster)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -2346,7 +2346,7 @@ func TestDeletePackageRepository(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, http.Header{}, s.kubeappsCluster)
+			ctrlClient, err := s.clientGetter.ControllerRuntime(http.Header{}, s.kubeappsCluster)
 			if err != nil {
 				t.Fatal(err)
 			}
