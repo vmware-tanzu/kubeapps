@@ -120,7 +120,7 @@ func (s *Server) newRepo(ctx context.Context, headers http.Header, repo *HelmRep
 	}
 
 	// Create repository CRD in K8s
-	if client, err := s.getClient(ctx, headers, repo.cluster, repo.name.Namespace); err != nil {
+	if client, err := s.getClient(headers, repo.cluster, repo.name.Namespace); err != nil {
 		return nil, err
 	} else if err = client.Create(ctx, helmRepoCrd); err != nil {
 		return nil, statuserror.FromK8sError("create", AppRepositoryKind, repo.name.String(), err)
@@ -613,7 +613,7 @@ func (s *Server) getAccessiblePackageRepositories(ctx context.Context, headers h
 }
 
 func (s *Server) deleteRepo(ctx context.Context, headers http.Header, cluster string, repoRef *corev1.PackageRepositoryReference) error {
-	client, err := s.getClient(ctx, headers, cluster, repoRef.Context.Namespace)
+	client, err := s.getClient(headers, cluster, repoRef.Context.Namespace)
 	if err != nil {
 		return err
 	}

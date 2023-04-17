@@ -718,8 +718,7 @@ func (s *Server) newRepoEventSink() repoEventSink {
 	}
 }
 
-// TODO: delete ctx
-func (s *Server) getClient(ctx context.Context, headers http.Header, namespace string) (ctrlclient.Client, error) {
+func (s *Server) getClient(headers http.Header, namespace string) (ctrlclient.Client, error) {
 	client, err := s.clientGetter.ControllerRuntime(headers, s.kubeappsCluster)
 	if err != nil {
 		return nil, err

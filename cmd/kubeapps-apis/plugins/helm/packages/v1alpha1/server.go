@@ -1098,8 +1098,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *connect.Requ
 	}
 }
 
-// TODO: delete ctx
-func (s *Server) getClient(ctx context.Context, headers http.Header, cluster string, namespace string) (ctrlclient.Client, error) {
+func (s *Server) getClient(headers http.Header, cluster string, namespace string) (ctrlclient.Client, error) {
 	client, err := s.clientGetter.ControllerRuntime(headers, cluster)
 	if err != nil {
 		return nil, err

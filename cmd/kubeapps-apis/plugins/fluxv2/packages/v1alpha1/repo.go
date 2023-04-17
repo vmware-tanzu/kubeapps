@@ -101,7 +101,7 @@ func (s *Server) getRepoInCluster(ctx context.Context, headers http.Header, key 
 	// whether or not the caller hasAccessToNamespace(). We can just pass the caller
 	// context into Get() and if the caller isn't allowed, Get will raise an error, which is what we
 	// want
-	client, err := s.getClient(ctx, headers, key.Namespace)
+	client, err := s.getClient(headers, key.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -285,7 +285,7 @@ func (s *Server) newRepo(ctx context.Context, request *connect.Request[corev1.Ad
 
 	if fluxRepo, err := newFluxHelmRepo(name, description, typ, url, interval, secret, passCredentials, provider); err != nil {
 		return nil, err
-	} else if client, err := s.getClient(ctx, request.Header(), name.Namespace); err != nil {
+	} else if client, err := s.getClient(request.Header(), name.Namespace); err != nil {
 		return nil, err
 	} else if err = client.Create(ctx, fluxRepo); err != nil {
 		return nil, statuserror.FromK8sError("create", "HelmRepository", name.String(), err)
@@ -378,7 +378,7 @@ func (s *Server) repoSummaries(ctx context.Context, headers http.Header, ns stri
 		// error should be raised, as opposed to returning an empty list with no error
 		var repoList sourcev1.HelmRepositoryList
 		var client ctrlclient.Client
-		if client, err = s.getClient(ctx, headers, ns); err != nil {
+		if client, err = s.getClient(headers, ns); err != nil {
 			return nil, err
 		} else if err = client.List(ctx, &repoList); err != nil {
 			return nil, statuserror.FromK8sError("list", "HelmRepository", "", err)
@@ -499,7 +499,7 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 	// even other changes made by the user.
 	repo.Status = sourcev1.HelmRepositoryStatus{}
 
-	if client, err := s.getClient(ctx, request.Header(), key.Namespace); err != nil {
+	if client, err := s.getClient(request.Header(), key.Namespace); err != nil {
 		return nil, err
 	} else if err = client.Update(ctx, repo); err != nil {
 		return nil, statuserror.FromK8sError("update", "HelmRepository", key.String(), err)
@@ -525,7 +525,7 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 }
 
 func (s *Server) deleteRepo(ctx context.Context, headers http.Header, repoRef *corev1.PackageRepositoryReference) error {
-	client, err := s.getClient(ctx, headers, repoRef.Context.Namespace)
+	client, err := s.getClient(headers, repoRef.Context.Namespace)
 	if err != nil {
 		return err
 	}
