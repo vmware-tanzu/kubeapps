@@ -393,7 +393,6 @@ export interface IKind {
 
 export interface IKubeState {
   items: { [s: string]: IKubeItem<IResource | IK8sList<IResource, {}>> };
-  subscriptions: { [s: string]: Subscription };
   // TODO(minelson): Remove kinds and kindsError once the operator support is
   // removed from the dashboard or replaced with a plugin.
   kinds: { [kind: string]: IKind };

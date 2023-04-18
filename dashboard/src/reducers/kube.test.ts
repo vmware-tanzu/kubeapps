@@ -20,7 +20,6 @@ describe("kubeReducer", () => {
   beforeEach(() => {
     initialState = {
       items: {},
-      subscriptions: {},
       kinds: initialKinds,
     };
   });
