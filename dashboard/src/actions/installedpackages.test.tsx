@@ -7,8 +7,6 @@ import {
   GetInstalledPackageSummariesResponse,
   InstalledPackageDetail,
   InstalledPackageReference,
-  InstalledPackageStatus,
-  InstalledPackageStatus_StatusReason,
   InstalledPackageSummary,
   ReconciliationOptions,
   VersionReference,
@@ -52,9 +50,9 @@ describe("fetches installed packages", () => {
   beforeEach(() => {
     requestInstalledPackageListMock = jest.fn(
       () =>
-        ({
-          installedPackageSummaries,
-        } as GetInstalledPackageSummariesResponse),
+      ({
+        installedPackageSummaries,
+      } as GetInstalledPackageSummariesResponse),
     );
     InstalledPackage.GetInstalledPackageSummaries = requestInstalledPackageListMock;
   });
