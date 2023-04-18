@@ -33,10 +33,6 @@ beforeEach(() => {
       ...initialState.config,
       namespace: "kubeapps-ns",
     },
-    kube: {
-      ...initialState.kube,
-      subscriptions: { "default-c/default-ns/my-release": {} } as any,
-    },
   } as Partial<IStoreState>);
 });
 

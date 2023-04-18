@@ -26,7 +26,6 @@ import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/flux
 import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
 import { KappControllerPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller_pb";
 import { IOperatorsState } from "reducers/operators";
-import { Subscription } from "rxjs";
 import { IAuthState } from "../reducers/auth";
 import { IClustersState } from "../reducers/cluster";
 import { IConfigState } from "../reducers/config";
@@ -393,7 +392,6 @@ export interface IKind {
 
 export interface IKubeState {
   items: { [s: string]: IKubeItem<IResource | IK8sList<IResource, {}>> };
-  subscriptions: { [s: string]: Subscription };
   // TODO(minelson): Remove kinds and kindsError once the operator support is
   // removed from the dashboard or replaced with a plugin.
   kinds: { [kind: string]: IKind };

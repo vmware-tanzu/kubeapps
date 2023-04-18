@@ -124,11 +124,6 @@ export const initialKinds = {
 export const initialState: IKubeState = {
   items: {},
   kinds: initialKinds,
-  // We book keep on subscriptions, keyed by the installed package ref,
-  // so that we can unsubscribe when the closeRequestResources action is
-  // dispatched (usually because the component is unmounted when the user
-  // navigates away).
-  subscriptions: {},
 };
 
 const kubeReducer = (
@@ -155,14 +150,6 @@ const kubeReducer = (
     case getType(actions.kube.requestResources): {
       const { pkg, refs, handler, watch } = action.payload;
       const asyncResponses = Kube.getResources(pkg, refs, watch);
-
-      // With the change from improbable's grpc-web, which used a subscription
-      // to the connect grpc-web, which uses an async iterator, we'll no longer
-      // need to handle neither the subscription state nor the errors.
-      // TODO(absoludity): Remove the subscription state as well as the extra
-      // args passed in for error handling and completion.
-      // Existing tests only tested the subscription state, so add tests for the actual
-      // content state (of responses).
       const processResponses = async () => {
         for await (const response of asyncResponses) {
           handler(response);
@@ -171,20 +158,6 @@ const kubeReducer = (
       processResponses();
 
       return state;
-    }
-    case getType(actions.kube.closeRequestResources): {
-      const pkg = action.payload;
-      const key = `${pkg.context?.cluster}/${pkg.context?.namespace}/${pkg.identifier}`;
-      const { subscriptions } = state;
-      const { [key]: foundSubscription, ...otherSubscriptions } = subscriptions;
-      // unsubscribe if it exists
-      if (foundSubscription !== undefined) {
-        foundSubscription.unsubscribe();
-      }
-      return {
-        ...state,
-        subscriptions: otherSubscriptions,
-      };
     }
     case LOCATION_CHANGE:
       return { ...state, items: {} };

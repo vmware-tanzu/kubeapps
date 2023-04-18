@@ -51,6 +51,8 @@ type GRPCPluginRegistrationOptions struct {
 
 	// The mux used for the connect gRPC routing
 	Mux *http.ServeMux
+
+	LocalPort int
 }
 
 // PluginWithServer keeps a record of a GRPC server and its plugin detail.
@@ -185,6 +187,7 @@ func (s *PluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plu
 		ClientQPS:        serveOpts.QPS,
 		ClientBurst:      serveOpts.Burst,
 		Mux:              mux,
+		LocalPort:        serveOpts.Port,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("plug-in %q failed to register due to: %v", pluginDetail, err)

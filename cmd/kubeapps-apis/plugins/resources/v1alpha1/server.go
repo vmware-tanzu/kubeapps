@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"sync"
 
 	"github.com/bufbuild/connect-go"
@@ -16,10 +15,7 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/resources/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,6 +30,7 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
 	pkgsGRPCv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	pkgsConnectV1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1/v1alpha1connect"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 )
@@ -54,7 +51,7 @@ type Server struct {
 
 	// corePackagesClientGetter holds a function to obtain the core.packages.v1alpha1
 	// client. It is similarly initialised in NewServer() below.
-	corePackagesClientGetter func() (pkgsGRPCv1alpha1.PackagesServiceClient, error)
+	corePackagesClientGetter func() (pkgsConnectV1alpha1.PackagesServiceClient, error)
 
 	// We keep a restmapper to cache discovery of REST mappings from GVK->GVR.
 	restMapper meta.RESTMapper
@@ -105,7 +102,7 @@ func createRESTMapper(clientQPS float32, clientBurst int) (meta.RESTMapper, erro
 	return restmapper.NewDiscoveryRESTMapper(groupResources), nil
 }
 
-func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clientBurst int, pluginConfigPath string, clustersConfig kube.ClustersConfig) (*Server, error) {
+func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clientBurst int, pluginConfigPath string, clustersConfig kube.ClustersConfig, localPort int) (*Server, error) {
 	mapper, err := createRESTMapper(clientQPS, clientBurst)
 	if err != nil {
 		return nil, err
@@ -143,13 +140,8 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 		clusterServiceAccountClientGetter: clusterServiceAccountClientGetter,
 		// Get the "in-cluster" client getter
 		localServiceAccountClientGetter: clientgetter.NewBackgroundClientProvider(clientgetter.Options{}, clientQPS, clientBurst),
-		corePackagesClientGetter: func() (pkgsGRPCv1alpha1.PackagesServiceClient, error) {
-			port := os.Getenv("PORT")
-			conn, err := grpc.Dial("localhost:"+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
-			if err != nil {
-				return nil, status.Errorf(codes.Internal, "unable to dial to localhost grpc service: %s", err.Error())
-			}
-			return pkgsGRPCv1alpha1.NewPackagesServiceClient(conn), nil
+		corePackagesClientGetter: func() (pkgsConnectV1alpha1.PackagesServiceClient, error) {
+			return pkgsConnectV1alpha1.NewPackagesServiceClient(http.DefaultClient, fmt.Sprintf("http://localhost:%d/", localPort)), nil
 		},
 		restMapper: mapper,
 		kindToResource: func(mapper meta.RESTMapper, gvk schema.GroupVersionKind) (schema.GroupVersionResource, meta.RESTScopeName, error) {
@@ -212,18 +204,10 @@ func setupRestConfigForCluster(restConfig *rest.Config, cluster string, clusters
 }
 
 // GetResources returns the resources for an installed package.
-func (s *Server) GetResources(incomingCtx context.Context, r *connect.Request[v1alpha1.GetResourcesRequest], stream *connect.ServerStream[v1alpha1.GetResourcesResponse]) error {
+func (s *Server) GetResources(ctx context.Context, r *connect.Request[v1alpha1.GetResourcesRequest], stream *connect.ServerStream[v1alpha1.GetResourcesResponse]) error {
 	namespace := r.Msg.GetInstalledPackageRef().GetContext().GetNamespace()
 	cluster := r.Msg.GetInstalledPackageRef().GetContext().GetCluster()
 	log.InfoS("+resources GetResources ", "cluster", cluster, "namespace", namespace)
-
-	// Ensure the token is available for the packages plugins which are still
-	// using the grpc with context auth.
-	token, err := getTokenFromIncoming(incomingCtx, r.Header())
-	if err != nil {
-		return err
-	}
-	ctx := metadata.AppendToOutgoingContext(incomingCtx, "authorization", token)
 
 	// First we grab the resource references for the specified installed package.
 	coreClient, err := s.corePackagesClientGetter()
@@ -231,13 +215,14 @@ func (s *Server) GetResources(incomingCtx context.Context, r *connect.Request[v1
 		log.Errorf("unable to create core packages client: %+v", err)
 		return err
 	}
-	// TODO: Add the Authorization token to the header here when switching
-	// the packaging plugins. Currently it's being encoded into the
-	// context which is still checked by the core client (? Otherwise, how
-	// is the auth working)
-	refsResponse, err := coreClient.GetInstalledPackageResourceRefs(ctx, &pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsRequest{
+
+	newRequest := connect.NewRequest(&pkgsGRPCv1alpha1.GetInstalledPackageResourceRefsRequest{
 		InstalledPackageRef: r.Msg.InstalledPackageRef,
 	})
+	newRequest.Header().Set("Authorization", r.Header().Get("Authorization"))
+
+	refsResponse, err := coreClient.GetInstalledPackageResourceRefs(ctx, newRequest)
+
 	if err != nil {
 		log.Errorf("unable to query core packages client for installed package resource refs: %+v", err)
 		return err
@@ -250,11 +235,11 @@ func (s *Server) GetResources(incomingCtx context.Context, r *connect.Request[v1
 		if r.Msg.GetWatch() {
 			return status.Errorf(codes.InvalidArgument, "resource refs must be specified in request when watching resources")
 		}
-		resourcesToReturn = refsResponse.GetResourceRefs()
+		resourcesToReturn = refsResponse.Msg.GetResourceRefs()
 	} else {
 		for _, requestedRef := range r.Msg.GetResourceRefs() {
 			found := false
-			for _, pkgRef := range refsResponse.GetResourceRefs() {
+			for _, pkgRef := range refsResponse.Msg.GetResourceRefs() {
 				if resourceRefsEqual(pkgRef, requestedRef) {
 					found = true
 					break
@@ -290,9 +275,9 @@ func (s *Server) GetResources(incomingCtx context.Context, r *connect.Request[v1
 		if !r.Msg.GetWatch() {
 			var resource interface{}
 			if scopeName == meta.RESTScopeNameNamespace {
-				resource, err = dynamicClient.Resource(gvr).Namespace(ref.Namespace).Get(incomingCtx, ref.GetName(), metav1.GetOptions{})
+				resource, err = dynamicClient.Resource(gvr).Namespace(ref.Namespace).Get(ctx, ref.GetName(), metav1.GetOptions{})
 			} else {
-				resource, err = dynamicClient.Resource(gvr).Get(incomingCtx, ref.GetName(), metav1.GetOptions{})
+				resource, err = dynamicClient.Resource(gvr).Get(ctx, ref.GetName(), metav1.GetOptions{})
 			}
 			if err != nil {
 				return status.Errorf(codes.Internal, "unable to get resource referenced by %+v: %s", ref, err.Error())
@@ -310,9 +295,9 @@ func (s *Server) GetResources(incomingCtx context.Context, r *connect.Request[v1
 		}
 		var watcher watch.Interface
 		if scopeName == meta.RESTScopeNameNamespace {
-			watcher, err = dynamicClient.Resource(gvr).Namespace(ref.Namespace).Watch(incomingCtx, listOptions)
+			watcher, err = dynamicClient.Resource(gvr).Namespace(ref.Namespace).Watch(ctx, listOptions)
 		} else {
-			watcher, err = dynamicClient.Resource(gvr).Watch(incomingCtx, listOptions)
+			watcher, err = dynamicClient.Resource(gvr).Watch(ctx, listOptions)
 		}
 		if err != nil {
 			log.Errorf("unable to watch resource %v: %v", ref, err)
@@ -479,28 +464,6 @@ func (rw *ResourceWatcher) ResultChan() <-chan ResourceEvent {
 	}()
 
 	return rw.resultChan
-}
-
-// getTokenFromIncoming explicitly copies the authz from the
-// incoming context or headers so the caller can use it in the outgoing context
-// when making the outgoing call the core packaging API.
-func getTokenFromIncoming(ctx context.Context, hdrs http.Header) (string, error) {
-	notAllowedErr := status.Errorf(codes.PermissionDenied, "unable to get authorization from request context")
-
-	token := hdrs.Get("Authorization")
-	// Fall back to getting the token from the context metadata.
-	if token == "" {
-		md, ok := metadata.FromIncomingContext(ctx)
-		if !ok {
-			return "", notAllowedErr
-		}
-		if len(md["authorization"]) == 0 {
-			return "", notAllowedErr
-		}
-		token = md["authorization"][0]
-	}
-
-	return token, nil
 }
 
 func resourceRefsEqual(r1, r2 *pkgsGRPCv1alpha1.ResourceRef) bool {

@@ -256,9 +256,7 @@ export default function AppView() {
     }
     if (refsToWatch.length > 0) {
       dispatch(actions.kube.getResources(installedPackageRef, refsToWatch, true));
-      return function cleanup() {
-        dispatch(actions.kube.closeRequestResources(installedPackageRef));
-      };
+      return () => {};
     }
     return () => {};
   }, [dispatch, selectedInstalledPkg?.installedPackageRef, appViewResourceRefs]);
