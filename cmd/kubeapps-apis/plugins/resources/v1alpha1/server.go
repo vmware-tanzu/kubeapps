@@ -16,7 +16,6 @@ import (
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -465,28 +464,6 @@ func (rw *ResourceWatcher) ResultChan() <-chan ResourceEvent {
 	}()
 
 	return rw.resultChan
-}
-
-// getTokenFromIncoming explicitly copies the authz from the
-// incoming context or headers so the caller can use it in the outgoing context
-// when making the outgoing call the core packaging API.
-func getTokenFromIncoming(ctx context.Context, hdrs http.Header) (string, error) {
-	notAllowedErr := status.Errorf(codes.PermissionDenied, "unable to get authorization from request context")
-
-	token := hdrs.Get("Authorization")
-	// Fall back to getting the token from the context metadata.
-	if token == "" {
-		md, ok := metadata.FromIncomingContext(ctx)
-		if !ok {
-			return "", notAllowedErr
-		}
-		if len(md["authorization"]) == 0 {
-			return "", notAllowedErr
-		}
-		token = md["authorization"][0]
-	}
-
-	return token, nil
 }
 
 func resourceRefsEqual(r1, r2 *pkgsGRPCv1alpha1.ResourceRef) bool {
