@@ -152,6 +152,28 @@ export function getInstalledPackage(
   };
 }
 
+export function getInstalledPkgStatus(
+  installedPackageRef?: InstalledPackageReference,
+): ThunkAction<Promise<void>, IStoreState, null, InstalledPackagesAction> {
+  return async dispatch => {
+    dispatch(requestInstalledPackageStatus());
+    try {
+      // Get the details of an installed package for the status.
+      const { installedPackageDetail } = await InstalledPackage.GetInstalledPackageDetail(
+        installedPackageRef,
+      );
+      dispatch(receiveInstalledPackageStatus(installedPackageDetail!.status!));
+    } catch (e: any) {
+      dispatch(
+        handleErrorAction(
+          e,
+          errorInstalledPackage(new FetchError("Unable to refresh installed package", [e])),
+        ),
+      );
+    }
+  };
+}
+
 export function deleteInstalledPackage(
   installedPackageRef: InstalledPackageReference,
 ): ThunkAction<Promise<boolean>, IStoreState, null, InstalledPackagesAction> {
