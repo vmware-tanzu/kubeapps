@@ -26,7 +26,6 @@ import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/flux
 import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
 import { KappControllerPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller_pb";
 import { IOperatorsState } from "reducers/operators";
-import { Subscription } from "rxjs";
 import { IAuthState } from "../reducers/auth";
 import { IClustersState } from "../reducers/cluster";
 import { IConfigState } from "../reducers/config";
