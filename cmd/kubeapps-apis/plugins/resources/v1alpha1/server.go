@@ -102,7 +102,7 @@ func createRESTMapper(clientQPS float32, clientBurst int) (meta.RESTMapper, erro
 	return restmapper.NewDiscoveryRESTMapper(groupResources), nil
 }
 
-func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clientBurst int, pluginConfigPath string, clustersConfig kube.ClustersConfig) (*Server, error) {
+func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clientBurst int, pluginConfigPath string, clustersConfig kube.ClustersConfig, localPort int) (*Server, error) {
 	mapper, err := createRESTMapper(clientQPS, clientBurst)
 	if err != nil {
 		return nil, err
@@ -141,7 +141,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 		// Get the "in-cluster" client getter
 		localServiceAccountClientGetter: clientgetter.NewBackgroundClientProvider(clientgetter.Options{}, clientQPS, clientBurst),
 		corePackagesClientGetter: func() (pkgsConnectV1alpha1.PackagesServiceClient, error) {
-			return pkgsConnectV1alpha1.NewPackagesServiceClient(http.DefaultClient, "http://localhost/"), nil
+			return pkgsConnectV1alpha1.NewPackagesServiceClient(http.DefaultClient, fmt.Sprintf("http://localhost:%d/", localPort)), nil
 		},
 		restMapper: mapper,
 		kindToResource: func(mapper meta.RESTMapper, gvk schema.GroupVersionKind) (schema.GroupVersionResource, meta.RESTScopeName, error) {
