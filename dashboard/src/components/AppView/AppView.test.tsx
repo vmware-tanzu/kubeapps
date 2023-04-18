@@ -580,7 +580,6 @@ describe("AppView actions", () => {
           watch: false,
           handler: expect.any(Function),
           onError: expect.any(Function),
-          onComplete: expect.any(Function),
         },
       },
       {
@@ -591,7 +590,6 @@ describe("AppView actions", () => {
           watch: true,
           handler: expect.any(Function),
           onError: expect.any(Function),
-          onComplete: expect.any(Function),
         },
       },
     ]);
@@ -642,12 +640,7 @@ describe("AppView actions", () => {
           watch,
           handler: expect.any(Function),
           onError: expect.any(Function),
-          onComplete: expect.any(Function),
         },
-      },
-      {
-        type: getType(actions.kube.closeRequestResources),
-        payload: installedPackage.installedPackageRef,
       },
     ]);
   });

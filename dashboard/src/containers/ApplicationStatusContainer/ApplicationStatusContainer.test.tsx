@@ -17,7 +17,6 @@ const makeStore = (resources: { [s: string]: IKubeItem<IResource> }) => {
   const state: IKubeState = {
     items: resources,
     kinds: initialKinds,
-    subscriptions: {},
   };
   return mockStore({ kube: state, config: { featureFlags: {} } } as Partial<IStoreState>);
 };

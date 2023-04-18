@@ -18,7 +18,6 @@ const mockStore = configureMockStore([thunk]);
 const makeStore = (operatorsEnabled: boolean) => {
   const state: IKubeState = {
     items: {},
-    subscriptions: {},
     kinds: {},
   };
   const config = operatorsEnabled ? { featureFlags: { operators: true } } : {};
@@ -85,7 +84,7 @@ describe("getResourceKinds", () => {
 });
 
 describe("getResources", () => {
-  it("dispatches a requestResources action with an onComplete that closes request when watching", () => {
+  it("dispatches a requestResources action", () => {
     const refs = [
       {
         apiVersion: "v1",
@@ -110,7 +109,6 @@ describe("getResources", () => {
           watch,
           handler: expect.any(Function),
           onError: expect.any(Function),
-          onComplete: expect.any(Function),
         },
       },
     ];
@@ -149,55 +147,6 @@ describe("getResources", () => {
     const handler = store.getActions()[0].payload.handler;
     handler(getResourcesResponse);
     expect(store.getActions()).toEqual(expectedHandlerActions);
-
-    const expectedCompletionActions = [
-      ...expectedHandlerActions,
-      {
-        type: getType(actions.kube.closeRequestResources),
-        payload: pkg,
-      },
-    ];
-    const onComplete = store.getActions()[0].payload.onComplete;
-    onComplete();
-    expect(store.getActions()).toEqual(expectedCompletionActions);
-  });
-
-  it("dispatches a requestResources action with an onComplete that does nothing when not watching", () => {
-    const refs = [
-      {
-        apiVersion: "v1",
-        kind: "Service",
-        name: "foo",
-        namespace: "default",
-      },
-    ] as APIResourceRef[];
-
-    const pkg = {
-      identifier: "test-pkg",
-    } as InstalledPackageReference;
-
-    const watch = false;
-
-    const expectedActions = [
-      {
-        type: getType(actions.kube.requestResources),
-        payload: {
-          pkg,
-          refs,
-          watch,
-          handler: expect.any(Function),
-          onError: expect.any(Function),
-          onComplete: expect.any(Function),
-        },
-      },
-    ];
-
-    store.dispatch(actions.kube.getResources(pkg, refs, watch));
-    expect(store.getActions()).toEqual(expectedActions);
-
-    const onComplete = store.getActions()[0].payload.onComplete;
-    onComplete();
-    expect(store.getActions()).toEqual(expectedActions);
   });
 });
 
