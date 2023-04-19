@@ -35,7 +35,7 @@ deploy-dependencies: deploy-dex deploy-openldap devel/localhost-cert.pem
 		--from-literal=password=dev-only-fake-password
 
 deploy-dev-kubeapps:
-	helm --kubeconfig=${CLUSTER_CONFIG} upgrade --install kubeapps ./chart/kubeapps --namespace kubeapps --create-namespace \
+	helm --kubeconfig=${CLUSTER_CONFIG} upgrade --install kubeapps bitnami/kubeapps --namespace kubeapps --create-namespace \
 		--values ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-values.yaml \
 		--values ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
 		--values ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-additional-kind-cluster.yaml \

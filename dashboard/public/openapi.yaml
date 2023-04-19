@@ -5807,6 +5807,14 @@ components:
         - PACKAGE_REPOSITORY_AUTH_TYPE_SSH
         - PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE
       default: PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+      title: >-
+        - PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH: uses UsernamePassword
+         - PACKAGE_REPOSITORY_AUTH_TYPE_TLS: uses TlsCertKey
+         - PACKAGE_REPOSITORY_AUTH_TYPE_BEARER: uses header
+         - PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER: uses header
+         - PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON: uses DockerCredentials
+         - PACKAGE_REPOSITORY_AUTH_TYPE_SSH: uses SshCredentials
+         - PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE: uses OpaqueCredentials
     protobufAny:
       type: object
       properties:
@@ -5886,6 +5894,10 @@ components:
             ...
             if (any.is(Foo.class)) {
               foo = any.unpack(Foo.class);
+            }
+            // or ...
+            if (any.isSameTypeAs(Foo.getDefaultInstance())) {
+              foo = any.unpack(Foo.getDefaultInstance());
             }
 
         Example 3: Pack and unpack a message in Python.
@@ -6112,6 +6124,11 @@ components:
       description: |-
         An AvailablePackageDetail provides additional details required when
         inspecting an individual package.
+
+        TODO: add example for API docs
+         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+           example: '{}'
+         };
       title: AvailablePackageDetail
     v1alpha1AvailablePackageReference:
       type: object
@@ -6150,6 +6167,12 @@ components:
         identify an available package. This is re-used on the summary and details of an
 
         available package.
+
+
+        TODO: add example for API docs
+         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+           example: '{}'
+         };
       title: AvailablePackageReference
     v1alpha1AvailablePackageSummary:
       type: object
@@ -6189,6 +6212,12 @@ components:
         installation
 
         useful when aggregating many available packages.
+
+
+        TODO: add example for API docs
+         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+           example: '{}'
+         };
       title: AvailablePackageSummary
     v1alpha1CanIResponse:
       type: object
@@ -6233,7 +6262,13 @@ components:
 
             Unimplemented for some queries for which we do not yet have a need.
           title: Namespace
-      description: A Context specifies the context of the message
+      description: |-
+        A Context specifies the context of the message
+
+        TODO: add example for API docs
+         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+           example: '{}'
+         };
       title: Context
     v1alpha1CreateInstalledPackageRequest:
       type: object
@@ -6267,7 +6302,13 @@ components:
       properties:
         installedPackageRef:
           $ref: "#/components/schemas/v1alpha1InstalledPackageReference"
-      description: Response for CreateInstalledPackage
+      description: |-
+        Response for CreateInstalledPackage
+
+        TODO: add example for API docs
+         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+           example: '{"installed_package_ref": {}}'
+         };
       title: CreateInstalledPackageResponse
     v1alpha1CreateNamespaceResponse:
       type: object
@@ -6279,11 +6320,17 @@ components:
       title: CreateSecretResponse
     v1alpha1DeleteInstalledPackageResponse:
       type: object
-      description: Response for DeleteInstalledPackage
+      description: |-
+        Response for DeleteInstalledPackage
+
+        For future extensibility only.
       title: DeleteInstalledPackageResponse
     v1alpha1DeletePackageRepositoryResponse:
       type: object
-      description: Response for DeletePackageRepository
+      description: |-
+        Response for DeletePackageRepository
+
+        For future extensibility only.
       title: DeletePackageRepositoryResponse
     v1alpha1DockerCredentials:
       type: object
@@ -6328,14 +6375,26 @@ components:
           type: string
           description: Packaged app version for the request
           title: App version
-      description: FilterOptions available when requesting summaries
+      description: |-
+        FilterOptions available when requesting summaries
+
+        TODO: add example for API docs
+         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+           example: '{}'
+         };
       title: FilterOptions
     v1alpha1GetAvailablePackageDetailResponse:
       type: object
       properties:
         availablePackageDetail:
           $ref: "#/components/schemas/v1alpha1AvailablePackageDetail"
-      description: Response for GetAvailablePackageDetail
+      description: |-
+        Response for GetAvailablePackageDetail
+
+        TODO: add example for API docs
+         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+           example: '{"available_package_detail": [{}]}'
+         };
       title: GetAvailablePackageDetailResponse
     v1alpha1GetAvailablePackageSummariesResponse:
       type: object
@@ -6361,7 +6420,13 @@ components:
           description: This optional field contains the distinct category names considering
             the FilterOptions.
           title: Categories
-      description: Response for GetAvailablePackageSummaries
+      description: |-
+        Response for GetAvailablePackageSummaries
+
+        TODO: add example for API docs
+         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+           example: '{"available_package_summaries": [{}]}'
+         };
       title: GetAvailablePackageSummariesResponse
     v1alpha1GetAvailablePackageVersionsResponse:
       type: object
@@ -6399,7 +6464,13 @@ components:
 
             the full history of versions matching the version query should be returned.
           title: Package app versions
-      description: Response for GetAvailablePackageVersions
+      description: |-
+        Response for GetAvailablePackageVersions
+
+        TODO: add example for API docs
+         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+           example: '{"package_app_versions": [{}]}'
+         };
       title: GetAvailablePackageVersionsResponse
     v1alpha1GetConfiguredPluginsResponse:
       type: object
@@ -6421,7 +6492,13 @@ components:
       properties:
         installedPackageDetail:
           $ref: "#/components/schemas/v1alpha1InstalledPackageDetail"
-      description: Response for GetInstalledPackageDetail
+      description: |-
+        Response for GetInstalledPackageDetail
+
+        TODO: add example for API docs
+         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+           example: '{"installed_package_detail": [{}]}'
+         };
       title: GetInstalledPackageDetailResponse
     v1alpha1GetInstalledPackageResourceRefsResponse:
       type: object
@@ -6585,6 +6662,12 @@ components:
         uniquely
 
         identify an installed package.
+
+
+        TODO: add example for API docs
+         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+           example: '{}'
+         };
       title: InstalledPackageReference
     v1alpha1InstalledPackageStatus:
       type: object
@@ -6652,6 +6735,11 @@ components:
       description: |-
         An InstalledPackageSummary provides a summary of an installed package
         useful when aggregating many installed packages.
+
+        TODO: add example for API docs
+         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+           example: '{}'
+         };
       title: InstalledPackageSummary
     v1alpha1Maintainer:
       type: object
@@ -6664,7 +6752,13 @@ components:
           type: string
           description: A maintainer email
           title: Maintainer email
-      description: Maintainers for the package.
+      description: |-
+        Maintainers for the package.
+
+        TODO: add example for API docs
+         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+           example: '{}'
+         };
       title: Maintainer
     v1alpha1OpaqueCredentials:
       type: object
@@ -6928,6 +7022,12 @@ components:
         https://cloud.google.com/apis/design/design_patterns#list_pagination
 
         just encapsulated in a message so it can be reused on different request messages.
+
+
+        TODO: add example for API docs
+         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+           example: '{}'
+         };
       title: PaginationOptions
     v1alpha1Plugin:
       type: object
@@ -7102,7 +7202,13 @@ components:
       properties:
         installedPackageRef:
           $ref: "#/components/schemas/v1alpha1InstalledPackageReference"
-      description: Response for UpdateInstalledPackage
+      description: |-
+        Response for UpdateInstalledPackage
+
+        TODO: add example for API docs
+         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+           example: '{"installed_package_ref": {}}'
+         };
       title: UpdateInstalledPackageResponse
     v1alpha1UpdatePackageRepositoryResponse:
       type: object
