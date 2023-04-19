@@ -38,7 +38,7 @@ env:
   GOLANG_VERSION: "1.19.8"
   HELM_VERSION_MIN: "v3.2.0"
   HELM_VERSION_STABLE: "v3.11.0"
-  GITHUB_VERSION: "2.27.2"
+  GITHUB_VERSION: "2.27.0"
   IMAGES_TO_PUSH: "apprepository-controller dashboard asset-syncer pinniped-proxy kubeapps-apis"
   # IMG_DEV_TAG is the tags used for the Kubeapps docker images. Ideally there should be an IMG_PROD_TAG
   # but its value is dynamic and GitHub actions doesn't support it in the `env` block, so it is generated
