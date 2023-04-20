@@ -110,13 +110,16 @@ replaceImage_latestToProduction() {
     fi
 
     # Get the latest tag from the bitnami repository
-    local tag
-    tag=$(curl "${curl_opts[@]}" "https://api.github.com/repos/bitnami/${repoName}/tags" | jq -r '.[0].name')
+    # See https://github.com/vmware-tanzu/kubeapps/issues/6220
+    # We may need to update to use dockerhub if we want the most recent tag
+    # explicitly. For now, just create the PR with the latest tag.
+    # local tag
+    # tag=$(curl "${curl_opts[@]}" "https://api.github.com/repos/bitnami/${repoName}/tags" | jq -r '.[0].name')
 
-    if [[ $tag == "" ]]; then
-        echo "ERROR: Unable to obtain latest tag for ${repoName}. Stopping..."
-        exit 1
-    fi
+    # if [[ $tag == "" ]]; then
+    #     echo "ERROR: Unable to obtain latest tag for ${repoName}. Stopping..."
+    #     exit 1
+    # fi
 
     # Replace image and tag from the values.yaml
     sed -i.bk -e '1h;2,$H;$!d;g' -re \
@@ -157,7 +160,7 @@ replaceImage_productionToLatest() {
 
     # Replace image and tag from the values.yaml
     sed -i.bk -e '1h;2,$H;$!d;g' -re \
-    's/repository: '${currentImageEscaped}'\n    tag: \S*/repository: '${targetImageEscaped}'\n    tag: latest/g' \
+    's/repository: '${currentImageEscaped}'\n/repository: '${targetImageEscaped}'\n/g' \
     "${FILE}"
     rm "${FILE}.bk"
 }
