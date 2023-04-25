@@ -36,8 +36,8 @@ env:
   README_GENERATOR_REPO: "bitnami-labs/readme-generator-for-helm"
   DOCKER_REGISTRY_VERSION: "2.8.1"
   GOLANG_VERSION: "1.19.8"
-  HELM_VERSION_MIN: "v3.2.0"
-  HELM_VERSION_STABLE: "v3.11.0"
+  HELM_VERSION_MIN: "v3.8.0"
+  HELM_VERSION_STABLE: "v3.11.3"
   GITHUB_VERSION: "2.27.0"
   IMAGES_TO_PUSH: "apprepository-controller dashboard asset-syncer pinniped-proxy kubeapps-apis"
   # IMG_DEV_TAG is the tags used for the Kubeapps docker images. Ideally there should be an IMG_PROD_TAG
