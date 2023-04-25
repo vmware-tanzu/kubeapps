@@ -8,8 +8,7 @@ Kubeapps is a web-based UI for launching and managing applications on Kubernetes
 ## TL;DR
 
 ```console
-helm repo add my-repo https://charts.bitnami.com/bitnami
-helm install my-release my-repo/kubeapps --namespace kubeapps --create-namespace
+helm install my-release oci://registry-1.docker.io/bitnamicharts/kubeapps --namespace kubeapps --create-namespace
 ```
 
 > Check out the [getting started](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/tutorials/getting-started.md) to start deploying apps with Kubeapps.
@@ -43,8 +42,7 @@ It also packages the [Bitnami PostgreSQL chart](https://github.com/bitnami/chart
 To install the chart with the release name `my-release`:
 
 ```console
-helm repo add my-repo https://charts.bitnami.com/bitnami
-helm install my-release my-repo/kubeapps --namespace kubeapps --create-namespace
+helm install my-release oci://registry-1.docker.io/bitnamicharts/kubeapps --namespace kubeapps --create-namespace
 ```
 
 The command deploys Kubeapps on the Kubernetes cluster in the `kubeapps` namespace. The [Parameters](#parameters) section lists the parameters that can be configured during installation.
@@ -111,7 +109,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | --------------------- |
 | `frontend.image.registry`                        | NGINX image registry                                                                                  | `docker.io`           |
 | `frontend.image.repository`                      | NGINX image repository                                                                                | `bitnami/nginx`       |
-| `frontend.image.tag`                             | NGINX image tag (immutable tags are recommended)                                                      | `1.23.4-debian-11-r0` |
+| `frontend.image.tag`                             | NGINX image tag (immutable tags are recommended)                                                      | `1.23.4-debian-11-r7` |
 | `frontend.image.digest`                          | NGINX image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                  |
 | `frontend.image.pullPolicy`                      | NGINX image pull policy                                                                               | `IfNotPresent`        |
 | `frontend.image.pullSecrets`                     | NGINX image pull secrets                                                                              | `[]`                  |
@@ -342,7 +340,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `authProxy.enabled`                               | Specifies whether Kubeapps should configure OAuth login/logout                                                                      | `false`                |
 | `authProxy.image.registry`                        | OAuth2 Proxy image registry                                                                                                         | `docker.io`            |
 | `authProxy.image.repository`                      | OAuth2 Proxy image repository                                                                                                       | `bitnami/oauth2-proxy` |
-| `authProxy.image.tag`                             | OAuth2 Proxy image tag (immutable tags are recommended)                                                                             | `7.4.0-debian-11-r52`  |
+| `authProxy.image.tag`                             | OAuth2 Proxy image tag (immutable tags are recommended)                                                                             | `7.4.0-debian-11-r59`  |
 | `authProxy.image.digest`                          | OAuth2 Proxy image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag                        | `""`                   |
 | `authProxy.image.pullPolicy`                      | OAuth2 Proxy image pull policy                                                                                                      | `IfNotPresent`         |
 | `authProxy.image.pullSecrets`                     | OAuth2 Proxy image pull secrets                                                                                                     | `[]`                   |
@@ -553,7 +551,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 ```console
 helm install kubeapps --namespace kubeapps \
   --set ingress.enabled=true \
-    my-repo/kubeapps
+    oci://registry-1.docker.io/bitnamicharts/kubeapps
 ```
 
 The above command enables an Ingress Rule to expose Kubeapps.
@@ -561,7 +559,7 @@ The above command enables an Ingress Rule to expose Kubeapps.
 Alternatively, a YAML file that specifies the values for parameters can be provided while installing the chart. For example,
 
 ```console
-helm install kubeapps --namespace kubeapps -f custom-values.yaml my-repo/kubeapps
+helm install kubeapps --namespace kubeapps -f custom-values.yaml oci://registry-1.docker.io/bitnamicharts/kubeapps
 ```
 
 ## Configuration and installation details
@@ -652,7 +650,7 @@ Now upgrade Kubeapps:
 
 ```console
 export RELEASE_NAME=kubeapps
-helm upgrade $RELEASE_NAME my-repo/kubeapps
+helm upgrade $RELEASE_NAME oci://registry-1.docker.io/bitnamicharts/kubeapps
 ```
 
 If you find issues upgrading Kubeapps, check the [troubleshooting](#error-while-upgrading-the-chart) section.
@@ -716,7 +714,7 @@ Have a look at the [dashboard documentation](https://github.com/vmware-tanzu/kub
 The example below will match the URL `http://example.com` to the Kubeapps dashboard. For further configuration, please refer to your specific Ingress configuration docs (e.g., [NGINX](https://github.com/kubernetes/ingress-nginx) or [HAProxy](https://github.com/haproxytech/kubernetes-ingress)).
 
 ```console
-helm install kubeapps my-repo/kubeapps \
+helm install kubeapps oci://registry-1.docker.io/bitnamicharts/kubeapps \
   --namespace kubeapps \
   --set ingress.enabled=true \
   --set ingress.hostname=example.com \
@@ -738,7 +736,7 @@ You can work around this problem by setting the following Nginx ingress annotati
 You may want to serve Kubeapps with a subpath, for instance `http://example.com/subpath`, you have to set the proper Ingress configuration. If you are using the ingress configuration provided by the Kubeapps chart, you will have to set the `ingress.hostname` and `path` parameters:
 
 ```console
-helm install kubeapps my-repo/kubeapps \
+helm install kubeapps oci://registry-1.docker.io/bitnamicharts/kubeapps \
   --namespace kubeapps \
   --set ingress.enabled=true \
   --set ingress.hostname=example.com \
@@ -749,7 +747,7 @@ helm install kubeapps my-repo/kubeapps \
 Besides, if you are using the OAuth2/OIDC login (more information at the [using an OIDC provider documentation](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/tutorials/using-an-OIDC-provider.md)), you will need, also, to configure the different URLs:
 
 ```console
-helm install kubeapps my-repo/kubeapps \
+helm install kubeapps oci://registry-1.docker.io/bitnamicharts/kubeapps \
   --namespace kubeapps \
   # ... other OIDC and ingress flags
   --set authProxy.oauthLoginURI="/subpath/oauth2/login" \
@@ -866,7 +864,7 @@ kubectl api-versions
 If the above command does not include entries for `rbac.authorization.k8s.io` you should perform the chart installation by setting `rbac.create=false`:
 
 ```console
-helm install --name kubeapps --namespace kubeapps my-repo/kubeapps --set rbac.create=false
+helm install --name kubeapps --namespace kubeapps oci://registry-1.docker.io/bitnamicharts/kubeapps --set rbac.create=false
 ```
 
 ### Error while upgrading the Chart
@@ -909,7 +907,7 @@ It is possible that when upgrading Kubeapps an error appears. That can be caused
 
     ```console
     helm repo update
-    helm install --name kubeapps --namespace kubeapps my-repo/kubeapps
+    helm install --name kubeapps --namespace kubeapps oci://registry-1.docker.io/bitnamicharts/kubeapps
     ```
 
 6. (Optional) Restore any repositories you backed up in the first step:
@@ -970,7 +968,7 @@ After that, you will be able to upgrade Kubeapps to 2.3.1 using the existing dat
 > **WARNING**: Make sure that the variable `$POSTGRESQL_PASSWORD` is properly populated. Setting a wrong (or empty) password will corrupt the release.
 
 ```console
-helm upgrade kubeapps my-repo/kubeapps -n kubeapps --set postgresql.postgresqlPassword=$POSTGRESQL_PASSWORD
+helm upgrade kubeapps oci://registry-1.docker.io/bitnamicharts/kubeapps -n kubeapps --set postgresql.postgresqlPassword=$POSTGRESQL_PASSWORD
 ```
 
 ### Upgrading to 2.0.1 (Chart 5.0.0)
