@@ -123,7 +123,7 @@ replaceImage_latestToProduction() {
 
     # Replace image and tag from the values.yaml
     sed -i.bk -e '1h;2,$H;$!d;g' -re \
-    's/repository: '${currentImageEscaped}'\n    tag: latest/repository: '${targetImageEscaped}'\n    tag: '${tag}'/g' \
+    's/repository: '${currentImageEscaped}'\n    tag: latest/repository: '${targetImageEscaped}'\n/g' \
     "${FILE}"
     rm "${FILE}.bk"
 }
@@ -160,7 +160,7 @@ replaceImage_productionToLatest() {
 
     # Replace image and tag from the values.yaml
     sed -i.bk -e '1h;2,$H;$!d;g' -re \
-    's/repository: '${currentImageEscaped}'\n/repository: '${targetImageEscaped}'\n/g' \
+    's/repository: '${currentImageEscaped}'\n    tag: \S*/repository: '${targetImageEscaped}'\n    tag: latest/g' \
     "${FILE}"
     rm "${FILE}.bk"
 }
