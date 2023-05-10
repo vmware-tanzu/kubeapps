@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /*
- Utility functions that apply to "packages", e.g. helm charts or carvel packages
+Utility functions that apply to "packages", e.g. helm charts or carvel packages
 */
 package pkgutils
 
@@ -26,6 +26,7 @@ import (
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	log "k8s.io/klog/v2"
 )
 
 // Contains miscellaneous package-utilities used by multiple plug-ins
@@ -59,12 +60,15 @@ type packageSemVersion struct {
 	appVersion string
 }
 
-func sortByPackageVersion(versions []models.ChartVersion) []*packageSemVersion {
+func sortByPackageVersion(versions []models.ChartVersion) ([]*packageSemVersion, error) {
 	var sortedVersions []*packageSemVersion
 	for _, v := range versions {
 		version, err := semver.NewVersion(v.Version)
 		if err != nil {
-			continue
+			return nil, err
+		}
+		if version.String() != v.Version {
+			return nil, fmt.Errorf("Chart version %q is not semver", v.Version)
 		}
 
 		sortedVersions = append(sortedVersions, &packageSemVersion{
@@ -75,16 +79,28 @@ func sortByPackageVersion(versions []models.ChartVersion) []*packageSemVersion {
 	sort.Slice(sortedVersions, func(i, j int) bool {
 		return sortedVersions[i].Version.GreaterThan(sortedVersions[j].Version)
 	})
-	return sortedVersions
+	return sortedVersions, nil
 }
 
 // PackageAppVersionsSummary converts the model chart versions into the required version summary.
 func PackageAppVersionsSummary(versions []models.ChartVersion, versionInSummary VersionsInSummary) []*corev1.PackageAppVersion {
 
-	// Sort versions
-	sortedVersions := sortByPackageVersion(versions)
-
 	var pav []*corev1.PackageAppVersion
+
+	// Sort versions
+	sortedVersions, err := sortByPackageVersion(versions)
+	if err != nil {
+		// If there was an error parsing a version as semver, we log the error
+		// and simply return the versions, as Helm does.
+		log.Errorf("error parsing versions as semver: %w", err)
+		for _, version := range versions {
+			pav = append(pav, &corev1.PackageAppVersion{
+				PkgVersion: version.Version,
+				AppVersion: version.AppVersion,
+			})
+		}
+		return pav
+	}
 
 	// Use a version map to be able to count how many major, minor and patch versions
 	// we have included.

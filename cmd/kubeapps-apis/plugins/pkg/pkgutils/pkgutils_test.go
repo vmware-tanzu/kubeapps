@@ -363,6 +363,18 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 			},
 			input_versions_in_summary: GetDefaultVersionsInSummary(),
 		},
+		{
+			name: "it just returns versions that are not semver without any filtering or ordering",
+			chart_versions: []models.ChartVersion{
+				{Version: "v12-main", AppVersion: DefaultAppVersion},
+				{Version: "v11-main", AppVersion: DefaultAppVersion},
+			},
+			version_summary: []*corev1.PackageAppVersion{
+				{PkgVersion: "v12-main", AppVersion: DefaultAppVersion},
+				{PkgVersion: "v11-main", AppVersion: DefaultAppVersion},
+			},
+			input_versions_in_summary: GetDefaultVersionsInSummary(),
+		},
 	}
 
 	opts := cmpopts.IgnoreUnexported(corev1.PackageAppVersion{})
