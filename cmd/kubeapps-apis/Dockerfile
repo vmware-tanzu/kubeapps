@@ -80,7 +80,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 
 # Remove and instead use built-in gRPC container probes once we're
 # supporting >= 1.24 only. https://kubernetes.io/blog/2022/05/13/grpc-probes-now-in-beta/
-RUN GRPC_HEALTH_PROBE_VERSION=v0.4.16 && \
+RUN GRPC_HEALTH_PROBE_VERSION=v0.4.18 && \
     curl -sSL "https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64" -o "/bin/grpc_health_probe" && chmod +x "/bin/grpc_health_probe"
 
 # Note: unlike the other docker images for go, we cannot use scratch as the plugins
