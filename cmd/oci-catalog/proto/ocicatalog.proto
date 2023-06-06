@@ -1,0 +1,53 @@
+// Copyright 2021-2023 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+package ocicatalog;
+
+// The OCICatalog service defines the two RPCs for listing repositories and listing tags
+// for a repository.
+service OCICatalog {
+    rpc ListRepositoriesForRegistry(ListRepositoriesRequest) returns (stream Repository);
+    rpc ListTagsForRepository(ListTagsRequest) returns (stream Tag);
+}
+
+// ListRepositoriesRequest
+//
+// Request for listing repositories of a registry or a namespaced registry.
+message ListRepositoriesRequest {
+    // The OCI registry for which the repositories should be listed.
+    string registry = 1;
+
+    // An optional namespace within which to list repositories.
+    string namespace = 2;
+
+    // Perhaps switch to be a one-of, so when testing, can pass a token
+    // directly? Though wouldn't want this to be used or available in prod.
+    string kubernetes_secret = 3;
+    // Possibly send hint or specific API to use (ie. a custom harbor install
+    // may not be recognisable from the URL, so the request will need to
+    // specify that the harbor API should be used?).
+}
+
+// Repository
+//
+// Uniquely identifies an OCI repository.
+message Repository {
+    string registry = 1;
+    string name = 2;
+}
+
+// ListTagsRequest
+//
+// Identifies the repository for which tags are to be listed. Can be
+// extended in the future with other options.
+message ListTagsRequest {
+    Repository repository = 1;
+}
+
+// Tag
+//
+// Simple tag for a repository.
+message Tag {
+    string name = 1;
+}
