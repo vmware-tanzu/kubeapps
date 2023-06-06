@@ -1,4 +1,4 @@
-// Copyright 2020-2023 the Kubeapps contributors.
+// Copyright 2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 use tokio_stream::wrappers::ReceiverStream;
