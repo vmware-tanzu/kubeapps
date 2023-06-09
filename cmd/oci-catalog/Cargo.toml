@@ -12,6 +12,11 @@ prost = "0.11"
 tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
 tokio-stream = "0.1"
 futures-core = "0.3"
+# To build a statically linked version, will need to use the rusttls rather than
+# OS-native, then compile for the linux-musl conditionally with something like
+# https://stackoverflow.com/a/75350455 in the Dockerfile to set a target
+# linux-musl target specific for the arch.
+# reqwest = { version ="0.11", default_features=false, features = ["rustls-tls"] }
 reqwest = "0.11"
 
 [build-dependencies]
