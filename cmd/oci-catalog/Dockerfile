@@ -12,6 +12,12 @@ ARG VERSION
 RUN apt-get update && apt-get -y install --no-install-recommends protobuf-compiler && rm -rf /var/lib/apt/lists/*
 
 # Create a release build of oci-catalog itself.
+# To build a statically linked version, will need to use the rusttls rather than
+# OS-native,
+# reqwest = { version ="0.11", default_features=false, features = ["rustls-tls"] }
+# then build for the linux-musl conditionally with something like
+# https://stackoverflow.com/a/75350455 in the Dockerfile to set a target
+# linux-musl target specific for the arch.
 COPY ./cmd/oci-catalog ./
 ENV OCI_CATALOG_VERSION=$VERSION
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
