@@ -17,7 +17,7 @@ Kubeapps supports the ability for developers to inject custom app views for spec
 
    This will tell the frontend to load the custom bundle for the apache helm chart in the bitnami repo.
 
-1. And just like the custom form components the bundle can be added via the command line:
+1. The bundle can be added via the command line:
 
    ```bash
    helm install  bitnami/kubeapps --set-file dashboard.customComponents=*path to file* <other_flags>
