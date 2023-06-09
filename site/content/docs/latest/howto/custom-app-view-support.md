@@ -1,6 +1,6 @@
 # Custom App View Support
 
-In addition to our [custom form component support](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/custom-form-component-support.md) we now support the ability for developers to inject custom app views for specific deployments.
+Kubeapps supports the ability for developers to inject custom app views for specific deployments.
 
 ## Step-by-step integration process
 

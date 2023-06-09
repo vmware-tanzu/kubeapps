@@ -56,12 +56,8 @@ toc:
         page: Using the dashboard
       - url: /howto/access-control
         page: Access Control
-      - url: /howto/basic-form-support
-        page: Basic Form Support
       - url: /howto/custom-app-view-support
         page: Custom App View Support
-      - url: /howto/custom-form-component-support
-        page: Custom Form Component Support
       - url: /howto/deploying-to-multiple-clusters
         page: Multi-cluster Support
       - url: /howto/offline-installation

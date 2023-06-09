@@ -558,10 +558,6 @@ dashboard:
   ##      name: helm-chart
   ##      repository: bitnami
   customAppViews: []
-  ## @param dashboard.customComponents Custom Form components injected into the BasicDeploymentForm
-  ## ref: https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/custom-form-component-support.md
-  ##
-  customComponents: ""
   ## @param dashboard.remoteComponentsUrl Remote URL that can be used to load custom components vs loading from the local filesystem
   ##
   remoteComponentsUrl: ""
