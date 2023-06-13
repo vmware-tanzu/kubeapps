@@ -1,6 +1,6 @@
 # Custom App View Support
 
-In addition to our [custom form component support](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/custom-form-component-support.md) we now support the ability for developers to inject custom app views for specific deployments.
+Kubeapps supports the ability for developers to inject custom app views for specific deployments.
 
 ## Step-by-step integration process
 
@@ -17,7 +17,7 @@ In addition to our [custom form component support](https://github.com/vmware-tan
 
    This will tell the frontend to load the custom bundle for the apache helm chart in the bitnami repo.
 
-1. And just like the custom form components the bundle can be added via the command line:
+1. The bundle can be added via the command line:
 
    ```bash
    helm install  bitnami/kubeapps --set-file dashboard.customComponents=*path to file* <other_flags>
