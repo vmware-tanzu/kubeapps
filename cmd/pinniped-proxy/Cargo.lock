@@ -964,13 +964,13 @@ dependencies = [
 
 [[package]]
 name = "kube"
-version = "0.82.1"
+version = "0.83.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7be64c88eeaeaeecf001614b67b144e784d836b5cb38f95851ae05b9695ccb55"
+checksum = "32f468b2fa6c5ef92117813238758f79e394c2d7688bd6faa3e77243f90260b0"
 dependencies = [
  "k8s-openapi",
- "kube-client",
- "kube-core",
+ "kube-client 0.83.0",
+ "kube-core 0.83.0",
 ]
 
 [[package]]
@@ -988,11 +988,44 @@ dependencies = [
  "http",
  "http-body",
  "hyper",
+ "hyper-timeout",
+ "jsonpath_lib",
+ "k8s-openapi",
+ "kube-core 0.82.1",
+ "pem",
+ "pin-project",
+ "secrecy",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "tower",
+ "tower-http",
+ "tracing",
+]
+
+[[package]]
+name = "kube-client"
+version = "0.83.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "337eb332d253036adc3247936248d0742c6c743f51eb38a684fd9b3b2878b27c"
+dependencies = [
+ "base64 0.20.0",
+ "bytes",
+ "chrono",
+ "dirs-next",
+ "either",
+ "futures",
+ "http",
+ "http-body",
+ "hyper",
  "hyper-openssl",
  "hyper-timeout",
  "jsonpath_lib",
  "k8s-openapi",
- "kube-core",
+ "kube-core 0.83.0",
  "openssl",
  "pem",
  "pin-project",
@@ -1026,6 +1059,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "kube-core"
+version = "0.83.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f924177ad71936cfe612641b45bb9879890696d3c026f0846423529f4fa449af"
+dependencies = [
+ "chrono",
+ "form_urlencoded",
+ "http",
+ "k8s-openapi",
+ "once_cell",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "kube-derive"
 version = "0.83.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1051,7 +1100,7 @@ dependencies = [
  "futures",
  "json-patch",
  "k8s-openapi",
- "kube-client",
+ "kube-client 0.82.1",
  "parking_lot",
  "pin-project",
  "serde",
