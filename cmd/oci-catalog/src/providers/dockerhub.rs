@@ -4,7 +4,7 @@
 use super::OCICatalogSender;
 use super::{ListRepositoriesRequest, ListTagsRequest, Repository, Tag};
 use log;
-use reqwest::Url;
+use reqwest::{StatusCode, Url};
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use tonic::Status;
@@ -44,7 +44,39 @@ impl OCICatalogSender for DockerHubAPI {
 
         loop {
             log::debug!("requesting: {}", url);
-            let body = client.get(url).send().await.unwrap().text().await.unwrap();
+            let response = match client.get(url.clone()).send().await {
+                Ok(r) => r,
+                Err(e) => {
+                    tx.send(Err(Status::failed_precondition(e.to_string())))
+                        .await
+                        .unwrap();
+                    return;
+                }
+            };
+
+            if response.status() != StatusCode::OK {
+                tx.send(Err(Status::failed_precondition(format!(
+                    "unexpected status code when requesting {}: {}",
+                    url,
+                    response.status()
+                ))))
+                .await
+                .unwrap();
+                return;
+            }
+
+            let body = match response.text().await {
+                Ok(b) => b,
+                Err(e) => {
+                    tx.send(Err(Status::failed_precondition(format!(
+                        "unable to extract body from response: {}",
+                        e.to_string()
+                    ))))
+                    .await
+                    .unwrap();
+                    return;
+                }
+            };
             log::trace!("response body: {}", body);
 
             let response: DockerHubV2RepositoriesResult = serde_json::from_str(&body).unwrap();
@@ -98,7 +130,6 @@ fn url_for_request(request: &ListRepositoriesRequest) -> Url {
     }
     url
 }
-
 
 #[cfg(test)]
 mod tests {
