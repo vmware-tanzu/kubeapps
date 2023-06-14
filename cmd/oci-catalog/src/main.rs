@@ -1,7 +1,6 @@
 // Copyright 2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-use self::providers::OCICatalogSender;
 use clap::Parser;
 use log;
 use tokio::sync::mpsc;
@@ -31,6 +30,14 @@ impl OciCatalog for KubeappsOCICatalog {
         &self,
         request: Request<ListRepositoriesRequest>,
     ) -> Result<Response<Self::ListRepositoriesForRegistryStream>, Status> {
+        // The provider for request strategy provides the registry-specific
+        // implementation.
+        let provider = providers::provider_for_request(
+            request.get_ref().registry.clone(),
+            request.get_ref().registry_provider(),
+        )
+        .map_err(|_e| Status::failed_precondition("support for registry not found"))?;
+
         // Initially for prototype, just implement support for
         // docker's registry-1.docker.io. Later split out relevant
         // functionality to a trait that can be implemented separately
@@ -38,17 +45,9 @@ impl OciCatalog for KubeappsOCICatalog {
         let (tx, rx) = mpsc::channel(4);
 
         tokio::spawn(async move {
-            // Have a trait which each registry plugin implements for matching a request.
-            match request.get_ref().registry.as_str() {
-                "registry-1.docker.io" => {
-                    providers::dockerhub::DockerHubAPI::send_repositories(tx, request.get_ref())
-                        .await;
-                }
-                _ => {
-                    unimplemented!()
-                }
-            }
+            provider.send_repositories(tx, request.get_ref()).await;
         });
+
         Ok(Response::new(ReceiverStream::new(rx)))
     }
 
@@ -56,11 +55,19 @@ impl OciCatalog for KubeappsOCICatalog {
         &self,
         request: Request<ListTagsRequest>,
     ) -> Result<Response<Self::ListTagsForRepositoryStream>, Status> {
+        // The provider for request strategy provides the registry-specific
+        // implementation.
+        let provider = providers::provider_for_request(
+            request.get_ref().repository.clone().unwrap().registry,
+            request.get_ref().registry_provider(),
+        )
+        .map_err(|_e| Status::failed_precondition("support for registry not found"))?;
+
         let (tx, rx) = mpsc::channel(4);
 
         tokio::spawn(async move {
             // Possibly just use generic OCI API for listing tags.
-            providers::dockerhub::DockerHubAPI::send_tags(tx, request.get_ref()).await;
+            provider.send_tags(tx, request.get_ref()).await;
         });
         Ok(Response::new(ReceiverStream::new(rx)))
     }

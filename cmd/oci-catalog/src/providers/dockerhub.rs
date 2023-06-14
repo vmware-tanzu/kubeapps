@@ -11,6 +11,7 @@ use tonic::Status;
 
 /// The default page size with which requests are sent to docker hub.
 const DEFAULT_PAGE_SIZE: u8 = 100;
+pub const PROVIDER_NAME: &str = "DockerHubAPI";
 
 #[derive(Serialize, Deserialize)]
 struct DockerHubV2Repository {
@@ -33,8 +34,13 @@ pub struct DockerHubAPI {}
 
 #[tonic::async_trait]
 impl OCICatalogSender for DockerHubAPI {
+    fn id(&self) -> &str {
+        PROVIDER_NAME
+    }
+
     // Update to return a result so errors are handled properly.
     async fn send_repositories(
+        &self,
         tx: mpsc::Sender<Result<Repository, Status>>,
         request: &ListRepositoriesRequest,
     ) {
@@ -99,7 +105,7 @@ impl OCICatalogSender for DockerHubAPI {
         }
     }
 
-    async fn send_tags(tx: mpsc::Sender<Result<Tag, Status>>, _request: &ListTagsRequest) {
+    async fn send_tags(&self, tx: mpsc::Sender<Result<Tag, Status>>, _request: &ListTagsRequest) {
         for count in 0..10 {
             tx.send(Ok(Tag {
                 name: format!("tag-{}", count),

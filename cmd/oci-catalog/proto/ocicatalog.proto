@@ -59,6 +59,8 @@ message Repository {
 // extended in the future with other options.
 message ListTagsRequest {
     Repository repository = 1;
+
+    RegistryProvider registry_provider = 2;
 }
 
 // Tag
