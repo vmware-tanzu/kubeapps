@@ -21,9 +21,12 @@ message ListRepositoriesRequest {
     // An optional namespace within which to list repositories.
     string namespace = 2;
 
+    // An optional list of content types to filter.
+    repeated string content_types = 3;
+
     // Perhaps switch to be a one-of, so when testing, can pass a token
     // directly? Though wouldn't want this to be used or available in prod.
-    string kubernetes_secret = 3;
+    string kubernetes_secret = 4;
     // Possibly send hint or specific API to use (ie. a custom harbor install
     // may not be recognisable from the URL, so the request will need to
     // specify that the harbor API should be used?).
@@ -34,7 +37,8 @@ message ListRepositoriesRequest {
 // Uniquely identifies an OCI repository.
 message Repository {
     string registry = 1;
-    string name = 2;
+    string namespace = 2;
+    string name = 3;
 }
 
 // ListTagsRequest
