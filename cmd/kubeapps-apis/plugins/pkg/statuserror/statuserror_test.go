@@ -4,8 +4,10 @@
 package statuserror
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -26,7 +28,7 @@ func TestErrorByStatus(t *testing.T) {
 			"my-resource",
 			"",
 			status.Errorf(codes.InvalidArgument, "boom!"),
-			status.Errorf(codes.Internal, "unable to get the my-resource 'all' due to 'rpc error: code = InvalidArgument desc = boom!'"),
+			connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the my-resource 'all' due to 'rpc error: code = InvalidArgument desc = boom!'")),
 		},
 		{
 			"error msg for a single resources ",
@@ -34,7 +36,7 @@ func TestErrorByStatus(t *testing.T) {
 			"my-resource",
 			"my-id",
 			status.Errorf(codes.InvalidArgument, "boom!"),
-			status.Errorf(codes.Internal, "unable to get the my-resource 'my-id' due to 'rpc error: code = InvalidArgument desc = boom!'"),
+			connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the my-resource 'my-id' due to 'rpc error: code = InvalidArgument desc = boom!'")),
 		},
 	}
 	for _, tt := range tests {

@@ -4,8 +4,9 @@
 package statuserror
 
 import (
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"fmt"
+
+	"github.com/bufbuild/connect-go"
 	"k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -16,13 +17,13 @@ func FromK8sError(verb, resource, identifier string, err error) error {
 		identifier = "all"
 	}
 	if errors.IsNotFound(err) {
-		return status.Errorf(codes.NotFound, "unable to %s the %s '%s' due to '%v'", verb, resource, identifier, err)
+		return connect.NewError(connect.CodeNotFound, fmt.Errorf("unable to %s the %s '%s' due to '%w'", verb, resource, identifier, err))
 	} else if errors.IsForbidden(err) {
-		return status.Errorf(codes.PermissionDenied, "Forbidden to %s the %s '%s' due to '%v'", verb, resource, identifier, err)
+		return connect.NewError(connect.CodePermissionDenied, fmt.Errorf("Forbidden to %s the %s '%s' due to '%v'", verb, resource, identifier, err))
 	} else if errors.IsUnauthorized(err) {
-		return status.Errorf(codes.Unauthenticated, "Authorization required to %s the %s '%s' due to '%v'", verb, resource, identifier, err)
+		return connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("Authorization required to %s the %s '%s' due to '%v'", verb, resource, identifier, err))
 	} else if errors.IsAlreadyExists(err) {
-		return status.Errorf(codes.AlreadyExists, "Cannot %s the %s '%s' due to '%v' as it already exists", verb, resource, identifier, err)
+		return connect.NewError(connect.CodeAlreadyExists, fmt.Errorf("Cannot %s the %s '%s' due to '%v' as it already exists", verb, resource, identifier, err))
 	}
-	return status.Errorf(codes.Internal, "unable to %s the %s '%s' due to '%v'", verb, resource, identifier, err)
+	return connect.NewError(connect.CodeInternal, fmt.Errorf("unable to %s the %s '%s' due to '%v'", verb, resource, identifier, err))
 }
