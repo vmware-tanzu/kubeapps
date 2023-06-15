@@ -11,6 +11,15 @@ service OCICatalog {
     rpc ListTagsForRepository(ListTagsRequest) returns (stream Tag);
 }
 
+// RegistryProvider
+//
+// Optionally specify the registry provider when known.
+enum RegistryProvider {
+    UNKNOWN = 0;
+    DOCKER_HUB = 1;
+    HARBOR = 2;
+}
+
 // ListRepositoriesRequest
 //
 // Request for listing repositories of a registry or a namespaced registry.
@@ -27,9 +36,12 @@ message ListRepositoriesRequest {
     // Perhaps switch to be a one-of, so when testing, can pass a token
     // directly? Though wouldn't want this to be used or available in prod.
     string kubernetes_secret = 4;
-    // Possibly send hint or specific API to use (ie. a custom harbor install
-    // may not be recognisable from the URL, so the request will need to
-    // specify that the harbor API should be used?).
+
+    // In self-hosted registry examples, such as a self-hosted Harbor registry,
+    // there will be no information in the URL that can be used to determine
+    // the provider (and hence, which strategy / API to use). The optional
+    // registry_provider field can be used to explicitly identify the provider.
+    RegistryProvider registry_provider = 5;
 }
 
 // Repository
@@ -47,6 +59,8 @@ message Repository {
 // extended in the future with other options.
 message ListTagsRequest {
     Repository repository = 1;
+
+    RegistryProvider registry_provider = 2;
 }
 
 // Tag

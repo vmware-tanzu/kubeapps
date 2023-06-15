@@ -4,13 +4,14 @@
 use super::OCICatalogSender;
 use super::{ListRepositoriesRequest, ListTagsRequest, Repository, Tag};
 use log;
-use reqwest::Url;
+use reqwest::{StatusCode, Url};
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use tonic::Status;
 
 /// The default page size with which requests are sent to docker hub.
 const DEFAULT_PAGE_SIZE: u8 = 100;
+pub const PROVIDER_NAME: &str = "DockerHubAPI";
 
 #[derive(Serialize, Deserialize)]
 struct DockerHubV2Repository {
@@ -33,8 +34,13 @@ pub struct DockerHubAPI {}
 
 #[tonic::async_trait]
 impl OCICatalogSender for DockerHubAPI {
+    fn id(&self) -> &str {
+        PROVIDER_NAME
+    }
+
     // Update to return a result so errors are handled properly.
     async fn send_repositories(
+        &self,
         tx: mpsc::Sender<Result<Repository, Status>>,
         request: &ListRepositoriesRequest,
     ) {
@@ -44,7 +50,39 @@ impl OCICatalogSender for DockerHubAPI {
 
         loop {
             log::debug!("requesting: {}", url);
-            let body = client.get(url).send().await.unwrap().text().await.unwrap();
+            let response = match client.get(url.clone()).send().await {
+                Ok(r) => r,
+                Err(e) => {
+                    tx.send(Err(Status::failed_precondition(e.to_string())))
+                        .await
+                        .unwrap();
+                    return;
+                }
+            };
+
+            if response.status() != StatusCode::OK {
+                tx.send(Err(Status::failed_precondition(format!(
+                    "unexpected status code when requesting {}: {}",
+                    url,
+                    response.status()
+                ))))
+                .await
+                .unwrap();
+                return;
+            }
+
+            let body = match response.text().await {
+                Ok(b) => b,
+                Err(e) => {
+                    tx.send(Err(Status::failed_precondition(format!(
+                        "unable to extract body from response: {}",
+                        e.to_string()
+                    ))))
+                    .await
+                    .unwrap();
+                    return;
+                }
+            };
             log::trace!("response body: {}", body);
 
             let response: DockerHubV2RepositoriesResult = serde_json::from_str(&body).unwrap();
@@ -67,7 +105,7 @@ impl OCICatalogSender for DockerHubAPI {
         }
     }
 
-    async fn send_tags(tx: mpsc::Sender<Result<Tag, Status>>, _request: &ListTagsRequest) {
+    async fn send_tags(&self, tx: mpsc::Sender<Result<Tag, Status>>, _request: &ListTagsRequest) {
         for count in 0..10 {
             tx.send(Ok(Tag {
                 name: format!("tag-{}", count),
@@ -98,7 +136,6 @@ fn url_for_request(request: &ListRepositoriesRequest) -> Url {
     }
     url
 }
-
 
 #[cfg(test)]
 mod tests {
