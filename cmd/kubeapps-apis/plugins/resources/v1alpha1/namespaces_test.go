@@ -155,7 +155,7 @@ func TestCreateNamespace(t *testing.T) {
 		request           *v1alpha1.CreateNamespaceRequest
 		k8sError          error
 		expectedResponse  *v1alpha1.CreateNamespaceResponse
-		expectedErrorCode codes.Code
+		expectedErrorCode connect.Code
 		existingObjects   []runtime.Object
 		validator         func(action clientGoTesting.Action) (handled bool, ret runtime.Object, err error)
 	}{
@@ -208,7 +208,7 @@ func TestCreateNamespace(t *testing.T) {
 				Group:    "v1",
 				Resource: "namespaces",
 			}, "default", errors.New("Bang")),
-			expectedErrorCode: codes.PermissionDenied,
+			expectedErrorCode: connect.CodePermissionDenied,
 		},
 		{
 			name: "returns already exists if k8s returns an already exists error",
@@ -222,7 +222,7 @@ func TestCreateNamespace(t *testing.T) {
 				Group:    "v1",
 				Resource: "namespaces",
 			}, "default"),
-			expectedErrorCode: codes.AlreadyExists,
+			expectedErrorCode: connect.CodeAlreadyExists,
 		},
 		{
 			name: "returns an internal error if k8s returns an unexpected error",
@@ -233,7 +233,7 @@ func TestCreateNamespace(t *testing.T) {
 				},
 			},
 			k8sError:          k8serrors.NewInternalError(errors.New("Bang")),
-			expectedErrorCode: codes.Internal,
+			expectedErrorCode: connect.CodeInternal,
 		},
 	}
 
@@ -257,7 +257,7 @@ func TestCreateNamespace(t *testing.T) {
 
 			response, err := s.CreateNamespace(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
 			if tc.expectedErrorCode != 0 {

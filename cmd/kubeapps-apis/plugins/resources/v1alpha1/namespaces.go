@@ -59,7 +59,7 @@ func (s *Server) CreateNamespace(ctx context.Context, r *connect.Request[v1alpha
 
 	typedClient, err := s.clientGetter.Typed(r.Header(), cluster)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the k8s client: '%w'", err))
 	}
 
 	_, err = typedClient.CoreV1().Namespaces().Create(ctx, &core.Namespace{
@@ -73,7 +73,7 @@ func (s *Server) CreateNamespace(ctx context.Context, r *connect.Request[v1alpha
 		},
 	}, metav1.CreateOptions{})
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "Namespace", namespace, err)
+		return nil, connecterror.FromK8sError("get", "Namespace", namespace, err)
 	}
 
 	return connect.NewResponse(&v1alpha1.CreateNamespaceResponse{}), nil

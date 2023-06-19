@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 )
 
-// FromK8sResourceError generates a grpc status error from a Kubernetes error
+// FromK8sResourceError generates a grpc connect error from a Kubernetes error
 // when querying a resource.
 func FromK8sError(verb, resource, identifier string, err error) error {
 	if identifier == "" {
