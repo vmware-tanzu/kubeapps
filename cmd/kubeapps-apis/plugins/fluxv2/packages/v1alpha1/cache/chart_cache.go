@@ -646,7 +646,7 @@ func chartCacheKeyFor(namespace, chartID, chartVersion string) (string, error) {
 
 	var err error
 	if chartID, err = pkgutils.GetUnescapedPackageID(chartID); err != nil {
-		return "", fmt.Errorf("invalid chart ID in chartCacheKeyFor: [%s]: %v", chartID, err)
+		return "", fmt.Errorf("invalid chart ID in chartCacheKeyFor: [%s]: %w", chartID, err)
 	}
 
 	// redis convention on key format

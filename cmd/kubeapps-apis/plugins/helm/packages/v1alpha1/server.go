@@ -209,7 +209,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *conn
 	// otherwise, first check if the user can access the requested ns
 	if namespace == "" {
 		// TODO(agamez): not including a namespace means that it returns everything a user can read
-		return nil, status.Errorf(codes.Unimplemented, "Not supported yet: not including a namespace means that it returns everything a user can read")
+		return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("Not supported yet: not including a namespace means that it returns everything a user can read"))
 	}
 	// After requesting a specific namespace, we have to ensure the user can actually access to it
 	if err := s.hasAccessToNamespace(request.Header(), cluster, namespace); err != nil {
@@ -239,14 +239,14 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *conn
 	pageSize := request.Msg.GetPaginationOptions().GetPageSize()
 	itemOffset, err := paginate.ItemOffsetFromPageToken(request.Msg.GetPaginationOptions().GetPageToken())
 	if err != nil {
-		return nil, err
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
 	// This plugin will include, as part of the GetAvailablePackageSummariesResponse,
 	// a "Categories" field containing only the distinct category names considering just the namespace
 	chartCategories, err := s.manager.GetAllChartCategories(utils.ChartQuery{Namespace: namespace})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to fetch chart categories: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to fetch chart categories: %w", err))
 	}
 
 	var categories []string
@@ -256,7 +256,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *conn
 
 	charts, err := s.manager.GetPaginatedChartListWithFilters(cq, itemOffset, int(pageSize))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to retrieve charts: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to retrieve charts: %w", err))
 	}
 
 	// Convert the charts response into a GetAvailablePackageSummariesResponse
@@ -264,7 +264,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *conn
 	for _, chart := range charts {
 		pkg, err := pkgutils.AvailablePackageSummaryFromChart(chart, GetPluginDetail())
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "Unable to parse chart to an AvailablePackageSummary: %v", err)
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to parse chart to an AvailablePackageSummary: %w", err))
 		}
 		// We currently support app repositories on the kubeapps cluster only.
 		pkg.AvailablePackageRef.Context.Cluster = s.globalPackagingCluster
@@ -289,7 +289,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect
 	log.InfoS("+helm GetAvailablePackageDetail", "cluster", request.Msg.GetAvailablePackageRef().GetContext().GetCluster(), "namespace", request.Msg.GetAvailablePackageRef().GetContext().GetNamespace())
 
 	if request.Msg.GetAvailablePackageRef().GetContext() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "No request AvailablePackageRef.Context provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No request AvailablePackageRef.Context provided"))
 	}
 
 	// Retrieve namespace, cluster, version from the request
@@ -299,7 +299,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect
 
 	// Currently we support available packages on the kubeapps cluster only.
 	if cluster != "" && cluster != s.globalPackagingCluster {
-		return nil, status.Errorf(codes.InvalidArgument, "Requests for available packages on clusters other than %q not supported. Requested cluster was: %q", s.globalPackagingCluster, cluster)
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Requests for available packages on clusters other than %q not supported. Requested cluster was: %q", s.globalPackagingCluster, cluster))
 	}
 
 	// After requesting a specific namespace, we have to ensure the user can actually access to it
@@ -324,11 +324,11 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect
 	}
 	if err != nil {
 		log.Errorf("Failed to request chart '%s' in ns '%s': %v", unescapedChartID, namespace, err)
-		return nil, status.Errorf(codes.Internal, "Unable to retrieve chart: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to retrieve chart: %w", err))
 	}
 
 	if len(chart.ChartVersions) == 0 {
-		return nil, status.Errorf(codes.Internal, "Chart returned without any versions: %+v", chart)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Chart returned without any versions: %+v", chart))
 	}
 	if version == "" {
 		version = chart.ChartVersions[0].Version
@@ -336,12 +336,12 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect
 	fileID := fileIDForChart(unescapedChartID, version)
 	chartFiles, err := s.manager.GetChartFiles(namespace, fileID)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to retrieve chart files: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to retrieve chart files: %v", err))
 	}
 
 	availablePackageDetail, err := AvailablePackageDetailFromChart(&chart, &chartFiles)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to parse chart to an availablePackageDetail: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to parse chart to an availablePackageDetail: %w", err))
 	}
 
 	return connect.NewResponse(&corev1.GetAvailablePackageDetailResponse{
@@ -360,12 +360,12 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *conne
 
 	namespace := request.Msg.GetAvailablePackageRef().GetContext().GetNamespace()
 	if namespace == "" || request.Msg.GetAvailablePackageRef().GetIdentifier() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Required context or identifier not provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Required context or identifier not provided"))
 	}
 	cluster := request.Msg.GetAvailablePackageRef().GetContext().GetCluster()
 	// Currently we support available packages on the kubeapps cluster only.
 	if cluster != "" && cluster != s.globalPackagingCluster {
-		return nil, status.Errorf(codes.InvalidArgument, "Requests for versions of available packages on clusters other than %q not supported. Requested cluster was %q.", s.globalPackagingCluster, cluster)
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Requests for versions of available packages on clusters other than %q not supported. Requested cluster was %q.", s.globalPackagingCluster, cluster))
 	}
 
 	// After requesting a specific namespace, we have to ensure the user can actually access to it
@@ -375,13 +375,13 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *conne
 
 	unescapedChartID, err := pkgutils.GetUnescapedPackageID(request.Msg.GetAvailablePackageRef().GetIdentifier())
 	if err != nil {
-		return nil, err
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
 	log.Infof("Requesting chart '%s' (latest version) in ns '%s'", unescapedChartID, namespace)
 	chart, err := s.manager.GetChart(namespace, unescapedChartID)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to retrieve chart: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to retrieve chart: %v", err))
 	}
 
 	return connect.NewResponse(&corev1.GetAvailablePackageVersionsResponse{
@@ -443,7 +443,7 @@ func (s *Server) hasAccessToNamespace(headers http.Header, cluster, namespace st
 	}
 	client, err := s.clientGetter.Typed(headers, cluster)
 	if err != nil {
-		return err
+		return connect.NewError(connect.CodeInternal, err)
 	}
 
 	res, err := client.AuthorizationV1().SelfSubjectAccessReviews().Create(context.TODO(), &authorizationv1.SelfSubjectAccessReview{
@@ -457,11 +457,11 @@ func (s *Server) hasAccessToNamespace(headers http.Header, cluster, namespace st
 		},
 	}, metav1.CreateOptions{})
 	if err != nil {
-		return status.Errorf(codes.Internal, "Unable to check if the user has access to the namespace: %s", err)
+		return connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to check if the user has access to the namespace: %w", err))
 	}
 	if !res.Status.Allowed {
 		// If the user has not access, return a unauthenticated response, otherwise, continue
-		return status.Errorf(codes.PermissionDenied, "The current user has no access to the namespace %q", namespace)
+		return connect.NewError(connect.CodePermissionDenied, fmt.Errorf("The current user has no access to the namespace %q", namespace))
 	}
 	return nil
 }
@@ -699,13 +699,13 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 
 	typedClient, err := s.clientGetter.Typed(request.Header(), s.globalPackagingCluster)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to create kubernetes clientset: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to create kubernetes clientset: %w", err))
 	}
 	chartID := request.Msg.GetAvailablePackageRef().GetIdentifier()
 	repoNamespace := request.Msg.GetAvailablePackageRef().GetContext().GetNamespace()
 	repoName, chartName, err := pkgutils.SplitPackageIdentifier(chartID)
 	if err != nil {
-		return nil, err
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 	chartDetails := &utils.ChartDetails{
 		AppRepositoryResourceName:      repoName,
@@ -715,18 +715,18 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 	}
 	ch, registrySecrets, err := s.fetchChartWithRegistrySecrets(ctx, request.Header(), chartDetails, typedClient)
 	if err != nil {
-		return nil, status.Errorf(codes.PermissionDenied, "Missing permissions %v", err)
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("Missing permissions %w", err))
 	}
 
 	// Create an action config for the target namespace.
 	actionConfig, err := s.actionConfigGetter(request.Header(), request.Msg.GetTargetContext())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to create Helm action config: %w", err))
 	}
 
 	release, err := s.createReleaseFunc(actionConfig, request.Msg.GetName(), request.Msg.GetTargetContext().GetNamespace(), request.Msg.GetValues(), ch, registrySecrets, s.pluginConfig.TimeoutSeconds)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to create helm release %q in the namespace %q: %v", request.Msg.GetName(), request.Msg.GetTargetContext().GetNamespace(), err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to create helm release %q in the namespace %q: %w", request.Msg.GetName(), request.Msg.GetTargetContext().GetNamespace(), err))
 	}
 
 	cluster := request.Msg.GetTargetContext().GetCluster()
@@ -768,12 +768,12 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Re
 
 	availablePkgRef := detailResponse.Msg.GetInstalledPackageDetail().GetAvailablePackageRef()
 	if availablePkgRef == nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "Unable to find the available package used to deploy %q in the namespace %q.", releaseName, installedRef.GetContext().GetNamespace())
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to find the available package used to deploy %q in the namespace %q.", releaseName, installedRef.GetContext().GetNamespace()))
 	}
 
 	typedClient, err := s.clientGetter.Typed(request.Header(), s.globalPackagingCluster)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to create kubernetes clientset: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to create kubernetes clientset: %w", err))
 	}
 	chartID := availablePkgRef.GetIdentifier()
 	repoName, chartName, err := pkgutils.SplitPackageIdentifier(chartID)
@@ -788,18 +788,18 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Re
 	}
 	ch, registrySecrets, err := s.fetchChartWithRegistrySecrets(ctx, request.Header(), chartDetails, typedClient)
 	if err != nil {
-		return nil, status.Errorf(codes.PermissionDenied, "Missing permissions %v", err)
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("Missing permissions %w", err))
 	}
 
 	// Create an action config for the installed pkg context.
 	actionConfig, err := s.actionConfigGetter(request.Header(), installedRef.GetContext())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to create Helm action config: %w", err))
 	}
 
 	release, err := agent.UpgradeRelease(actionConfig, releaseName, request.Msg.GetValues(), ch, registrySecrets, s.pluginConfig.TimeoutSeconds)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to upgrade helm release %q in the namespace %q: %v", releaseName, installedRef.GetContext().GetNamespace(), err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to upgrade helm release %q in the namespace %q: %w", releaseName, installedRef.GetContext().GetNamespace(), err))
 	}
 
 	cluster := installedRef.GetContext().GetCluster()
@@ -890,7 +890,7 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, headers http
 	// Most of the existing code that we want to reuse is based on having a typed AppRepository.
 	appRepo, caCertSecret, authSecret, _, err := s.getAppRepoAndRelatedSecrets(ctx, headers, s.globalPackagingCluster, chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace)
 	if err != nil {
-		return nil, nil, status.Errorf(codes.Internal, "Unable to fetch app repo %q from namespace %q: %v", chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, err)
+		return nil, nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to fetch app repo %q from namespace %q: %v", chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, err))
 	}
 
 	userAgentString := fmt.Sprintf("%s/%s/%s/%s", UserAgentPrefix, pluginDetail.Name, pluginDetail.Version, version)
@@ -901,7 +901,7 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, headers http
 	// Look up the cachedChart cached in our DB to populate the tarball URL
 	cachedChart, err := s.manager.GetChartVersion(chartDetails.AppRepositoryResourceNamespace, chartID, chartDetails.Version)
 	if err != nil {
-		return nil, nil, status.Errorf(codes.Internal, "Unable to fetch the chart %s (version %s) from the namespace %q: %v", chartID, chartDetails.Version, chartDetails.AppRepositoryResourceNamespace, err)
+		return nil, nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to fetch the chart %s (version %s) from the namespace %q: %w", chartID, chartDetails.Version, chartDetails.AppRepositoryResourceNamespace, err))
 	}
 	var tarballURL string
 	if cachedChart.ChartVersions != nil && len(cachedChart.ChartVersions) == 1 && cachedChart.ChartVersions[0].URLs != nil {
@@ -926,12 +926,12 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, headers http
 		s.chartClientFactory.New(appRepo.Spec.Type, userAgentString),
 	)
 	if err != nil {
-		return nil, nil, status.Errorf(codes.Internal, "Unable to fetch the chart %s from the namespace %q: %v", chartDetails.ChartName, appRepo.Namespace, err)
+		return nil, nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to fetch the chart %s from the namespace %q: %w", chartDetails.ChartName, appRepo.Namespace, err))
 	}
 
 	registrySecrets, err := utils.RegistrySecretsPerDomain(ctx, appRepo.Spec.DockerRegistrySecrets, appRepo.Namespace, client)
 	if err != nil {
-		return nil, nil, status.Errorf(codes.Internal, "Unable to fetch registry secrets from the namespace %q: %v", appRepo.Namespace, err)
+		return nil, nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to fetch registry secrets from the namespace %q: %w", appRepo.Namespace, err))
 	}
 
 	return ch, registrySecrets, nil
@@ -961,17 +961,16 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *connect.Re
 	// Create an action config for the installed pkg context.
 	actionConfig, err := s.actionConfigGetter(request.Header(), installedRef.GetContext())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to create Helm action config: %w", err))
 	}
 
 	keepHistory := false
 	err = agent.DeleteRelease(actionConfig, releaseName, keepHistory, s.pluginConfig.TimeoutSeconds)
 	if err != nil {
-		log.Errorf("error: %+v", err)
 		if errors.Is(err, driver.ErrReleaseNotFound) {
-			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", releaseName, namespace, err)
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("Unable to find Helm release %q in namespace %q: %+w", releaseName, namespace, err))
 		}
-		return nil, status.Errorf(codes.Internal, "Unable to delete helm release %q in the namespace %q: %v", releaseName, namespace, err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to delete helm release %q in the namespace %q: %w", releaseName, namespace, err))
 	}
 
 	return connect.NewResponse(&corev1.DeleteInstalledPackageResponse{}), nil
@@ -986,15 +985,15 @@ func (s *Server) RollbackInstalledPackage(ctx context.Context, request *connect.
 	// Create an action config for the installed pkg context.
 	actionConfig, err := s.actionConfigGetter(request.Header(), installedRef.GetContext())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to create Helm action config: %w", err))
 	}
 
 	release, err := agent.RollbackRelease(actionConfig, releaseName, int(request.Msg.GetReleaseRevision()), s.pluginConfig.TimeoutSeconds)
 	if err != nil {
 		if errors.Is(err, driver.ErrReleaseNotFound) {
-			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", releaseName, installedRef.GetContext().GetNamespace(), err)
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("Unable to find Helm release %q in namespace %q: %+w", releaseName, installedRef.GetContext().GetNamespace(), err))
 		}
-		return nil, status.Errorf(codes.Internal, "Unable to rollback helm release %q in the namespace %q: %v", releaseName, installedRef.GetContext().GetNamespace(), err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to rollback helm release %q in the namespace %q: %w", releaseName, installedRef.GetContext().GetNamespace(), err))
 	}
 
 	cluster := installedRef.GetContext().GetCluster()
@@ -1024,7 +1023,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	fn := func(headers http.Header, namespace string) (*action.Configuration, error) {
 		actionGetter, err := s.actionConfigGetter(headers, pkgRef.GetContext())
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to create Helm action config: %w", err))
 		}
 		return actionGetter, nil
 	}
@@ -1044,10 +1043,10 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 func (s *Server) AddPackageRepository(ctx context.Context, request *connect.Request[corev1.AddPackageRepositoryRequest]) (*connect.Response[corev1.AddPackageRepositoryResponse], error) {
 
 	if request == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "no request provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request provided"))
 	}
 	if request.Msg.Name == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no package repository Name provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no package repository Name provided"))
 	}
 
 	repoName := request.Msg.Name
@@ -1063,7 +1062,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *connect.Requ
 		namespace = s.GetGlobalPackagingNamespace()
 	}
 	if request.Msg.GetNamespaceScoped() != (namespace != s.GetGlobalPackagingNamespace()) {
-		return nil, status.Errorf(codes.InvalidArgument, "Namespace Scope is inconsistent with the provided Namespace")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Namespace Scope is inconsistent with the provided Namespace"))
 	}
 	name := types.NamespacedName{
 		Name:      repoName,
@@ -1075,7 +1074,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *connect.Requ
 	if request.Msg.CustomDetail != nil {
 		customDetail = &helmv1.HelmPackageRepositoryCustomDetail{}
 		if err := request.Msg.CustomDetail.UnmarshalTo(customDetail); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "customDetail could not be parsed: [%v]", request.Msg.CustomDetail)
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("customDetail could not be parsed: [%v]", request.Msg.CustomDetail))
 		}
 		log.Infof("+helm customDetail [%v]", customDetail)
 	}
@@ -1101,7 +1100,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *connect.Requ
 func (s *Server) getClient(headers http.Header, cluster string, namespace string) (ctrlclient.Client, error) {
 	client, err := s.clientGetter.ControllerRuntime(headers, cluster)
 	if err != nil {
-		return nil, err
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	return ctrlclient.NewNamespacedClient(client, namespace), nil
 }
@@ -1156,11 +1155,11 @@ func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *con
 
 func (s *Server) UpdatePackageRepository(ctx context.Context, request *connect.Request[corev1.UpdatePackageRepositoryRequest]) (*connect.Response[corev1.UpdatePackageRepositoryResponse], error) {
 	if request == nil || request.Msg.PackageRepoRef == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "no request PackageRepoRef provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request PackageRepoRef provided"))
 	}
 	repoRef := request.Msg.GetPackageRepoRef()
 	if repoRef.GetContext() == nil || repoRef.GetContext().GetNamespace() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no valid context provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no valid context provided"))
 	}
 	log.Infof("+helm UpdatePackageRepository '%s' in context [%v]", repoRef.Identifier, repoRef.Context)
 
@@ -1173,7 +1172,7 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *connect.R
 	// Retrieve repository
 	appRepo, caCertSecret, authSecret, imagesPullSecret, err := s.getAppRepoAndRelatedSecrets(ctx, request.Header(), cluster, name, namespace)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "Unable to retrieve AppRepository '%s/%s' due to [%v]", namespace, name, err)
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("Unable to retrieve AppRepository '%s/%s' due to [%w]", namespace, name, err))
 	}
 
 	// Get Helm-specific values
@@ -1181,7 +1180,7 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *connect.R
 	if request.Msg.CustomDetail != nil {
 		customDetail = &helmv1.HelmPackageRepositoryCustomDetail{}
 		if err := request.Msg.CustomDetail.UnmarshalTo(customDetail); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "customDetail could not be parsed: [%v]", request.Msg.CustomDetail)
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("customDetail could not be parsed: [%v]", request.Msg.CustomDetail))
 		}
 		log.V(4).Infof("+helm upgrade repo %s customDetail [%v]", repoRef.Identifier, customDetail)
 	}
@@ -1212,11 +1211,11 @@ func (s *Server) DeletePackageRepository(ctx context.Context, request *connect.R
 	log.Infof("+helm DeletePackageRepository [%v]", request)
 
 	if request == nil || request.Msg.PackageRepoRef == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "no request PackageRepoRef provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request PackageRepoRef provided"))
 	}
 	repoRef := request.Msg.GetPackageRepoRef()
 	if repoRef.GetContext() == nil || repoRef.GetContext().GetNamespace() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no valid context provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no valid context provided"))
 	}
 	cluster := repoRef.GetContext().GetCluster()
 

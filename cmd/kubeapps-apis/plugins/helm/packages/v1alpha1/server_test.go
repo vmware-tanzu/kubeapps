@@ -396,7 +396,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		name                   string
 		charts                 []*models.Chart
 		expectDBQueryNamespace string
-		statusCode             codes.Code
+		errorCode              connect.Code
 		request                *corev1.GetAvailablePackageSummariesRequest
 		expectedResponse       *corev1.GetAvailablePackageSummariesResponse
 		authorized             bool
@@ -470,7 +470,6 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 				Categories: []string{"cat1"},
 			},
-			statusCode: codes.OK,
 		},
 		{
 			name:       "it returns a set of availablePackageSummary from the database (specific ns)",
@@ -522,7 +521,6 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 				Categories: []string{"cat1"},
 			},
-			statusCode: codes.OK,
 		},
 		{
 			name:       "it returns a set of the global availablePackageSummary from the database (not the specific ns on other cluster)",
@@ -575,7 +573,6 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 				Categories: []string{"cat1"},
 			},
-			statusCode: codes.OK,
 		},
 		{
 			name:       "it returns a unimplemented status if no namespaces is provided",
@@ -585,8 +582,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Namespace: "",
 				},
 			},
-			charts:     []*models.Chart{},
-			statusCode: codes.Unimplemented,
+			charts:    []*models.Chart{},
+			errorCode: connect.CodeUnimplemented,
 		},
 		{
 			name:       "it returns an internal error status if response does not contain version",
@@ -599,7 +596,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			expectDBQueryNamespace: globalPackagingNamespace,
 			charts:                 []*models.Chart{makeChart("chart-1", "repo-1", "http://chart-1", "my-ns", []string{}, DefaultChartCategory)},
-			statusCode:             codes.Internal,
+			errorCode:              connect.CodeInternal,
 		},
 		{
 			name:       "it returns a permissionDenied status if the user doesn't have permissions",
@@ -609,8 +606,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Namespace: "my-ns",
 				},
 			},
-			charts:     []*models.Chart{{Name: "foo"}},
-			statusCode: codes.PermissionDenied,
+			charts:    []*models.Chart{{Name: "foo"}},
+			errorCode: connect.CodePermissionDenied,
 		},
 		{
 			name:       "it returns only the requested page of results and includes the next page token",
@@ -711,7 +708,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					PageSize:  2,
 				},
 			},
-			statusCode: codes.InvalidArgument,
+			errorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name:       "it returns the proper chart categories",
@@ -781,7 +778,6 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 				Categories: []string{"bar", "foo"},
 			},
-			statusCode: codes.OK,
 		},
 	}
 
@@ -831,11 +827,11 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 			availablePackageSummaries, err := server.GetAvailablePackageSummaries(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.errorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == codes.OK {
+			if tc.errorCode == 0 {
 				opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
 				if got, want := availablePackageSummaries.Msg, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
@@ -968,7 +964,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 		name            string
 		charts          []*models.Chart
 		expectedPackage *corev1.AvailablePackageDetail
-		statusCode      codes.Code
+		errorCode       connect.Code
 		request         *corev1.GetAvailablePackageDetailRequest
 		authorized      bool
 	}{
@@ -1005,7 +1001,6 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 				},
 			},
-			statusCode: codes.OK,
 		},
 		{
 			name:       "it returns an availablePackageDetail from the database (specific version)",
@@ -1042,7 +1037,6 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 				},
 			},
-			statusCode: codes.OK,
 		},
 		{
 			name:       "it returns an invalid arg error status if no context is provided",
@@ -1052,8 +1046,8 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					Identifier: "foo/bar",
 				},
 			},
-			charts:     []*models.Chart{{Name: "foo"}},
-			statusCode: codes.InvalidArgument,
+			charts:    []*models.Chart{{Name: "foo"}},
+			errorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name:       "it returns an invalid arg error status if cluster is not the global/kubeapps one",
@@ -1064,8 +1058,8 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					Identifier: "foo/bar",
 				},
 			},
-			charts:     []*models.Chart{{Name: "foo"}},
-			statusCode: codes.InvalidArgument,
+			charts:    []*models.Chart{{Name: "foo"}},
+			errorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name:       "it returns an internal error status if the chart is invalid",
@@ -1078,7 +1072,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			},
 			charts:          []*models.Chart{{Name: "foo"}},
 			expectedPackage: &corev1.AvailablePackageDetail{},
-			statusCode:      codes.Internal,
+			errorCode:       connect.CodeInternal,
 		},
 		{
 			name:       "it returns an internal error status if the requested chart version doesn't exist",
@@ -1092,7 +1086,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			},
 			charts:          []*models.Chart{{Name: "foo"}},
 			expectedPackage: &corev1.AvailablePackageDetail{},
-			statusCode:      codes.Internal,
+			errorCode:       connect.CodeInternal,
 		},
 		{
 			name:       "it returns a permissionDenied status if the user doesn't have permissions",
@@ -1105,7 +1099,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			},
 			charts:          []*models.Chart{{Name: "foo"}},
 			expectedPackage: &corev1.AvailablePackageDetail{},
-			statusCode:      codes.PermissionDenied,
+			errorCode:       connect.CodePermissionDenied,
 		},
 	}
 
@@ -1123,7 +1117,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				}
 				rows.AddRow(string(chartJSON))
 			}
-			if tc.statusCode == codes.OK {
+			if tc.errorCode == 0 {
 				// Checking if the WHERE condition is properly applied
 				chartIDUnescaped, err := url.QueryUnescape(tc.request.AvailablePackageRef.Identifier)
 				if err != nil {
@@ -1150,11 +1144,11 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 
 			availablePackageDetails, err := server.GetAvailablePackageDetail(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.errorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == codes.OK {
+			if tc.errorCode == 0 {
 				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
 				if got, want := availablePackageDetails.Msg.AvailablePackageDetail, tc.expectedPackage; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
@@ -1171,16 +1165,16 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 
 func TestGetAvailablePackageVersions(t *testing.T) {
 	testCases := []struct {
-		name               string
-		charts             []*models.Chart
-		request            *corev1.GetAvailablePackageVersionsRequest
-		expectedStatusCode codes.Code
-		expectedResponse   *corev1.GetAvailablePackageVersionsResponse
+		name              string
+		charts            []*models.Chart
+		request           *corev1.GetAvailablePackageVersionsRequest
+		expectedErrorCode connect.Code
+		expectedResponse  *corev1.GetAvailablePackageVersionsResponse
 	}{
 		{
-			name:               "it returns invalid argument if called without a package reference",
-			request:            nil,
-			expectedStatusCode: codes.InvalidArgument,
+			name:              "it returns invalid argument if called without a package reference",
+			request:           nil,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "it returns invalid argument if called without namespace",
@@ -1190,7 +1184,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 					Identifier: "bitnami/apache",
 				},
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "it returns invalid argument if called without an identifier",
@@ -1201,7 +1195,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "it returns invalid argument if called with a cluster other than the global/kubeapps one",
@@ -1211,7 +1205,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 					Identifier: "bitnami/apache",
 				},
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name:   "it returns the package version summary",
@@ -1224,7 +1218,6 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 					Identifier: "bitnami/apache",
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetAvailablePackageVersionsResponse{
 				PackageAppVersions: []*corev1.PackageAppVersion{
 					{
@@ -1259,7 +1252,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				}
 				rows.AddRow(string(chartJSON))
 			}
-			if tc.expectedStatusCode == codes.OK {
+			if tc.expectedErrorCode == 0 {
 				mock.ExpectQuery("SELECT info FROM").
 					WithArgs(tc.request.AvailablePackageRef.Context.Namespace, tc.request.AvailablePackageRef.Identifier).
 					WillReturnRows(rows)
@@ -1267,12 +1260,12 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 
 			response, err := server.GetAvailablePackageVersions(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 

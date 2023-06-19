@@ -12,6 +12,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/vmware-tanzu/kubeapps/pkg/helm"
 	log "k8s.io/klog/v2"
 
@@ -33,7 +34,7 @@ func (s *Server) ValidateRepository(appRepo *apprepov1alpha1.AppRepository, secr
 	if len(appRepo.Spec.DockerRegistrySecrets) > 0 && appRepo.Namespace == s.GetGlobalPackagingNamespace() {
 		// TODO(mnelson): we may also want to validate that any docker registry secrets listed
 		// already exist in the namespace.
-		return status.Errorf(codes.FailedPrecondition, "docker registry secrets cannot be set for app repositories available in all namespaces")
+		return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("docker registry secrets cannot be set for app repositories available in all namespaces"))
 	}
 
 	client, err := s.repoClientGetter(appRepo, secret)
@@ -49,7 +50,7 @@ func (s *Server) ValidateRepository(appRepo *apprepov1alpha1.AppRepository, secr
 		return err
 	} else if resp.Code >= 400 {
 		log.Errorf("Failed repository validation validation: %+v", resp)
-		return status.Errorf(codes.FailedPrecondition, "Failed repository validation: %v", resp)
+		return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Failed repository validation: %v", resp))
 	} else {
 		return nil
 	}

@@ -635,49 +635,46 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 
 func TestGetUnescapedPackageID(t *testing.T) {
 	testCases := []struct {
-		name       string
-		in         string
-		out        string
-		statusCode codes.Code
+		name          string
+		in            string
+		out           string
+		expectedError bool
 	}{
 		{
-			name:       "it returns a chartID for a valid input",
-			in:         "foo/bar",
-			out:        "foo/bar",
-			statusCode: codes.OK,
+			name: "it returns a chartID for a valid input",
+			in:   "foo/bar",
+			out:  "foo/bar",
 		},
 		{
-			name:       "it returns a chartID for a valid input (2)",
-			in:         "foo%2Fbar",
-			out:        "foo/bar",
-			statusCode: codes.OK,
+			name: "it returns a chartID for a valid input (2)",
+			in:   "foo%2Fbar",
+			out:  "foo/bar",
 		},
 		{
-			name:       "allows chart with multiple slashes",
-			in:         "foo/bar/zot",
-			out:        "foo/bar%2Fzot",
-			statusCode: codes.OK,
+			name: "allows chart with multiple slashes",
+			in:   "foo/bar/zot",
+			out:  "foo/bar%2Fzot",
 		},
 		{
-			name:       "it fails for an invalid chartID",
-			in:         "foo%ZZbar",
-			statusCode: codes.InvalidArgument,
+			name:          "it fails for an invalid chartID",
+			in:            "foo%ZZbar",
+			expectedError: true,
 		},
 		{
-			name:       "it fails for an invalid chartID (2)",
-			in:         "foo",
-			statusCode: codes.InvalidArgument,
+			name:          "it fails for an invalid chartID (2)",
+			in:            "foo",
+			expectedError: true,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			actualOut, err := GetUnescapedPackageID(tc.in)
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := err != nil, tc.expectedError; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == codes.OK {
+			if tc.expectedError == false {
 				if got, want := actualOut, tc.out; !cmp.Equal(got, want) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 				}
@@ -688,41 +685,39 @@ func TestGetUnescapedPackageID(t *testing.T) {
 
 func TestSplitPackageIdentifier(t *testing.T) {
 	testCases := []struct {
-		name       string
-		in         string
-		repoName   string
-		chartName  string
-		statusCode codes.Code
+		name      string
+		in        string
+		repoName  string
+		chartName string
+		error     bool
 	}{
 		{
-			name:       "it returns a repoName and chartName for a valid input",
-			in:         "foo/bar",
-			repoName:   "foo",
-			chartName:  "bar",
-			statusCode: codes.OK,
+			name:      "it returns a repoName and chartName for a valid input",
+			in:        "foo/bar",
+			repoName:  "foo",
+			chartName: "bar",
 		},
 		{
-			name:       "it allows chart with multiple slashes",
-			in:         "foo/bar/zot",
-			repoName:   "foo",
-			chartName:  "bar%2Fzot",
-			statusCode: codes.OK,
+			name:      "it allows chart with multiple slashes",
+			in:        "foo/bar/zot",
+			repoName:  "foo",
+			chartName: "bar%2Fzot",
 		},
 		{
-			name:       "it fails for invalid input",
-			in:         "foo",
-			statusCode: codes.InvalidArgument,
+			name:  "it fails for invalid input",
+			in:    "foo",
+			error: true,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			repoName, chartName, err := SplitPackageIdentifier(tc.in)
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := err != nil, tc.error; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == codes.OK {
+			if !tc.error {
 				if got, want := repoName, tc.repoName; !cmp.Equal(got, want) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 				}
