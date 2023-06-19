@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	authorizationapi "k8s.io/api/authorization/v1"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/connecterror"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -30,7 +32,7 @@ func (s *Server) CheckNamespaceExists(ctx context.Context, r *connect.Request[v1
 
 	typedClient, err := s.clientGetter.Typed(r.Header(), cluster)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the k8s client: '%w'", err))
 	}
 
 	_, err = typedClient.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
@@ -40,7 +42,7 @@ func (s *Server) CheckNamespaceExists(ctx context.Context, r *connect.Request[v1
 				Exists: false,
 			}), nil
 		}
-		return nil, statuserror.FromK8sError("get", "Namespace", namespace, err)
+		return nil, connecterror.FromK8sError("get", "Namespace", namespace, err)
 	}
 
 	return connect.NewResponse(&v1alpha1.CheckNamespaceExistsResponse{

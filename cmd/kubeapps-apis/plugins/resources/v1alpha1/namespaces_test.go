@@ -47,7 +47,7 @@ func TestCheckNamespaceExists(t *testing.T) {
 		request           *v1alpha1.CheckNamespaceExistsRequest
 		k8sError          error
 		expectedResponse  *v1alpha1.CheckNamespaceExistsResponse
-		expectedErrorCode codes.Code
+		expectedErrorCode connect.Code
 		existingObjects   []runtime.Object
 	}{
 		{
@@ -97,7 +97,7 @@ func TestCheckNamespaceExists(t *testing.T) {
 				Group:    "v1",
 				Resource: "namespaces",
 			}, "default", errors.New("Bang")),
-			expectedErrorCode: codes.PermissionDenied,
+			expectedErrorCode: connect.CodePermissionDenied,
 		},
 		{
 			name: "returns an internal error if k8s returns an unexpected error",
@@ -108,7 +108,7 @@ func TestCheckNamespaceExists(t *testing.T) {
 				},
 			},
 			k8sError:          k8serrors.NewInternalError(errors.New("Bang")),
-			expectedErrorCode: codes.Internal,
+			expectedErrorCode: connect.CodeInternal,
 		},
 	}
 
@@ -129,7 +129,7 @@ func TestCheckNamespaceExists(t *testing.T) {
 
 			response, err := s.CheckNamespaceExists(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
 			if tc.expectedErrorCode != 0 {
