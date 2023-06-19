@@ -5,12 +5,11 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/connecterror"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	log "k8s.io/klog/v2"
@@ -25,7 +24,7 @@ func (s *Server) CreateSecret(ctx context.Context, r *connect.Request[v1alpha1.C
 
 	typedClient, err := s.clientGetter.Typed(r.Header(), cluster)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the k8s client: '%w'", err))
 	}
 
 	_, err = typedClient.CoreV1().Secrets(namespace).Create(ctx, &core.Secret{
@@ -41,7 +40,7 @@ func (s *Server) CreateSecret(ctx context.Context, r *connect.Request[v1alpha1.C
 		StringData: r.Msg.GetStringData(),
 	}, metav1.CreateOptions{})
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "Namespace", namespace, err)
+		return nil, connecterror.FromK8sError("get", "Namespace", namespace, err)
 	}
 
 	return connect.NewResponse(&v1alpha1.CreateSecretResponse{}), nil
@@ -100,12 +99,12 @@ func (s *Server) GetSecretNames(ctx context.Context, r *connect.Request[v1alpha1
 
 	typedClient, err := s.clientGetter.Typed(r.Header(), cluster)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the k8s client: '%w'", err))
 	}
 
 	secretList, err := typedClient.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, statuserror.FromK8sError("list", "Secrets", "", err)
+		return nil, connecterror.FromK8sError("list", "Secrets", "", err)
 	}
 
 	secrets := map[string]v1alpha1.SecretType{}

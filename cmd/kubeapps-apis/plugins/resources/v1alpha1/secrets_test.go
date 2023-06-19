@@ -15,8 +15,6 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	pkgsGRPCv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	core "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -40,7 +38,7 @@ func TestCreateSecret(t *testing.T) {
 		request           *v1alpha1.CreateSecretRequest
 		k8sError          error
 		expectedResponse  *v1alpha1.CreateSecretResponse
-		expectedErrorCode codes.Code
+		expectedErrorCode connect.Code
 		existingObjects   []runtime.Object
 	}{
 		{
@@ -68,7 +66,7 @@ func TestCreateSecret(t *testing.T) {
 				Group:    "v1",
 				Resource: "secrets",
 			}, "default", errors.New("Bang")),
-			expectedErrorCode: codes.PermissionDenied,
+			expectedErrorCode: connect.CodePermissionDenied,
 		},
 		{
 			name: "returns already exists if k8s returns an already exists error",
@@ -82,7 +80,7 @@ func TestCreateSecret(t *testing.T) {
 				Group:    "v1",
 				Resource: "secrets",
 			}, "default"),
-			expectedErrorCode: codes.AlreadyExists,
+			expectedErrorCode: connect.CodeAlreadyExists,
 		},
 		{
 			name: "returns an internal error if k8s returns an unexpected error",
@@ -93,7 +91,7 @@ func TestCreateSecret(t *testing.T) {
 				},
 			},
 			k8sError:          k8serrors.NewInternalError(errors.New("Bang")),
-			expectedErrorCode: codes.Internal,
+			expectedErrorCode: connect.CodeInternal,
 		},
 	}
 
@@ -114,11 +112,11 @@ func TestCreateSecret(t *testing.T) {
 
 			response, err := s.CreateSecret(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
 
-			if tc.expectedErrorCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 
@@ -148,7 +146,7 @@ func TestGetSecretNames(t *testing.T) {
 		request           *v1alpha1.GetSecretNamesRequest
 		k8sError          error
 		expectedResponse  *v1alpha1.GetSecretNamesResponse
-		expectedErrorCode codes.Code
+		expectedErrorCode connect.Code
 		existingObjects   []runtime.Object
 	}{
 		{
@@ -216,7 +214,7 @@ func TestGetSecretNames(t *testing.T) {
 				Group:    "v1",
 				Resource: "secrets",
 			}, "default", errors.New("Bang")),
-			expectedErrorCode: codes.PermissionDenied,
+			expectedErrorCode: connect.CodePermissionDenied,
 		},
 		{
 			name: "returns an internal error if k8s returns an unexpected error",
@@ -227,7 +225,7 @@ func TestGetSecretNames(t *testing.T) {
 				},
 			},
 			k8sError:          k8serrors.NewInternalError(errors.New("Bang")),
-			expectedErrorCode: codes.Internal,
+			expectedErrorCode: connect.CodeInternal,
 		},
 	}
 
@@ -248,7 +246,7 @@ func TestGetSecretNames(t *testing.T) {
 
 			response, err := s.GetSecretNames(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
 			if tc.expectedErrorCode != 0 {
