@@ -46,7 +46,9 @@ func (s *Server) availableChartDetail(ctx context.Context, headers http.Header, 
 
 	repoN, chartName, err := pkgutils.SplitPackageIdentifier(packageRef.Identifier)
 	if err != nil {
-		return nil, err
+		// The helper has been updated to return connect errors, so just ensure
+		// until switched that a grpc error is returned.
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// check specified repo exists and is in ready state
