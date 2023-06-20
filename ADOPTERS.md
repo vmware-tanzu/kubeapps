@@ -16,6 +16,8 @@ If you're using Kubeapps and want to add your organization to this list, follow 
 
 <a href="https://www.sap.com/" border="0" target="_blank"><img alt="SAP" src="./site/content/docs/latest/img/adopters/sap.jpg" height="80"></a>
 
+<a href="https://dih.telekom.com/en" border="0" target="_blank"><img alt="T-systems" src="./site/content/docs/latest/img/adopters/t-systems.jpg" height="60"></a>
+
 <a href="https://www.terasky.com/" border="0" target="_blank"><img alt="Terasky" src="./site/content/docs/latest/img/adopters/terasky.jpg" height="50"></a>
 
 ## Success Stories
@@ -45,6 +47,10 @@ We use KubeApps to manage our production workloads which are deployed using Helm
 **[SAP](https://www.sap.com/)** - Teapots team
 
 We are Team Teapots (reference to the HTTP 418 code). We manage the infrastructure of an internal Pipelines-as-a-Service offering for other development teams here at SAP. We use the wonderful Kubeapps project to help our customers deploy cloud-native applications (Jenkins, etc.) with an easy-to-use UI.
+
+**[Data Intelligence Hub (by T-Systems)](https://dih.telekom.com/en/products/#space)**
+
+We use KubeApps in our Space LivingLab product. Space LivingLab offers a sandbox environment for an experimental dataspace that is managed by us, so that the customer can fully concentrate on the development of new use cases & applications using data space technology. We use KubeApps to manage and deploy applications in a Kubernetes cluster and deploy custom Helm charts.
 
 **[Terasky](https://www.terasky.com/)**
 
