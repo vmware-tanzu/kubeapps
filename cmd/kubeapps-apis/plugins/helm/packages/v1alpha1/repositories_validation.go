@@ -18,8 +18,6 @@ import (
 
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -85,7 +83,7 @@ func getValidator(appRepo *apprepov1alpha1.AppRepository) (HttpValidator, error)
 
 func newRepositoryClient(appRepo *apprepov1alpha1.AppRepository, secret *corev1.Secret) (httpclient.Client, error) {
 	if cli, err := helm.InitNetClient(appRepo, secret, secret, nil); err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "Unable to create HTTP client for repository: %v", err)
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to create HTTP client for repository: %w", err))
 	} else {
 		return cli, nil
 	}

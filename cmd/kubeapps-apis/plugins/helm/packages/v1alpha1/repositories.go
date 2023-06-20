@@ -17,8 +17,6 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/connecterror"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resources"
 	"github.com/vmware-tanzu/kubeapps/pkg/helm"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
 	k8scorev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -654,7 +652,7 @@ func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *c
 	cluster := request.Msg.GetContext().GetCluster()
 	namespace := request.Msg.GetContext().GetNamespace()
 	if cluster == "" && namespace != "" {
-		return nil, status.Errorf(codes.InvalidArgument, "cluster must be specified when namespace is present: %s", namespace)
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("cluster must be specified when namespace is present: %s", namespace))
 	}
 	typedClient, err := s.clientGetter.Typed(request.Header(), cluster)
 	if err != nil {

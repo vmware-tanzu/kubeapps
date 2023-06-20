@@ -21,8 +21,6 @@ import (
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/pkg/helm"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
 	authorizationv1 "k8s.io/api/authorization/v1"
 	apiv1 "k8s.io/api/core/v1"
@@ -893,7 +891,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 		request            *corev1.GetPackageRepositorySummariesRequest
 		existingRepos      []k8sruntime.Object
 		existingNamespaces []*apiv1.Namespace
-		expectedStatusCode codes.Code
+		expectedErrorCode  connect.Code
 		expectedResponse   *corev1.GetPackageRepositorySummariesResponse
 		reactors           []*ClientReaction
 	}{
@@ -906,7 +904,6 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				&repo1b,
 				&repo2b,
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
 				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
 					repo1Summary,
@@ -975,7 +972,6 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
 				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
 					{
@@ -1000,7 +996,6 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				&repo1b,
 				&repo2b,
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
 				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
 					repo2Summary,
@@ -1015,7 +1010,6 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 			existingRepos: []k8sruntime.Object{
 				&repo3,
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
 				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
 					repo3Summary,
@@ -1045,12 +1039,12 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 
 			response, err := s.GetPackageRepositorySummaries(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 
@@ -1114,20 +1108,19 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 		request              *corev1.GetPackageRepositoryDetailRequest
 		repositoryCustomizer func(repository *appRepov1alpha1.AppRepository) *appRepov1alpha1.AppRepository
 		expectedResponse     *corev1.GetPackageRepositoryDetailResponse
-		expectedStatusCode   codes.Code
+		expectedErrorCode    connect.Code
 		existingSecret       *apiv1.Secret
 	}{
 		{
-			name:               "not found",
-			request:            buildRequest("ns-1", "foo"),
-			expectedStatusCode: codes.NotFound,
+			name:              "not found",
+			request:           buildRequest("ns-1", "foo"),
+			expectedErrorCode: connect.CodeNotFound,
 		},
 		{
 			name:    "check ref",
 			request: buildRequest("ns-1", "repo-1"),
 			expectedResponse: buildResponse("ns-1", "repo-1", "helm",
 				"https://test-repo", "description 1", nil, nil, nil),
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name:    "check values with auth",
@@ -1145,8 +1138,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				},
 				nil,
 				nil),
-			existingSecret:     newBasicAuthSecret(helm.SecretNameForRepo("repo-3"), globalPackagingNamespace, "baz-user", "zot-pwd"),
-			expectedStatusCode: codes.OK,
+			existingSecret: newBasicAuthSecret(helm.SecretNameForRepo("repo-3"), globalPackagingNamespace, "baz-user", "zot-pwd"),
 		},
 		{
 			name:    "check values without auth",
@@ -1168,8 +1160,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 						Variables: map[string]string{"$1": "value1"},
 					},
 				}),
-			existingSecret:     newTlsSecret(helm.SecretNameForRepo("repo-4"), "ns-4", nil, nil, ca),
-			expectedStatusCode: codes.OK,
+			existingSecret: newTlsSecret(helm.SecretNameForRepo("repo-4"), "ns-4", nil, nil, ca),
 		},
 		{
 			name:    "check values with imagesPullSecret",
@@ -1190,7 +1181,6 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				}),
 			existingSecret: newAuthDockerSecret(imagesPullSecretName("repo-5"), "ns-5",
 				dockerAuthJson("https://myfooserver.com", "username", "password", "foo@bar.com", "dXNlcm5hbWU6cGFzc3dvcmQ=")),
-			expectedStatusCode: codes.OK,
 		},
 	}
 
@@ -1216,9 +1206,9 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			actualResponse, err := s.GetPackageRepositoryDetail(context.Background(), connect.NewRequest(tc.request))
 
 			// checks
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got error: %d, want: %d, err: %+v", got, want, err)
-			} else if got != codes.OK {
+			} else if got != 0 {
 				return
 			}
 
@@ -2109,11 +2099,11 @@ func TestDeletePackageRepository(t *testing.T) {
 func TestGetPackageRepositoryPermissions(t *testing.T) {
 
 	testCases := []struct {
-		name               string
-		request            *corev1.GetPackageRepositoryPermissionsRequest
-		expectedStatusCode codes.Code
-		expectedResponse   *corev1.GetPackageRepositoryPermissionsResponse
-		reactors           []*ClientReaction
+		name              string
+		request           *corev1.GetPackageRepositoryPermissionsRequest
+		expectedErrorCode connect.Code
+		expectedResponse  *corev1.GetPackageRepositoryPermissionsResponse
+		reactors          []*ClientReaction
 	}{
 		{
 			name: "returns permissions for global package repositories",
@@ -2139,7 +2129,6 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetPackageRepositoryPermissionsResponse{
 				Permissions: []*corev1.PackageRepositoriesPermissions{
 					{
@@ -2169,7 +2158,6 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetPackageRepositoryPermissionsResponse{
 				Permissions: []*corev1.PackageRepositoriesPermissions{
 					{
@@ -2192,7 +2180,7 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 			request: &corev1.GetPackageRepositoryPermissionsRequest{
 				Context: &corev1.Context{Namespace: "my-ns"},
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "returns permissions for namespaced package repositories",
@@ -2218,7 +2206,6 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetPackageRepositoryPermissionsResponse{
 				Permissions: []*corev1.PackageRepositoriesPermissions{
 					{
@@ -2251,12 +2238,12 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 
 			response, err := s.GetPackageRepositoryPermissions(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 
