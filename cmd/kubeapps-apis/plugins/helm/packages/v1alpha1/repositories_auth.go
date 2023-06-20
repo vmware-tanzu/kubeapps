@@ -17,8 +17,6 @@ import (
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/connecterror"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	k8scorev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -114,13 +112,13 @@ func handleAuthSecretForUpdate(
 
 	// if we have both ref config and data config, it is an invalid mixed configuration
 	if (hasCaRef || hasAuthRef) && (hasCaData || hasAuthData) {
-		return nil, false, false, status.Errorf(codes.InvalidArgument, "Package repository cannot mix referenced secrets and user provided secret data")
+		return nil, false, false, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Package repository cannot mix referenced secrets and user provided secret data"))
 	}
 
 	// check we cannot change mode (per design spec)
 	if secret != nil && (hasCaRef || hasCaData || hasAuthRef || hasAuthData) {
 		if isAuthSecretKubeappsManaged(repo, secret) != (hasAuthData || hasCaData) {
-			return nil, false, false, status.Errorf(codes.InvalidArgument, "Auth management mode cannot be changed")
+			return nil, false, false, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Auth management mode cannot be changed"))
 		}
 	}
 
@@ -181,7 +179,7 @@ func handleImagesPullSecretForUpdate(
 	// check we are not changing mode
 	if secret != nil && (hasRef || hasData) {
 		if isImagesPullSecretKubeappsManaged(repo, secret) != hasData {
-			return nil, false, false, status.Errorf(codes.InvalidArgument, "Auth management mode cannot be changed")
+			return nil, false, false, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Auth management mode cannot be changed"))
 		}
 	}
 
@@ -591,8 +589,8 @@ func validateUserManagedRepoSecret(
 
 	var secretRef string
 	if secretRefTls != "" && secretRefAuth != "" && secretRefTls != secretRefAuth {
-		return nil, status.Errorf(
-			codes.InvalidArgument, "TLS config secret and Auth secret must be the same")
+		return nil, connect.NewError(
+			connect.CodeInvalidArgument, fmt.Errorf("TLS config secret and Auth secret must be the same"))
 	} else if secretRefTls != "" {
 		secretRef = secretRefTls
 	} else if secretRefAuth != "" {

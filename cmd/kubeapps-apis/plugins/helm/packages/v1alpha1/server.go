@@ -182,7 +182,7 @@ func (s *Server) MaxWorkers() int {
 // GetManager ensures a manager is available and returns it.
 func (s *Server) GetManager() (utils.AssetManager, error) {
 	if s.manager == nil {
-		return nil, status.Errorf(codes.Internal, "server not configured with manager")
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("server not configured with manager"))
 	}
 	manager := s.manager
 	return manager, nil
@@ -395,7 +395,7 @@ func AvailablePackageDetailFromChart(chart *models.Chart, chartFiles *models.Cha
 
 	isValid, err := pkgutils.IsValidChart(chart)
 	if !isValid || err != nil {
-		return nil, status.Errorf(codes.Internal, "invalid chart: %s", err.Error())
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("invalid chart: %w", err))
 	}
 
 	pkg.DisplayName = chart.Name
@@ -472,7 +472,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *conn
 
 	actionConfig, err := s.actionConfigGetter(request.Header(), request.Msg.GetContext())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to create Helm action config: %w", err))
 	}
 	cmd := action.NewList(actionConfig)
 	if request.Msg.GetContext().GetNamespace() == "" {
@@ -489,7 +489,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *conn
 
 	releases, err := cmd.Run()
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to run Helm List action: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to run Helm List action: %w", err))
 	}
 
 	installedPkgSummaries := make([]*corev1.InstalledPackageSummary, len(releases))
@@ -520,7 +520,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *conn
 		}
 		charts, err := s.manager.GetPaginatedChartListWithFilters(cq, 0, 0)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "Error while fetching related charts: %v", err)
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Error while fetching related charts: %w", err))
 		}
 		// TODO(agamez): deal with multiple matches, perhaps returning []AvailablePackageRef ?
 		// Example: global + namespaced repo including an overlapping subset of packages.
@@ -594,7 +594,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *connect
 
 	actionConfig, err := s.actionConfigGetter(request.Header(), request.Msg.GetInstalledPackageRef().GetContext())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to create Helm action config: %w", err))
 	}
 
 	// First grab the release.
@@ -602,24 +602,24 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *connect
 	release, err := getcmd.Run(identifier)
 	if err != nil {
 		if err == driver.ErrReleaseNotFound {
-			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", identifier, namespace, err)
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("Unable to find Helm release %q in namespace %q: %w", identifier, namespace, err))
 		}
-		return nil, status.Errorf(codes.Internal, "Unable to run Helm get action: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to run Helm get action: %w", err))
 	}
 	installedPkgDetail, err := installedPkgDetailFromRelease(release, request.Msg.GetInstalledPackageRef())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to create installed package detail from release: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to create installed package detail from release: %w", err))
 	}
 
 	// Grab the released values.
 	valuescmd := action.NewGetValues(actionConfig)
 	values, err := valuescmd.Run(identifier)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to get Helm release values: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get Helm release values: %w", err))
 	}
 	valuesMarshalled, err := json.Marshal(values)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Unable to marshal Helm release values: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to marshal Helm release values: %w", err))
 	}
 	installedPkgDetail.ValuesApplied = string(valuesMarshalled)
 
@@ -635,7 +635,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *connect
 	}
 	charts, err := s.manager.GetPaginatedChartListWithFilters(cq, 0, 0)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Error while fetching related chart: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Error while fetching related chart: %w", err))
 	}
 	// Getting zero charts here
 
@@ -1031,7 +1031,13 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	refs, err := resourcerefs.GetInstalledPackageResourceRefs(
 		request.Header(), types.NamespacedName{Name: identifier, Namespace: pkgRef.Context.Namespace}, fn)
 	if err != nil {
-		return nil, err
+		// TODO(minelson): Remove once 6269 is complete.
+		switch status.Code(err) {
+		case codes.NotFound:
+			return nil, connect.NewError(connect.CodeNotFound, err)
+		default:
+			return nil, connect.NewError(connect.CodeInternal, err)
+		}
 	} else {
 		return connect.NewResponse(&corev1.GetInstalledPackageResourceRefsResponse{
 			Context:      pkgRef.GetContext(),
@@ -1107,11 +1113,11 @@ func (s *Server) getClient(headers http.Header, cluster string, namespace string
 
 func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *connect.Request[corev1.GetPackageRepositoryDetailRequest]) (*connect.Response[corev1.GetPackageRepositoryDetailResponse], error) {
 	if request == nil || request.Msg.PackageRepoRef == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "no request PackageRepoRef provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request PackageRepoRef provided"))
 	}
 	repoRef := request.Msg.GetPackageRepoRef()
 	if repoRef.GetContext() == nil || repoRef.GetContext().GetNamespace() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no valid context provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no valid context provided"))
 	}
 	log.Infof("+helm GetPackageRepositoryDetail '%s' in context [%v]", repoRef.Identifier, repoRef.Context)
 
@@ -1124,13 +1130,13 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *connec
 	// Retrieve repository
 	appRepo, caCertSecret, authSecret, imagesPullSecret, err := s.getAppRepoAndRelatedSecrets(ctx, request.Header(), cluster, name, namespace)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "Unable to retrieve AppRepository '%s/%s' due to [%v]", namespace, name, err)
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("Unable to retrieve AppRepository '%s/%s' due to [%w]", namespace, name, err))
 	}
 
 	// Map to target struct
 	repositoryDetail, err := s.mapToPackageRepositoryDetail(appRepo, cluster, namespace, caCertSecret, authSecret, imagesPullSecret)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to convert the AppRepository: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to convert the AppRepository: %w", err))
 	}
 
 	// response

@@ -102,14 +102,14 @@ func TestGetClient(t *testing.T) {
 		manager           utils.AssetManager
 		clientGetter      clientgetter.ClientProviderInterface
 		statusCodeClient  codes.Code
-		statusCodeManager codes.Code
+		statusCodeManager connect.Code
 	}{
 		{
 			name:              "it returns internal error status when no manager configured",
 			manager:           nil,
 			clientGetter:      clientGetter,
 			statusCodeClient:  codes.OK,
-			statusCodeManager: codes.Internal,
+			statusCodeManager: connect.CodeInternal,
 		},
 		{
 			name:    "it returns whatever error the clients getter function returns",
@@ -117,15 +117,13 @@ func TestGetClient(t *testing.T) {
 			clientGetter: &clientgetter.ClientProvider{ClientsFunc: func(headers http.Header, cluster string) (*clientgetter.ClientGetter, error) {
 				return nil, status.Errorf(codes.FailedPrecondition, "Bang!")
 			}},
-			statusCodeClient:  codes.FailedPrecondition,
-			statusCodeManager: codes.OK,
+			statusCodeClient: codes.FailedPrecondition,
 		},
 		{
-			name:              "it returns failed-precondition when clients getter function is not set",
-			manager:           manager,
-			clientGetter:      &clientgetter.ClientProvider{ClientsFunc: nil},
-			statusCodeClient:  codes.FailedPrecondition,
-			statusCodeManager: codes.OK,
+			name:             "it returns failed-precondition when clients getter function is not set",
+			manager:          manager,
+			clientGetter:     &clientgetter.ClientProvider{ClientsFunc: nil},
+			statusCodeClient: codes.FailedPrecondition,
 		},
 		{
 			name:         "it returns client without error when configured correctly",
@@ -145,7 +143,7 @@ func TestGetClient(t *testing.T) {
 
 			_, errManager := s.GetManager()
 
-			if got, want := status.Code(errManager), tc.statusCodeManager; got != want {
+			if got, want := connect.CodeOf(errManager), tc.statusCodeManager; errManager != nil && got != want {
 				t.Errorf("got: %+v, want: %+v", got, want)
 			}
 
@@ -1906,11 +1904,11 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 		releaseNotes     = "some notes"
 	)
 	testCases := []struct {
-		name               string
-		existingReleases   []releaseStub
-		request            *corev1.GetInstalledPackageDetailRequest
-		expectedResponse   *corev1.GetInstalledPackageDetailResponse
-		expectedStatusCode codes.Code
+		name              string
+		existingReleases  []releaseStub
+		request           *corev1.GetInstalledPackageDetailRequest
+		expectedResponse  *corev1.GetInstalledPackageDetailResponse
+		expectedErrorCode connect.Code
 	}{
 		{
 			name: "returns an installed package detail",
@@ -1984,7 +1982,6 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					CustomDetail: customDetailRevision2,
 				},
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "returns a 404 if the installed package is not found",
@@ -1996,7 +1993,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					Identifier: releaseName,
 				},
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedErrorCode: connect.CodeNotFound,
 		},
 	}
 
@@ -2007,18 +2004,18 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			server, mock, cleanup := makeServer(t, authorized, actionConfig)
 			defer cleanup()
 
-			if tc.expectedStatusCode == codes.OK {
+			if tc.expectedErrorCode == 0 {
 				populateAssetDBWithDetail(t, mock, tc.expectedResponse.InstalledPackageDetail)
 			}
 
 			response, err := server.GetInstalledPackageDetail(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 

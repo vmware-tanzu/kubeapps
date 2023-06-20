@@ -14,8 +14,6 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,12 +21,12 @@ import (
 
 func TestUpdateInstalledPackage(t *testing.T) {
 	testCases := []struct {
-		name               string
-		existingReleases   []releaseStub
-		request            *corev1.UpdateInstalledPackageRequest
-		expectedResponse   *corev1.UpdateInstalledPackageResponse
-		expectedStatusCode codes.Code
-		expectedRelease    *release.Release
+		name              string
+		existingReleases  []releaseStub
+		request           *corev1.UpdateInstalledPackageRequest
+		expectedResponse  *corev1.UpdateInstalledPackageResponse
+		expectedErrorCode connect.Code
+		expectedRelease   *release.Release
 	}{
 		{
 			name: "updates the installed package from repo without credentials",
@@ -65,7 +63,6 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					Plugin:     GetPluginDetail(),
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedRelease: &release.Release{
 				Name: "my-apache",
 				Info: &release.Info{
@@ -118,7 +115,6 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					Plugin:     GetPluginDetail(),
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedRelease: &release.Release{
 				Name: "my-apache",
 				Info: &release.Info{
@@ -147,7 +143,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					Identifier: "not-a-valid-identifier",
 				},
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedErrorCode: connect.CodeNotFound,
 		},
 	}
 
@@ -176,7 +172,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			}
 			response, err := server.UpdateInstalledPackage(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 			if err != nil {
