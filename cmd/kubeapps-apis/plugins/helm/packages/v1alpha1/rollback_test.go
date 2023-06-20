@@ -14,8 +14,6 @@ import (
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	helmv1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,12 +21,12 @@ import (
 
 func TestRollbackInstalledPackage(t *testing.T) {
 	testCases := []struct {
-		name               string
-		existingReleases   []releaseStub
-		request            *helmv1.RollbackInstalledPackageRequest
-		expectedResponse   *helmv1.RollbackInstalledPackageResponse
-		expectedStatusCode codes.Code
-		expectedRelease    *release.Release
+		name              string
+		existingReleases  []releaseStub
+		request           *helmv1.RollbackInstalledPackageRequest
+		expectedResponse  *helmv1.RollbackInstalledPackageResponse
+		expectedErrorCode connect.Code
+		expectedRelease   *release.Release
 	}{
 		{
 			name: "rolls back the installed package from revision 2 to 1, creating rev 3",
@@ -72,7 +70,6 @@ func TestRollbackInstalledPackage(t *testing.T) {
 					Plugin:     GetPluginDetail(),
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedRelease: &release.Release{
 				Name: "my-apache",
 				Info: &release.Info{
@@ -101,7 +98,7 @@ func TestRollbackInstalledPackage(t *testing.T) {
 					Identifier: "not-a-valid-identifier",
 				},
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedErrorCode: connect.CodeNotFound,
 		},
 	}
 
@@ -128,10 +125,10 @@ func TestRollbackInstalledPackage(t *testing.T) {
 
 			response, err := server.RollbackInstalledPackage(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 

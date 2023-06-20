@@ -244,7 +244,7 @@ func TestAddPackageRepository(t *testing.T) {
 		request                     *corev1.AddPackageRepositoryRequest
 		expectedResponse            *corev1.AddPackageRepositoryResponse
 		expectedRepo                *appRepov1alpha1.AppRepository
-		statusCode                  codes.Code
+		errorCode                   connect.Code
 		existingAuthSecret          *apiv1.Secret
 		existingDockerSecret        *apiv1.Secret
 		expectedAuthCreatedSecret   *apiv1.Secret
@@ -254,52 +254,48 @@ func TestAddPackageRepository(t *testing.T) {
 		expectedGlobalSecret        *apiv1.Secret
 	}{
 		{
-			name:       "returns error if no namespace is provided",
-			request:    &corev1.AddPackageRepositoryRequest{Context: &corev1.Context{}},
-			statusCode: codes.InvalidArgument,
+			name:      "returns error if no namespace is provided",
+			request:   &corev1.AddPackageRepositoryRequest{Context: &corev1.Context{}},
+			errorCode: connect.CodeInvalidArgument,
 		},
 		{
-			name:       "returns error if no name is provided",
-			request:    &corev1.AddPackageRepositoryRequest{Context: &corev1.Context{Namespace: "foo"}},
-			statusCode: codes.InvalidArgument,
+			name:      "returns error if no name is provided",
+			request:   &corev1.AddPackageRepositoryRequest{Context: &corev1.Context{Namespace: "foo"}},
+			errorCode: connect.CodeInvalidArgument,
 		},
 		{
-			name:       "returns error if wrong repository type",
-			request:    addRepoReqWrongType,
-			statusCode: codes.InvalidArgument,
+			name:      "returns error if wrong repository type",
+			request:   addRepoReqWrongType,
+			errorCode: connect.CodeInvalidArgument,
 		},
 		{
-			name:       "returns error if no url",
-			request:    addRepoReqNoUrl,
-			statusCode: codes.InvalidArgument,
+			name:      "returns error if no url",
+			request:   addRepoReqNoUrl,
+			errorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name:             "check that interval is used",
 			request:          addRepoReqWithInterval,
 			expectedResponse: addRepoExpectedResp,
 			expectedRepo:     &addRepoWithInterval,
-			statusCode:       codes.OK,
 		},
 		{
 			name:             "simple add package repository scenario (HELM)",
 			request:          addRepoReqSimple("helm"),
 			expectedResponse: addRepoExpectedResp,
 			expectedRepo:     &addRepoSimpleHelm,
-			statusCode:       codes.OK,
 		},
 		{
 			name:             "simple add package repository scenario (OCI)",
 			request:          addRepoReqSimple("oci"),
 			expectedResponse: addRepoExpectedResp,
 			expectedRepo:     &addRepoSimpleOci,
-			statusCode:       codes.OK,
 		},
 		{
 			name:             "add package global repository",
 			request:          addRepoReqGlobal,
 			expectedResponse: addRepoExpectedGlobalResp,
 			expectedRepo:     &addRepoGlobal,
-			statusCode:       codes.OK,
 		},
 		// CUSTOM CA AUTH
 		{
@@ -309,7 +305,6 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedRepo:              &addRepoWithTLSCA,
 			expectedAuthCreatedSecret: setSecretAnnotations(setSecretOwnerRef("bar", newTlsSecret("apprepo-bar", "foo", nil, nil, ca))),
 			expectedGlobalSecret:      newTlsSecret("foo-apprepo-bar", kubeappsNamespace, nil, nil, ca), // Global secrets must reside in the Kubeapps (asset syncer) namespace
-			statusCode:                codes.OK,
 		},
 		{
 			name:                 "package repository with secret key reference",
@@ -319,13 +314,12 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedResponse:     addRepoExpectedResp,
 			expectedRepo:         &addRepoTLSSecret,
 			expectedGlobalSecret: newTlsSecret("foo-apprepo-bar", kubeappsNamespace, nil, nil, ca),
-			statusCode:           codes.OK,
 		},
 		{
 			name:               "fails when package repository links to non-existing secret",
 			request:            addRepoReqTLSSecretRef,
 			userManagedSecrets: true,
-			statusCode:         codes.NotFound,
+			errorCode:          connect.CodeNotFound,
 		},
 		// BASIC AUTH
 		{
@@ -335,7 +329,6 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedRepo:              addRepoAuthHeaderPassCredentials("foo"),
 			expectedAuthCreatedSecret: setSecretAnnotations(setSecretOwnerRef("bar", newBasicAuthSecret("apprepo-bar", "foo", "baz", "zot"))),
 			expectedGlobalSecret:      newBasicAuthSecret("foo-apprepo-bar", kubeappsNamespace, "baz", "zot"),
-			statusCode:                codes.OK,
 		},
 		{
 			name: "[kubeapps managed secrets] package repository with basic auth and pass_credentials flag in global namespace copies secret to kubeapps ns",
@@ -360,12 +353,11 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedRepo:              addRepoAuthHeaderPassCredentials(globalPackagingNamespace),
 			expectedAuthCreatedSecret: setSecretAnnotations(setSecretOwnerRef("bar", newBasicAuthSecret("apprepo-bar", globalPackagingNamespace, "the-user", "the-pwd"))),
 			expectedGlobalSecret:      newBasicAuthSecret("kubeapps-repos-global-apprepo-bar", kubeappsNamespace, "the-user", "the-pwd"),
-			statusCode:                codes.OK,
 		},
 		{
-			name:       "package repository with wrong basic auth",
-			request:    addRepoReqWrongBasicAuth,
-			statusCode: codes.InvalidArgument,
+			name:      "package repository with wrong basic auth",
+			request:   addRepoReqWrongBasicAuth,
+			errorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name:                 "[user managed secrets] package repository basic auth with existing secret",
@@ -375,7 +367,6 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedResponse:     addRepoExpectedResp,
 			expectedRepo:         addRepoAuthHeaderWithSecretRef("foo", "secret-basic"),
 			expectedGlobalSecret: newBasicAuthSecret("foo-apprepo-bar", kubeappsNamespace, "baz-user", "zot-pwd"),
-			statusCode:           codes.OK,
 		},
 		{
 			name: "[user managed secrets] add repository to global namespace creates secret in kubeapps namespace for syncer",
@@ -399,7 +390,6 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedResponse:     addRepoExpectedGlobalResp,
 			expectedRepo:         addRepoAuthHeaderWithSecretRef(globalPackagingNamespace, "secret-basic"),
 			expectedGlobalSecret: newBasicAuthSecret("kubeapps-repos-global-apprepo-bar", kubeappsNamespace, "baz-user", "zot-pwd"),
-			statusCode:           codes.OK,
 		},
 		// BEARER TOKEN
 		{
@@ -409,12 +399,11 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedRepo:              addRepoAuthHeaderWithSecretRef("foo", "apprepo-bar"),
 			expectedAuthCreatedSecret: setSecretAnnotations(setSecretOwnerRef("bar", newBearerAuthSecret("apprepo-bar", "foo", "the-token"))),
 			expectedGlobalSecret:      newBearerAuthSecret("foo-apprepo-bar", kubeappsNamespace, "the-token"),
-			statusCode:                codes.OK,
 		},
 		{
-			name:       "package repository with no bearer token",
-			request:    addRepoReqBearerToken(""),
-			statusCode: codes.InvalidArgument,
+			name:      "package repository with no bearer token",
+			request:   addRepoReqBearerToken(""),
+			errorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name:                 "package repository bearer token with secret (user managed secrets)",
@@ -424,7 +413,6 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedResponse:     addRepoExpectedResp,
 			expectedRepo:         addRepoAuthHeaderWithSecretRef("foo", "secret-bearer"),
 			expectedGlobalSecret: newBearerAuthSecret("foo-apprepo-bar", kubeappsNamespace, "the-token"),
-			statusCode:           codes.OK,
 		},
 		// CUSTOM AUTH
 		{
@@ -434,7 +422,6 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedRepo:              addRepoAuthHeaderWithSecretRef("foo", "apprepo-bar"),
 			expectedAuthCreatedSecret: setSecretAnnotations(setSecretOwnerRef("bar", newHeaderAuthSecret("apprepo-bar", "foo", "foobarzot"))),
 			expectedGlobalSecret:      newHeaderAuthSecret("foo-apprepo-bar", kubeappsNamespace, "foobarzot"),
-			statusCode:                codes.OK,
 		},
 		{
 			name:                 "package repository custom auth with existing secret (user managed secrets)",
@@ -444,7 +431,6 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedResponse:     addRepoExpectedResp,
 			expectedRepo:         addRepoAuthHeaderWithSecretRef("foo", "secret-custom"),
 			expectedGlobalSecret: newBasicAuthSecret("foo-apprepo-bar", kubeappsNamespace, "baz", "zot"),
-			statusCode:           codes.OK,
 		},
 		{
 			name: "global package repository custom auth with existing secret does not generate copied global secret (user managed secrets)",
@@ -468,7 +454,6 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedResponse:     addRepoExpectedGlobalResp,
 			expectedRepo:         addRepoAuthHeaderWithSecretRef(globalPackagingNamespace, "secret-custom"),
 			expectedGlobalSecret: newBasicAuthSecret("kubeapps-repos-global-apprepo-bar", kubeappsNamespace, "baz", "zot"),
-			statusCode:           codes.OK,
 		},
 		// DOCKER AUTH
 		{
@@ -486,7 +471,6 @@ func TestAddPackageRepository(t *testing.T) {
 					dockerAuthJson("https://docker-server", "the-user", "the-password", "foo@bar.com", "dGhlLXVzZXI6dGhlLXBhc3N3b3Jk")))),
 			expectedGlobalSecret: newAuthDockerSecret("foo-apprepo-bar", kubeappsNamespace,
 				dockerAuthJson("https://docker-server", "the-user", "the-password", "foo@bar.com", "dGhlLXVzZXI6dGhlLXBhc3N3b3Jk")),
-			statusCode: codes.OK,
 		},
 		{
 			name:               "package repository with Docker auth (user managed secrets)",
@@ -498,18 +482,17 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedRepo:     addRepoAuthDocker("secret-docker"),
 			expectedGlobalSecret: newAuthDockerSecret("foo-apprepo-bar", kubeappsNamespace,
 				dockerAuthJson("https://docker-server", "the-user", "the-password", "foo@bar.com", "dGhlLXVzZXI6dGhlLXBhc3N3b3Jk")),
-			statusCode: codes.OK,
 		},
 		// Others
 		{
-			name:       "errors when package repository with 1 secret for TLS CA and a different secret for basic auth (kubeapps managed secrets)",
-			request:    addRepoReqTLSDifferentSecretAuth,
-			statusCode: codes.InvalidArgument,
+			name:      "errors when package repository with 1 secret for TLS CA and a different secret for basic auth (kubeapps managed secrets)",
+			request:   addRepoReqTLSDifferentSecretAuth,
+			errorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name:               "errors when package repository with 1 secret for TLS CA and a different secret for basic auth",
 			request:            addRepoReqTLSDifferentSecretAuth,
-			statusCode:         codes.InvalidArgument,
+			errorCode:          connect.CodeInvalidArgument,
 			userManagedSecrets: true,
 		},
 		{
@@ -517,14 +500,13 @@ func TestAddPackageRepository(t *testing.T) {
 			request:          addRepoReqOnlyPassCredentials,
 			expectedResponse: addRepoExpectedResp,
 			expectedRepo:     &addRepoOnlyPassCredentials,
-			statusCode:       codes.OK,
 		},
 		{
 			name:               "package repository with reference to malformed secret",
 			request:            addRepoReqAuthWithSecret(corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH, "foo", "secret-basic"),
 			existingAuthSecret: newTlsSecret("secret-basic", "foo", nil, nil, nil), // Creates empty secret
 			userManagedSecrets: true,
-			statusCode:         codes.Internal,
+			errorCode:          connect.CodeInternal,
 		},
 		// Custom values
 		{
@@ -532,13 +514,12 @@ func TestAddPackageRepository(t *testing.T) {
 			request:          addRepoReqCustomValues,
 			expectedResponse: addRepoExpectedResp,
 			expectedRepo:     &addRepoCustomDetailHelm,
-			statusCode:       codes.OK,
 		},
 		{
 			name:             "package repository with invalid custom values",
 			request:          addRepoReqWrongCustomValues,
 			expectedResponse: addRepoExpectedResp,
-			statusCode:       codes.InvalidArgument,
+			errorCode:        connect.CodeInvalidArgument,
 		},
 		{
 			name:             "package repository with validation success (Helm)",
@@ -546,7 +527,6 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedResponse: addRepoExpectedResp,
 			expectedRepo:     &addRepoCustomDetailHelm,
 			repoClientGetter: newRepoHttpClient(map[string]*http.Response{"https://example.com/index.yaml": {StatusCode: 200}}),
-			statusCode:       codes.OK,
 		},
 		{
 			name:             "package repository with validation success (OCI)",
@@ -557,7 +537,6 @@ func TestAddPackageRepository(t *testing.T) {
 				"https://example.com/v2/repo1/tags/list?n=1":  httpResponse(200, "{ \"name\":\"repo1\", \"tags\":[\"tag1\"] }"),
 				"https://example.com/v2/repo1/manifests/tag1": httpResponse(200, "{ \"config\":{ \"mediaType\":\"application/vnd.cncf.helm.config\" } }"),
 			}),
-			statusCode: codes.OK,
 		},
 		{
 			name:             "package repository with validation failing",
@@ -567,7 +546,7 @@ func TestAddPackageRepository(t *testing.T) {
 				map[string]*http.Response{
 					"https://example.com/index.yaml": httpResponse(404, "It failed because of X and Y"),
 				}),
-			statusCode: codes.FailedPrecondition,
+			errorCode: connect.CodeFailedPrecondition,
 		},
 		{
 			name: "[user managed secrets] create repository is ok with existing imagePullSecrets",
@@ -600,7 +579,6 @@ func TestAddPackageRepository(t *testing.T) {
 					DockerRegistrySecrets: []string{"secret-docker"},
 				},
 			},
-			statusCode: codes.OK,
 		},
 		{
 			name: "[user managed secrets] create repository fails with non existing images pull secret",
@@ -614,7 +592,7 @@ func TestAddPackageRepository(t *testing.T) {
 			}),
 			expectedResponse:   addRepoExpectedResp,
 			userManagedSecrets: true,
-			statusCode:         codes.NotFound,
+			errorCode:          connect.CodeNotFound,
 		},
 		{
 			name: "[user managed secrets] create repository fails with existing images pull secret having wrong type",
@@ -628,7 +606,7 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedResponse:   addRepoExpectedResp,
 			userManagedSecrets: true,
 			existingAuthSecret: newHeaderAuthSecret("secret-docker", "foo", ""),
-			statusCode:         codes.InvalidArgument,
+			errorCode:          connect.CodeInvalidArgument,
 		},
 		{
 			name: "[user managed secrets] create repository fails with existing images pull secret having wrong key",
@@ -651,7 +629,7 @@ func TestAddPackageRepository(t *testing.T) {
 					"wrong-key": []byte(""),
 				},
 			},
-			statusCode: codes.InvalidArgument,
+			errorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "[kubeapps managed secrets] create repository is ok",
@@ -687,7 +665,6 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedDockerCreatedSecret: setSecretAnnotations(setSecretOwnerRef("bar",
 				newAuthDockerSecret("pullsecret-bar", "foo",
 					dockerAuthJson("https://myfooserver.com", "username", "password", "foo@bar.com", "dXNlcm5hbWU6cGFzc3dvcmQ=")))),
-			statusCode: codes.OK,
 		},
 		{
 			name: "[kubeapps managed secrets] create repository fails with existing imagePullSecret",
@@ -707,7 +684,7 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedResponse: addRepoExpectedResp,
 			existingDockerSecret: newAuthDockerSecret("pullsecret-bar", "foo",
 				dockerAuthJson("https://myfooserver.com", "username", "password", "foo@bar.com", "dXNlcm5hbWU6cGFzc3dvcmQ=")),
-			statusCode: codes.AlreadyExists,
+			errorCode: connect.CodeAlreadyExists,
 		},
 		{
 			name: "[custom details] repository is created with proxy options",
@@ -757,7 +734,6 @@ func TestAddPackageRepository(t *testing.T) {
 					},
 				},
 			},
-			statusCode: codes.OK,
 		},
 		{
 			name: "[custom details] repository is created with pod template options",
@@ -821,7 +797,6 @@ func TestAddPackageRepository(t *testing.T) {
 					},
 				},
 			},
-			statusCode: codes.OK,
 		},
 	}
 
@@ -843,12 +818,12 @@ func TestAddPackageRepository(t *testing.T) {
 			ctx := context.Background()
 			response, err := s.AddPackageRepository(ctx, connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.errorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			// Only check the expectedResponse for OK status.
-			if tc.statusCode == codes.OK {
+			if tc.errorCode == 0 {
 				if response == nil {
 					t.Fatalf("got: nil, want: expectedResponse")
 				} else {
@@ -870,7 +845,7 @@ func TestAddPackageRepository(t *testing.T) {
 			// point where the cache worker does a GET
 
 			// We don't need to check anything else for non-OK codes.
-			if tc.statusCode != codes.OK {
+			if tc.errorCode != 0 {
 				return
 			}
 
@@ -1298,7 +1273,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 		name                   string
 		requestCustomizer      func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest
 		expectedRepoCustomizer func(repository appRepov1alpha1.AppRepository) *appRepov1alpha1.AppRepository
-		expectedStatusCode     codes.Code
+		expectedErrorCode      connect.Code
 		expectedRef            *corev1.PackageRepositoryReference
 		existingAuthSecret     *apiv1.Secret
 		existingDockerSecret   *apiv1.Secret
@@ -1313,7 +1288,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				request.PackageRepoRef = nil
 				return request
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "repository not found",
@@ -1321,7 +1296,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				request.PackageRepoRef.Context = &corev1.Context{Cluster: "other", Namespace: globalPackagingNamespace}
 				return request
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedErrorCode: connect.CodeNotFound,
 		},
 		{
 			name: "validate name",
@@ -1329,7 +1304,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				request.PackageRepoRef.Identifier = ""
 				return request
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedErrorCode: connect.CodeNotFound,
 		},
 		{
 			name: "validate url",
@@ -1337,7 +1312,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				request.Url = ""
 				return request
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "check that interval is used",
@@ -1354,8 +1329,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				return &repository
 			},
 
-			expectedRef:        defaultRef,
-			expectedStatusCode: codes.OK,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "update the proxy options",
@@ -1387,8 +1361,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				return &repository
 			},
 
-			expectedRef:        defaultRef,
-			expectedStatusCode: codes.OK,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "update the pod template options",
@@ -1442,8 +1415,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				repository.Spec.URL = "https://new-repo-url"
 				return &repository
 			},
-			expectedRef:        defaultRef,
-			expectedStatusCode: codes.OK,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "update tls config",
@@ -1469,7 +1441,6 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedRef:          defaultRef,
 			expectedAuthSecret:   setSecretAnnotations(setSecretOwnerRef("repo-1", newTlsSecret("apprepo-repo-1", "ns-1", nil, nil, ca))),
 			expectedGlobalSecret: newTlsSecret("ns-1-apprepo-repo-1", kubeappsNamespace, nil, nil, ca),
-			expectedStatusCode:   codes.OK,
 		},
 		{
 			name:               "update removing tsl config",
@@ -1498,7 +1469,6 @@ func TestUpdatePackageRepository(t *testing.T) {
 				Context:    &corev1.Context{Namespace: "ns-4", Cluster: KubeappsCluster},
 				Identifier: "repo-4",
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "update adding auth",
@@ -1528,7 +1498,6 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedRef:          defaultRef,
 			expectedAuthSecret:   setSecretAnnotations(setSecretOwnerRef("repo-1", newBearerAuthSecret("apprepo-repo-1", "ns-1", "foobarzot"))),
 			expectedGlobalSecret: newBearerAuthSecret("ns-1-apprepo-repo-1", kubeappsNamespace, "foobarzot"),
-			expectedStatusCode:   codes.OK,
 		},
 		{
 			name: "update adding auth (user managed secrets)",
@@ -1561,7 +1530,6 @@ func TestUpdatePackageRepository(t *testing.T) {
 			},
 			expectedRef:          defaultRef,
 			expectedGlobalSecret: newBearerAuthSecret("ns-1-apprepo-repo-1", kubeappsNamespace, "foobarzot"),
-			expectedStatusCode:   codes.OK,
 		},
 		{
 			name:               "update removing auth",
@@ -1589,7 +1557,6 @@ func TestUpdatePackageRepository(t *testing.T) {
 				Context:    &corev1.Context{Namespace: globalPackagingNamespace, Cluster: KubeappsCluster},
 				Identifier: "repo-3",
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "updated with new url",
@@ -1604,8 +1571,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				repository.Spec.Description = "description 1b"
 				return &repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "updated with custom details",
@@ -1620,8 +1586,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				repository.Spec.Description = "description 1b"
 				return &repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "[kubeapps managed secrets] update repo with image pull secret credentials",
@@ -1651,8 +1616,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedDockerSecret: setSecretAnnotations(setSecretOwnerRef("repo-1",
 				newAuthDockerSecret("pullsecret-repo-1", "ns-1",
 					dockerAuthJson("https://myfooserver.com", "username", "password", "foo@bar.com", "dXNlcm5hbWU6cGFzc3dvcmQ=")))),
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "[kubeapps managed secrets] update repo with image pull secret redacted",
@@ -1695,7 +1659,6 @@ func TestUpdatePackageRepository(t *testing.T) {
 				Context:    &corev1.Context{Namespace: "ns-5", Cluster: KubeappsCluster},
 				Identifier: "repo-5",
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "[user managed secrets] update repo with image pull secret ref",
@@ -1720,8 +1683,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			userManagedSecrets: true,
 			existingDockerSecret: newAuthDockerSecret("test-pull-secret", "ns-1",
 				dockerAuthJson("https://docker-server", "the-user", "the-password", "foo@bar.com", "dGhlLXVzZXI6dGhlLXBhc3N3b3Jk")),
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "[kubeapps managed secrets] update repo removing images pull secret",
@@ -1737,7 +1699,6 @@ func TestUpdatePackageRepository(t *testing.T) {
 			},
 			existingDockerSecret: newAuthDockerSecret("pullsecret-repo-5", "ns-5",
 				dockerAuthJson("https://myfooserver.com", "username", "password", "foo@bar.com", "dXNlcm5hbWU6cGFzc3dvcmQ=")),
-			expectedStatusCode: codes.OK,
 			expectedRepoCustomizer: func(repository appRepov1alpha1.AppRepository) *appRepov1alpha1.AppRepository {
 				repository.ResourceVersion = "2"
 				repository.Namespace = "ns-5"
@@ -1774,7 +1735,6 @@ func TestUpdatePackageRepository(t *testing.T) {
 				return request
 			},
 
-			expectedStatusCode: codes.OK,
 			expectedRepoCustomizer: func(repository appRepov1alpha1.AppRepository) *appRepov1alpha1.AppRepository {
 				repository.ResourceVersion = "2"
 				repository.Namespace = "ns-7"
@@ -1817,7 +1777,6 @@ func TestUpdatePackageRepository(t *testing.T) {
 				return request
 			},
 
-			expectedStatusCode: codes.OK,
 			expectedRepoCustomizer: func(repository appRepov1alpha1.AppRepository) *appRepov1alpha1.AppRepository {
 				repository.ResourceVersion = "2"
 				repository.Namespace = "ns-7"
@@ -1866,7 +1825,6 @@ func TestUpdatePackageRepository(t *testing.T) {
 				return request
 			},
 
-			expectedStatusCode: codes.OK,
 			expectedAuthSecret: setSecretAnnotations(setSecretOwnerRef("repo-6",
 				addTlsToSecret(newBasicAuthSecret("apprepo-repo-6", "ns-6", "foo", "zot"), nil, nil, ca))),
 			expectedRef: &corev1.PackageRepositoryReference{
@@ -1912,7 +1870,6 @@ func TestUpdatePackageRepository(t *testing.T) {
 				return request
 			},
 
-			expectedStatusCode: codes.OK,
 			expectedAuthSecret: setSecretAnnotations(setSecretOwnerRef("repo-6",
 				addTlsToSecret(newBasicAuthSecret("apprepo-repo-6", "ns-6", "foo", "bar"), nil, nil, pub))),
 			expectedRef: &corev1.PackageRepositoryReference{
@@ -1958,7 +1915,6 @@ func TestUpdatePackageRepository(t *testing.T) {
 				return request
 			},
 
-			expectedStatusCode: codes.OK,
 			expectedDockerSecret: setSecretAnnotations(setSecretOwnerRef("repo-5",
 				newAuthDockerSecret("pullsecret-repo-5", "ns-5",
 					dockerAuthJson("https://myfooserver.com", "username", "password", "newemail", "dXNlcm5hbWU6cGFzc3dvcmQ=")))),
@@ -2000,9 +1956,9 @@ func TestUpdatePackageRepository(t *testing.T) {
 			request := tc.requestCustomizer(commonRequest())
 			response, err := s.UpdatePackageRepository(context.Background(), connect.NewRequest(request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got error: %d, want: %d, err: %+v", got, want, err)
-			} else if got != codes.OK {
+			} else if got != 0 {
 				return
 			}
 
@@ -2055,7 +2011,7 @@ func TestDeletePackageRepository(t *testing.T) {
 		name                       string
 		existingObjects            []k8sruntime.Object
 		request                    *corev1.DeletePackageRepositoryRequest
-		expectedStatusCode         codes.Code
+		expectedErrorCode          connect.Code
 		expectedNonExistingSecrets []metav1.ObjectMeta
 	}{
 		{
@@ -2066,7 +2022,7 @@ func TestDeletePackageRepository(t *testing.T) {
 					Identifier: "repo-1",
 				},
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "delete - success",
@@ -2077,7 +2033,6 @@ func TestDeletePackageRepository(t *testing.T) {
 					Identifier: "repo-1",
 				},
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "delete - not found (empty)",
@@ -2088,7 +2043,7 @@ func TestDeletePackageRepository(t *testing.T) {
 					Identifier: "repo-1",
 				},
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedErrorCode: connect.CodeNotFound,
 		},
 		{
 			name: "delete - deletes associated secrets",
@@ -2099,7 +2054,6 @@ func TestDeletePackageRepository(t *testing.T) {
 					Identifier: "repo-1",
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedNonExistingSecrets: []metav1.ObjectMeta{
 				{
 					Name:      "apprepo-repo-1",
@@ -2126,9 +2080,9 @@ func TestDeletePackageRepository(t *testing.T) {
 			_, err := s.DeletePackageRepository(context.Background(), connect.NewRequest(tc.request))
 
 			// checks
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got error: %d, want: %d, err: %+v", got, want, err)
-			} else if got != codes.OK {
+			} else if got != 0 {
 				return
 			}
 

@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/bufbuild/connect-go"
@@ -13,8 +14,8 @@ import (
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/connecterror"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resources"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"github.com/vmware-tanzu/kubeapps/pkg/helm"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -58,14 +59,15 @@ const NO_PROXY = "NO_PROXY"
 
 func (s *Server) newRepo(ctx context.Context, headers http.Header, repo *HelmRepository) (*corev1.PackageRepositoryReference, error) {
 	if repo.url == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "repository url may not be empty")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("repository url may not be empty"))
 	}
 	if repo.repoType == "" || !slices.Contains(ValidRepoTypes, repo.repoType) {
-		return nil, status.Errorf(codes.InvalidArgument, "repository type [%s] not supported", repo.repoType)
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("repository type [%s] not supported", repo.repoType))
 	}
+	// up to here, go through and update all these helpers?
 	typedClient, err := s.clientGetter.Typed(headers, repo.cluster)
 	if err != nil {
-		return nil, err
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	// Get or validate secret resource for auth,
@@ -123,7 +125,7 @@ func (s *Server) newRepo(ctx context.Context, headers http.Header, repo *HelmRep
 	if client, err := s.getClient(headers, repo.cluster, repo.name.Namespace); err != nil {
 		return nil, err
 	} else if err = client.Create(ctx, helmRepoCrd); err != nil {
-		return nil, statuserror.FromK8sError("create", AppRepositoryKind, repo.name.String(), err)
+		return nil, connecterror.FromK8sError("create", AppRepositoryKind, repo.name.String(), err)
 	} else {
 		if secretIsKubeappsManaged {
 			if err = s.setOwnerReferencesForRepoSecret(ctx, headers, secret, repo.cluster, helmRepoCrd); err != nil {
@@ -327,7 +329,7 @@ func (s *Server) setOwnerReferencesForRepoSecret(
 					}),
 			}
 			if _, err := secretsInterface.Update(ctx, secret, metav1.UpdateOptions{}); err != nil {
-				return statuserror.FromK8sError("update", "secrets", secret.Name, err)
+				return connecterror.FromK8sError("update", "secrets", secret.Name, err)
 			}
 		}
 	}
@@ -342,10 +344,10 @@ func (s *Server) updateRepo(ctx context.Context,
 	imagePullSecret *k8scorev1.Secret,
 	repo *HelmRepository) (*corev1.PackageRepositoryReference, error) {
 	if repo.url == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "repository url may not be empty")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("repository url may not be empty"))
 	}
 	if repo.name.Name == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "repository name may not be empty")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("repository name may not be empty"))
 	}
 	typedClient, err := s.clientGetter.Typed(headers, repo.cluster)
 	if err != nil {
@@ -354,7 +356,7 @@ func (s *Server) updateRepo(ctx context.Context,
 
 	var secret *k8scorev1.Secret
 	if authSecret != nil && caSecret != nil && authSecret.Name != caSecret.Name {
-		return nil, status.Errorf(codes.Internal, "inconsistent state. auth secret and ca secret must be the same.")
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("inconsistent state. auth secret and ca secret must be the same."))
 	} else if authSecret != nil {
 		secret = authSecret
 	} else if caSecret != nil {
@@ -492,7 +494,7 @@ func (s *Server) updateRepo(ctx context.Context,
 	// persist repository
 	err = s.updatePkgRepository(ctx, headers, repo.cluster, repo.name.Namespace, appRepo)
 	if err != nil {
-		return nil, statuserror.FromK8sError("update", AppRepositoryKind, repo.name.String(), err)
+		return nil, connecterror.FromK8sError("update", AppRepositoryKind, repo.name.String(), err)
 	}
 
 	// update owner references
@@ -532,7 +534,7 @@ func (s *Server) repoSummaries(ctx context.Context, headers http.Header, cluster
 				return nil, err
 			}
 		} else {
-			return nil, statuserror.FromK8sError("get", "AppRepository", "", err)
+			return nil, connecterror.FromK8sError("get", "AppRepository", "", err)
 		}
 	}
 
@@ -630,17 +632,17 @@ func (s *Server) deleteRepo(ctx context.Context, headers http.Header, cluster st
 		},
 	}
 	if err = client.Delete(ctx, repo); err != nil {
-		return statuserror.FromK8sError("delete", AppRepositoryKind, repoRef.Identifier, err)
+		return connecterror.FromK8sError("delete", AppRepositoryKind, repoRef.Identifier, err)
 	} else {
 		// Cross-namespace owner references are disallowed by design.
 		// We need to explicitly delete the repo secret from the namespace of the asset syncer.
 		typedClient, err := s.clientGetter.Typed(headers, cluster)
 		if err != nil {
-			return err
+			return connect.NewError(connect.CodeInvalidArgument, err)
 		}
 		namespacedSecretName := helm.SecretNameForNamespacedRepo(repoRef.Identifier, repoRef.Context.Namespace)
 		if deleteErr := s.deleteRepositorySecretFromNamespace(typedClient, s.kubeappsNamespace, namespacedSecretName); deleteErr != nil {
-			return statuserror.FromK8sError("delete", "Secret", namespacedSecretName, deleteErr)
+			return connecterror.FromK8sError("delete", "Secret", namespacedSecretName, deleteErr)
 		}
 		return nil
 	}

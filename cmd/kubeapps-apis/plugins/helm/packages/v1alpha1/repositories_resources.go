@@ -9,7 +9,7 @@ import (
 	"net/http"
 
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/connecterror"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -45,7 +45,7 @@ func (s *Server) getPkgRepository(ctx context.Context, headers http.Header, clus
 	}
 	appRepo := &apprepov1alpha1.AppRepository{}
 	if err = client.Get(ctx, key, appRepo); err != nil {
-		return nil, nil, nil, statuserror.FromK8sError("get", AppRepositoryKind, key.String(), err)
+		return nil, nil, nil, connecterror.FromK8sError("get", AppRepositoryKind, key.String(), err)
 	}
 
 	// Auth and TLS
@@ -85,7 +85,7 @@ func (s *Server) updatePkgRepository(ctx context.Context, headers http.Header, c
 	}
 
 	if err = client.Update(ctx, newPkgRepository); err != nil {
-		return statuserror.FromK8sError("update", AppRepositoryKind, newPkgRepository.Name, err)
+		return connecterror.FromK8sError("update", AppRepositoryKind, newPkgRepository.Name, err)
 	}
 	return nil
 }

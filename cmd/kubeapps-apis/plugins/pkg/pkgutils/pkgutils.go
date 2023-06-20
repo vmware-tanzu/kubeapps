@@ -229,7 +229,7 @@ func AvailablePackageSummaryFromChart(chart *models.Chart, plugin *plugins.Plugi
 func GetUnescapedPackageID(packageID string) (string, error) {
 	unescapedPackageID, err := url.QueryUnescape(packageID)
 	if err != nil {
-		return "", status.Errorf(codes.InvalidArgument, "Unable to decode package ID: %v", packageID)
+		return "", fmt.Errorf("Unable to decode package ID: %v. %w", packageID, err)
 	}
 	// Ensure it has at least a / character, like "my-repo/foo/bar"
 	if idx := strings.IndexByte(unescapedPackageID, '/'); idx >= 0 {
@@ -237,7 +237,7 @@ func GetUnescapedPackageID(packageID string) (string, error) {
 		id := url.QueryEscape(unescapedPackageID[idx+1:])   // the rest is the package name, which should remain escaped
 		unescapedPackageID = fmt.Sprintf("%s/%s", repo, id) // combine the repo and package name like "my-repo/foo%2Fbar"
 	} else {
-		return "", status.Errorf(codes.InvalidArgument, "Incorrect package ref dentifier, expecting 'my-repo/foo/.../bar' %s", packageID)
+		return "", fmt.Errorf("Incorrect package ref identifier, expecting 'my-repo/foo/.../bar' %s", packageID)
 	}
 	return unescapedPackageID, nil
 }
