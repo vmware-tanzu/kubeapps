@@ -1159,16 +1159,16 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 func TestGetAvailablePackageVersions(t *testing.T) {
 	testCases := []struct {
-		name               string
-		existingObjects    []k8sruntime.Object
-		request            *corev1.GetAvailablePackageVersionsRequest
-		expectedStatusCode codes.Code
-		expectedResponse   *corev1.GetAvailablePackageVersionsResponse
+		name              string
+		existingObjects   []k8sruntime.Object
+		request           *corev1.GetAvailablePackageVersionsRequest
+		expectedErrorCode connect.Code
+		expectedResponse  *corev1.GetAvailablePackageVersionsResponse
 	}{
 		{
-			name:               "it returns invalid argument if called without a package reference",
-			request:            nil,
-			expectedStatusCode: codes.InvalidArgument,
+			name:              "it returns invalid argument if called without a package reference",
+			request:           nil,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "it returns invalid argument if called without namespace",
@@ -1178,7 +1178,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 					Identifier: "unknown/package-one",
 				},
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "it returns invalid argument if called without an identifier",
@@ -1189,7 +1189,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "it returns the package version summary",
@@ -1257,7 +1257,6 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 					Identifier: "unknown/tetris.foo.example.com",
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetAvailablePackageVersionsResponse{
 				PackageAppVersions: []*corev1.PackageAppVersion{
 					{
@@ -1300,12 +1299,12 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 
 			response, err := s.GetAvailablePackageVersions(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 
@@ -1321,7 +1320,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 		name            string
 		existingObjects []k8sruntime.Object
 		expectedPackage *corev1.AvailablePackageDetail
-		statusCode      codes.Code
+		errorCode       connect.Code
 		request         *corev1.GetAvailablePackageDetailRequest
 	}{
 		{
@@ -1413,7 +1412,6 @@ Some support information
 					Plugin:     &pluginDetail,
 				},
 			},
-			statusCode: codes.OK,
 		},
 		{
 			name: "it returns an availablePackageDetail of the latest version with repo-based identifiers",
@@ -1507,7 +1505,6 @@ Some support information
 					Plugin:     &pluginDetail,
 				},
 			},
-			statusCode: codes.OK,
 		},
 		{
 			name: "it combines long description and support description for readme field",
@@ -1598,7 +1595,6 @@ Some support information
 					Plugin:     &pluginDetail,
 				},
 			},
-			statusCode: codes.OK,
 		},
 		{
 			name: "it returns an invalid arg error status if no context is provided",
@@ -1607,7 +1603,7 @@ Some support information
 					Identifier: "unknown/foo/bar",
 				},
 			},
-			statusCode: codes.InvalidArgument,
+			errorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "it returns not found error status if the requested package version doesn't exist",
@@ -1658,7 +1654,7 @@ Some support information
 					},
 				},
 			},
-			statusCode: codes.NotFound,
+			errorCode: connect.CodeNotFound,
 		},
 	}
 
@@ -1684,11 +1680,11 @@ Some support information
 			}
 			availablePackageDetail, err := s.GetAvailablePackageDetail(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.errorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == codes.OK {
+			if tc.errorCode == 0 {
 				if got, want := availablePackageDetail.Msg.AvailablePackageDetail, tc.expectedPackage; !cmp.Equal(got, want, ignoreUnexported) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 				}
@@ -1701,11 +1697,11 @@ Some support information
 
 func TestGetInstalledPackageSummaries(t *testing.T) {
 	testCases := []struct {
-		name               string
-		request            *corev1.GetInstalledPackageSummariesRequest
-		existingObjects    []k8sruntime.Object
-		expectedPackages   []*corev1.InstalledPackageSummary
-		expectedStatusCode codes.Code
+		name              string
+		request           *corev1.GetInstalledPackageSummariesRequest
+		existingObjects   []k8sruntime.Object
+		expectedPackages  []*corev1.InstalledPackageSummary
+		expectedErrorCode connect.Code
 	}{
 		{
 			name: "it returns an error if a non-existent page is requested",
@@ -1800,7 +1796,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name:    "it returns carvel empty installed package summary when no package install is present",
@@ -2821,11 +2817,11 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 
 			response, err := s.GetInstalledPackageSummaries(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
 			// If we were expecting an error, continue to the next test.
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 

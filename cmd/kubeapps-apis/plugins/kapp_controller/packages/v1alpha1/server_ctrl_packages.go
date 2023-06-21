@@ -67,7 +67,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *conn
 		if pageSize > 0 {
 			startAt = itemOffset
 			if startAt > len(pkgMetadatas) {
-				return nil, status.Errorf(codes.InvalidArgument, "invalid pagination arguments %v", request.Msg.GetPaginationOptions())
+				return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid pagination arguments %v", request.Msg.GetPaginationOptions()))
 			}
 			pkgMetadatas = pkgMetadatas[startAt:]
 			if len(pkgMetadatas) > int(pageSize) {
@@ -164,7 +164,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *conne
 
 	// Validate the request
 	if namespace == "" || identifier == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Required context or identifier not provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Required context or identifier not provided"))
 	}
 
 	if cluster == "" {
@@ -180,11 +180,11 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *conne
 	fieldSelector := fmt.Sprintf("spec.refName=%s", pkgName)
 	pkgs, err := s.getPkgsWithFieldSelector(ctx, request.Header(), cluster, namespace, fieldSelector)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "Package", "", err)
+		return nil, connecterror.FromK8sError("get", "Package", "", err)
 	}
 	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the PkgVersionsMap: '%v'", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the PkgVersionsMap: '%w'", err))
 
 	}
 
@@ -218,7 +218,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect
 
 	// Validate the request
 	if request.Msg.GetAvailablePackageRef().GetContext() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef.Context provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request AvailablePackageRef.Context provided"))
 	}
 
 	if cluster == "" {
@@ -233,18 +233,18 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect
 	// fetch the package metadata
 	pkgMetadata, err := s.getPkgMetadata(ctx, request.Header(), cluster, namespace, pkgName)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "PackageMetadata", pkgName, err)
+		return nil, connecterror.FromK8sError("get", "PackageMetadata", pkgName, err)
 	}
 
 	// Use the field selector to return only Package CRs that match on the spec.refName.
 	fieldSelector := fmt.Sprintf("spec.refName=%s", pkgName)
 	pkgs, err := s.getPkgsWithFieldSelector(ctx, request.Header(), cluster, namespace, fieldSelector)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "Package", pkgName, err)
+		return nil, connecterror.FromK8sError("get", "Package", pkgName, err)
 	}
 	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the PkgVersionsMap: '%v'", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the PkgVersionsMap: '%w'", err))
 	}
 
 	var foundPkgSemver = &pkgSemver{}
@@ -258,7 +258,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect
 			}
 		}
 		if foundPkgSemver.version == nil {
-			return nil, status.Errorf(codes.NotFound, fmt.Sprintf("unable to find %q package with version %q", pkgName, requestedPkgVersion))
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("unable to find %q package with version %q", pkgName, requestedPkgVersion))
 		}
 	} else {
 		// If the pkgVersion wasn't specified, grab the packages to find the latest.
@@ -266,13 +266,13 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect
 			foundPkgSemver = &pkgVersionsMap[pkgName][0]
 			requestedPkgVersion = foundPkgSemver.version.String()
 		} else {
-			return nil, status.Errorf(codes.NotFound, fmt.Sprintf("unable to find any versions for the package %q", pkgName))
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("unable to find any versions for the package %q", pkgName))
 		}
 	}
 
 	availablePackageDetail, err := s.buildAvailablePackageDetail(pkgMetadata, requestedPkgVersion, foundPkgSemver, cluster)
 	if err != nil {
-		return nil, statuserror.FromK8sError("create", "AvailablePackageDetail", pkgMetadata.Name, err)
+		return nil, connecterror.FromK8sError("create", "AvailablePackageDetail", pkgMetadata.Name, err)
 
 	}
 
@@ -304,7 +304,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *conn
 	// TODO(agamez): we should be paginating this request rather than requesting everything every time
 	pkgInstalls, err := s.getPkgInstalls(ctx, request.Header(), cluster, namespace)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "PackageInstall", "", err)
+		return nil, connecterror.FromK8sError("get", "PackageInstall", "", err)
 	}
 
 	// paginate the list of results
@@ -316,7 +316,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *conn
 		if pageSize > 0 {
 			startAt = itemOffset
 			if startAt > len(pkgInstalls) {
-				return nil, status.Errorf(codes.InvalidArgument, "invalid pagination arguments %v", request.Msg.GetPaginationOptions())
+				return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid pagination arguments %v", request.Msg.GetPaginationOptions()))
 			}
 			pkgInstalls = pkgInstalls[startAt:]
 			if len(pkgInstalls) > int(pageSize) {
@@ -369,7 +369,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *conn
 		// populate the collected package data with the metadata.
 		pkgMetadatas, err := s.getPkgMetadatas(ctx, request.Header(), cluster, namespace)
 		if err != nil {
-			return nil, statuserror.FromK8sError("get", "PackageMetadata", "", err)
+			return nil, connecterror.FromK8sError("get", "PackageMetadata", "", err)
 		}
 		for _, pm := range pkgMetadatas {
 			if pkgDataForNamespaces, ok := pkgData[pm.Name]; ok {
@@ -410,7 +410,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *conn
 
 		// Verify no error during go routine.
 		if getPkgsError != nil {
-			return nil, statuserror.FromK8sError("get", "Package", "", err)
+			return nil, connecterror.FromK8sError("get", "Package", "", err)
 		}
 
 		// Calculate the version map for all packages that we're interested
@@ -419,7 +419,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *conn
 		// in different namespaces (suspect not).
 		pkgVersionsMap, err := getPkgVersionsMap(pkgsForVersionMap)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to calculate package versions map: %v", err))
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to calculate package versions map: %w", err))
 		}
 
 		// We now have all the data we need to return the result:
@@ -441,7 +441,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *conn
 			// generate the installedPackageSummary from the fetched information
 			installedPackageSummary, err := s.buildInstalledPackageSummary(pkgi, pkgData.meta, pkgVersionsMap, cluster)
 			if err != nil {
-				return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to create the InstalledPackageSummary: %v", err))
+				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to create the InstalledPackageSummary: %w", err))
 			}
 
 			// append the availablePackageSummary to the slice
