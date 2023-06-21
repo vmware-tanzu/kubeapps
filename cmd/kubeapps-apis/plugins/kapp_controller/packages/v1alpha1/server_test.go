@@ -123,17 +123,16 @@ var kappctrlAPIVersion = fmt.Sprintf("%s/%s", kappctrlv1alpha1.SchemeGroupVersio
 // available packages
 func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
-		name               string
-		existingObjects    []k8sruntime.Object
-		expectedPackages   []*corev1.AvailablePackageSummary
-		paginationOptions  corev1.PaginationOptions
-		filterOptions      corev1.FilterOptions
-		expectedStatusCode codes.Code
+		name              string
+		existingObjects   []k8sruntime.Object
+		expectedPackages  []*corev1.AvailablePackageSummary
+		paginationOptions corev1.PaginationOptions
+		filterOptions     corev1.FilterOptions
+		expectedErrorCode connect.Code
 	}{
 		{
-			name:               "it returns without error if there are no packages available",
-			expectedPackages:   []*corev1.AvailablePackageSummary{},
-			expectedStatusCode: codes.OK,
+			name:             "it returns without error if there are no packages available",
+			expectedPackages: []*corev1.AvailablePackageSummary{},
 		},
 		{
 			name: "it returns an internal error status if there is no corresponding package for a package metadata",
@@ -159,7 +158,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.Internal,
+			expectedErrorCode: connect.CodeInternal,
 		},
 		{
 			name: "it returns an invalid argument error status if a page is requested that doesn't exist",
@@ -189,7 +188,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				PageToken: "2",
 				PageSize:  1,
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "it returns carvel package summaries with basic info from the cluster",
@@ -1143,11 +1142,11 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				FilterOptions:     &tc.filterOptions,
 			}))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
 			// If we were expecting an error, continue to the next test.
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 
@@ -1160,16 +1159,16 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 func TestGetAvailablePackageVersions(t *testing.T) {
 	testCases := []struct {
-		name               string
-		existingObjects    []k8sruntime.Object
-		request            *corev1.GetAvailablePackageVersionsRequest
-		expectedStatusCode codes.Code
-		expectedResponse   *corev1.GetAvailablePackageVersionsResponse
+		name              string
+		existingObjects   []k8sruntime.Object
+		request           *corev1.GetAvailablePackageVersionsRequest
+		expectedErrorCode connect.Code
+		expectedResponse  *corev1.GetAvailablePackageVersionsResponse
 	}{
 		{
-			name:               "it returns invalid argument if called without a package reference",
-			request:            nil,
-			expectedStatusCode: codes.InvalidArgument,
+			name:              "it returns invalid argument if called without a package reference",
+			request:           nil,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "it returns invalid argument if called without namespace",
@@ -1179,7 +1178,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 					Identifier: "unknown/package-one",
 				},
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "it returns invalid argument if called without an identifier",
@@ -1190,7 +1189,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "it returns the package version summary",
@@ -1258,7 +1257,6 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 					Identifier: "unknown/tetris.foo.example.com",
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetAvailablePackageVersionsResponse{
 				PackageAppVersions: []*corev1.PackageAppVersion{
 					{
@@ -1301,12 +1299,12 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 
 			response, err := s.GetAvailablePackageVersions(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 
@@ -1322,7 +1320,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 		name            string
 		existingObjects []k8sruntime.Object
 		expectedPackage *corev1.AvailablePackageDetail
-		statusCode      codes.Code
+		errorCode       connect.Code
 		request         *corev1.GetAvailablePackageDetailRequest
 	}{
 		{
@@ -1414,7 +1412,6 @@ Some support information
 					Plugin:     &pluginDetail,
 				},
 			},
-			statusCode: codes.OK,
 		},
 		{
 			name: "it returns an availablePackageDetail of the latest version with repo-based identifiers",
@@ -1508,7 +1505,6 @@ Some support information
 					Plugin:     &pluginDetail,
 				},
 			},
-			statusCode: codes.OK,
 		},
 		{
 			name: "it combines long description and support description for readme field",
@@ -1599,7 +1595,6 @@ Some support information
 					Plugin:     &pluginDetail,
 				},
 			},
-			statusCode: codes.OK,
 		},
 		{
 			name: "it returns an invalid arg error status if no context is provided",
@@ -1608,7 +1603,7 @@ Some support information
 					Identifier: "unknown/foo/bar",
 				},
 			},
-			statusCode: codes.InvalidArgument,
+			errorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "it returns not found error status if the requested package version doesn't exist",
@@ -1659,7 +1654,7 @@ Some support information
 					},
 				},
 			},
-			statusCode: codes.NotFound,
+			errorCode: connect.CodeNotFound,
 		},
 	}
 
@@ -1685,11 +1680,11 @@ Some support information
 			}
 			availablePackageDetail, err := s.GetAvailablePackageDetail(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.errorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == codes.OK {
+			if tc.errorCode == 0 {
 				if got, want := availablePackageDetail.Msg.AvailablePackageDetail, tc.expectedPackage; !cmp.Equal(got, want, ignoreUnexported) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 				}
@@ -1702,11 +1697,11 @@ Some support information
 
 func TestGetInstalledPackageSummaries(t *testing.T) {
 	testCases := []struct {
-		name               string
-		request            *corev1.GetInstalledPackageSummariesRequest
-		existingObjects    []k8sruntime.Object
-		expectedPackages   []*corev1.InstalledPackageSummary
-		expectedStatusCode codes.Code
+		name              string
+		request           *corev1.GetInstalledPackageSummariesRequest
+		existingObjects   []k8sruntime.Object
+		expectedPackages  []*corev1.InstalledPackageSummary
+		expectedErrorCode connect.Code
 	}{
 		{
 			name: "it returns an error if a non-existent page is requested",
@@ -1801,7 +1796,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name:    "it returns carvel empty installed package summary when no package install is present",
@@ -2822,11 +2817,11 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 
 			response, err := s.GetInstalledPackageSummaries(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
 			// If we were expecting an error, continue to the next test.
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 
@@ -6557,8 +6552,8 @@ func TestAddPackageRepository(t *testing.T) {
 		existingTypedObjects []k8sruntime.Object
 		requestCustomizer    func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest
 		repositoryCustomizer func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository
-		expectedStatusCode   codes.Code
-		expectedStatusString string
+		expectedErrorCode    connect.Code
+		expectedErrorString  string
 		expectedRef          *corev1.PackageRepositoryReference
 		customChecks         func(t *testing.T, s *Server)
 	}{
@@ -6568,7 +6563,7 @@ func TestAddPackageRepository(t *testing.T) {
 				request.Context = &corev1.Context{Cluster: "other", Namespace: demoGlobalPackagingNamespace}
 				return request
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "validate name",
@@ -6576,7 +6571,7 @@ func TestAddPackageRepository(t *testing.T) {
 				request.Name = ""
 				return request
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "validate scope",
@@ -6584,7 +6579,7 @@ func TestAddPackageRepository(t *testing.T) {
 				request.NamespaceScoped = true
 				return request
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "validate scope",
@@ -6593,7 +6588,7 @@ func TestAddPackageRepository(t *testing.T) {
 				request.NamespaceScoped = false
 				return request
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "validate tls config",
@@ -6601,7 +6596,7 @@ func TestAddPackageRepository(t *testing.T) {
 				request.TlsConfig = &corev1.PackageRepositoryTlsConfig{}
 				return request
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "validate exists in global ns",
@@ -6622,7 +6617,7 @@ func TestAddPackageRepository(t *testing.T) {
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
 				return request
 			},
-			expectedStatusCode: codes.AlreadyExists,
+			expectedErrorCode: connect.CodeAlreadyExists,
 		},
 		{
 			name: "validate exists in private ns",
@@ -6646,7 +6641,7 @@ func TestAddPackageRepository(t *testing.T) {
 				request.NamespaceScoped = true
 				return request
 			},
-			expectedStatusCode: codes.AlreadyExists,
+			expectedErrorCode: connect.CodeAlreadyExists,
 		},
 		{
 			name: "validate url",
@@ -6654,7 +6649,7 @@ func TestAddPackageRepository(t *testing.T) {
 				request.Url = ""
 				return request
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "validate type (empty)",
@@ -6662,7 +6657,7 @@ func TestAddPackageRepository(t *testing.T) {
 				request.Type = ""
 				return request
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "validate type (invalid)",
@@ -6670,7 +6665,7 @@ func TestAddPackageRepository(t *testing.T) {
 				request.Type = "othertype"
 				return request
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "validate type (inline)",
@@ -6678,7 +6673,7 @@ func TestAddPackageRepository(t *testing.T) {
 				request.Type = typeInline
 				return request
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "validate details (invalid type)",
@@ -6686,7 +6681,7 @@ func TestAddPackageRepository(t *testing.T) {
 				request.CustomDetail, _ = anypb.New(&corev1.AddPackageRepositoryRequest{})
 				return request
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "validate details (type mismatch)",
@@ -6701,7 +6696,7 @@ func TestAddPackageRepository(t *testing.T) {
 				})
 				return request
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "validate auth (type incompatibility)",
@@ -6711,8 +6706,8 @@ func TestAddPackageRepository(t *testing.T) {
 				}
 				return request
 			},
-			expectedStatusCode:   codes.InvalidArgument,
-			expectedStatusString: "Auth Type is incompatible",
+			expectedErrorCode:   connect.CodeInvalidArgument,
+			expectedErrorString: "Auth Type is incompatible",
 		},
 		{
 			name: "validate auth (user managed, invalid secret)",
@@ -6725,8 +6720,8 @@ func TestAddPackageRepository(t *testing.T) {
 				}
 				return request
 			},
-			expectedStatusCode:   codes.InvalidArgument,
-			expectedStatusString: "secret name is not provided",
+			expectedErrorCode:   connect.CodeInvalidArgument,
+			expectedErrorString: "secret name is not provided",
 		},
 		{
 			name: "validate auth (user managed, secret does not exist)",
@@ -6741,8 +6736,8 @@ func TestAddPackageRepository(t *testing.T) {
 				}
 				return request
 			},
-			expectedStatusCode:   codes.InvalidArgument,
-			expectedStatusString: "not found",
+			expectedErrorCode:   connect.CodeInvalidArgument,
+			expectedErrorString: "not found",
 		},
 		{
 			name: "validate auth (user managed, secret is incompatible)",
@@ -6763,8 +6758,8 @@ func TestAddPackageRepository(t *testing.T) {
 				}
 				return request
 			},
-			expectedStatusCode:   codes.InvalidArgument,
-			expectedStatusString: "secret does not match",
+			expectedErrorCode:   connect.CodeInvalidArgument,
+			expectedErrorString: "secret does not match",
 		},
 		{
 			name: "validate auth (plugin managed, invalid config, basic auth)",
@@ -6774,8 +6769,8 @@ func TestAddPackageRepository(t *testing.T) {
 				}
 				return request
 			},
-			expectedStatusCode:   codes.InvalidArgument,
-			expectedStatusString: "missing basic auth",
+			expectedErrorCode:   connect.CodeInvalidArgument,
+			expectedErrorString: "missing basic auth",
 		},
 		{
 			name: "validate auth (plugin managed, invalid config, docker)",
@@ -6788,8 +6783,8 @@ func TestAddPackageRepository(t *testing.T) {
 				}
 				return request
 			},
-			expectedStatusCode:   codes.InvalidArgument,
-			expectedStatusString: "missing Docker Config auth",
+			expectedErrorCode:   connect.CodeInvalidArgument,
+			expectedErrorString: "missing Docker Config auth",
 		},
 		{
 			name: "validate auth (plugin managed, invalid config, ssh auth)",
@@ -6806,8 +6801,8 @@ func TestAddPackageRepository(t *testing.T) {
 				}
 				return request
 			},
-			expectedStatusCode:   codes.InvalidArgument,
-			expectedStatusString: "unexpected REDACTED",
+			expectedErrorCode:   connect.CodeInvalidArgument,
+			expectedErrorString: "unexpected REDACTED",
 		},
 		{
 			name: "create with description",
@@ -6819,8 +6814,7 @@ func TestAddPackageRepository(t *testing.T) {
 				repository.Annotations = map[string]string{k8sutils.AnnotationDescriptionKey: "repository description"}
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "create with no interval",
@@ -6832,8 +6826,7 @@ func TestAddPackageRepository(t *testing.T) {
 				repository.Spec.SyncPeriod = nil
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "create with interval",
@@ -6845,8 +6838,7 @@ func TestAddPackageRepository(t *testing.T) {
 				repository.Spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(12) * time.Hour}
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "create with url",
@@ -6858,8 +6850,7 @@ func TestAddPackageRepository(t *testing.T) {
 				repository.Spec.Fetch.ImgpkgBundle.Image = "foo"
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "create with details (imgpkg)",
@@ -6898,8 +6889,7 @@ func TestAddPackageRepository(t *testing.T) {
 				}
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "create with details (image)",
@@ -6940,8 +6930,7 @@ func TestAddPackageRepository(t *testing.T) {
 				}
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "create with details (git)",
@@ -6986,8 +6975,7 @@ func TestAddPackageRepository(t *testing.T) {
 				}
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "create with details (http)",
@@ -7014,8 +7002,7 @@ func TestAddPackageRepository(t *testing.T) {
 				}
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "create with auth (user managed)",
@@ -7042,8 +7029,7 @@ func TestAddPackageRepository(t *testing.T) {
 				}
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "create with auth (plugin managed, basic auth)",
@@ -7063,8 +7049,7 @@ func TestAddPackageRepository(t *testing.T) {
 				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{} // the name will be empty as the fake client does not handle generating names
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
 				secret, err := s.getSecret(context.Background(), http.Header{}, defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
@@ -7093,8 +7078,7 @@ func TestAddPackageRepository(t *testing.T) {
 				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{} // the name will be empty as the fake client does not handle generating names
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
 				secret, err := s.getSecret(context.Background(), http.Header{}, defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
@@ -7128,8 +7112,7 @@ func TestAddPackageRepository(t *testing.T) {
 				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{} // the name will be empty as the fake client does not handle generating names
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
 				secret, err := s.getSecret(context.Background(), http.Header{}, defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
@@ -7175,11 +7158,11 @@ func TestAddPackageRepository(t *testing.T) {
 			response, err := s.AddPackageRepository(context.Background(), connect.NewRequest(request))
 
 			// check status
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got error: %d, want: %d, err: %+v", got, want, err)
-			} else if got != codes.OK {
-				if tc.expectedStatusString != "" && !strings.Contains(fmt.Sprint(err), tc.expectedStatusString) {
-					t.Fatalf("error without expected string: expected %s, err: %+v", tc.expectedStatusString, err)
+			} else if got != 0 {
+				if tc.expectedErrorString != "" && !strings.Contains(fmt.Sprint(err), tc.expectedErrorString) {
+					t.Fatalf("error without expected string: expected %s, err: %+v", tc.expectedErrorString, err)
 				}
 				return
 			}
@@ -7286,7 +7269,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 		initialCustomizer    func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository
 		requestCustomizer    func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest
 		repositoryCustomizer func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository
-		expectedStatusCode   codes.Code
+		expectedErrorCode    connect.Code
 		expectedStatusString string
 		expectedRef          *corev1.PackageRepositoryReference
 		customChecks         func(t *testing.T, s *Server)
@@ -7297,7 +7280,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				request.PackageRepoRef.Context = &corev1.Context{Cluster: "other", Namespace: demoGlobalPackagingNamespace}
 				return request
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "validate name",
@@ -7305,7 +7288,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				request.PackageRepoRef.Identifier = ""
 				return request
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "validate url",
@@ -7313,7 +7296,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				request.Url = ""
 				return request
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "validate tls config",
@@ -7321,7 +7304,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				request.TlsConfig = &corev1.PackageRepositoryTlsConfig{}
 				return request
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "validate auth (data provided with unspecified type)",
@@ -7337,7 +7320,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				}
 				return request
 			},
-			expectedStatusCode:   codes.InvalidArgument,
+			expectedErrorCode:    connect.CodeInvalidArgument,
 			expectedStatusString: "Auth Type is not specified but auth configuration data were provided",
 		},
 		{
@@ -7348,7 +7331,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				}
 				return request
 			},
-			expectedStatusCode:   codes.InvalidArgument,
+			expectedErrorCode:    connect.CodeInvalidArgument,
 			expectedStatusString: "Auth Type is incompatible",
 		},
 		{
@@ -7368,7 +7351,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				}
 				return request
 			},
-			expectedStatusCode:   codes.InvalidArgument,
+			expectedErrorCode:    connect.CodeInvalidArgument,
 			expectedStatusString: "management mode cannot be changed",
 		},
 		{
@@ -7382,7 +7365,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				}
 				return request
 			},
-			expectedStatusCode:   codes.InvalidArgument,
+			expectedErrorCode:    connect.CodeInvalidArgument,
 			expectedStatusString: "secret name is not provided",
 		},
 		{
@@ -7398,7 +7381,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				}
 				return request
 			},
-			expectedStatusCode:   codes.InvalidArgument,
+			expectedErrorCode:    connect.CodeInvalidArgument,
 			expectedStatusString: "not found",
 		},
 		{
@@ -7417,7 +7400,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				}
 				return request
 			},
-			expectedStatusCode:   codes.InvalidArgument,
+			expectedErrorCode:    connect.CodeInvalidArgument,
 			expectedStatusString: "secret does not match",
 		},
 		{
@@ -7428,7 +7411,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				}
 				return request
 			},
-			expectedStatusCode:   codes.InvalidArgument,
+			expectedErrorCode:    connect.CodeInvalidArgument,
 			expectedStatusString: "missing basic auth",
 		},
 		{
@@ -7446,7 +7429,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				}
 				return request
 			},
-			expectedStatusCode:   codes.InvalidArgument,
+			expectedErrorCode:    connect.CodeInvalidArgument,
 			expectedStatusString: "unexpected REDACTED",
 		},
 		{
@@ -7455,7 +7438,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				request.PackageRepoRef.Identifier = "foo"
 				return request
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedErrorCode: connect.CodeNotFound,
 		},
 		{
 			name: "validate details (invalid type)",
@@ -7463,7 +7446,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				request.CustomDetail, _ = anypb.New(&corev1.UpdatePackageRepositoryRequest{})
 				return request
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "validate details (type mismatch)",
@@ -7478,7 +7461,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				})
 				return request
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "validate pending status",
@@ -7494,7 +7477,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				}
 				return repository
 			},
-			expectedStatusCode:   codes.FailedPrecondition,
+			expectedErrorCode:    connect.CodeFailedPrecondition,
 			expectedStatusString: "not in a stable state",
 		},
 		{
@@ -7511,8 +7494,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				repository.Annotations = map[string]string{k8sutils.AnnotationDescriptionKey: "updated description"}
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "update remove description",
@@ -7528,8 +7510,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				repository.Annotations = nil
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "update with no interval",
@@ -7541,8 +7522,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				repository.Spec.SyncPeriod = nil
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "updated with new interval",
@@ -7554,8 +7534,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				repository.Spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(12) * time.Hour}
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "updated with new url",
@@ -7567,8 +7546,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				repository.Spec.Fetch.ImgpkgBundle.Image = "foo"
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "create with details (imgpkg)",
@@ -7614,8 +7592,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				}
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "create with details (image)",
@@ -7663,8 +7640,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				}
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "create with details (git)",
@@ -7716,8 +7692,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				}
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "create with details (http)",
@@ -7751,8 +7726,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				}
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "updated with auth (user managed, added)",
@@ -7776,8 +7750,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				}
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "updated with auth (user managed, updated)",
@@ -7808,8 +7781,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				}
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "updated with auth (user managed, removed)",
@@ -7826,8 +7798,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				repository.Spec.Fetch.ImgpkgBundle.SecretRef = nil
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "updated with auth (plugin managed, added)",
@@ -7847,8 +7818,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{} // the name will be empty as the fake client does not handle generating names
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
 				secret, err := s.getSecret(context.Background(), http.Header{}, defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
@@ -7877,8 +7847,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{} // the name will be empty as the fake client does not handle generating names
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
 				secret, err := s.getSecret(context.Background(), http.Header{}, defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
@@ -7913,8 +7882,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				repository.Spec.Fetch.ImgpkgBundle.SecretRef = nil
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 		},
 		{
 			name: "updated with auth (plugin managed, update unchanged)",
@@ -7939,8 +7907,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				}
 				return request
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
 				secret, err := s.getSecret(context.Background(), http.Header{}, defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "my-secret")
 				if err != nil {
@@ -7979,8 +7946,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{} // the name will be empty as the fake client does not handle generating names
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
 				secret, err := s.getSecret(context.Background(), http.Header{}, defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
@@ -8015,8 +7981,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{} // the name will be empty as the fake client does not handle generating names
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
 				secret, err := s.getSecret(context.Background(), http.Header{}, defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
@@ -8050,7 +8015,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				}
 				return request
 			},
-			expectedStatusCode:   codes.InvalidArgument,
+			expectedErrorCode:    connect.CodeInvalidArgument,
 			expectedStatusString: "unexpected REDACTED content",
 		},
 		{
@@ -8090,8 +8055,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				}
 				return repository
 			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
+			expectedRef: defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
 				secret, err := s.getSecret(context.Background(), http.Header{}, defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
@@ -8145,9 +8109,9 @@ func TestUpdatePackageRepository(t *testing.T) {
 			response, err := s.UpdatePackageRepository(context.Background(), connect.NewRequest(request))
 
 			// check status
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got error: %d, want: %d, err: %+v", got, want, err)
-			} else if got != codes.OK {
+			} else if got != 0 {
 				if tc.expectedStatusString != "" && !strings.Contains(fmt.Sprint(err), tc.expectedStatusString) {
 					t.Fatalf("error without expected string: expected %s, err: %+v", tc.expectedStatusString, err)
 				}
@@ -8198,10 +8162,10 @@ func TestDeletePackageRepository(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name               string
-		existingObjects    []k8sruntime.Object
-		request            *corev1.DeletePackageRepositoryRequest
-		expectedStatusCode codes.Code
+		name              string
+		existingObjects   []k8sruntime.Object
+		request           *corev1.DeletePackageRepositoryRequest
+		expectedErrorCode connect.Code
 	}{
 		{
 			name:            "delete - success",
@@ -8213,7 +8177,6 @@ func TestDeletePackageRepository(t *testing.T) {
 					Identifier: "globalrepo",
 				},
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name:            "delete - not found (empty)",
@@ -8225,7 +8188,7 @@ func TestDeletePackageRepository(t *testing.T) {
 					Identifier: "globalrepo",
 				},
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedErrorCode: connect.CodeNotFound,
 		},
 		{
 			name:            "delete - not found (different)",
@@ -8237,7 +8200,7 @@ func TestDeletePackageRepository(t *testing.T) {
 					Identifier: "globalrepo2",
 				},
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedErrorCode: connect.CodeNotFound,
 		},
 		{
 			name: "delete - with user managed secret",
@@ -8254,7 +8217,6 @@ func TestDeletePackageRepository(t *testing.T) {
 					Identifier: "globalrepo",
 				},
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "delete - with plugin managed secret",
@@ -8272,7 +8234,6 @@ func TestDeletePackageRepository(t *testing.T) {
 					Identifier: "globalrepo",
 				},
 			},
-			expectedStatusCode: codes.OK,
 		},
 	}
 
@@ -8301,7 +8262,7 @@ func TestDeletePackageRepository(t *testing.T) {
 
 			_, err := s.DeletePackageRepository(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
 		})
@@ -8376,7 +8337,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 		requestCustomizer    func(request *corev1.GetPackageRepositoryDetailRequest) *corev1.GetPackageRepositoryDetailRequest
 		repositoryCustomizer func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository
 		responseCustomizer   func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse
-		expectedStatusCode   codes.Code
+		expectedErrorCode    connect.Code
 	}{
 		{
 			name: "not found",
@@ -8384,7 +8345,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				request.PackageRepoRef.Identifier = "foo"
 				return request
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedErrorCode: connect.CodeNotFound,
 		},
 		{
 			name: "check ref",
@@ -8402,15 +8363,12 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				response.Detail.Name = "foo"
 				return response
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
-			name:               "check name",
-			expectedStatusCode: codes.OK,
+			name: "check name",
 		},
 		{
-			name:               "check global scope",
-			expectedStatusCode: codes.OK,
+			name: "check global scope",
 		},
 		{
 			name: "check namespace scoped",
@@ -8427,7 +8385,6 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				response.Detail.NamespaceScoped = true
 				return response
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "check url",
@@ -8439,7 +8396,6 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				response.Detail.Url = "foo"
 				return response
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "check description",
@@ -8451,7 +8407,6 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				response.Detail.Description = "repository description"
 				return response
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "check interval (none)",
@@ -8463,7 +8418,6 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				response.Detail.Interval = ""
 				return response
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "check interval (set)",
@@ -8475,7 +8429,6 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				response.Detail.Interval = "12h"
 				return response
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "check imgpkg type",
@@ -8514,7 +8467,6 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				})
 				return response
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "check image type",
@@ -8555,7 +8507,6 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				})
 				return response
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "check git type",
@@ -8600,7 +8551,6 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				})
 				return response
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "check http type",
@@ -8627,7 +8577,6 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				})
 				return response
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "check inline type",
@@ -8673,7 +8622,6 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				})
 				return response
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "check auth - missing secret",
@@ -8683,7 +8631,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				}
 				return repository
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedErrorCode: connect.CodeNotFound,
 		},
 		{
 			name: "check auth - user managed secret",
@@ -8710,7 +8658,6 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				}
 				return response
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "check auth - plugin managed secret - basic auth",
@@ -8740,7 +8687,6 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				}
 				return response
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "check auth - plugin managed secret - ssh auth",
@@ -8769,7 +8715,6 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				}
 				return response
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "check auth - plugin managed secret - bearer auth",
@@ -8795,7 +8740,6 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				}
 				return response
 			},
-			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "check auth - plugin managed secret - docker auth",
@@ -8826,7 +8770,6 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				}
 				return response
 			},
-			expectedStatusCode: codes.OK,
 		},
 	}
 
@@ -8870,9 +8813,9 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			response, err := s.GetPackageRepositoryDetail(context.Background(), connect.NewRequest(request))
 
 			// checks
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got error: %d, want: %d, err: %+v", got, want, err)
-			} else if got != codes.OK {
+			} else if got != 0 {
 				return
 			}
 
