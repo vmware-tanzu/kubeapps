@@ -16,6 +16,7 @@ import (
 	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
 	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/connecterror"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
@@ -40,7 +41,9 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *conn
 	pageSize := request.Msg.GetPaginationOptions().GetPageSize()
 	itemOffset, err := paginate.ItemOffsetFromPageToken(request.Msg.GetPaginationOptions().GetPageToken())
 	if err != nil {
-		return nil, err
+		// TODO(minelson): When 6269 is complete, this can just be returned as an
+		// err (as the paginate module will return connect errors).
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 	// Assume the default cluster if none is specified
 	if cluster == "" {
@@ -49,7 +52,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *conn
 	// fetch all the package metadatas
 	pkgMetadatas, err := s.getPkgMetadatas(ctx, request.Header(), cluster, namespace)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "PackageMetadata", "", err)
+		return nil, connecterror.FromK8sError("get", "PackageMetadata", "", err)
 	}
 
 	// Filter the package metadatas using any specified filter.
@@ -94,14 +97,14 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *conn
 			// currentPkg will be nil if the channel is closed and there's no
 			// more items to consume.
 			if currentPkg == nil {
-				return nil, statuserror.FromK8sError("get", "Package", pkgMetadata.Name, fmt.Errorf("no package versions for the package %q", pkgMetadata.Name))
+				return nil, connecterror.FromK8sError("get", "Package", pkgMetadata.Name, fmt.Errorf("no package versions for the package %q", pkgMetadata.Name))
 			}
 			// The kapp-controller returns both packages and package metadata
 			// in order. But some repositories have invalid data (TAP 1.0.2)
 			// where a package is present *without* corresponding metadata.
 			for currentPkg.Spec.RefName != pkgMetadata.Name {
 				if currentPkg.Spec.RefName > pkgMetadata.Name {
-					return nil, status.Errorf(codes.Internal, fmt.Sprintf("unexpected order for kapp-controller packages, expected %q, found %q", pkgMetadata.Name, currentPkg.Spec.RefName))
+					return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unexpected order for kapp-controller packages, expected %q, found %q", pkgMetadata.Name, currentPkg.Spec.RefName))
 				}
 				log.Errorf("Package %q did not have a corresponding metadata (want %q)", currentPkg.Spec.RefName, pkgMetadata.Name)
 				currentPkg = <-getPkgsChannel
@@ -120,7 +123,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *conn
 			// this ref name, and currentPkg is for the next meta name.
 			pkgVersionMap, err := getPkgVersionsMap(pkgsForMeta)
 			if err != nil || len(pkgVersionMap[pkgMetadata.Name]) == 0 {
-				return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to calculate package versions map for packages: %v, err: %v", pkgsForMeta, err))
+				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to calculate package versions map for packages: %v, err: %v", pkgsForMeta, err))
 			}
 			latestVersion := pkgVersionMap[pkgMetadata.Name][0].version.String()
 			availablePackageSummary := s.buildAvailablePackageSummary(pkgMetadata, latestVersion, cluster)
@@ -133,7 +136,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *conn
 
 		// Verify no error during go routine.
 		if getPkgsError != nil {
-			return nil, statuserror.FromK8sError("get", "Package", "", err)
+			return nil, connecterror.FromK8sError("get", "Package", "", err)
 		}
 	}
 
