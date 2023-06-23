@@ -22,8 +22,6 @@ import (
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappcorev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -368,7 +366,7 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 	// Ensure the selected version can be, actually installed to let the user know before installing
 	eligibleVersion, err := versions.HighestConstrainedVersion([]string{pkgVersion}, vendirversions.VersionSelection{Semver: versionSelection})
 	if eligibleVersion == "" || err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "The selected version %q is not eligible to be installed: %v", pkgVersion, err)
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("The selected version %q is not eligible to be installed: %w", pkgVersion, err))
 	}
 
 	pkgInstall := &packagingv1alpha1.PackageInstall{
@@ -405,7 +403,7 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 
 	if reconciliationOptions != nil {
 		if pkgInstall.Spec.SyncPeriod, err = pkgutils.ToDuration(reconciliationOptions.Interval); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "The interval is invalid: %v", err)
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("The interval is invalid: %w", err))
 		}
 		pkgInstall.Spec.ServiceAccountName = reconciliationOptions.ServiceAccountName
 		pkgInstall.Spec.Paused = reconciliationOptions.Suspend
