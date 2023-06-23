@@ -20,9 +20,6 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	log "k8s.io/klog/v2"
@@ -476,37 +473,37 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *connect
 
 	typedClient, err := s.clientGetter.Typed(request.Header(), cluster)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the k8s client: '%w'", err))
 	}
 
 	// fetch the package install
 	pkgInstall, err := s.getPkgInstall(ctx, request.Header(), cluster, namespace, installedPackageRefId)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "PackageInstall", installedPackageRefId, err)
+		return nil, connecterror.FromK8sError("get", "PackageInstall", installedPackageRefId, err)
 	}
 
 	// fetch the resulting deployed app after the installation
 	app, err := s.getApp(ctx, request.Header(), cluster, namespace, installedPackageRefId)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "App", installedPackageRefId, err)
+		return nil, connecterror.FromK8sError("get", "App", installedPackageRefId, err)
 	}
 
 	// retrieve the package metadata associated with this installed package
 	pkgName := pkgInstall.Spec.PackageRef.RefName
 	pkgMetadata, err := s.getPkgMetadata(ctx, request.Header(), cluster, namespace, pkgName)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "PackageMetadata", pkgName, err)
+		return nil, connecterror.FromK8sError("get", "PackageMetadata", pkgName, err)
 	}
 
 	// Use the field selector to return only Package CRs that match on the spec.refName.
 	fieldSelector := fmt.Sprintf("spec.refName=%s", pkgMetadata.Name)
 	pkgs, err := s.getPkgsWithFieldSelector(ctx, request.Header(), cluster, namespace, fieldSelector)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "Package", "", err)
+		return nil, connecterror.FromK8sError("get", "Package", "", err)
 	}
 	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the PkgVersionsMap: '%v'", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the PkgVersionsMap: '%w'", err))
 	}
 
 	// get the values applies i) get the secret name where it is stored; 2) get the values from the secret
@@ -519,9 +516,9 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *connect
 			values, err := typedClient.CoreV1().Secrets(namespace).Get(ctx, secretRefName, metav1.GetOptions{})
 			if err != nil {
 				if errors.IsNotFound(err) {
-					log.Warningf("The referenced secret does not exist: %s", statuserror.FromK8sError("get", "Secret", secretRefName, err).Error())
+					log.Warningf("The referenced secret does not exist: %s", connecterror.FromK8sError("get", "Secret", secretRefName, err).Error())
 				} else {
-					return nil, statuserror.FromK8sError("get", "Secret", secretRefName, err)
+					return nil, connecterror.FromK8sError("get", "Secret", secretRefName, err)
 				}
 			}
 			if values != nil {
@@ -536,7 +533,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *connect
 
 	installedPackageDetail, err := s.buildInstalledPackageDetail(pkgInstall, pkgMetadata, pkgVersionsMap, app, valuesApplied, cluster)
 	if err != nil {
-		return nil, statuserror.FromK8sError("create", "InstalledPackageDetail", pkgInstall.Name, err)
+		return nil, connecterror.FromK8sError("create", "InstalledPackageDetail", pkgInstall.Name, err)
 
 	}
 
@@ -557,19 +554,19 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 
 	// Validate the request
 	if request.Msg.GetAvailablePackageRef().GetContext().GetNamespace() == "" || request.Msg.GetAvailablePackageRef().GetIdentifier() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "required context or identifier not provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("required context or identifier not provided"))
 	}
 	if request == nil || request.Msg.GetAvailablePackageRef() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request AvailablePackageRef provided"))
 	}
 	if request.Msg.GetName() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request Name provided"))
 	}
 	if request.Msg.GetTargetContext() == nil || request.Msg.GetTargetContext().GetNamespace() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no request TargetContext namespace provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request TargetContext namespace provided"))
 	}
 	if request.Msg.GetReconciliationOptions() == nil || request.Msg.GetReconciliationOptions().GetServiceAccountName() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no request ReconciliationOptions serviceAccountName provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request ReconciliationOptions serviceAccountName provided"))
 	}
 
 	// Retrieve additional parameters from the request
@@ -590,30 +587,30 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 	}
 
 	if targetCluster != packageCluster {
-		return nil, status.Errorf(codes.InvalidArgument, "installing packages in other clusters in not supported yet")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("installing packages in other clusters in not supported yet"))
 	}
 
 	typedClient, err := s.clientGetter.Typed(request.Header(), targetCluster)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the k8s client: '%w'", err))
 	}
 
 	// fetch the package metadata
 	pkgMetadata, err := s.getPkgMetadata(ctx, request.Header(), packageCluster, packageNamespace, pkgName)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "PackageMetadata", pkgName, err)
+		return nil, connecterror.FromK8sError("get", "PackageMetadata", pkgName, err)
 	}
 
 	// build a new secret object with the values
 	secret, err := s.buildSecret(installedPackageName, values, targetNamespace)
 	if err != nil {
-		return nil, statuserror.FromK8sError("create", "Secret", installedPackageName, err)
+		return nil, connecterror.FromK8sError("create", "Secret", installedPackageName, err)
 	}
 
 	// build a new pkgInstall object
 	newPkgInstall, err := s.buildPkgInstall(installedPackageName, targetCluster, targetNamespace, pkgMetadata.Name, pkgVersion, reconciliationOptions, secret)
 	if err != nil {
-		return nil, status.Errorf(status.Code(err), "Unable to create the PackageInstall '%s' due to '%v'", installedPackageName, err)
+		return nil, connect.NewError(connect.CodeOf(err), fmt.Errorf("Unable to create the PackageInstall '%s' due to '%w'", installedPackageName, err))
 	}
 
 	// create the Secret in the cluster
@@ -621,7 +618,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 	// See if we can delay the creation until the PackageInstall is successfully created.
 	createdSecret, err := typedClient.CoreV1().Secrets(targetNamespace).Create(ctx, secret, metav1.CreateOptions{})
 	if createdSecret == nil || err != nil {
-		return nil, statuserror.FromK8sError("create", "Secret", secret.Name, err)
+		return nil, connecterror.FromK8sError("create", "Secret", secret.Name, err)
 	}
 
 	// create the PackageInstall in the cluster
@@ -630,14 +627,14 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 		// clean-up the secret if something fails
 		err := typedClient.CoreV1().Secrets(targetNamespace).Delete(ctx, secret.Name, metav1.DeleteOptions{})
 		if err != nil {
-			return nil, statuserror.FromK8sError("delete", "Secret", secret.Name, err)
+			return nil, connecterror.FromK8sError("delete", "Secret", secret.Name, err)
 		}
-		return nil, statuserror.FromK8sError("create", "PackageInstall", newPkgInstall.Name, err)
+		return nil, connecterror.FromK8sError("create", "PackageInstall", newPkgInstall.Name, err)
 	}
 
 	resource, err := s.getAppResource(request.Header(), targetCluster, targetNamespace)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the App resource: '%v'", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the App resource: '%w'", err))
 	}
 	// The InstalledPackage is considered as created once the associated kapp App gets created,
 	// so we actively wait for the App CR to be present in the cluster before returning OK
@@ -646,14 +643,14 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 		// clean-up the secret if something fails
 		err := typedClient.CoreV1().Secrets(targetNamespace).Delete(ctx, secret.Name, metav1.DeleteOptions{})
 		if err != nil {
-			return nil, statuserror.FromK8sError("delete", "Secret", secret.Name, err)
+			return nil, connecterror.FromK8sError("delete", "Secret", secret.Name, err)
 		}
 		// clean-up the package install if something fails
 		err = s.deletePkgInstall(ctx, request.Header(), targetCluster, targetNamespace, newPkgInstall.Name)
 		if err != nil {
-			return nil, statuserror.FromK8sError("delete", "PackageInstall", newPkgInstall.Name, err)
+			return nil, connecterror.FromK8sError("delete", "PackageInstall", newPkgInstall.Name, err)
 		}
-		return nil, status.Errorf(codes.Internal, "timeout exceeded (%v s) waiting for resource to be installed: '%v'", s.pluginConfig.timeoutSeconds, err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("timeout exceeded (%v s) waiting for resource to be installed: '%w'", s.pluginConfig.timeoutSeconds, err))
 	}
 
 	// generate the response
@@ -675,7 +672,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Request[corev1.UpdateInstalledPackageRequest]) (*connect.Response[corev1.UpdateInstalledPackageResponse], error) {
 	// Validate the request
 	if request == nil || request.Msg.GetInstalledPackageRef() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request AvailablePackageRef provided"))
 	}
 	// Retrieve parameters from the request
 	packageCluster := request.Msg.GetInstalledPackageRef().GetContext().GetCluster()
@@ -684,10 +681,10 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Re
 	log.InfoS("+kapp-controller UpdateInstalledPackage", "cluster", packageCluster, "namespace", "packageNamespace", "id", installedPackageName)
 
 	if request.Msg.GetInstalledPackageRef().GetContext().GetNamespace() == "" || request.Msg.GetInstalledPackageRef().GetIdentifier() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "required context or identifier not provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("required context or identifier not provided"))
 	}
 	if request.Msg.GetInstalledPackageRef().GetIdentifier() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request Name provided"))
 	}
 
 	// Retrieve additional parameters from the request
@@ -707,7 +704,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Re
 	// fetch the package install
 	pkgInstall, err := s.getPkgInstall(ctx, request.Header(), packageCluster, packageNamespace, installedPackageName)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "PackageInstall", installedPackageName, err)
+		return nil, connecterror.FromK8sError("get", "PackageInstall", installedPackageName, err)
 	}
 
 	// Calculate the constraints and prerelease fields
@@ -725,7 +722,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Re
 	// Ensure the selected version can be, actually installed to let the user know before installing
 	eligibleVersion, err := versions.HighestConstrainedVersion([]string{pkgVersion}, vendirversions.VersionSelection{Semver: versionSelection})
 	if eligibleVersion == "" || err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "The selected version %q is not eligible to be installed: %v", pkgVersion, err)
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("The selected version %q is not eligible to be installed: %w", pkgVersion, err))
 	}
 
 	// Set the versionSelection
@@ -743,7 +740,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Re
 	// Update the rest of the fields
 	if reconciliationOptions != nil {
 		if pkgInstall.Spec.SyncPeriod, err = pkgutils.ToDuration(reconciliationOptions.Interval); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "The interval is invalid: %v", err)
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("The interval is invalid: %w", err))
 		}
 		if reconciliationOptions.ServiceAccountName != "" {
 			pkgInstall.Spec.ServiceAccountName = reconciliationOptions.ServiceAccountName
@@ -754,18 +751,18 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Re
 	// update the pkgInstall in the server
 	updatedPkgInstall, err := s.updatePkgInstall(ctx, request.Header(), packageCluster, packageNamespace, pkgInstall)
 	if err != nil {
-		return nil, statuserror.FromK8sError("update", "PackageInstall", installedPackageName, err)
+		return nil, connecterror.FromK8sError("update", "PackageInstall", installedPackageName, err)
 	}
 
 	// Update the values.yaml values file if any is passed, otherwise, delete the values
 	if values != "" {
 		secret, err := s.buildSecret(installedPackageName, values, packageNamespace)
 		if err != nil {
-			return nil, statuserror.FromK8sError("update", "Secret", secret.Name, err)
+			return nil, connecterror.FromK8sError("update", "Secret", secret.Name, err)
 		}
 		updatedSecret, err := typedClient.CoreV1().Secrets(packageNamespace).Update(ctx, secret, metav1.UpdateOptions{})
 		if updatedSecret == nil || err != nil {
-			return nil, statuserror.FromK8sError("update", "Secret", secret.Name, err)
+			return nil, connecterror.FromK8sError("update", "Secret", secret.Name, err)
 		}
 
 		if updatedSecret != nil {
@@ -787,9 +784,9 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Re
 			secretId := packageInstallValue.SecretRef.Name
 			err := typedClient.CoreV1().Secrets(packageNamespace).Delete(ctx, secretId, metav1.DeleteOptions{})
 			if errors.IsNotFound(err) {
-				log.Warningf("The referenced secret does not exist: %s", statuserror.FromK8sError("get", "Secret", secretId, err).Error())
+				log.Warningf("The referenced secret does not exist: %s", connecterror.FromK8sError("get", "Secret", secretId, err).Error())
 			} else {
-				return nil, statuserror.FromK8sError("delete", "Secret", secretId, err)
+				return nil, connecterror.FromK8sError("delete", "Secret", secretId, err)
 			}
 		}
 	}
@@ -812,7 +809,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Re
 func (s *Server) DeleteInstalledPackage(ctx context.Context, request *connect.Request[corev1.DeleteInstalledPackageRequest]) (*connect.Response[corev1.DeleteInstalledPackageResponse], error) {
 	// Validate the request
 	if request == nil || request.Msg.GetInstalledPackageRef() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "no request InstalledPackageRef provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request InstalledPackageRef provided"))
 	}
 	// Retrieve parameters from the request
 	namespace := request.Msg.GetInstalledPackageRef().GetContext().GetNamespace()
@@ -821,7 +818,7 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *connect.Re
 	log.InfoS("+kapp-controller DeleteInstalledPackage", "namespace", namespace, "cluster", cluster, "id", identifier)
 
 	if request.Msg.GetInstalledPackageRef().GetContext().GetNamespace() == "" || request.Msg.GetInstalledPackageRef().GetIdentifier() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "required context or identifier not provided")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("required context or identifier not provided"))
 	}
 
 	if cluster == "" {
@@ -835,13 +832,13 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *connect.Re
 
 	pkgInstall, err := s.getPkgInstall(ctx, request.Header(), cluster, namespace, identifier)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "PackageInstall", identifier, err)
+		return nil, connecterror.FromK8sError("get", "PackageInstall", identifier, err)
 	}
 
 	// Delete the package install
 	err = s.deletePkgInstall(ctx, request.Header(), cluster, namespace, identifier)
 	if err != nil {
-		return nil, statuserror.FromK8sError("delete", "PackageInstall", identifier, err)
+		return nil, connecterror.FromK8sError("delete", "PackageInstall", identifier, err)
 	}
 
 	// Delete all the associated secrets
@@ -852,9 +849,9 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *connect.Re
 		err := typedClient.CoreV1().Secrets(namespace).Delete(ctx, secretId, metav1.DeleteOptions{})
 		if err != nil {
 			if errors.IsNotFound(err) {
-				log.Warningf("The referenced secret does not exist: %s", statuserror.FromK8sError("get", "Secret", secretId, err).Error())
+				log.Warningf("The referenced secret does not exist: %s", connecterror.FromK8sError("get", "Secret", secretId, err).Error())
 			} else {
-				return nil, statuserror.FromK8sError("delete", "Secret", secretId, err)
+				return nil, connecterror.FromK8sError("delete", "Secret", secretId, err)
 			}
 		}
 	}

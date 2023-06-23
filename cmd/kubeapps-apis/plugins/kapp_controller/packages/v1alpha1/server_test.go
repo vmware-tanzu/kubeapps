@@ -44,8 +44,6 @@ import (
 	kappcorev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -2838,7 +2836,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 		existingObjects      []k8sruntime.Object
 		existingTypedObjects []k8sruntime.Object
 		expectedPackage      *corev1.InstalledPackageDetail
-		statusCode           codes.Code
+		errorCode            connect.Code
 		request              *corev1.GetInstalledPackageDetailRequest
 	}{
 		{
@@ -3006,7 +3004,6 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					},
 				},
 			},
-			statusCode: codes.OK,
 			expectedPackage: &corev1.InstalledPackageDetail{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    defaultContext,
@@ -3242,7 +3239,6 @@ fetchStderr
 					},
 				},
 			},
-			statusCode: codes.OK,
 			expectedPackage: &corev1.InstalledPackageDetail{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    defaultContext,
@@ -3440,7 +3436,6 @@ fetchStderr
 					},
 				},
 			},
-			statusCode: codes.OK,
 			expectedPackage: &corev1.InstalledPackageDetail{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    defaultContext,
@@ -3529,11 +3524,11 @@ fetchStderr
 			}
 			installedPackageDetail, err := s.GetInstalledPackageDetail(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.errorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == codes.OK {
+			if tc.errorCode == 0 {
 				if got, want := installedPackageDetail.Msg.InstalledPackageDetail, tc.expectedPackage; !cmp.Equal(got, want, ignoreUnexported) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 				}
@@ -3549,7 +3544,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 		pluginConfig           *kappControllerPluginParsedConfig
 		existingObjects        []k8sruntime.Object
 		existingTypedObjects   []k8sruntime.Object
-		expectedStatusCode     codes.Code
+		expectedErrorCode      connect.Code
 		expectedResponse       *corev1.CreateInstalledPackageResponse
 		expectedPackageInstall *packagingv1alpha1.PackageInstall
 	}{
@@ -3659,7 +3654,6 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context:    defaultContext,
@@ -3791,7 +3785,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.Internal,
+			expectedErrorCode: connect.CodeInternal,
 		},
 		{
 			name: "create installed package (with values)",
@@ -3900,7 +3894,6 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context:    defaultContext,
@@ -4056,7 +4049,6 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context:    defaultContext,
@@ -4214,7 +4206,6 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context:    defaultContext,
@@ -4373,7 +4364,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "create installed package (prereleases - defaultPrereleasesVersionSelection: [])",
@@ -4485,7 +4476,6 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context:    defaultContext,
@@ -4644,7 +4634,6 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context:    defaultContext,
@@ -4799,7 +4788,6 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context:    defaultContext,
@@ -4957,7 +4945,6 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context:    defaultContext,
@@ -5115,7 +5102,6 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context:    defaultContext,
@@ -5273,7 +5259,6 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context:    defaultContext,
@@ -5431,7 +5416,6 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.CreateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context:    defaultContext,
@@ -5510,11 +5494,11 @@ func TestCreateInstalledPackage(t *testing.T) {
 
 			createInstalledPackageResponse, err := s.CreateInstalledPackage(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
 			// If we were expecting an error, continue to the next test.
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 			if tc.expectedPackageInstall != nil {
@@ -5542,7 +5526,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 		pluginConfig           *kappControllerPluginParsedConfig
 		existingObjects        []k8sruntime.Object
 		existingTypedObjects   []k8sruntime.Object
-		expectedStatusCode     codes.Code
+		expectedErrorCode      connect.Code
 		expectedResponse       *corev1.UpdateInstalledPackageResponse
 		expectedPackageInstall *packagingv1alpha1.PackageInstall
 	}{
@@ -5664,7 +5648,6 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.UpdateInstalledPackageResponse{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context:    defaultContext,
@@ -5839,7 +5822,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 	}
 
@@ -5868,11 +5851,11 @@ func TestUpdateInstalledPackage(t *testing.T) {
 
 			updateInstalledPackageResponse, err := s.UpdateInstalledPackage(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
 			// If we were expecting an error, continue to the next test.
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 			if tc.expectedPackageInstall != nil {
@@ -5899,7 +5882,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 		request              *corev1.DeleteInstalledPackageRequest
 		existingObjects      []k8sruntime.Object
 		existingTypedObjects []k8sruntime.Object
-		expectedStatusCode   codes.Code
+		expectedErrorCode    connect.Code
 		expectedResponse     *corev1.DeleteInstalledPackageResponse
 	}{
 		{
@@ -5969,8 +5952,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
-			expectedResponse:   &corev1.DeleteInstalledPackageResponse{},
+			expectedResponse: &corev1.DeleteInstalledPackageResponse{},
 		},
 		{
 			name: "returns not found if installed package doesn't exist",
@@ -6039,8 +6021,8 @@ func TestDeleteInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.NotFound,
-			expectedResponse:   &corev1.DeleteInstalledPackageResponse{},
+			expectedErrorCode: connect.CodeNotFound,
+			expectedResponse:  &corev1.DeleteInstalledPackageResponse{},
 		},
 	}
 
@@ -6070,11 +6052,11 @@ func TestDeleteInstalledPackage(t *testing.T) {
 
 			deleteInstalledPackageResponse, err := s.DeleteInstalledPackage(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
 			// If we were expecting an error, continue to the next test.
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 			if got, want := deleteInstalledPackageResponse.Msg, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
@@ -6090,7 +6072,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 		request              *corev1.GetInstalledPackageResourceRefsRequest
 		existingObjects      []k8sruntime.Object
 		existingTypedObjects []k8sruntime.Object
-		expectedStatusCode   codes.Code
+		expectedErrorCode    connect.Code
 		expectedResponse     *corev1.GetInstalledPackageResourceRefsResponse
 	}{
 		{
@@ -6180,7 +6162,6 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
 				ResourceRefs: []*corev1.ResourceRef{
 					{
@@ -6280,7 +6261,6 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
 				ResourceRefs: []*corev1.ResourceRef{
 					{
@@ -6348,7 +6328,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedErrorCode: connect.CodeNotFound,
 		},
 		{
 			name: "returns NotFound if app exists but no resources found",
@@ -6420,7 +6400,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedErrorCode: connect.CodeNotFound,
 		},
 	}
 
@@ -6477,7 +6457,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					resourceFilterFlags := kappcmdtools.ResourceFilterFlags{}
 					resourceFilter, err := resourceFilterFlags.ResourceFilter()
 					if err != nil {
-						return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
+						return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get config due to: %w", err))
 					}
 					resourceTypesFlags := kappcmdapp.ResourceTypesFlags{
 						IgnoreFailingAPIServices:         true,
@@ -6486,11 +6466,11 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					failingAPIServicesPolicy := resourceTypesFlags.FailingAPIServicePolicy()
 					supportingNsObjs, err := kappcmdapp.FactoryClients(depsFactory, kappcmdcore.NamespaceFlags{Name: namespace}, resourceTypesFlags, logger.NewNoopLogger())
 					if err != nil {
-						return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
+						return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get config due to: %w", err))
 					}
 					supportingObjs, err := kappcmdapp.FactoryClients(depsFactory, kappcmdcore.NamespaceFlags{Name: ""}, resourceTypesFlags, logger.NewNoopLogger())
 					if err != nil {
-						return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
+						return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get config due to: %w", err))
 					}
 					return supportingNsObjs.Apps, supportingObjs.IdentifiedResources, failingAPIServicesPolicy, resourceFilter, nil
 				},
@@ -6498,11 +6478,11 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 
 			getInstalledPackageResourceRefsResponse, err := s.GetInstalledPackageResourceRefs(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
 			// If we were expecting an error, continue to the next test.
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 			if got, want := getInstalledPackageResourceRefsResponse.Msg, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
@@ -9186,7 +9166,7 @@ func TestGetPackageRepositorySummariesNamespaces(t *testing.T) {
 		request            *corev1.GetPackageRepositorySummariesRequest
 		existingRepos      []k8sruntime.Object
 		existingNamespaces []*k8scorev1.Namespace
-		expectedStatusCode codes.Code
+		expectedErrorCode  connect.Code
 		expectedResponse   *corev1.GetPackageRepositorySummariesResponse
 		reactors           []*ClientReaction
 	}{
@@ -9247,7 +9227,6 @@ func TestGetPackageRepositorySummariesNamespaces(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
 				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
 					{
@@ -9315,12 +9294,12 @@ func TestGetPackageRepositorySummariesNamespaces(t *testing.T) {
 
 			response, err := s.GetPackageRepositorySummaries(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 
@@ -9957,11 +9936,11 @@ kappController:
 func TestGetPackageRepositoryPermissions(t *testing.T) {
 
 	testCases := []struct {
-		name               string
-		request            *corev1.GetPackageRepositoryPermissionsRequest
-		expectedStatusCode codes.Code
-		expectedResponse   *corev1.GetPackageRepositoryPermissionsResponse
-		reactors           []*ClientReaction
+		name              string
+		request           *corev1.GetPackageRepositoryPermissionsRequest
+		expectedErrorCode connect.Code
+		expectedResponse  *corev1.GetPackageRepositoryPermissionsResponse
+		reactors          []*ClientReaction
 	}{
 		{
 			name: "returns permissions for global package repositories",
@@ -9987,7 +9966,6 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetPackageRepositoryPermissionsResponse{
 				Permissions: []*corev1.PackageRepositoriesPermissions{
 					{
@@ -10017,7 +9995,6 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetPackageRepositoryPermissionsResponse{
 				Permissions: []*corev1.PackageRepositoriesPermissions{
 					{
@@ -10040,7 +10017,7 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 			request: &corev1.GetPackageRepositoryPermissionsRequest{
 				Context: &corev1.Context{Namespace: "my-ns"},
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "returns permissions for namespaced package repositories",
@@ -10066,7 +10043,6 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetPackageRepositoryPermissionsResponse{
 				Permissions: []*corev1.PackageRepositoriesPermissions{
 					{
@@ -10112,12 +10088,12 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 
 			response, err := s.GetPackageRepositoryPermissions(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 

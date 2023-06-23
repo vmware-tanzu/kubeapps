@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/bufbuild/connect-go"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/connecterror"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resources"
 	"k8s.io/client-go/kubernetes"
 
@@ -18,8 +20,6 @@ import (
 	ctlapp "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/app"
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -567,7 +567,7 @@ func getAppUsedGVs(appsClient ctlapp.Apps, packageId string, namespace string, u
 	// Fetch the Kapp App
 	app, err := appsClient.Find(appName)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, connecterror.FromK8sError("GET", "App", appName, err)
 	}
 
 	// Fetch the GroupVersions used by the app
@@ -586,9 +586,9 @@ func getAppUsedGVs(appsClient ctlapp.Apps, packageId string, namespace string, u
 			// We want to return a NotFound here because the dashboard already
 			// handles this case, knowing that the references may not be
 			// available immediately.
-			return nil, nil, status.Errorf(codes.NotFound, "App not found: %+v", err)
+			return nil, nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("App not found: %w", err))
 		}
-		return nil, nil, err
+		return nil, nil, connecterror.FromK8sError("GET", "GV", "", err)
 	}
 	return usedGVs, app, nil
 }
@@ -635,7 +635,7 @@ func (s *Server) inspectKappK8sResources(headers http.Header, cluster, namespace
 	}
 	// Package exists but no resourceRefs found
 	if refs != nil && len(refs) == 0 {
-		return nil, status.Errorf(codes.NotFound, "No resource references available for '%s' in plugin '%s'", packageId, namespace)
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("No resource references available for '%s' in plugin '%s'", packageId, namespace))
 	}
 	return refs, nil
 }

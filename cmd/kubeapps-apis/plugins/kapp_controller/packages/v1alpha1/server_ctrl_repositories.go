@@ -14,8 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	k8scorev1 "k8s.io/api/core/v1"
 	log "k8s.io/klog/v2"
 )
@@ -187,7 +185,7 @@ func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *con
 		repo, err := s.buildPackageRepositorySummary(repo, cluster)
 		if err != nil {
 			// todo -> instead of failing the whole query, we should be able to log the error along with the response
-			return nil, status.Errorf(codes.Internal, "unable to convert the PackageRepository: %v", err)
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to convert the PackageRepository: %w", err))
 		}
 		repositories = append(repositories, repo)
 	}
@@ -350,7 +348,7 @@ func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *c
 	cluster := request.Msg.GetContext().GetCluster()
 	namespace := request.Msg.GetContext().GetNamespace()
 	if cluster == "" && namespace != "" {
-		return nil, status.Errorf(codes.InvalidArgument, "cluster must be specified when namespace is present: %s", namespace)
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("cluster must be specified when namespace is present: %s", namespace))
 	}
 	typedClient, err := s.clientGetter.Typed(request.Header(), cluster)
 	if err != nil {
