@@ -29,8 +29,6 @@ import (
 	"sort"
 	"strings"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/registry"
@@ -38,6 +36,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/bufbuild/connect-go"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common/transport"
@@ -239,10 +238,10 @@ func (r *OCIChartRepository) listRepositoryNames() ([]string, error) {
 	}
 
 	if r.repositoryLister == nil {
-		return nil, status.Errorf(
-			codes.Internal,
-			"No repository lister found for OCI registry with URL: [%s]",
-			r.url.String())
+		return nil, connect.NewError(
+			connect.CodeInternal,
+			fmt.Errorf("No repository lister found for OCI registry with URL: [%s]",
+				r.url.String()))
 	}
 
 	return r.repositoryLister.ListRepositoryNames(r)
@@ -422,7 +421,7 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 
 	checksum, err := ociChartRepo.checksum(appNames, allTags)
 	if err != nil {
-		return nil, false, status.Errorf(codes.Internal, "%v", err)
+		return nil, false, connect.NewError(connect.CodeInternal, err)
 	}
 
 	cacheEntryValue := repoCacheEntryValue{
@@ -464,10 +463,10 @@ func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo s
 
 	cacheEntry, ok := cacheEntryUntyped.(repoCacheEntryValue)
 	if !ok {
-		return nil, false, status.Errorf(
-			codes.Internal,
-			"unexpected value found in cache for key [%s]: %v",
-			key, cacheEntryUntyped)
+		return nil, false, connect.NewError(
+			connect.CodeInternal,
+			fmt.Errorf("unexpected value found in cache for key [%s]: %v",
+				key, cacheEntryUntyped))
 	}
 
 	ociChartRepo, err := s.newOCIChartRepositoryAndLogin(context.Background(), repo)
@@ -580,9 +579,9 @@ func (r *OCIChartRepository) shortRepoName(fullRepoName string) (string, error) 
 	if strings.HasPrefix(fullRepoName, expectedPrefix) {
 		return fullRepoName[len(expectedPrefix):], nil
 	} else {
-		err := status.Errorf(codes.Internal,
-			"Unexpected repository name: expected prefix: [%s], actual name: [%s]",
-			expectedPrefix, fullRepoName)
+		err := connect.NewError(connect.CodeInternal,
+			fmt.Errorf("Unexpected repository name: expected prefix: [%s], actual name: [%s]",
+				expectedPrefix, fullRepoName))
 		return "", err
 	}
 }
@@ -594,7 +593,7 @@ func (s *Server) newOCIChartRepositoryAndLogin(ctx context.Context, repo sourcev
 
 func (s *repoEventSink) newOCIChartRepositoryAndLogin(ctx context.Context, repo sourcev1.HelmRepository) (*OCIChartRepository, error) {
 	if loginOpts, getterOpts, cred, err := s.clientOptionsForOciRepo(ctx, repo); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create registry client: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to create registry client: %w", err))
 	} else {
 		return s.newOCIChartRepositoryAndLoginWithOptions(repo.Spec.URL, loginOpts, getterOpts, cred)
 	}
@@ -615,10 +614,10 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 	// Create new registry client and login if needed.
 	registryClient, file, err := registryClientBuilderFn(loginOpts != nil, tlsConfig, getterOpts, helmProvider)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create registry client due to: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to create registry client due to: %w", err))
 	}
 	if registryClient == nil {
-		return nil, status.Errorf(codes.Internal, "failed to create registry client")
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to create registry client"))
 	}
 	if file != "" {
 		defer func() {
@@ -647,14 +646,14 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 		withRegistryCredentialFn(registryCredentialFn),
 		withTlsConfig(tlsConfig))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to parse URL '%s': %v", registryURL, err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to parse URL '%s': %w", registryURL, err))
 	}
 
 	// Attempt to login to the registry if credentials are provided.
 	if loginOpts != nil {
 		err := ociRepo.registryClient.Login(ociRepo.url.Host, loginOpts...)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to login to registry '%s' due to %v", registryURL, err)
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to login to registry '%s' due to %w", registryURL, err))
 		}
 	}
 	return ociRepo, nil
@@ -755,7 +754,7 @@ func getOciChartModels(appNames []string, allTags map[string]TagList, ociChartRe
 
 		tags, ok := allTags[appName]
 		if !ok {
-			return nil, status.Errorf(codes.Internal, "Missing tags for app [%s]", appName)
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Missing tags for app [%s]", appName))
 		}
 
 		mc, err := getOciChartModel(appName, tags, ociChartRepo, repo)
@@ -778,7 +777,7 @@ func getOciChartModel(appName string, tags TagList, ociChartRepo *OCIChartReposi
 	// ref https://github.com/vmware-tanzu/kubeapps/blob/11c87926d6cd798af72875d01437d15ae8d85b9a/pkg/helm/index.go#L30
 	latestChartVersion, err := ociChartRepo.pickChartVersionFrom(appName, "", tags.Tags)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", err)
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	latestChartMetadata, err := getOCIChartMetadata(ociChartRepo, chartID, latestChartVersion)
@@ -815,7 +814,7 @@ func getOciChartModel(appName string, tags TagList, ociChartRepo *OCIChartReposi
 	for _, tag := range tags.Tags {
 		chartVersion, err := ociChartRepo.pickChartVersionFrom(appName, tag, tags.Tags)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "%v", err)
+			return nil, connect.NewError(connect.CodeInternal, err)
 		}
 		mcv := models.ChartVersion{
 			Version:    chartVersion.Version,
@@ -832,7 +831,7 @@ func getOciChartModel(appName string, tags TagList, ociChartRepo *OCIChartReposi
 func getOCIChartTarball(ociRepo *OCIChartRepository, chartID string, chartVersion *repo.ChartVersion) ([]byte, error) {
 	chartBuffer, err := ociRepo.registryClient.DownloadChart(chartVersion)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", err)
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	return chartBuffer.Bytes(), nil
 }
@@ -840,20 +839,20 @@ func getOCIChartTarball(ociRepo *OCIChartRepository, chartID string, chartVersio
 func getOCIChartMetadata(ociRepo *OCIChartRepository, chartID string, chartVersion *repo.ChartVersion) (*chart.Metadata, error) {
 	chartTarball, err := getOCIChartTarball(ociRepo, chartID, chartVersion)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", err)
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	// not sure yet why flux untars into a temp directory
 	files, err := tarutil.FetchChartDetailFromTarball(bytes.NewReader(chartTarball))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%v", err)
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	chartYaml, ok := files[models.ChartYamlKey]
 	// TODO (gfichtenholt): if there is no chart yaml (is that even possible?),
 	// fall back to chart info from repo index.yaml
 	if !ok || chartYaml == "" {
-		return nil, status.Errorf(codes.Internal, "No chart manifest found for chart [%s]", chartID)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("No chart manifest found for chart [%s]", chartID))
 	}
 	var chartMetadata chart.Metadata
 	err = yaml.Unmarshal([]byte(chartYaml), &chartMetadata)

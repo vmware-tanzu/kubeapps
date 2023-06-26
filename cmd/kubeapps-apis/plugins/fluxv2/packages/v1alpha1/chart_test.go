@@ -21,8 +21,6 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -337,9 +335,9 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 
 func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 	negativeTestCases := []struct {
-		testName   string
-		request    *corev1.GetAvailablePackageDetailRequest
-		statusCode codes.Code
+		testName  string
+		request   *corev1.GetAvailablePackageDetailRequest
+		errorCode connect.Code
 	}{
 		{
 			testName: "it fails if request is missing namespace",
@@ -347,14 +345,14 @@ func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Identifier: "redis",
 				}},
-			statusCode: codes.InvalidArgument,
+			errorCode: connect.CodeInvalidArgument,
 		},
 		{
 			testName: "it fails if request has invalid identifier",
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: availableRef("redis", "default"),
 			},
-			statusCode: codes.InvalidArgument,
+			errorCode: connect.CodeInvalidArgument,
 		},
 	}
 
@@ -370,7 +368,7 @@ func TestNegativeGetAvailablePackageDetail(t *testing.T) {
 			if err == nil {
 				t.Fatalf("got nil, want error")
 			}
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.errorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
@@ -393,7 +391,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 		request       *corev1.GetAvailablePackageDetailRequest
 		repoName      string
 		repoNamespace string
-		statusCode    codes.Code
+		errorCode     connect.Code
 	}{
 		{
 			testName:      "it fails if request has invalid package version",
@@ -403,7 +401,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
 				PkgVersion:          "99.99.0",
 			},
-			statusCode: codes.Internal,
+			errorCode: connect.CodeInternal,
 		},
 		{
 			testName:      "it fails if repo does not exist",
@@ -412,7 +410,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: availableRef("bitnami-2/redis", "default"),
 			},
-			statusCode: codes.NotFound,
+			errorCode: connect.CodeNotFound,
 		},
 		{
 			testName:      "it fails if repo does not exist in specified namespace",
@@ -421,7 +419,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: availableRef("bitnami-1/redis", "default"),
 			},
-			statusCode: codes.NotFound,
+			errorCode: connect.CodeNotFound,
 		},
 		{
 			testName:      "it fails if request has invalid chart",
@@ -430,7 +428,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: availableRef("bitnami-1/redis-123", "default"),
 			},
-			statusCode: codes.NotFound,
+			errorCode: connect.CodeNotFound,
 		},
 	}
 
@@ -506,7 +504,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			if err == nil {
 				t.Fatalf("got nil, want error")
 			}
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.errorCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
@@ -523,15 +521,15 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 
 func TestNegativeGetAvailablePackageVersions(t *testing.T) {
 	testCases := []struct {
-		name               string
-		request            *corev1.GetAvailablePackageVersionsRequest
-		expectedStatusCode codes.Code
-		expectedResponse   *corev1.GetAvailablePackageVersionsResponse
+		name              string
+		request           *corev1.GetAvailablePackageVersionsRequest
+		expectedErrorCode connect.Code
+		expectedResponse  *corev1.GetAvailablePackageVersionsResponse
 	}{
 		{
-			name:               "it returns invalid argument if called without a package reference",
-			request:            nil,
-			expectedStatusCode: codes.InvalidArgument,
+			name:              "it returns invalid argument if called without a package reference",
+			request:           nil,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "it returns invalid argument if called without namespace",
@@ -541,7 +539,7 @@ func TestNegativeGetAvailablePackageVersions(t *testing.T) {
 					Identifier: "bitnami/apache",
 				},
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "it returns invalid argument if called without an identifier",
@@ -552,7 +550,7 @@ func TestNegativeGetAvailablePackageVersions(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 	}
 
@@ -565,12 +563,12 @@ func TestNegativeGetAvailablePackageVersions(t *testing.T) {
 
 			response, err := s.GetAvailablePackageVersions(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 			compareAvailablePackageVersions(t, response.Msg, tc.expectedResponse)
@@ -585,13 +583,13 @@ func TestNegativeGetAvailablePackageVersions(t *testing.T) {
 
 func TestGetAvailablePackageVersions(t *testing.T) {
 	testCases := []struct {
-		name               string
-		repoIndex          string
-		repoNamespace      string
-		repoName           string
-		request            *corev1.GetAvailablePackageVersionsRequest
-		expectedStatusCode codes.Code
-		expectedResponse   *corev1.GetAvailablePackageVersionsResponse
+		name              string
+		repoIndex         string
+		repoNamespace     string
+		repoName          string
+		request           *corev1.GetAvailablePackageVersionsRequest
+		expectedErrorCode connect.Code
+		expectedResponse  *corev1.GetAvailablePackageVersionsResponse
 	}{
 		{
 			name:          "it returns the package version summary for redis chart in bitnami repo",
@@ -601,8 +599,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			request: &corev1.GetAvailablePackageVersionsRequest{
 				AvailablePackageRef: availableRef("bitnami/redis", "kubeapps"),
 			},
-			expectedStatusCode: codes.OK,
-			expectedResponse:   expected_versions_redis,
+			expectedResponse: expected_versions_redis,
 		},
 		{
 			name:          "it returns error for non-existent chart",
@@ -612,7 +609,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			request: &corev1.GetAvailablePackageVersionsRequest{
 				AvailablePackageRef: availableRef("bitnami/redis-123", "kubeapps"),
 			},
-			expectedStatusCode: codes.Internal,
+			expectedErrorCode: connect.CodeInternal,
 		},
 	}
 
@@ -667,7 +664,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 
 			response, err := s.GetAvailablePackageVersions(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
@@ -677,7 +674,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			}
 
 			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 			compareAvailablePackageVersions(t, response.Msg, tc.expectedResponse)
@@ -692,15 +689,15 @@ func TestGetOciAvailablePackageVersions(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name               string
-		repoNamespace      string
-		repoName           string
-		repoUrl            string
-		request            *corev1.GetAvailablePackageVersionsRequest
-		expectedStatusCode codes.Code
-		expectedResponse   *corev1.GetAvailablePackageVersionsResponse
-		seedData           *fakeRemoteOciRegistryData
-		charts             []testSpecChartWithUrl
+		name              string
+		repoNamespace     string
+		repoName          string
+		repoUrl           string
+		request           *corev1.GetAvailablePackageVersionsRequest
+		expectedErrorCode connect.Code
+		expectedResponse  *corev1.GetAvailablePackageVersionsResponse
+		seedData          *fakeRemoteOciRegistryData
+		charts            []testSpecChartWithUrl
 	}{
 		{
 			name:          "it returns the package version summary for podinfo chart in oci repo",
@@ -709,11 +706,10 @@ func TestGetOciAvailablePackageVersions(t *testing.T) {
 			request: &corev1.GetAvailablePackageVersionsRequest{
 				AvailablePackageRef: availableRef("repo-1/podinfo", "namespace-1"),
 			},
-			expectedStatusCode: codes.OK,
-			expectedResponse:   expected_versions_podinfo_2,
-			seedData:           seed_data_2,
-			charts:             oci_podinfo_charts_spec_2,
-			repoUrl:            "oci://localhost:54321/userX/charts",
+			expectedResponse: expected_versions_podinfo_2,
+			seedData:         seed_data_2,
+			charts:           oci_podinfo_charts_spec_2,
+			repoUrl:          "oci://localhost:54321/userX/charts",
 		},
 		{
 			name:          "it returns error for non-existent chart",
@@ -723,8 +719,8 @@ func TestGetOciAvailablePackageVersions(t *testing.T) {
 			request: &corev1.GetAvailablePackageVersionsRequest{
 				AvailablePackageRef: availableRef("repo-1/zippity", "namespace-1"),
 			},
-			expectedStatusCode: codes.Internal,
-			seedData:           seed_data_2,
+			expectedErrorCode: connect.CodeInternal,
+			seedData:          seed_data_2,
 		},
 	}
 
@@ -755,7 +751,7 @@ func TestGetOciAvailablePackageVersions(t *testing.T) {
 
 			response, err := s.GetAvailablePackageVersions(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
@@ -765,7 +761,7 @@ func TestGetOciAvailablePackageVersions(t *testing.T) {
 			}
 
 			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 			compareAvailablePackageVersions(t, response.Msg, tc.expectedResponse)
@@ -1252,7 +1248,7 @@ func redisMockExpectDeleteRepoWithCharts(mock redismock.ClientMock, name types.N
 func fromRedisKeyForChart(key string) (namespace, chartID, chartVersion string, err error) {
 	parts := strings.Split(key, ":")
 	if len(parts) != 4 || parts[0] != "helmcharts" || len(parts[1]) == 0 || len(parts[2]) == 0 || len(parts[3]) == 0 {
-		return "", "", "", status.Errorf(codes.Internal, "invalid key [%s]", key)
+		return "", "", "", connect.NewError(connect.CodeInternal, fmt.Errorf("invalid key [%s]", key))
 	}
 	return parts[1], parts[2], parts[3], nil
 }

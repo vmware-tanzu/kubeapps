@@ -5,8 +5,10 @@ package clientgetter
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -99,12 +101,12 @@ func (cp ClientProvider) Dynamic(headers http.Header, cluster string) (dynamic.I
 func (cp ClientProvider) ControllerRuntime(headers http.Header, cluster string) (client.WithWatch, error) {
 	clientGetter, err := cp.GetClients(headers, cluster)
 	if err != nil {
-		code := codes.FailedPrecondition
+		code := connect.CodeFailedPrecondition
 		if status.Code(err) == codes.Unauthenticated {
 			// want to make sure we return same status in this case
-			code = codes.Unauthenticated
+			code = connect.CodeUnauthenticated
 		}
-		return nil, status.Errorf(code, "unable to build clients due to: %v", err)
+		return nil, connect.NewError(code, fmt.Errorf("unable to build clients due to: %w", err))
 	}
 	return clientGetter.ControllerRuntime()
 }

@@ -11,17 +11,16 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/bufbuild/connect-go"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/connecterror"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"github.com/vmware-tanzu/kubeapps/pkg/tarutil"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/chart"
 	"k8s.io/apimachinery/pkg/types"
 	log "k8s.io/klog/v2"
@@ -35,7 +34,7 @@ func (s *Server) getChartInCluster(ctx context.Context, headers http.Header, key
 	}
 	var chartObj sourcev1.HelmChart
 	if err = client.Get(ctx, key, &chartObj); err != nil {
-		return nil, statuserror.FromK8sError("get", "HelmChart", key.String(), err)
+		return nil, connecterror.FromK8sError("get", "HelmChart", key.String(), err)
 	}
 	return &chartObj, nil
 }
@@ -46,9 +45,7 @@ func (s *Server) availableChartDetail(ctx context.Context, headers http.Header, 
 
 	repoN, chartName, err := pkgutils.SplitPackageIdentifier(packageRef.Identifier)
 	if err != nil {
-		// The helper has been updated to return connect errors, so just ensure
-		// until switched that a grpc error is returned.
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
 	// check specified repo exists and is in ready state
@@ -59,7 +56,7 @@ func (s *Server) availableChartDetail(ctx context.Context, headers http.Header, 
 	if err != nil {
 		return nil, err
 	} else if !isRepoReady(*repo) {
-		return nil, status.Errorf(codes.Internal, "repository [%s] is not in Ready state", repoName)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("repository [%s] is not in Ready state", repoName))
 	}
 
 	chartID := fmt.Sprintf("%s/%s", repoName.Name, chartName)
@@ -80,7 +77,7 @@ func (s *Server) availableChartDetail(ctx context.Context, headers http.Header, 
 		if err != nil {
 			return nil, err
 		} else if chartModel == nil {
-			return nil, status.Errorf(codes.NotFound, "chart [%s] not found", chartName)
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("chart [%s] not found", chartName))
 		}
 
 		if chartVersion == "" {
@@ -111,7 +108,7 @@ func (s *Server) availableChartDetail(ctx context.Context, headers http.Header, 
 		}
 
 		if byteArray == nil {
-			return nil, status.Errorf(codes.Internal, "failed to load details for chart [%s], version [%s]", chartModel.ID, chartVersion)
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to load details for chart [%s], version [%s]", chartModel.ID, chartVersion))
 		}
 	}
 
@@ -128,7 +125,7 @@ func (s *Server) availableChartDetail(ctx context.Context, headers http.Header, 
 	// fix up a couple of fields that don't come from the chart tarball
 	repoUrl := repo.Spec.URL
 	if repoUrl == "" {
-		return nil, status.Errorf(codes.NotFound, "Missing required field spec.url on repository %q", repoName)
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("Missing required field spec.url on repository %q", repoName))
 	}
 
 	pkgDetail.RepoUrl = repoUrl
@@ -140,11 +137,11 @@ func (s *Server) availableChartDetail(ctx context.Context, headers http.Header, 
 
 func (s *Server) getChartModel(ctx context.Context, headers http.Header, repoName types.NamespacedName, chartName string) (*models.Chart, error) {
 	if s.repoCache == nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("server cache has not been properly initialized"))
 	} else if ok, err := s.hasAccessToNamespace(ctx, headers, common.GetChartsGvr(), repoName.Namespace); err != nil {
 		return nil, err
 	} else if !ok {
-		return nil, status.Errorf(codes.PermissionDenied, "user has no [get] access for HelmCharts in namespace [%s]", repoName.Namespace)
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("user has no [get] access for HelmCharts in namespace [%s]", repoName.Namespace))
 	}
 
 	key := s.repoCache.KeyForNamespacedName(repoName)
@@ -243,10 +240,10 @@ func filterAndPaginateCharts(filters *corev1.FilterOptions, pageSize int32, item
 				if startAt < i {
 					pkg, err := pkgutils.AvailablePackageSummaryFromChart(&chart, GetPluginDetail())
 					if err != nil {
-						return nil, status.Errorf(
-							codes.Internal,
-							"Unable to parse chart to an AvailablePackageSummary: %v",
-							err)
+						return nil, connect.NewError(
+							connect.CodeInternal,
+							fmt.Errorf("Unable to parse chart to an AvailablePackageSummary: %w",
+								err))
 					}
 					summaries = append(summaries, pkg)
 					if pageSize > 0 && len(summaries) == int(pageSize) {
@@ -264,7 +261,7 @@ func availablePackageDetailFromChartDetail(chartID string, chartDetail map[strin
 	// TODO (gfichtenholt): if there is no chart yaml (is that even possible?),
 	// fall back to chart info from repo index.yaml
 	if !ok || chartYaml == "" {
-		return nil, status.Errorf(codes.Internal, "No chart manifest found for chart: [%s]", chartID)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("No chart manifest found for chart: [%s]", chartID))
 	}
 	var chartMetadata chart.Metadata
 	err := yaml.Unmarshal([]byte(chartYaml), &chartMetadata)

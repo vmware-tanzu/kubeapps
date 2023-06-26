@@ -13,12 +13,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/go-redis/redis/v8"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -577,7 +576,7 @@ func (c *ChartCache) String() string {
 func (c *ChartCache) fromKey(key string) (namespace, chartID, chartVersion string, err error) {
 	parts := strings.Split(key, KeySegmentsSeparator)
 	if len(parts) != 4 || parts[0] != "helmcharts" || len(parts[1]) == 0 || len(parts[2]) == 0 || len(parts[3]) == 0 {
-		return "", "", "", status.Errorf(codes.Internal, "invalid key [%s]", key)
+		return "", "", "", connect.NewError(connect.CodeInternal, fmt.Errorf("invalid key [%s]", key))
 	}
 	return parts[1], parts[2], parts[3], nil
 }
@@ -609,7 +608,7 @@ func (c *ChartCache) ExpectResync() (chan int, error) {
 	}()
 
 	if c.resyncCh != nil {
-		return nil, status.Errorf(codes.Internal, "ExpectSync() already called")
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("ExpectSync() already called"))
 	} else {
 		c.resyncCh = make(chan int, 1)
 		return c.resyncCh, nil
