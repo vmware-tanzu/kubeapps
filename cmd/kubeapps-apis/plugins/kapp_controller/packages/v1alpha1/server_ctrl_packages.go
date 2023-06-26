@@ -38,9 +38,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *conn
 	pageSize := request.Msg.GetPaginationOptions().GetPageSize()
 	itemOffset, err := paginate.ItemOffsetFromPageToken(request.Msg.GetPaginationOptions().GetPageToken())
 	if err != nil {
-		// TODO(minelson): When 6269 is complete, this can just be returned as an
-		// err (as the paginate module will return connect errors).
-		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		return nil, err
 	}
 	// Assume the default cluster if none is specified
 	if cluster == "" {

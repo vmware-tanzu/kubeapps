@@ -32,8 +32,6 @@ import (
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
@@ -1031,13 +1029,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	refs, err := resourcerefs.GetInstalledPackageResourceRefs(
 		request.Header(), types.NamespacedName{Name: identifier, Namespace: pkgRef.Context.Namespace}, fn)
 	if err != nil {
-		// TODO(minelson): Remove once 6269 is complete.
-		switch status.Code(err) {
-		case codes.NotFound:
-			return nil, connect.NewError(connect.CodeNotFound, err)
-		default:
-			return nil, connect.NewError(connect.CodeInternal, err)
-		}
+		return nil, err
 	} else {
 		return connect.NewResponse(&corev1.GetInstalledPackageResourceRefsResponse{
 			Context:      pkgRef.GetContext(),
