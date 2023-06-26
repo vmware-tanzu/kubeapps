@@ -6,12 +6,11 @@ package resourcerefs
 import (
 	"testing"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs/resourcerefstest"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 func TestGetInstalledPackageResourceRefs(t *testing.T) {
@@ -31,11 +30,8 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 			resourceRefs, err := ResourceRefsFromManifest(
 				tc.ExistingReleases[0].Manifest,
 				tc.ExistingReleases[0].Namespace)
-			expectedStatusCode := tc.ExpectedErrStatusCode
-			if expectedStatusCode == 0 {
-				expectedStatusCode = codes.OK
-			}
-			if got, want := status.Code(err), expectedStatusCode; got != want {
+			expectedStatusCode := tc.ExpectedErrCode
+			if got, want := connect.CodeOf(err), expectedStatusCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
