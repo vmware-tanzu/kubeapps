@@ -23,8 +23,6 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	pkgsGRPCv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	core "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -288,7 +286,7 @@ func TestGetNamespaceNames(t *testing.T) {
 		k8sError                error
 		requestHeaders          http.Header
 		expectedResponse        *v1alpha1.GetNamespaceNamesResponse
-		expectedErrorCode       codes.Code
+		expectedErrorCode       connect.Code
 		existingObjects         []runtime.Object
 	}{
 		{
@@ -334,13 +332,13 @@ func TestGetNamespaceNames(t *testing.T) {
 				Group:    "v1",
 				Resource: "namespaces",
 			}, "default", errors.New("Bang")),
-			expectedErrorCode: codes.PermissionDenied,
+			expectedErrorCode: connect.CodePermissionDenied,
 		},
 		{
 			name:              "returns an internal error if k8s returns an unexpected error",
 			request:           defaultRequest,
 			k8sError:          k8serrors.NewInternalError(errors.New("Bang")),
-			expectedErrorCode: codes.Internal,
+			expectedErrorCode: connect.CodeInternal,
 		},
 		{
 			name: "it should return the list of only active namespaces if accessible",
@@ -630,7 +628,7 @@ func TestGetNamespaceNames(t *testing.T) {
 
 			response, err := s.GetNamespaceNames(ctx, connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
 			if tc.expectedErrorCode != 0 {
@@ -656,7 +654,7 @@ func TestCanI(t *testing.T) {
 		request           *v1alpha1.CanIRequest
 		expectedResponse  *v1alpha1.CanIResponse
 		k8sError          error
-		expectedErrorCode codes.Code
+		expectedErrorCode connect.Code
 	}{
 		{
 			name:      "returns allowed",
@@ -685,14 +683,14 @@ func TestCanI(t *testing.T) {
 		{
 			name:              "requires context parameter",
 			request:           &v1alpha1.CanIRequest{},
-			expectedErrorCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
 			name: "requires cluster parameter",
 			request: &v1alpha1.CanIRequest{
 				Context: &pkgsGRPCv1alpha1.Context{},
 			},
-			expectedErrorCode: codes.InvalidArgument,
+			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 	}
 
@@ -728,7 +726,7 @@ func TestCanI(t *testing.T) {
 
 			response, err := s.CanI(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
 			if tc.expectedErrorCode != 0 {

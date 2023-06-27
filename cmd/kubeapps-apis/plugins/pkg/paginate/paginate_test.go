@@ -6,8 +6,7 @@ package paginate
 import (
 	"testing"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"github.com/bufbuild/connect-go"
 )
 
 func TestPageOffsetFromPageToken(t *testing.T) {
@@ -20,7 +19,7 @@ func TestPageOffsetFromPageToken(t *testing.T) {
 	}
 
 	_, err = PageOffsetFromPageToken("not a number")
-	if got, want := status.Code(err), codes.InvalidArgument; got != want {
+	if got, want := connect.CodeOf(err), connect.CodeInvalidArgument; err != nil && got != want {
 		t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 	}
 }

@@ -98,32 +98,31 @@ func TestGetClient(t *testing.T) {
 		)).Build()
 
 	testCases := []struct {
-		name              string
-		manager           utils.AssetManager
-		clientGetter      clientgetter.ClientProviderInterface
-		statusCodeClient  codes.Code
-		statusCodeManager connect.Code
+		name             string
+		manager          utils.AssetManager
+		clientGetter     clientgetter.ClientProviderInterface
+		errorCodeClient  connect.Code
+		errorCodeManager connect.Code
 	}{
 		{
-			name:              "it returns internal error status when no manager configured",
-			manager:           nil,
-			clientGetter:      clientGetter,
-			statusCodeClient:  codes.OK,
-			statusCodeManager: connect.CodeInternal,
+			name:             "it returns internal error status when no manager configured",
+			manager:          nil,
+			clientGetter:     clientGetter,
+			errorCodeManager: connect.CodeInternal,
 		},
 		{
 			name:    "it returns whatever error the clients getter function returns",
 			manager: manager,
 			clientGetter: &clientgetter.ClientProvider{ClientsFunc: func(headers http.Header, cluster string) (*clientgetter.ClientGetter, error) {
-				return nil, status.Errorf(codes.FailedPrecondition, "Bang!")
+				return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Bang!"))
 			}},
-			statusCodeClient: codes.FailedPrecondition,
+			errorCodeClient: connect.CodeFailedPrecondition,
 		},
 		{
-			name:             "it returns failed-precondition when clients getter function is not set",
-			manager:          manager,
-			clientGetter:     &clientgetter.ClientProvider{ClientsFunc: nil},
-			statusCodeClient: codes.FailedPrecondition,
+			name:            "it returns failed-precondition when clients getter function is not set",
+			manager:         manager,
+			clientGetter:    &clientgetter.ClientProvider{ClientsFunc: nil},
+			errorCodeClient: connect.CodeFailedPrecondition,
 		},
 		{
 			name:         "it returns client without error when configured correctly",
@@ -137,18 +136,18 @@ func TestGetClient(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter, manager: tc.manager}
 
 			clientsProvider, errClient := s.clientGetter.GetClients(http.Header{}, "")
-			if got, want := status.Code(errClient), tc.statusCodeClient; got != want {
-				t.Errorf("got: %+v, want: %+v", got, want)
+			if got, want := connect.CodeOf(errClient), tc.errorCodeClient; errClient != nil && got != want {
+				t.Errorf("got: %+v, want: %+v. err: %+v", got, want, errClient)
 			}
 
 			_, errManager := s.GetManager()
 
-			if got, want := connect.CodeOf(errManager), tc.statusCodeManager; errManager != nil && got != want {
+			if got, want := connect.CodeOf(errManager), tc.errorCodeManager; errManager != nil && got != want {
 				t.Errorf("got: %+v, want: %+v", got, want)
 			}
 
 			// If there is no error, the client should be a dynamic.Interface implementation.
-			if tc.statusCodeClient == codes.OK {
+			if tc.errorCodeClient == 0 {
 				_, err := clientsProvider.Dynamic()
 				if err != nil {
 					t.Errorf("got: nil, want: dynamic.Interface. error %v", err)
@@ -849,7 +848,7 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 		chart      *models.Chart
 		chartFiles *models.ChartFiles
 		expected   *corev1.AvailablePackageDetail
-		statusCode codes.Code
+		errorCode  connect.Code
 	}{
 		{
 			name:  "it returns AvailablePackageDetail if the chart is correct",
@@ -883,7 +882,6 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 				},
 			},
-			statusCode: codes.OK,
 		},
 		{
 			name:  "it includes additional values files in AvailablePackageDetail when available",
@@ -925,17 +923,16 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 				},
 			},
-			statusCode: codes.OK,
 		},
 		{
-			name:       "it returns internal error if empty chart",
-			chart:      &models.Chart{},
-			statusCode: codes.Internal,
+			name:      "it returns internal error if empty chart",
+			chart:     &models.Chart{},
+			errorCode: connect.CodeInternal,
 		},
 		{
-			name:       "it returns internal error if chart is invalid",
-			chart:      &models.Chart{Name: "foo"},
-			statusCode: codes.Internal,
+			name:      "it returns internal error if chart is invalid",
+			chart:     &models.Chart{Name: "foo"},
+			errorCode: connect.CodeInternal,
 		},
 	}
 
@@ -943,11 +940,11 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			availablePackageDetail, err := AvailablePackageDetailFromChart(tc.chart, tc.chartFiles)
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.errorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == codes.OK {
+			if tc.errorCode == 0 {
 				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
 				if got, want := availablePackageDetail, tc.expected; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))

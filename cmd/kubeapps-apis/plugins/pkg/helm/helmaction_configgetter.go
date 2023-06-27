@@ -4,12 +4,12 @@
 package helm
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm/agent"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/kube"
 	"k8s.io/client-go/kubernetes"
@@ -21,17 +21,17 @@ type HelmActionConfigGetterFunc func(headers http.Header, namespace string) (*ac
 func NewHelmActionConfigGetter(configGetter core.KubernetesConfigGetter, cluster string) HelmActionConfigGetterFunc {
 	return func(headers http.Header, namespace string) (*action.Configuration, error) {
 		if configGetter == nil {
-			return nil, status.Errorf(codes.Internal, "configGetter arg required")
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("configGetter arg required"))
 		}
 		config, err := configGetter(headers, cluster)
 		if err != nil {
-			return nil, status.Errorf(codes.FailedPrecondition, "unable to get config due to: %v", err)
+			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get config due to: %w", err))
 		}
 
 		restClientGetter := agent.NewConfigFlagsFromCluster(namespace, config)
 		clientSet, err := kubernetes.NewForConfig(config)
 		if err != nil {
-			return nil, status.Errorf(codes.FailedPrecondition, "unable to create kubernetes client due to: %v", err)
+			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to create kubernetes client due to: %w", err))
 		}
 		// TODO(mnelson): Update to allow different helm storage options.
 		storage := agent.StorageForSecrets(namespace, clientSet)

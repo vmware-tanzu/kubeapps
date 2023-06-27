@@ -9,13 +9,12 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/chart"
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
 )
@@ -524,10 +523,10 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 	invalidChart := &models.Chart{Name: "foo"}
 
 	testCases := []struct {
-		name       string
-		in         *models.Chart
-		expected   *corev1.AvailablePackageSummary
-		statusCode codes.Code
+		name      string
+		in        *models.Chart
+		expected  *corev1.AvailablePackageSummary
+		errorCode connect.Code
 	}{
 		{
 			name: "it returns a complete AvailablePackageSummary for a complete chart",
@@ -564,7 +563,6 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 				},
 			},
-			statusCode: codes.OK,
 		},
 		{
 			name: "it returns a valid AvailablePackageSummary if the minimal chart is correct",
@@ -596,17 +594,16 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 				},
 			},
-			statusCode: codes.OK,
 		},
 		{
-			name:       "it returns internal error if empty chart",
-			in:         &models.Chart{},
-			statusCode: codes.Internal,
+			name:      "it returns internal error if empty chart",
+			in:        &models.Chart{},
+			errorCode: connect.CodeInternal,
 		},
 		{
-			name:       "it returns internal error if chart is invalid",
-			in:         invalidChart,
-			statusCode: codes.Internal,
+			name:      "it returns internal error if chart is invalid",
+			in:        invalidChart,
+			errorCode: connect.CodeInternal,
 		},
 	}
 
@@ -619,11 +616,11 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			availablePackageSummary, err := AvailablePackageSummaryFromChart(tc.in, &pluginDetail)
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.errorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == codes.OK {
+			if tc.errorCode == 0 {
 				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
 				if got, want := availablePackageSummary, tc.expected; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))

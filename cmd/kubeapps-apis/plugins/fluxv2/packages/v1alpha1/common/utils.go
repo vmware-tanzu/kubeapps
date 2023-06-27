@@ -20,6 +20,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/config/credentials"
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
@@ -30,8 +31,6 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"golang.org/x/net/http/httpproxy"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/getter"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -125,9 +124,9 @@ func NamespacedName(obj ctrlclient.Object) (*types.NamespacedName, error) {
 		return &types.NamespacedName{Name: name, Namespace: namespace}, nil
 	} else {
 		return nil,
-			status.Errorf(codes.Internal,
-				"required fields 'metadata.name' and/or 'metadata.namespace' not found on resource: %v",
-				PrettyPrint(obj))
+			connect.NewError(connect.CodeInternal,
+				fmt.Errorf("required fields 'metadata.name' and/or 'metadata.namespace' not found on resource: %v",
+					PrettyPrint(obj)))
 	}
 }
 
@@ -148,6 +147,10 @@ func RWMutexWriteLocked(rw *sync.RWMutex) bool {
 // the readerCount may become < 0.
 // see https://github.com/golang/go/blob/release-branch.go1.14/src/sync/rwmutex.go#L100
 // so this code definitely needs be used with caution or better avoided
+// TODO(minelson): Note the danger of checking private variables like this
+// is that they change underneath you. This fails with go 1.20 because
+// readerCount has changed from an Int to an atomic.Int32 (struct).
+// We'll need to update when upgrading.
 func RWMutexReadLocked(rw *sync.RWMutex) bool {
 	return reflect.ValueOf(rw).Elem().FieldByName("readerCount").Int() > 0
 }

@@ -13,8 +13,6 @@ import (
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugin_test"
-
-	"google.golang.org/grpc/codes"
 )
 
 const (
@@ -24,7 +22,7 @@ const (
 var mockedPackagingPlugin1 = makeDefaultTestPackagingPlugin("mock1")
 var mockedPackagingPlugin2 = makeDefaultTestPackagingPlugin("mock2")
 var mockedPackagingPlugin3 = makeDefaultTestPackagingPlugin("mock2")
-var mockedNotFoundPackagingPlugin = makeOnlyStatusTestPackagingPlugin("bad-plugin", codes.NotFound)
+var mockedNotFoundPackagingPlugin = makeOnlyStatusTestPackagingPlugin("bad-plugin", connect.CodeNotFound)
 
 var ignoreUnexportedOpts = cmpopts.IgnoreUnexported(
 	corev1.AvailablePackageDetail{},
@@ -77,11 +75,11 @@ func makeDefaultTestPackagingPlugin(pluginName string) pkgPluginWithServer {
 	}
 }
 
-func makeOnlyStatusTestPackagingPlugin(pluginName string, statusCode codes.Code) pkgPluginWithServer {
+func makeOnlyStatusTestPackagingPlugin(pluginName string, errorCode connect.Code) pkgPluginWithServer {
 	pluginDetails := &plugins.Plugin{Name: pluginName, Version: "v1alpha1"}
 	packagingPluginServer := &plugin_test.TestPackagingPluginServer{Plugin: pluginDetails}
 
-	packagingPluginServer.Status = statusCode
+	packagingPluginServer.ErrorCode = errorCode
 
 	return pkgPluginWithServer{
 		plugin: pluginDetails,
@@ -93,7 +91,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name              string
 		configuredPlugins []pkgPluginWithServer
-		statusCode        connect.Code
+		errorCode         connect.Code
 		request           *corev1.GetAvailablePackageSummariesRequest
 		expectedResponse  *corev1.GetAvailablePackageSummariesResponse
 	}{
@@ -275,7 +273,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
 				Categories:                []string{""},
 			},
-			statusCode: connect.CodeNotFound,
+			errorCode: connect.CodeNotFound,
 		},
 	}
 
@@ -286,14 +284,14 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			}
 			availablePackageSummaries, err := server.GetAvailablePackageSummaries(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := connect.CodeOf(err), tc.statusCode; err != nil && got != want {
+			if got, want := connect.CodeOf(err), tc.errorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
-			if tc.statusCode != 0 {
+			if tc.errorCode != 0 {
 				return
 			}
 
-			if tc.statusCode == 0 {
+			if tc.errorCode == 0 {
 				if got, want := availablePackageSummaries.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}
@@ -306,7 +304,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 	testCases := []struct {
 		name              string
 		configuredPlugins []pkgPluginWithServer
-		statusCode        connect.Code
+		errorCode         connect.Code
 		request           *corev1.GetAvailablePackageDetailRequest
 		expectedResponse  *corev1.GetAvailablePackageDetailResponse
 	}{
@@ -351,7 +349,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			},
 
 			expectedResponse: &corev1.GetAvailablePackageDetailResponse{},
-			statusCode:       connect.CodeNotFound,
+			errorCode:        connect.CodeNotFound,
 		},
 	}
 
@@ -362,11 +360,11 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 			availablePackageDetail, err := server.GetAvailablePackageDetail(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := connect.CodeOf(err), tc.statusCode; err != nil && got != want {
+			if got, want := connect.CodeOf(err), tc.errorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == 0 {
+			if tc.errorCode == 0 {
 				if got, want := availablePackageDetail.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
 				}

@@ -14,9 +14,6 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/connecterror"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -88,12 +85,12 @@ func (s *Server) GetNamespaceNames(ctx context.Context, r *connect.Request[v1alp
 	// Check if there are trusted namespaces in the request
 	trustedNamespaces, err := getTrustedNamespacesFromHeader(ctx, s.pluginConfig.TrustedNamespaces.HeaderName, s.pluginConfig.TrustedNamespaces.HeaderPattern)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "Namespaces", "", err)
+		return nil, connecterror.FromK8sError("get", "Namespaces", "", err)
 	}
 
 	namespaceList, err := s.GetAccessibleNamespaces(ctx, r.Header(), cluster, trustedNamespaces)
 	if err != nil {
-		return nil, statuserror.FromK8sError("list", "Namespaces", "", err)
+		return nil, connecterror.FromK8sError("list", "Namespaces", "", err)
 	}
 
 	namespaces := make([]string, len(namespaceList))
@@ -109,12 +106,12 @@ func (s *Server) GetNamespaceNames(ctx context.Context, r *connect.Request[v1alp
 // CanI Checks if the operation can be performed according to incoming auth rbac
 func (s *Server) CanI(ctx context.Context, r *connect.Request[v1alpha1.CanIRequest]) (*connect.Response[v1alpha1.CanIResponse], error) {
 	if r.Msg.GetContext() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "context parameter is required")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("context parameter is required"))
 	}
 	namespace := r.Msg.GetContext().GetNamespace()
 	cluster := r.Msg.GetContext().GetCluster()
 	if cluster == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "cluster parameter is required")
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("cluster parameter is required"))
 	}
 	log.InfoS("+resources CanI", "cluster", cluster, "namespace", namespace, "group", r.Msg.GetGroup(), "resource", r.Msg.GetResource(), "verb", r.Msg.GetVerb())
 
@@ -127,7 +124,7 @@ func (s *Server) CanI(ctx context.Context, r *connect.Request[v1alpha1.CanIReque
 		typedClient, err = s.clientGetter.Typed(r.Header(), cluster)
 	}
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the k8s client: '%w'", err))
 	}
 
 	reviewResult, err := typedClient.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, &authorizationapi.SelfSubjectAccessReview{

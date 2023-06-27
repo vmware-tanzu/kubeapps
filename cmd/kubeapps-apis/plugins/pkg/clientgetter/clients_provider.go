@@ -5,8 +5,10 @@ package clientgetter
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -73,12 +75,12 @@ type ClientProvider struct {
 func (cp ClientProvider) Typed(headers http.Header, cluster string) (kubernetes.Interface, error) {
 	clientGetter, err := cp.GetClients(headers, cluster)
 	if err != nil {
-		code := codes.FailedPrecondition
-		if status.Code(err) == codes.Unauthenticated {
+		code := connect.CodeFailedPrecondition
+		if connect.CodeOf(err) == connect.CodeUnauthenticated {
 			// want to make sure we return same status in this case
-			code = codes.Unauthenticated
+			code = connect.CodeUnauthenticated
 		}
-		return nil, status.Errorf(code, "unable to build clients due to: %v", err)
+		return nil, connect.NewError(code, fmt.Errorf("unable to build clients due to: %w", err))
 	}
 	return clientGetter.Typed()
 }
@@ -86,12 +88,12 @@ func (cp ClientProvider) Typed(headers http.Header, cluster string) (kubernetes.
 func (cp ClientProvider) Dynamic(headers http.Header, cluster string) (dynamic.Interface, error) {
 	clientGetter, err := cp.GetClients(headers, cluster)
 	if err != nil {
-		code := codes.FailedPrecondition
-		if status.Code(err) == codes.Unauthenticated {
+		code := connect.CodeFailedPrecondition
+		if connect.CodeOf(err) == connect.CodeUnauthenticated {
 			// want to make sure we return same status in this case
-			code = codes.Unauthenticated
+			code = connect.CodeUnauthenticated
 		}
-		return nil, status.Errorf(code, "unable to build clients due to: %v", err)
+		return nil, connect.NewError(code, fmt.Errorf("unable to build clients due to: %w", err))
 	}
 	return clientGetter.Dynamic()
 }
@@ -99,12 +101,12 @@ func (cp ClientProvider) Dynamic(headers http.Header, cluster string) (dynamic.I
 func (cp ClientProvider) ControllerRuntime(headers http.Header, cluster string) (client.WithWatch, error) {
 	clientGetter, err := cp.GetClients(headers, cluster)
 	if err != nil {
-		code := codes.FailedPrecondition
-		if status.Code(err) == codes.Unauthenticated {
+		code := connect.CodeFailedPrecondition
+		if connect.CodeOf(err) == connect.CodeUnauthenticated {
 			// want to make sure we return same status in this case
-			code = codes.Unauthenticated
+			code = connect.CodeUnauthenticated
 		}
-		return nil, status.Errorf(code, "unable to build clients due to: %v", err)
+		return nil, connect.NewError(code, fmt.Errorf("unable to build clients due to: %w", err))
 	}
 	return clientGetter.ControllerRuntime()
 }
@@ -112,19 +114,19 @@ func (cp ClientProvider) ControllerRuntime(headers http.Header, cluster string) 
 func (cp ClientProvider) ApiExt(headers http.Header, cluster string) (apiext.Interface, error) {
 	clientGetter, err := cp.GetClients(headers, cluster)
 	if err != nil {
-		code := codes.FailedPrecondition
-		if status.Code(err) == codes.Unauthenticated {
+		code := connect.CodeFailedPrecondition
+		if connect.CodeOf(err) == connect.CodeUnauthenticated {
 			// want to make sure we return same status in this case
-			code = codes.Unauthenticated
+			code = connect.CodeUnauthenticated
 		}
-		return nil, status.Errorf(code, "unable to build clients due to: %v", err)
+		return nil, connect.NewError(code, fmt.Errorf("unable to build clients due to: %w", err))
 	}
 	return clientGetter.ApiExt()
 }
 
 func (cp ClientProvider) GetClients(headers http.Header, cluster string) (*ClientGetter, error) {
 	if cp.ClientsFunc == nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "clients provider function is not set")
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("clients provider function is not set"))
 	}
 	return cp.ClientsFunc(headers, cluster)
 }
@@ -146,7 +148,7 @@ type FixedClusterClientProvider struct {
 func (bcp FixedClusterClientProvider) Typed(ctx context.Context) (kubernetes.Interface, error) {
 	clientGetter, err := bcp.GetClients(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "unable to build clients due to: %v", err)
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to build clients due to: %w", err))
 	}
 	return clientGetter.Typed()
 }
@@ -154,7 +156,7 @@ func (bcp FixedClusterClientProvider) Typed(ctx context.Context) (kubernetes.Int
 func (bcp FixedClusterClientProvider) Dynamic(ctx context.Context) (dynamic.Interface, error) {
 	clientGetter, err := bcp.GetClients(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "unable to build clients due to: %v", err)
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to build clients due to: %w", err))
 	}
 	return clientGetter.Dynamic()
 }
@@ -162,7 +164,7 @@ func (bcp FixedClusterClientProvider) Dynamic(ctx context.Context) (dynamic.Inte
 func (bcp FixedClusterClientProvider) ControllerRuntime(ctx context.Context) (client.WithWatch, error) {
 	clientGetter, err := bcp.GetClients(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "unable to build clients due to: %v", err)
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to build clients due to: %w", err))
 	}
 	return clientGetter.ControllerRuntime()
 }
@@ -170,14 +172,14 @@ func (bcp FixedClusterClientProvider) ControllerRuntime(ctx context.Context) (cl
 func (bcp FixedClusterClientProvider) ApiExt(ctx context.Context) (apiext.Interface, error) {
 	clientGetter, err := bcp.GetClients(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "unable to build clients due to: %v", err)
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to build clients due to: %w", err))
 	}
 	return clientGetter.ApiExt()
 }
 
 func (bcp FixedClusterClientProvider) GetClients(ctx context.Context) (*ClientGetter, error) {
 	if bcp.ClientsFunc == nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "clients provider function is not set")
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("clients provider function is not set"))
 	}
 	return bcp.ClientsFunc(ctx)
 }
@@ -186,16 +188,16 @@ func (bcp FixedClusterClientProvider) GetClients(ctx context.Context) (*ClientGe
 func buildClientsProviderFunction(configGetter core.KubernetesConfigGetter, options Options) (GetClientsFunc, error) {
 	return func(headers http.Header, cluster string) (*ClientGetter, error) {
 		if configGetter == nil {
-			return nil, status.Errorf(codes.Internal, "configGetter arg required")
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("configGetter arg required"))
 		}
 		config, err := configGetter(headers, cluster)
 		if err != nil {
-			code := codes.FailedPrecondition
-			if status.Code(err) == codes.Unauthenticated {
+			code := connect.CodeFailedPrecondition
+			if connect.CodeOf(err) == connect.CodeUnauthenticated {
 				// want to make sure we return same status in this case
-				code = codes.Unauthenticated
+				code = connect.CodeUnauthenticated
 			}
-			return nil, status.Errorf(code, "unable to get in cluster config due to: %v", err)
+			return nil, connect.NewError(code, fmt.Errorf("unable to get in cluster config due to: %w", err))
 		}
 
 		return buildClientGetter(config, options)
@@ -206,7 +208,7 @@ func buildClientGetter(config *rest.Config, options Options) (*ClientGetter, err
 	var typedClientFunc TypedClientFunc = func() (kubernetes.Interface, error) {
 		typedClient, err := kubernetes.NewForConfig(config)
 		if err != nil {
-			return nil, status.Errorf(codes.FailedPrecondition, "unable to get typed client due to: %v", err)
+			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get typed client due to: %w", err))
 		}
 		return typedClient, nil
 	}
@@ -214,7 +216,7 @@ func buildClientGetter(config *rest.Config, options Options) (*ClientGetter, err
 	var dynamicClientFunc DynamicClientFunc = func() (dynamic.Interface, error) {
 		dynamicClient, err := dynamic.NewForConfig(config)
 		if err != nil {
-			return nil, status.Errorf(codes.FailedPrecondition, "unable to get dynamic client due to: %v", err)
+			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get dynamic client due to: %w", err))
 		}
 		return dynamicClient, nil
 	}
@@ -230,7 +232,7 @@ func buildClientGetter(config *rest.Config, options Options) (*ClientGetter, err
 
 		ctrlClient, err := client.NewWithWatch(config, ctrlOpts)
 		if err != nil {
-			return nil, status.Errorf(codes.FailedPrecondition, "unable to get controller runtime client due to: %v", err)
+			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get controller runtime client due to: %w", err))
 		}
 		return ctrlClient, nil
 	}
@@ -238,7 +240,7 @@ func buildClientGetter(config *rest.Config, options Options) (*ClientGetter, err
 	var apiExtClientFunc ApiExtFunc = func() (apiext.Interface, error) {
 		apiExtensions, err := apiext.NewForConfig(config)
 		if err != nil {
-			return nil, status.Errorf(codes.FailedPrecondition, "unable to get api extensions client due to: %v", err)
+			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get api extensions client due to: %w", err))
 		}
 		return apiExtensions, nil
 	}
@@ -248,7 +250,7 @@ func buildClientGetter(config *rest.Config, options Options) (*ClientGetter, err
 func NewClientProvider(configGetter core.KubernetesConfigGetter, options Options) (ClientProviderInterface, error) {
 	clientsGetFunc, err := buildClientsProviderFunction(configGetter, options)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "unable to get client provider functions due to: %v", err)
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get client provider functions due to: %w", err))
 	}
 	return &ClientProvider{ClientsFunc: clientsGetFunc}, nil
 }
@@ -265,12 +267,12 @@ func NewBackgroundClientProvider(options Options, clientQPS float32, clientBurst
 	return &FixedClusterClientProvider{ClientsFunc: func(ctx context.Context) (*ClientGetter, error) {
 		// Some plugins currently support interactions with the default (kubeapps) cluster only
 		if config, err := rest.InClusterConfig(); err != nil {
-			code := codes.FailedPrecondition
+			code := connect.CodeFailedPrecondition
 			if status.Code(err) == codes.Unauthenticated {
 				// want to make sure we return same status in this case
-				code = codes.Unauthenticated
+				code = connect.CodeUnauthenticated
 			}
-			return nil, status.Errorf(code, "unable to get in cluster config due to: %v", err)
+			return nil, connect.NewError(code, fmt.Errorf("unable to get in cluster config due to: %w", err))
 		} else {
 			config.QPS = clientQPS
 			config.Burst = clientBurst

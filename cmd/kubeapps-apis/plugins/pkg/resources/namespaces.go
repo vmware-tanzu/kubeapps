@@ -4,13 +4,13 @@
 package resources
 
 import (
+	"fmt"
 	"math"
 	"sync"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	authorizationapi "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -34,7 +34,7 @@ type checkNSResult struct {
 func FindAccessibleNamespaces(userClientGetter clientgetter.TypedClientFunc, serviceAccountClientGetter clientgetter.TypedClientFunc, maxWorkers int) ([]corev1.Namespace, error) {
 	userClient, err := userClientGetter()
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the k8s client: '%w'", err))
 	}
 
 	backgroundCtx := context.Background()
@@ -50,7 +50,7 @@ func FindAccessibleNamespaces(userClientGetter clientgetter.TypedClientFunc, ser
 			// the cluster config service account otherwise.
 			serviceAccountClient, err := serviceAccountClientGetter()
 			if err != nil {
-				return nil, status.Errorf(codes.Internal, "unable to get the in-cluster k8s client: '%v'", err)
+				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the in-cluster k8s client: '%w'", err))
 			}
 			namespaces, err = serviceAccountClient.CoreV1().Namespaces().List(backgroundCtx, metav1.ListOptions{})
 			if err != nil && k8sErrors.IsForbidden(err) {

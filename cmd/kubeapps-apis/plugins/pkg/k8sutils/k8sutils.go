@@ -7,7 +7,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/connecterror"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -28,7 +28,7 @@ func WaitForResource(ctx context.Context, ri dynamic.ResourceInterface, name str
 				return false, nil
 			} else {
 				// any other real error
-				return false, statuserror.FromK8sError("wait", "resource", name, err)
+				return false, connecterror.FromK8sError("wait", "resource", name, err)
 			}
 		}
 		// the resource is created now

@@ -9,11 +9,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/bufbuild/connect-go"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/connecterror"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -44,7 +43,7 @@ func (s *Server) handleRepoSecretForCreate(
 
 	// if we have both ref config and data config, it is an invalid mixed configuration
 	if (hasCaRef || hasAuthRef) && (hasCaData || hasAuthData) {
-		return nil, false, status.Errorf(codes.InvalidArgument, "Package repository cannot mix referenced secrets and user provided secret data")
+		return nil, false, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Package repository cannot mix referenced secrets and user provided secret data"))
 	}
 
 	// create/get secret
@@ -66,7 +65,7 @@ func (s *Server) handleRepoSecretForCreate(
 		if typedClient, err := s.clientGetter.Typed(headers, s.kubeappsCluster); err != nil {
 			return nil, false, err
 		} else if secret, err = typedClient.CoreV1().Secrets(repoName.Namespace).Create(ctx, secret, metav1.CreateOptions{}); err != nil {
-			return nil, false, statuserror.FromK8sError("create", "secret", secret.GetGenerateName(), err)
+			return nil, false, connecterror.FromK8sError("create", "secret", secret.GetGenerateName(), err)
 		} else {
 			return secret, true, err
 		}
@@ -91,7 +90,7 @@ func (s *Server) handleRepoSecretForUpdate(
 
 	// if we have both ref config and data config, it is an invalid mixed configuration
 	if (hasCaRef || hasAuthRef) && (hasCaData || hasAuthData) {
-		return nil, false, false, status.Errorf(codes.InvalidArgument, "Package repository cannot mix referenced secrets and user provided secret data")
+		return nil, false, false, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Package repository cannot mix referenced secrets and user provided secret data"))
 	}
 
 	typedClient, err := s.clientGetter.Typed(headers, s.kubeappsCluster)
@@ -103,14 +102,14 @@ func (s *Server) handleRepoSecretForUpdate(
 	var existingSecret *apiv1.Secret
 	if repo.Spec.SecretRef != nil {
 		if existingSecret, err = secretInterface.Get(ctx, repo.Spec.SecretRef.Name, metav1.GetOptions{}); err != nil {
-			return nil, false, false, statuserror.FromK8sError("get", "secret", repo.Spec.SecretRef.Name, err)
+			return nil, false, false, connecterror.FromK8sError("get", "secret", repo.Spec.SecretRef.Name, err)
 		}
 	}
 
 	// check we cannot change mode (per design spec)
 	if existingSecret != nil && (hasCaRef || hasCaData || hasAuthRef || hasAuthData) {
 		if isSecretKubeappsManaged(existingSecret, repo) != (hasAuthData || hasCaData) {
-			return nil, false, false, status.Errorf(codes.InvalidArgument, "Auth management mode cannot be changed")
+			return nil, false, false, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Auth management mode cannot be changed"))
 		}
 	}
 
@@ -141,7 +140,7 @@ func (s *Server) handleRepoSecretForUpdate(
 			// and we recreate the updated one
 			if updatedSecret != nil {
 				if updatedSecret, err = typedClient.CoreV1().Secrets(repoName.Namespace).Create(ctx, updatedSecret, metav1.CreateOptions{}); err != nil {
-					return nil, false, false, statuserror.FromK8sError("create", "secret", updatedSecret.GetGenerateName(), err)
+					return nil, false, false, connecterror.FromK8sError("create", "secret", updatedSecret.GetGenerateName(), err)
 				}
 			}
 			return updatedSecret, true, true, nil
@@ -177,8 +176,8 @@ func (s *Server) validateUserManagedRepoSecret(
 	var secretRef string
 	if secretRefTls != "" && secretRefAuth != "" && secretRefTls != secretRefAuth {
 		// flux repo spec only allows one secret per HelmRepository CRD
-		return nil, status.Errorf(
-			codes.InvalidArgument, "TLS config secret and Auth secret must be the same")
+		return nil, connect.NewError(
+			connect.CodeInvalidArgument, fmt.Errorf("TLS config secret and Auth secret must be the same"))
 	} else if secretRefTls != "" {
 		secretRef = secretRefTls
 	} else if secretRefAuth != "" {
@@ -191,7 +190,7 @@ func (s *Server) validateUserManagedRepoSecret(
 		if typedClient, err := s.clientGetter.Typed(headers, s.kubeappsCluster); err != nil {
 			return nil, err
 		} else if secret, err = typedClient.CoreV1().Secrets(repoName.Namespace).Get(ctx, secretRef, metav1.GetOptions{}); err != nil {
-			return nil, statuserror.FromK8sError("get", "secret", secretRef, err)
+			return nil, connecterror.FromK8sError("get", "secret", secretRef, err)
 		} else {
 			// also check that the data in the opaque secret corresponds
 			// to specified auth type, e.g. if AuthType is
@@ -200,34 +199,34 @@ func (s *Server) validateUserManagedRepoSecret(
 			// it appears flux does not care about the k8s secret type (opaque vs tls vs basic-auth, etc.)
 			// https://github.com/fluxcd/source-controller/blob/bc5a47e821562b1c4f9731acd929b8d9bd23b3a8/controllers/helmrepository_controller.go#L357
 			if secretRefTls != "" && secret.Data["caFile"] == nil {
-				return nil, status.Errorf(codes.Internal, "Specified secret [%s] missing field 'caFile'", secretRef)
+				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Specified secret [%s] missing field 'caFile'", secretRef))
 			}
 			if secretRefAuth != "" {
 				switch auth.Type {
 				case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
 					if secret.Data["username"] == nil || secret.Data["password"] == nil {
-						return nil, status.Errorf(codes.Internal, "Specified secret [%s] missing fields 'username' and/or 'password'", secretRef)
+						return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Specified secret [%s] missing fields 'username' and/or 'password'", secretRef))
 					}
 				case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS:
 					if repoType == sourcev1.HelmRepositoryTypeOCI {
 						// ref https://fluxcd.io/flux/components/source/helmrepositories/#tls-authentication
 						// Note: TLS authentication is not yet supported by OCI Helm repositories.
-						return nil, status.Errorf(codes.Internal, "Package repository authentication type %q is not supported for OCI repositories", auth.Type)
+						return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Package repository authentication type %q is not supported for OCI repositories", auth.Type))
 					} else {
 						if secret.Data["keyFile"] == nil || secret.Data["certFile"] == nil {
-							return nil, status.Errorf(codes.Internal, "Specified secret [%s] missing fields 'keyFile' and/or 'certFile'", secretRef)
+							return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Specified secret [%s] missing fields 'keyFile' and/or 'certFile'", secretRef))
 						}
 					}
 				case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
 					if repoType == sourcev1.HelmRepositoryTypeOCI {
 						if secret.Data[apiv1.DockerConfigJsonKey] == nil {
-							return nil, status.Errorf(codes.Internal, "Specified secret [%s] missing field '%s'", secretRef, apiv1.DockerConfigJsonKey)
+							return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Specified secret [%s] missing field '%s'", secretRef, apiv1.DockerConfigJsonKey))
 						}
 					} else {
-						return nil, status.Errorf(codes.Internal, "Package repository authentication type %q is not supported", auth.Type)
+						return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Package repository authentication type %q is not supported", auth.Type))
 					}
 				default:
-					return nil, status.Errorf(codes.Internal, "Package repository authentication type %q is not supported", auth.Type)
+					return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Package repository authentication type %q is not supported", auth.Type))
 				}
 			}
 		}
@@ -269,7 +268,7 @@ func (s *Server) setOwnerReferencesForRepoSecret(
 					}),
 			}
 			if _, err := secretsInterface.Update(ctx, secret, metav1.UpdateOptions{}); err != nil {
-				return statuserror.FromK8sError("update", "secret", secret.Name, err)
+				return connecterror.FromK8sError("update", "secret", secret.Name, err)
 			}
 		}
 	}
@@ -283,7 +282,7 @@ func (s *Server) getRepoTlsConfigAndAuth(ctx context.Context, headers http.Heade
 	if repo.Spec.SecretRef != nil {
 		secretName := repo.Spec.SecretRef.Name
 		if s == nil || s.clientGetter == nil {
-			return nil, nil, status.Errorf(codes.Internal, "unexpected state in clientGetterHolder instance")
+			return nil, nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unexpected state in clientGetterHolder instance"))
 		}
 		typedClient, err := s.clientGetter.Typed(headers, s.kubeappsCluster)
 		if err != nil {
@@ -291,7 +290,7 @@ func (s *Server) getRepoTlsConfigAndAuth(ctx context.Context, headers http.Heade
 		}
 		secret, err := typedClient.CoreV1().Secrets(repo.Namespace).Get(ctx, secretName, metav1.GetOptions{})
 		if err != nil {
-			return nil, nil, statuserror.FromK8sError("get", "secret", secretName, err)
+			return nil, nil, connecterror.FromK8sError("get", "secret", secretName, err)
 		}
 
 		if isSecretKubeappsManaged(secret, &repo) {
@@ -347,7 +346,7 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 			if hadSecretTlsCa {
 				secret.Data["caFile"] = existingSecret.Data["caFile"]
 			} else {
-				return nil, false, status.Errorf(codes.InvalidArgument, "Invalid configuration, unexpected REDACTED content")
+				return nil, false, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Invalid configuration, unexpected REDACTED content"))
 			}
 		} else {
 			secret.Data["caFile"] = []byte(caCert)
@@ -364,10 +363,10 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
 			unp := auth.GetUsernamePassword()
 			if unp == nil || unp.Username == "" || unp.Password == "" {
-				return nil, false, status.Errorf(codes.InvalidArgument, "Username/Password configuration is missing")
+				return nil, false, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Username/Password configuration is missing"))
 			}
 			if (unp.Username == redactedString && !hadSecretUsername) || (unp.Password == redactedString && !hadSecretPassword) {
-				return nil, false, status.Errorf(codes.InvalidArgument, "Invalid configuration, unexpected REDACTED content")
+				return nil, false, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Invalid configuration, unexpected REDACTED content"))
 			}
 
 			if existingSecret != nil {
@@ -387,15 +386,15 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 			if repoType == sourcev1.HelmRepositoryTypeOCI {
 				// ref https://fluxcd.io/flux/components/source/helmrepositories/#tls-authentication
 				// Note: TLS authentication is not yet supported by OCI Helm repositories.
-				return nil, false, status.Errorf(codes.Internal, "Package repository authentication type %q is not supported for OCI repositories", auth.Type)
+				return nil, false, connect.NewError(connect.CodeInternal, fmt.Errorf("Package repository authentication type %q is not supported for OCI repositories", auth.Type))
 			}
 
 			ck := auth.GetTlsCertKey()
 			if ck == nil || ck.Cert == "" || ck.Key == "" {
-				return nil, false, status.Errorf(codes.InvalidArgument, "TLS Cert/Key configuration is missing")
+				return nil, false, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("TLS Cert/Key configuration is missing"))
 			}
 			if (ck.Cert == redactedString && !hadSecretTlsCert) || (ck.Key == redactedString && !hadSecretTlsKey) {
-				return nil, false, status.Errorf(codes.InvalidArgument, "Invalid configuration, unexpected REDACTED content")
+				return nil, false, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Invalid configuration, unexpected REDACTED content"))
 			}
 
 			if existingSecret != nil {
@@ -413,15 +412,15 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 			}
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
 			if repoType != sourcev1.HelmRepositoryTypeOCI {
-				return nil, false, status.Errorf(codes.Internal, "Unsupported package repository authentication type: %q", auth.Type)
+				return nil, false, connect.NewError(connect.CodeInternal, fmt.Errorf("Unsupported package repository authentication type: %q", auth.Type))
 			}
 
 			creds := auth.GetDockerCreds()
 			if creds == nil || creds.Server == "" || creds.Username == "" || creds.Password == "" {
-				return nil, false, status.Errorf(codes.InvalidArgument, "Docker credentials are missing")
+				return nil, false, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Docker credentials are missing"))
 			}
 			if (creds.Server == redactedString || creds.Username == redactedString || creds.Password == redactedString || creds.Email == redactedString) && !hadSecretDocker {
-				return nil, false, status.Errorf(codes.InvalidArgument, "Invalid configuration, unexpected REDACTED content")
+				return nil, false, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Invalid configuration, unexpected REDACTED content"))
 			}
 
 			secret.Type = apiv1.SecretTypeDockerConfigJson
@@ -430,7 +429,7 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 			} else if creds.Server == redactedString || creds.Username == redactedString || creds.Password == redactedString || creds.Email == redactedString {
 				newcreds, err := decodeDockerAuth(existingSecret.Data[apiv1.DockerConfigJsonKey])
 				if err != nil {
-					return nil, false, status.Errorf(codes.Internal, "Invalid configuration, the existing repository does not have valid docker authentication")
+					return nil, false, connect.NewError(connect.CodeInternal, fmt.Errorf("Invalid configuration, the existing repository does not have valid docker authentication"))
 				}
 
 				if creds.Server != redactedString {
@@ -448,20 +447,20 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 
 				isSameSecret = false
 				if configjson, err := encodeDockerAuth(newcreds); err != nil {
-					return nil, false, status.Errorf(codes.InvalidArgument, "Invalid Docker credentials")
+					return nil, false, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Invalid Docker credentials"))
 				} else {
 					secret.Data[apiv1.DockerConfigJsonKey] = configjson
 				}
 			} else {
 				isSameSecret = false
 				if configjson, err := encodeDockerAuth(creds); err != nil {
-					return nil, false, status.Errorf(codes.InvalidArgument, "Invalid Docker credentials")
+					return nil, false, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Invalid Docker credentials"))
 				} else {
 					secret.Data[apiv1.DockerConfigJsonKey] = configjson
 				}
 			}
 		default:
-			return nil, false, status.Errorf(codes.InvalidArgument, "Package repository authentication type %q is not supported", auth.Type)
+			return nil, false, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Package repository authentication type %q is not supported", auth.Type))
 		}
 	} else {
 		// no authentication, check if it was removed

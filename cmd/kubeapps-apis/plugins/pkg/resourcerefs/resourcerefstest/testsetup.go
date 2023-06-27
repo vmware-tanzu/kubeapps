@@ -4,8 +4,8 @@
 package resourcerefstest
 
 import (
+	"github.com/bufbuild/connect-go"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"google.golang.org/grpc/codes"
 )
 
 // this is done so that test scenarios can be re-used in another package (helm and flux plug-ins)
@@ -17,10 +17,10 @@ type TestReleaseStub struct {
 }
 
 type TestCase struct {
-	Name                  string
-	ExistingReleases      []TestReleaseStub
-	ExpectedResourceRefs  []*corev1.ResourceRef
-	ExpectedErrStatusCode codes.Code
+	Name                 string
+	ExistingReleases     []TestReleaseStub
+	ExpectedResourceRefs []*corev1.ResourceRef
+	ExpectedErrCode      connect.Code
 }
 
 var (
@@ -186,7 +186,7 @@ should not be :! parsed as yaml$
 `,
 				},
 			},
-			ExpectedErrStatusCode: codes.Internal,
+			ExpectedErrCode: connect.CodeInternal,
 		},
 		{
 			Name: "handles duplicate labels as helm does",
@@ -498,8 +498,8 @@ metadata:
 			},
 		},
 		{
-			Name:                  "returns a not found error if the helm release is not found (2)",
-			ExpectedErrStatusCode: codes.NotFound,
+			Name:            "returns a not found error if the helm release is not found (2)",
+			ExpectedErrCode: connect.CodeNotFound,
 		},
 		{
 			Name: "returns internal error if the yaml manifest cannot be parsed (2)",
@@ -514,7 +514,7 @@ should not be :! parsed as yaml$
 `,
 				},
 			},
-			ExpectedErrStatusCode: codes.Internal,
+			ExpectedErrCode: connect.CodeInternal,
 		},
 		{
 			Name: "handles duplicate labels in the manifest as helm does (2)",

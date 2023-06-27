@@ -391,60 +391,56 @@ type helmReleaseStub struct {
 
 func TestGetInstalledPackageDetail(t *testing.T) {
 	testCases := []struct {
-		name               string
-		request            *corev1.GetInstalledPackageDetailRequest
-		existingK8sObjs    testSpecGetInstalledPackages
-		existingHelmStub   helmReleaseStub
-		expectedStatusCode codes.Code
-		expectedDetail     *corev1.InstalledPackageDetail
+		name              string
+		request           *corev1.GetInstalledPackageDetailRequest
+		existingK8sObjs   testSpecGetInstalledPackages
+		existingHelmStub  helmReleaseStub
+		expectedErrorCode connect.Code
+		expectedDetail    *corev1.InstalledPackageDetail
 	}{
 		{
 			name: "returns installed package detail when install fails",
 			request: &corev1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: my_redis_ref,
 			},
-			existingK8sObjs:    redis_existing_spec_failed,
-			existingHelmStub:   redis_existing_stub_failed,
-			expectedStatusCode: codes.OK,
-			expectedDetail:     redis_detail_failed,
+			existingK8sObjs:  redis_existing_spec_failed,
+			existingHelmStub: redis_existing_stub_failed,
+			expectedDetail:   redis_detail_failed,
 		},
 		{
 			name: "returns installed package detail when install is in progress",
 			request: &corev1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: my_redis_ref,
 			},
-			existingK8sObjs:    redis_existing_spec_pending,
-			existingHelmStub:   redis_existing_stub_pending,
-			expectedStatusCode: codes.OK,
-			expectedDetail:     redis_detail_pending,
+			existingK8sObjs:  redis_existing_spec_pending,
+			existingHelmStub: redis_existing_stub_pending,
+			expectedDetail:   redis_detail_pending,
 		},
 		{
 			name: "returns installed package detail when install is successful",
 			request: &corev1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: my_redis_ref,
 			},
-			existingK8sObjs:    redis_existing_spec_completed,
-			existingHelmStub:   redis_existing_stub_completed,
-			expectedStatusCode: codes.OK,
-			expectedDetail:     redis_detail_completed,
+			existingK8sObjs:  redis_existing_spec_completed,
+			existingHelmStub: redis_existing_stub_completed,
+			expectedDetail:   redis_detail_completed,
 		},
 		{
 			name: "returns a 404 if the installed package is not found",
 			request: &corev1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: installedRef("dontworrybehappy", "namespace-1"),
 			},
-			existingK8sObjs:    redis_existing_spec_completed,
-			expectedStatusCode: codes.NotFound,
+			existingK8sObjs:   redis_existing_spec_completed,
+			expectedErrorCode: connect.CodeNotFound,
 		},
 		{
 			name: "returns values and reconciliation options in package detail",
 			request: &corev1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: my_redis_ref,
 			},
-			existingK8sObjs:    redis_existing_spec_completed_with_values_and_reconciliation_options,
-			existingHelmStub:   redis_existing_stub_completed,
-			expectedStatusCode: codes.OK,
-			expectedDetail:     redis_detail_completed_with_values_and_reconciliation_options,
+			existingK8sObjs:  redis_existing_spec_completed_with_values_and_reconciliation_options,
+			existingHelmStub: redis_existing_stub_completed,
+			expectedDetail:   redis_detail_completed_with_values_and_reconciliation_options,
 		},
 		{
 			// see https://github.com/vmware-tanzu/kubeapps/issues/4189 for discussion
@@ -454,10 +450,9 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			request: &corev1.GetInstalledPackageDetailRequest{
 				InstalledPackageRef: my_redis_ref,
 			},
-			existingK8sObjs:    redis_existing_spec_target_ns_is_set,
-			existingHelmStub:   redis_existing_stub_target_ns_is_set,
-			expectedStatusCode: codes.OK,
-			expectedDetail:     redis_detail_completed,
+			existingK8sObjs:  redis_existing_spec_target_ns_is_set,
+			existingHelmStub: redis_existing_stub_target_ns_is_set,
+			expectedDetail:   redis_detail_completed,
 		},
 	}
 
@@ -479,12 +474,12 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 
 			response, err := s.GetInstalledPackageDetail(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 
@@ -712,7 +707,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 		name                    string
 		request                 *corev1.UpdateInstalledPackageRequest
 		existingK8sObjs         *testSpecGetInstalledPackages
-		expectedStatusCode      codes.Code
+		expectedErrorCode       connect.Code
 		expectedResponse        *corev1.UpdateInstalledPackageResponse
 		expectedRelease         *helmv2.HelmRelease
 		defaultUpgradePolicyStr string
@@ -725,8 +720,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					Version: ">14.4.0",
 				},
 			},
-			existingK8sObjs:    &redis_existing_spec_completed,
-			expectedStatusCode: codes.OK,
+			existingK8sObjs: &redis_existing_spec_completed,
 			expectedResponse: &corev1.UpdateInstalledPackageResponse{
 				InstalledPackageRef: my_redis_ref,
 			},
@@ -737,7 +731,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			request: &corev1.UpdateInstalledPackageRequest{
 				InstalledPackageRef: installedRef("not-a-valid-identifier", "default"),
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedErrorCode: connect.CodeNotFound,
 		},
 		{
 			// see https://github.com/vmware-tanzu/kubeapps/issues/4189 for discussion
@@ -750,8 +744,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					Version: ">14.4.0",
 				},
 			},
-			existingK8sObjs:    &redis_existing_spec_target_ns_is_set,
-			expectedStatusCode: codes.OK,
+			existingK8sObjs: &redis_existing_spec_target_ns_is_set,
 			expectedResponse: &corev1.UpdateInstalledPackageResponse{
 				InstalledPackageRef: my_redis_ref,
 			},
@@ -763,8 +756,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				InstalledPackageRef: my_redis_ref,
 				Values:              "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
 			},
-			existingK8sObjs:    &redis_existing_spec_completed,
-			expectedStatusCode: codes.OK,
+			existingK8sObjs: &redis_existing_spec_completed,
 			expectedResponse: &corev1.UpdateInstalledPackageResponse{
 				InstalledPackageRef: my_redis_ref,
 			},
@@ -776,8 +768,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				InstalledPackageRef: my_redis_ref,
 				Values:              "# Default values.\n---\nui:\n  message: what we do in the shadows",
 			},
-			existingK8sObjs:    &redis_existing_spec_completed,
-			expectedStatusCode: codes.OK,
+			existingK8sObjs: &redis_existing_spec_completed,
 			expectedResponse: &corev1.UpdateInstalledPackageResponse{
 				InstalledPackageRef: my_redis_ref,
 			},
@@ -791,8 +782,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					Version: "14.4.0",
 				},
 			},
-			existingK8sObjs:    &redis_existing_spec_completed,
-			expectedStatusCode: codes.OK,
+			existingK8sObjs: &redis_existing_spec_completed,
 			expectedResponse: &corev1.UpdateInstalledPackageResponse{
 				InstalledPackageRef: my_redis_ref,
 			},
@@ -807,8 +797,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					Version: "14.4.0",
 				},
 			},
-			existingK8sObjs:    &redis_existing_spec_completed,
-			expectedStatusCode: codes.OK,
+			existingK8sObjs: &redis_existing_spec_completed,
 			expectedResponse: &corev1.UpdateInstalledPackageResponse{
 				InstalledPackageRef: my_redis_ref,
 			},
@@ -823,8 +812,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					Version: "14.4.0",
 				},
 			},
-			existingK8sObjs:    &redis_existing_spec_completed,
-			expectedStatusCode: codes.OK,
+			existingK8sObjs: &redis_existing_spec_completed,
 			expectedResponse: &corev1.UpdateInstalledPackageResponse{
 				InstalledPackageRef: my_redis_ref,
 			},
@@ -839,8 +827,8 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					Version: "14.4.0",
 				},
 			},
-			existingK8sObjs:    &redis_existing_spec_pending,
-			expectedStatusCode: codes.Internal,
+			existingK8sObjs:   &redis_existing_spec_pending,
+			expectedErrorCode: connect.CodeInternal,
 		},
 
 		// test case update installed package that has failed reconciliation will be done
@@ -871,12 +859,12 @@ func TestUpdateInstalledPackage(t *testing.T) {
 
 			response, err := s.UpdateInstalledPackage(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 
@@ -921,11 +909,11 @@ func TestUpdateInstalledPackage(t *testing.T) {
 
 func TestDeleteInstalledPackage(t *testing.T) {
 	testCases := []struct {
-		name               string
-		request            *corev1.DeleteInstalledPackageRequest
-		existingK8sObjs    []testSpecGetInstalledPackages
-		expectedStatusCode codes.Code
-		expectedResponse   *corev1.DeleteInstalledPackageResponse
+		name              string
+		request           *corev1.DeleteInstalledPackageRequest
+		existingK8sObjs   []testSpecGetInstalledPackages
+		expectedErrorCode connect.Code
+		expectedResponse  *corev1.DeleteInstalledPackageResponse
 	}{
 		{
 			name: "delete package",
@@ -935,8 +923,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 			existingK8sObjs: []testSpecGetInstalledPackages{
 				redis_existing_spec_completed,
 			},
-			expectedStatusCode: codes.OK,
-			expectedResponse:   &corev1.DeleteInstalledPackageResponse{},
+			expectedResponse: &corev1.DeleteInstalledPackageResponse{},
 		},
 		{
 			name: "returns not found if installed package doesn't exist",
@@ -948,7 +935,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 					Identifier: "not-a-valid-identifier",
 				},
 			},
-			expectedStatusCode: codes.NotFound,
+			expectedErrorCode: connect.CodeNotFound,
 		},
 	}
 
@@ -963,12 +950,12 @@ func TestDeleteInstalledPackage(t *testing.T) {
 
 			response, err := s.DeleteInstalledPackage(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
 			// We don't need to check anything else for non-OK codes.
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 
@@ -1009,7 +996,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 		baseTestCase       resourcerefstest.TestCase
 		request            *corev1.GetInstalledPackageResourceRefsRequest
 		expectedResponse   *corev1.GetInstalledPackageResourceRefsResponse
-		expectedStatusCode codes.Code
+		expectedErrorCode  connect.Code
 		targetNamespaceSet bool
 	}
 
@@ -1024,7 +1011,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 	// (a so-called baseTestCase in pkg/resourcerefs module, which contains a LOT of useful data)
 	// and "enrich" it with some new fields to create a different kind of test case
 	// that tests server.GetInstalledPackageResourceRefs() func
-	newTestCase := func(tc int, response bool, code codes.Code, targetNamespaceSet bool) testCase {
+	newTestCase := func(tc int, response bool, code connect.Code, targetNamespaceSet bool) testCase {
 		newCase := testCase{
 			baseTestCase: resourcerefstest.TestCases2[tc],
 			request: &corev1.GetInstalledPackageResourceRefsRequest{
@@ -1046,29 +1033,29 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 				ResourceRefs: resourcerefstest.TestCases2[tc].ExpectedResourceRefs,
 			}
 		}
-		newCase.expectedStatusCode = code
+		newCase.expectedErrorCode = code
 		newCase.targetNamespaceSet = targetNamespaceSet
 		return newCase
 	}
 
 	testCases := []testCase{
-		newTestCase(0, true, codes.OK, false),
-		newTestCase(1, true, codes.OK, false),
-		newTestCase(2, true, codes.OK, false),
-		newTestCase(3, true, codes.OK, false),
-		newTestCase(4, false, codes.NotFound, false),
-		newTestCase(5, false, codes.Internal, false),
+		newTestCase(0, true, 0, false),
+		newTestCase(1, true, 0, false),
+		newTestCase(2, true, 0, false),
+		newTestCase(3, true, 0, false),
+		newTestCase(4, false, connect.CodeNotFound, false),
+		newTestCase(5, false, connect.CodeInternal, false),
 		// See https://github.com/vmware-tanzu/kubeapps/issues/632
-		newTestCase(6, true, codes.OK, false),
-		newTestCase(7, true, codes.OK, false),
-		newTestCase(8, true, codes.OK, false),
+		newTestCase(6, true, 0, false),
+		newTestCase(7, true, 0, false),
+		newTestCase(8, true, 0, false),
 		// See https://kubernetes.io/docs/reference/kubernetes-api/authorization-resources/role-v1/#RoleList
-		newTestCase(9, true, codes.OK, false),
-		newTestCase(10, true, codes.OK, false),
+		newTestCase(9, true, 0, false),
+		newTestCase(10, true, 0, false),
 		// see https://github.com/vmware-tanzu/kubeapps/issues/4189 for discussion
 		// this is testing a configuration where a customer has manually set a
 		// .targetNamespace field of Flux HelmRelease CR
-		newTestCase(11, true, codes.OK, true),
+		newTestCase(11, true, 0, true),
 	}
 
 	ignoredFields := cmpopts.IgnoreUnexported(
@@ -1114,10 +1101,10 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 
 			response, err := server.GetInstalledPackageResourceRefs(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
-			if tc.expectedStatusCode != codes.OK {
+			if tc.expectedErrorCode != 0 {
 				return
 			}
 
