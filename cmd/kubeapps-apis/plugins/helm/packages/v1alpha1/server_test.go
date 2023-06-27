@@ -98,32 +98,31 @@ func TestGetClient(t *testing.T) {
 		)).Build()
 
 	testCases := []struct {
-		name              string
-		manager           utils.AssetManager
-		clientGetter      clientgetter.ClientProviderInterface
-		statusCodeClient  codes.Code
-		statusCodeManager connect.Code
+		name             string
+		manager          utils.AssetManager
+		clientGetter     clientgetter.ClientProviderInterface
+		errorCodeClient  connect.Code
+		errorCodeManager connect.Code
 	}{
 		{
-			name:              "it returns internal error status when no manager configured",
-			manager:           nil,
-			clientGetter:      clientGetter,
-			statusCodeClient:  codes.OK,
-			statusCodeManager: connect.CodeInternal,
+			name:             "it returns internal error status when no manager configured",
+			manager:          nil,
+			clientGetter:     clientGetter,
+			errorCodeManager: connect.CodeInternal,
 		},
 		{
 			name:    "it returns whatever error the clients getter function returns",
 			manager: manager,
 			clientGetter: &clientgetter.ClientProvider{ClientsFunc: func(headers http.Header, cluster string) (*clientgetter.ClientGetter, error) {
-				return nil, status.Errorf(codes.FailedPrecondition, "Bang!")
+				return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Bang!"))
 			}},
-			statusCodeClient: codes.FailedPrecondition,
+			errorCodeClient: connect.CodeFailedPrecondition,
 		},
 		{
-			name:             "it returns failed-precondition when clients getter function is not set",
-			manager:          manager,
-			clientGetter:     &clientgetter.ClientProvider{ClientsFunc: nil},
-			statusCodeClient: codes.FailedPrecondition,
+			name:            "it returns failed-precondition when clients getter function is not set",
+			manager:         manager,
+			clientGetter:    &clientgetter.ClientProvider{ClientsFunc: nil},
+			errorCodeClient: connect.CodeFailedPrecondition,
 		},
 		{
 			name:         "it returns client without error when configured correctly",
@@ -137,18 +136,18 @@ func TestGetClient(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter, manager: tc.manager}
 
 			clientsProvider, errClient := s.clientGetter.GetClients(http.Header{}, "")
-			if got, want := status.Code(errClient), tc.statusCodeClient; got != want {
-				t.Errorf("got: %+v, want: %+v", got, want)
+			if got, want := connect.CodeOf(errClient), tc.errorCodeClient; errClient != nil && got != want {
+				t.Errorf("got: %+v, want: %+v. err: %+v", got, want, errClient)
 			}
 
 			_, errManager := s.GetManager()
 
-			if got, want := connect.CodeOf(errManager), tc.statusCodeManager; errManager != nil && got != want {
+			if got, want := connect.CodeOf(errManager), tc.errorCodeManager; errManager != nil && got != want {
 				t.Errorf("got: %+v, want: %+v", got, want)
 			}
 
 			// If there is no error, the client should be a dynamic.Interface implementation.
-			if tc.statusCodeClient == codes.OK {
+			if tc.errorCodeClient == 0 {
 				_, err := clientsProvider.Dynamic()
 				if err != nil {
 					t.Errorf("got: nil, want: dynamic.Interface. error %v", err)
