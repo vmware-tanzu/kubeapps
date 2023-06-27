@@ -13,8 +13,6 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/google/go-cmp/cmp"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -437,11 +435,11 @@ import (
 
 func TestGetServiceAccountNames(t *testing.T) {
 	testCases := []struct {
-		name               string
-		request            *v1alpha1.GetServiceAccountNamesRequest
-		existingObjects    []runtime.Object
-		expectedResponse   []string
-		expectedStatusCode codes.Code
+		name              string
+		request           *v1alpha1.GetServiceAccountNamesRequest
+		existingObjects   []runtime.Object
+		expectedResponse  []string
+		expectedErrorCode connect.Code
 	}{
 		{
 			name: "returns expected SAs",
@@ -498,12 +496,12 @@ func TestGetServiceAccountNames(t *testing.T) {
 
 			GetServiceAccountNamesResponse, err := s.GetServiceAccountNames(context.Background(), connect.NewRequest(tc.request))
 
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
 			}
 
 			// Only check the response for OK status.
-			if tc.expectedStatusCode == codes.OK {
+			if tc.expectedErrorCode == 0 {
 				if GetServiceAccountNamesResponse == nil {
 					t.Fatalf("got: nil, want: response")
 				} else {
@@ -523,7 +521,7 @@ func TestSetupConfigForCluster(t *testing.T) {
 		cluster            string
 		clustersConfig     kube.ClustersConfig
 		expectedRestConfig *rest.Config
-		expectedErrorCode  codes.Code
+		expectedErrorCode  connect.Code
 	}{
 		{
 			name:    "config is not modified and so includes the incluster token for kubeapps cluster",
@@ -570,7 +568,7 @@ func TestSetupConfigForCluster(t *testing.T) {
 				},
 			},
 			expectedRestConfig: &rest.Config{},
-			expectedErrorCode:  codes.Internal,
+			expectedErrorCode:  connect.CodeInternal,
 		},
 		{
 			name:    "config is modified for additional clusters when configured service token",
@@ -599,7 +597,7 @@ func TestSetupConfigForCluster(t *testing.T) {
 
 			err := setupRestConfigForCluster(tc.inputConfig, tc.cluster, tc.clustersConfig)
 
-			if got, want := status.Code(err), tc.expectedErrorCode; !cmp.Equal(got, want, nil) {
+			if got, want := connect.CodeOf(err), tc.expectedErrorCode; err != nil && !cmp.Equal(got, want, nil) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, nil))
 			}
 

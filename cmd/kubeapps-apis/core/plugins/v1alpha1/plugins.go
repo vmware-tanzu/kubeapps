@@ -22,8 +22,6 @@ import (
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	log "k8s.io/klog/v2"
@@ -324,7 +322,7 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.S
 		var err error
 		token, err := extractToken(headers)
 		if err != nil {
-			return nil, status.Errorf(codes.Unauthenticated, "invalid authorization metadata: %v", err)
+			return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("invalid authorization metadata: %w", err))
 		}
 
 		var config *rest.Config

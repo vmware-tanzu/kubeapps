@@ -12,11 +12,10 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/connecterror"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/resources/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -32,7 +31,6 @@ import (
 	pkgsGRPCv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	pkgsConnectV1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1/v1alpha1connect"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 )
 
 type Server struct {
@@ -164,17 +162,17 @@ func newClientGetter(configGetter core.KubernetesConfigGetter, useServiceAccount
 			// to use depends on which cluster is targeted.
 			restConfig, err := rest.InClusterConfig()
 			if err != nil {
-				return nil, status.Errorf(codes.FailedPrecondition, "unable to get config : %v", err.Error())
+				return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get config : %w", err))
 			}
 			err = setupRestConfigForCluster(restConfig, cluster, clustersConfig)
 			if err != nil {
-				return nil, status.Errorf(codes.FailedPrecondition, "unable to setup config for cluster : %v", err.Error())
+				return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to setup config for cluster : %w", err))
 			}
 			return restConfig, nil
 		}
 		restConfig, err := configGetter(headers, cluster)
 		if err != nil {
-			return nil, status.Errorf(codes.FailedPrecondition, "unable to get config : %v", err.Error())
+			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get config : %v", err))
 		}
 		return restConfig, nil
 	}
@@ -194,7 +192,7 @@ func setupRestConfigForCluster(restConfig *rest.Config, cluster string, clusters
 	} else {
 		additionalCluster, ok := clustersConfig.Clusters[cluster]
 		if !ok {
-			return status.Errorf(codes.Internal, "cluster %q has no configuration", cluster)
+			return connect.NewError(connect.CodeInternal, fmt.Errorf("cluster %q has no configuration", cluster))
 		}
 		// We *always* overwrite the token, even if it was configured empty.
 		restConfig.BearerToken = additionalCluster.ServiceToken
@@ -233,7 +231,7 @@ func (s *Server) GetResources(ctx context.Context, r *connect.Request[v1alpha1.G
 	// we only return the requested ones.
 	if len(r.Msg.GetResourceRefs()) == 0 {
 		if r.Msg.GetWatch() {
-			return status.Errorf(codes.InvalidArgument, "resource refs must be specified in request when watching resources")
+			return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("resource refs must be specified in request when watching resources"))
 		}
 		resourcesToReturn = refsResponse.Msg.GetResourceRefs()
 	} else {
@@ -246,7 +244,7 @@ func (s *Server) GetResources(ctx context.Context, r *connect.Request[v1alpha1.G
 				}
 			}
 			if !found {
-				return status.Errorf(codes.InvalidArgument, "requested resource %+v does not belong to installed package %+v", requestedRef, r.Msg.GetInstalledPackageRef())
+				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("requested resource %+v does not belong to installed package %+v", requestedRef, r.Msg.GetInstalledPackageRef()))
 			}
 		}
 		resourcesToReturn = r.Msg.GetResourceRefs()
@@ -261,7 +259,7 @@ func (s *Server) GetResources(ctx context.Context, r *connect.Request[v1alpha1.G
 	for _, ref := range resourcesToReturn {
 		groupVersion, err := schema.ParseGroupVersion(ref.ApiVersion)
 		if err != nil {
-			return status.Errorf(codes.Internal, "unable to parse group version from %q: %s", ref.ApiVersion, err.Error())
+			return connect.NewError(connect.CodeInternal, fmt.Errorf("unable to parse group version from %q: %w", ref.ApiVersion, err))
 		}
 		gvk := groupVersion.WithKind(ref.Kind)
 
@@ -269,7 +267,7 @@ func (s *Server) GetResources(ctx context.Context, r *connect.Request[v1alpha1.G
 		// the scope of the resource (namespaced or not).
 		gvr, scopeName, err := s.kindToResource(s.restMapper, gvk)
 		if err != nil {
-			return status.Errorf(codes.Internal, "unable to map group-kind %v to resource: %s", gvk.GroupKind(), err.Error())
+			return connect.NewError(connect.CodeInternal, fmt.Errorf("unable to map group-kind %v to resource: %w", gvk.GroupKind(), err))
 		}
 
 		if !r.Msg.GetWatch() {
@@ -280,7 +278,7 @@ func (s *Server) GetResources(ctx context.Context, r *connect.Request[v1alpha1.G
 				resource, err = dynamicClient.Resource(gvr).Get(ctx, ref.GetName(), metav1.GetOptions{})
 			}
 			if err != nil {
-				return status.Errorf(codes.Internal, "unable to get resource referenced by %+v: %s", ref, err.Error())
+				return connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get resource referenced by %+v: %w", ref, err))
 			}
 			err = sendResourceData(ref, resource, stream)
 			if err != nil {
@@ -301,7 +299,7 @@ func (s *Server) GetResources(ctx context.Context, r *connect.Request[v1alpha1.G
 		}
 		if err != nil {
 			log.Errorf("unable to watch resource %v: %v", ref, err)
-			return status.Errorf(codes.Internal, "unable to watch resource %v", ref)
+			return connect.NewError(connect.CodeInternal, fmt.Errorf("unable to watch resource %v", ref))
 		}
 		watchers = append(watchers, &ResourceWatcher{
 			ResourceRef: ref,
@@ -335,12 +333,12 @@ func (s *Server) GetServiceAccountNames(ctx context.Context, r *connect.Request[
 
 	typedClient, err := s.clientGetter.Typed(r.Header(), cluster)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the k8s client: '%w'", err))
 	}
 
 	saList, err := typedClient.CoreV1().ServiceAccounts(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, statuserror.FromK8sError("list", "ServiceAccounts", "", err)
+		return nil, connecterror.FromK8sError("list", "ServiceAccounts", "", err)
 	}
 
 	// We only need to send the list of SA names (ie, not sending secret names)
@@ -360,7 +358,7 @@ func (s *Server) GetServiceAccountNames(ctx context.Context, r *connect.Request[
 func sendResourceData(ref *pkgsGRPCv1alpha1.ResourceRef, obj interface{}, s *connect.ServerStream[v1alpha1.GetResourcesResponse]) error {
 	resourceBytes, err := json.Marshal(obj)
 	if err != nil {
-		return status.Errorf(codes.Internal, "unable to marshal json for resource: %s", err.Error())
+		return connect.NewError(connect.CodeInternal, fmt.Errorf("unable to marshal json for resource: %w", err))
 	}
 
 	// Note, a string in Go is effectively a read-only slice of bytes.
@@ -370,7 +368,7 @@ func sendResourceData(ref *pkgsGRPCv1alpha1.ResourceRef, obj interface{}, s *con
 		Manifest:    string(resourceBytes),
 	})
 	if err != nil {
-		return status.Errorf(codes.Internal, "unable send GetResourcesResponse: %s", err.Error())
+		return connect.NewError(connect.CodeInternal, fmt.Errorf("unable send GetResourcesResponse: %w", err))
 	}
 
 	return nil

@@ -19,8 +19,6 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"k8s.io/client-go/rest"
 )
 
@@ -362,18 +360,18 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 		{
 			name:           "it doesn't create the config and throws a grpc error when passing an invalid authorization metadata",
 			headers:        http.Header{"Authorization": []string{"Bla"}},
-			expectedErrMsg: status.Errorf(codes.Unauthenticated, "invalid authorization metadata: malformed authorization metadata"),
+			expectedErrMsg: connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("invalid authorization metadata: malformed authorization metadata")),
 		},
 		{
 			name:            "it doesn't create the config and throws a grpc error for the default cluster when no authorization metadata is passed",
 			expectedAPIHost: DefaultK8sAPI,
-			expectedErrMsg:  status.Errorf(codes.Unauthenticated, "invalid authorization metadata: missing authorization metadata"),
+			expectedErrMsg:  connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("invalid authorization metadata: missing authorization metadata")),
 		},
 		{
 			name:            "it doesn't create the config and throws a grpc error for the other cluster",
 			cluster:         OtherClusterName,
 			expectedAPIHost: OtherK8sAPI,
-			expectedErrMsg:  status.Errorf(codes.Unauthenticated, "invalid authorization metadata: missing authorization metadata"),
+			expectedErrMsg:  connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("invalid authorization metadata: missing authorization metadata")),
 		},
 	}
 

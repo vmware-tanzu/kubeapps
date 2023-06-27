@@ -849,7 +849,7 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 		chart      *models.Chart
 		chartFiles *models.ChartFiles
 		expected   *corev1.AvailablePackageDetail
-		statusCode codes.Code
+		errorCode  connect.Code
 	}{
 		{
 			name:  "it returns AvailablePackageDetail if the chart is correct",
@@ -883,7 +883,6 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 				},
 			},
-			statusCode: codes.OK,
 		},
 		{
 			name:  "it includes additional values files in AvailablePackageDetail when available",
@@ -925,17 +924,16 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
 				},
 			},
-			statusCode: codes.OK,
 		},
 		{
-			name:       "it returns internal error if empty chart",
-			chart:      &models.Chart{},
-			statusCode: codes.Internal,
+			name:      "it returns internal error if empty chart",
+			chart:     &models.Chart{},
+			errorCode: connect.CodeInternal,
 		},
 		{
-			name:       "it returns internal error if chart is invalid",
-			chart:      &models.Chart{Name: "foo"},
-			statusCode: codes.Internal,
+			name:      "it returns internal error if chart is invalid",
+			chart:     &models.Chart{Name: "foo"},
+			errorCode: connect.CodeInternal,
 		},
 	}
 
@@ -943,11 +941,11 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			availablePackageDetail, err := AvailablePackageDetailFromChart(tc.chart, tc.chartFiles)
 
-			if got, want := status.Code(err), tc.statusCode; got != want {
+			if got, want := connect.CodeOf(err), tc.errorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
 
-			if tc.statusCode == codes.OK {
+			if tc.errorCode == 0 {
 				opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.Maintainer{}, corev1.PackageAppVersion{})
 				if got, want := availablePackageDetail, tc.expected; !cmp.Equal(got, want, opt1) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))

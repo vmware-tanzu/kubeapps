@@ -16,11 +16,10 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/bufbuild/connect-go"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"gopkg.in/yaml.v3" // The usual "sigs.k8s.io/yaml" doesn't work: https://github.com/vmware-tanzu/kubeapps/pull/4050
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
@@ -146,26 +145,26 @@ func PackageAppVersionsSummary(versions []models.ChartVersion, versionInSummary 
 // together with required fields for our model.
 func IsValidChart(chart *models.Chart) (bool, error) {
 	if chart.Name == "" {
-		return false, status.Errorf(codes.Internal, "required field .Name not found on helm chart: %v", chart)
+		return false, connect.NewError(connect.CodeInternal, fmt.Errorf("required field .Name not found on helm chart: %v", chart))
 	}
 	if chart.ID == "" {
-		return false, status.Errorf(codes.Internal, "required field .ID not found on helm chart: %v", chart)
+		return false, connect.NewError(connect.CodeInternal, fmt.Errorf("required field .ID not found on helm chart: %v", chart))
 	}
 	if chart.Repo == nil {
-		return false, status.Errorf(codes.Internal, "required field .Repo not found on helm chart: %v", chart)
+		return false, connect.NewError(connect.CodeInternal, fmt.Errorf("required field .Repo not found on helm chart: %v", chart))
 	}
 	if chart.ChartVersions == nil || len(chart.ChartVersions) == 0 {
-		return false, status.Errorf(codes.Internal, "required field .chart.ChartVersions[0] not found on helm chart: %v", chart)
+		return false, connect.NewError(connect.CodeInternal, fmt.Errorf("required field .chart.ChartVersions[0] not found on helm chart: %v", chart))
 	} else {
 		for _, chartVersion := range chart.ChartVersions {
 			if chartVersion.Version == "" {
-				return false, status.Errorf(codes.Internal, "required field .ChartVersions[i].Version not found on helm chart: %v", chart)
+				return false, connect.NewError(connect.CodeInternal, fmt.Errorf("required field .ChartVersions[i].Version not found on helm chart: %v", chart))
 			}
 		}
 	}
 	for _, maintainer := range chart.Maintainers {
 		if maintainer.Name == "" {
-			return false, status.Errorf(codes.Internal, "required field .Maintainers[i].Name not found on helm chart: %v", chart)
+			return false, connect.NewError(connect.CodeInternal, fmt.Errorf("required field .Maintainers[i].Name not found on helm chart: %v", chart))
 		}
 	}
 	return true, nil
@@ -177,7 +176,7 @@ func AvailablePackageSummaryFromChart(chart *models.Chart, plugin *plugins.Plugi
 
 	isValid, err := IsValidChart(chart)
 	if !isValid || err != nil {
-		return nil, status.Errorf(codes.Internal, "invalid chart: %s", err.Error())
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("invalid chart: %s", err.Error()))
 	}
 
 	pkg.Name = chart.Name

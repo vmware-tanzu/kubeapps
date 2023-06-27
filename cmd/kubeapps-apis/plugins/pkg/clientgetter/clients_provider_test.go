@@ -8,12 +8,12 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/bufbuild/connect-go"
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
-	"google.golang.org/grpc/codes"
 	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -52,23 +52,22 @@ func TestGetClientProvider(t *testing.T) {
 	testCases := []struct {
 		name         string
 		clientGetter ClientProviderInterface
-		statusCode   codes.Code
+		errorCode    connect.Code
 	}{
 		{
 			name:         "it returns failed-precondition when configGetter itself errors",
-			statusCode:   codes.Unknown,
+			errorCode:    connect.CodeUnknown,
 			clientGetter: badClientGetter,
 		},
 		{
 			name:         "it returns client without error when configured correctly",
-			statusCode:   codes.OK,
 			clientGetter: clientGetter,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if tc.statusCode == codes.OK {
+			if tc.errorCode == 0 {
 				dynamicClient, err := tc.clientGetter.Dynamic(http.Header{}, "")
 				if err != nil {
 					t.Fatal(err)
