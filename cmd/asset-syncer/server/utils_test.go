@@ -36,6 +36,62 @@ import (
 var validRepoIndexYAMLBytes, _ = os.ReadFile("testdata/valid-index.yaml")
 var validRepoIndexYAML = string(validRepoIndexYAMLBytes)
 
+const chartsIndexManifestJSON = `
+{
+	"schemaVersion": 2,
+	"config": {
+	  "mediaType": "application/vnd.vmware.charts.index.config.v1+json",
+	  "digest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+	  "size": 2
+	},
+	"layers": [
+	  {
+		"mediaType": "application/vnd.vmware.charts.index.layer.v1+json",
+		"digest": "sha256:f9f7df0ae3f50aaf9ff390034cec4286d2aa43f061ce4bc7aa3c9ac862800aba",
+		"size": 1169,
+		"annotations": {
+		  "org.opencontainers.image.title": "charts-index.json"
+		}
+	  }
+	]
+  }
+`
+const chartsIndexJSON = `
+{
+    "entries": {
+        "common": {
+            "versions": [
+                {
+                    "version": "2.4.0",
+                    "appVersion": "2.4.0",
+                    "name": "common",
+                    "urls": [
+                        "harbor.example.com/charts/common:2.4.0"
+                    ],
+                    "digest": "sha256:c85139bbe83ec5af6201fe1bec39fc0d0db475de41bc74cd729acc5af8eed6ba",
+                    "releasedAt": "2023-06-08T12:15:48.149853788Z"
+                }
+            ]
+        },
+        "redis": {
+            "versions": [
+                {
+                    "version": "17.11.0",
+                    "appVersion": "7.0.11",
+                    "name": "redis",
+                    "urls": [
+                        "harbor.example.com/charts/redis:17.11.0"
+                    ],
+                    "digest": "sha256:45925becfe9aa2c6c4741c9fe1dd0ddca627894b696755c73830e4ae6b390c35",
+                    "releasedAt": "2023-06-09T11:50:48.144176763Z"
+                }
+            ]
+        }
+    },
+    "apiVersion": "v1"
+}
+`
+
 type badHTTPClient struct {
 	errMsg string
 }
@@ -797,6 +853,63 @@ func Test_ociAPICli(t *testing.T) {
 			t.Errorf("Tag 8.1.1 should be a helm chart")
 		}
 	})
+
+	urlWithNamespace, _ := parseRepoURL("http://oci-test/test/project")
+	t.Run("CatalogAvailable - successful request", func(t *testing.T) {
+		apiCli := &ociAPICli{
+			url: urlWithNamespace,
+			netClient: &goodOCIAPIHTTPClient{
+				responseByPath: map[string]string{
+					"/v2/test/project/charts-index/manifests/latest": chartsIndexManifestJSON,
+				},
+			},
+		}
+
+		if got, want := apiCli.CatalogAvailable("my-user-agent"), true; got != want {
+			t.Errorf("got: %t, want: %t", got, want)
+		}
+	})
+
+	t.Run("CatalogAvailable - returns false for incorrect media type", func(t *testing.T) {
+		apiCli := &ociAPICli{
+			url: urlWithNamespace,
+			netClient: &goodOCIAPIHTTPClient{
+				responseByPath: map[string]string{
+					"/v2/test/project/charts-index/manifests/latest": `{"config": {"mediaType": "something-else"}}`,
+				},
+			},
+		}
+
+		if got, want := apiCli.CatalogAvailable("my-user-agent"), false; got != want {
+			t.Errorf("got: %t, want: %t", got, want)
+		}
+	})
+
+	t.Run("CatalogAvailable - returns false for a 404", func(t *testing.T) {
+		apiCli := &ociAPICli{
+			url: urlWithNamespace,
+			netClient: &goodOCIAPIHTTPClient{
+				responseByPath: map[string]string{
+					"/v2/test/project/chart-index/manifests/latest": chartsIndexJSON,
+				},
+			},
+		}
+
+		if got, want := apiCli.CatalogAvailable("my-user-agent"), false; got != want {
+			t.Errorf("got: %t, want: %t", got, want)
+		}
+	})
+
+	t.Run("CatalogAvailable - returns false on any other", func(t *testing.T) {
+		apiCli := &ociAPICli{
+			url:       urlWithNamespace,
+			netClient: &badHTTPClient{},
+		}
+
+		if got, want := apiCli.CatalogAvailable("my-user-agent"), false; got != want {
+			t.Errorf("got: %t, want: %t", got, want)
+		}
+	})
 }
 
 type fakeOCIAPICli struct {
@@ -810,6 +923,10 @@ func (o *fakeOCIAPICli) TagList(appName, userAgent string) (*TagList, error) {
 
 func (o *fakeOCIAPICli) IsHelmChart(appName, tag, userAgent string) (bool, error) {
 	return true, o.err
+}
+
+func (o *fakeOCIAPICli) CatalogAvailable(userAgent string) bool {
+	return false
 }
 
 func Test_OCIRegistry(t *testing.T) {

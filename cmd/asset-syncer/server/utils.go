@@ -37,8 +37,9 @@ import (
 )
 
 const (
-	additionalCAFile = "/usr/local/share/ca-certificates/ca.crt"
-	numWorkers       = 10
+	additionalCAFile     = "/usr/local/share/ca-certificates/ca.crt"
+	numWorkers           = 10
+	chartsIndexMediaType = "application/vnd.vmware.charts.index.config.v1+json"
 )
 
 type Config struct {
@@ -320,6 +321,7 @@ type OCIManifest struct {
 type ociAPI interface {
 	TagList(appName, userAgent string) (*TagList, error)
 	IsHelmChart(appName, tag, userAgent string) (bool, error)
+	CatalogAvailable(userAgent string) bool
 }
 
 type ociAPICli struct {
@@ -365,6 +367,38 @@ func (o *ociAPICli) IsHelmChart(appName, tag, userAgent string) (bool, error) {
 		return false, err
 	}
 	return manifest.Config.MediaType == helmregistry.ConfigMediaType, nil
+}
+
+// CatalogAvailable returns whether Kubeapps can return a catalog for
+// this OCI repository.
+//
+// Currently this checks only for a VMware Application Catalog index as
+// documented at:
+// https://docs.vmware.com/en/VMware-Application-Catalog/services/main/GUID-using-consume-metadata.html#method-2-obtain-metadata-from-the-oci-registry-10
+// although examples have "chart-index" rather than "index" as the artifact
+// name.
+// In the future, this should check the oci-catalog service for possible
+// catalogs.
+func (o *ociAPICli) CatalogAvailable(userAgent string) bool {
+	indexURL := *o.url
+	indexURL.Path = path.Join("v2", indexURL.Path, "charts-index", "manifests", "latest")
+	log.V(4).Infof("getting tag %s", indexURL.String())
+	manifestData, err := doReq(
+		indexURL.String(),
+		o.netClient,
+		map[string]string{
+			"Authorization": o.authHeader,
+			"Accept":        "application/vnd.oci.image.manifest.v1+json",
+		}, userAgent)
+	if err != nil {
+		return false
+	}
+	var manifest OCIManifest
+	err = json.Unmarshal(manifestData, &manifest)
+	if err != nil {
+		return false
+	}
+	return manifest.Config.MediaType == chartsIndexMediaType
 }
 
 func tagCheckerWorker(o ociAPI, tagJobs <-chan checkTagJob, resultChan chan checkTagResult) {
