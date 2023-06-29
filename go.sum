@@ -213,8 +213,8 @@ github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f/go.mod h1:cu
 github.com/dgryski/go-sip13 v0.0.0-20181026042036-e10d5fee7954/go.mod h1:vAd38F8PWV+bWy6jNmig1y/TA+kYO4g3RSRF0IAv0no=
 github.com/disintegration/imaging v1.6.2 h1:w1LecBlG2Lnp8B3jk5zSuNqd7b4DXhcjwek1ei82L+c=
 github.com/disintegration/imaging v1.6.2/go.mod h1:44/5580QXChDfwIclfc/PCwrr44amcmDAg8hxG0Ewe4=
-github.com/distribution/distribution v2.8.1+incompatible h1:8iXUoOqRPx30bhzIEPUmNIqlmBlWdrieW1bqr6LrX30=
-github.com/distribution/distribution v2.8.1+incompatible/go.mod h1:EgLm2NgWtdKgzF9NpMzUKgzmR7AMmb0VQi2B+ZzDRjc=
+github.com/distribution/distribution v2.8.2+incompatible h1:k9+4DKdOG+quPFZXT/mUsiQrGu9vYCp+dXpuPkuqhk8=
+github.com/distribution/distribution v2.8.2+incompatible/go.mod h1:EgLm2NgWtdKgzF9NpMzUKgzmR7AMmb0VQi2B+ZzDRjc=
 github.com/distribution/distribution/v3 v3.0.0-20230223072852-e5d5810851d1 h1:OtfRoaZ54jKZ7jl9WuxqekousLR9T63iJf0y2EdC2S4=
 github.com/dnaeon/go-vcr v1.1.0 h1:ReYa/UBrRyQdant9B4fNHGoCNKw6qh6P0fsdGmZpR7c=
 github.com/docker/cli v24.0.2+incompatible h1:QdqR7znue1mtkXIJ+ruQMGQhpw2JzMJLRXp6zpzF6tM=
