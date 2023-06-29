@@ -56,7 +56,7 @@ const chartsIndexManifestJSON = `
 	]
   }
 `
-const chartsIndexJSON = `
+const chartsIndexMultipleJSON = `
 {
     "entries": {
         "common": {
@@ -84,6 +84,28 @@ const chartsIndexJSON = `
                     ],
                     "digest": "sha256:45925becfe9aa2c6c4741c9fe1dd0ddca627894b696755c73830e4ae6b390c35",
                     "releasedAt": "2023-06-09T11:50:48.144176763Z"
+                }
+            ]
+        }
+    },
+    "apiVersion": "v1"
+}
+`
+
+const chartsIndexSingleJSON = `
+{
+    "entries": {
+        "common": {
+            "versions": [
+                {
+                    "version": "2.4.0",
+                    "appVersion": "2.4.0",
+                    "name": "common",
+                    "urls": [
+                        "harbor.example.com/charts/common:2.4.0"
+                    ],
+                    "digest": "sha256:c85139bbe83ec5af6201fe1bec39fc0d0db475de41bc74cd729acc5af8eed6ba",
+                    "releasedAt": "2023-06-08T12:15:48.149853788Z"
                 }
             ]
         }
@@ -890,7 +912,7 @@ func Test_ociAPICli(t *testing.T) {
 			Url: urlWithNamespace,
 			NetClient: &goodOCIAPIHTTPClient{
 				responseByPath: map[string]string{
-					"/v2/test/project/chart-index/manifests/latest": chartsIndexJSON,
+					"/v2/test/project/chart-index/manifests/latest": chartsIndexMultipleJSON,
 				},
 			},
 		}
@@ -910,6 +932,27 @@ func Test_ociAPICli(t *testing.T) {
 			t.Errorf("got: %t, want: %t", got, want)
 		}
 	})
+
+	t.Run("Catalog - successful request", func(t *testing.T) {
+		apiCli := &OciAPIClient{
+			Url: urlWithNamespace,
+			NetClient: &goodOCIAPIHTTPClient{
+				responseByPath: map[string]string{
+					"/v2/test/project/charts-index/manifests/latest":                                                              chartsIndexManifestJSON,
+					"/v2/test/project/charts-index/blobs/sha256:f9f7df0ae3f50aaf9ff390034cec4286d2aa43f061ce4bc7aa3c9ac862800aba": chartsIndexMultipleJSON,
+				},
+			},
+		}
+
+		got, err := apiCli.Catalog("my-user-agent")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if got, want := got, []string{"common", "redis"}; !cmp.Equal(got, want) {
+			t.Errorf("got: %s, want: %s", got, want)
+		}
+	})
 }
 
 type fakeOCIAPICli struct {
@@ -927,6 +970,10 @@ func (o *fakeOCIAPICli) IsHelmChart(appName, tag, userAgent string) (bool, error
 
 func (o *fakeOCIAPICli) CatalogAvailable(userAgent string) bool {
 	return false
+}
+
+func (o *fakeOCIAPICli) Catalog(userAgent string) ([]string, error) {
+	return nil, nil
 }
 
 func Test_OCIRegistry(t *testing.T) {
@@ -1337,6 +1384,51 @@ version: 1.0.0
 			}
 		})
 	}
+
+	t.Run("it fetches repositories when not present", func(t *testing.T) {
+		content := map[string]*bytes.Buffer{}
+		files := []tartest.TarballFile{
+			{Name: "Chart.yaml", Body: chartYAML},
+			{Name: "README.md", Body: "chart readme"},
+			{Name: "values.yaml", Body: "chart values"},
+			{Name: "values.schema.json", Body: "chart schema"},
+		}
+		tag := "1.1.0"
+		recorder := httptest.NewRecorder()
+		gzw := gzip.NewWriter(recorder)
+		tartest.CreateTestTarball(gzw, files)
+		gzw.Flush()
+		content[tag] = recorder.Body
+		url, _ := parseRepoURL("http://oci-test/my-project")
+
+		fakeURIs := map[string]string{
+			"/v2/my-project/common/manifests/1.1.0":        `{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`,
+			"/v2/my-project/charts-index/manifests/latest": chartsIndexManifestJSON,
+			"/v2/my-project/charts-index/blobs/sha256:f9f7df0ae3f50aaf9ff390034cec4286d2aa43f061ce4bc7aa3c9ac862800aba": chartsIndexSingleJSON,
+		}
+		chartsRepo := OCIRegistry{
+			repositories: []string{},
+			RepoInternal: &models.RepoInternal{Name: "common", URL: "https://example.com"},
+			tags: map[string]TagList{
+				"common": {Name: "test/common", Tags: []string{"1.1.0"}},
+			},
+			puller: &helmfake.OCIPuller{
+				Content:  content,
+				Checksum: "123",
+			},
+			ociCli: &OciAPIClient{
+				Url: url,
+				NetClient: &goodOCIAPIHTTPClient{
+					responseByPath: fakeURIs,
+				},
+			},
+		}
+		charts, err := chartsRepo.Charts(true)
+		assert.NoError(t, err)
+		if len(charts) != 1 && charts[0].Name != "common" {
+			t.Errorf("got: %+v", charts)
+		}
+	})
 
 	t.Run("FetchFiles - It returns the stored files", func(t *testing.T) {
 		files := map[string]string{
