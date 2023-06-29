@@ -12,32 +12,32 @@ updates:
     schedule:
       interval: "daily"
       time: "00:00"
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 10
 
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
       interval: "daily"
       time: "01:00"
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 10
 
   - package-ecosystem: "cargo"
     directory: "/cmd/pinniped-proxy"
     schedule:
       interval: "daily"
       time: "02:00"
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 10
 
   - package-ecosystem: "npm"
     directory: "/integration"
     schedule:
       interval: "daily"
       time: "03:00"
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 10
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "daily"
       time: "04:00"
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 10
