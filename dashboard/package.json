@@ -77,7 +77,7 @@
   "devDependencies": {
     "@bufbuild/buf": "^1.14.0-1",
     "@bufbuild/protoc-gen-connect-es": "^0.8.1",
-    "@bufbuild/protoc-gen-es": "^1.1.1",
+    "@bufbuild/protoc-gen-es": "^1.2.1",
     "@craco/craco": "^7.0.0",
     "@formatjs/cli": "^6.0.4",
     "@testing-library/react": "^12.1.5",
