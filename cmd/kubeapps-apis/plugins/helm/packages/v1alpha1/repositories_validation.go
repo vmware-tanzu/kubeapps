@@ -17,6 +17,8 @@ import (
 	log "k8s.io/klog/v2"
 
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	// TODO(minelson): refactor these utils into shareable lib.
+	utils "github.com/vmware-tanzu/kubeapps/cmd/asset-syncer/server"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -97,7 +99,7 @@ type ValidationResponse struct {
 
 // ErrEmptyOCIRegistry defines the error returned when an attempt is
 // made to create an OCI registry with no repositories
-var ErrEmptyOCIRegistry = fmt.Errorf("You need to specify at least one repository for an OCI registry")
+var ErrEmptyOCIRegistry = fmt.Errorf("unable to determine the OCI catalog, you need to specify at least one repository")
 
 // repoTagsList stores the list of tags for an OCI repository.
 type repoTagsList struct {
@@ -174,7 +176,7 @@ func getOCIAppRepositoryTag(cli httpclient.Client, repoURL string, repoName stri
 }
 
 // getOCIAppRepositoryMediaType Gets manifests config.MediaType for the given repo URL & Name
-func getOCIAppRepositoryMediaType(cli httpclient.Client, repoURL string, repoName string, tagVersion string) (string, error) {
+func getOCIAppRepositoryMediaType(client httpclient.Client, repoURL string, repoName string, tagVersion string) (string, error) {
 	// This function is the implementation of below curl command
 	// curl -XGET -H "Authorization: Basic $harborauthz"
 	//		 -H "Accept: application/vnd.oci.image.manifest.v1+json"
@@ -195,7 +197,7 @@ func getOCIAppRepositoryMediaType(cli httpclient.Client, repoURL string, repoNam
 	//This header is required for a successful request
 	req.Header.Set("Accept", OCIImageManifestMediaType)
 
-	resp, err := cli.Do(req)
+	resp, err := client.Do(req)
 
 	if err != nil {
 		return "", err
@@ -224,8 +226,18 @@ func ValidateOCIAppRepository(appRepo *apprepov1alpha1.AppRepository, cli httpcl
 
 	repoURL := strings.TrimSuffix(strings.TrimSpace(appRepo.Spec.URL), "/")
 
-	// For the OCI case, we want to validate that all the given repositories are valid
+	// For the OCI case, if no repositories are listed then we validate that a
+	// catalog is available for the registry, otherwise we want to validate that
+	// all the listed repositories are valid
 	if len(appRepo.Spec.OCIRepositories) == 0 {
+		u, err := url.Parse(repoURL)
+		if err != nil {
+			return false, err
+		}
+		oci := utils.OciAPIClient{AuthHeader: "", Url: u, NetClient: cli}
+		if oci.CatalogAvailable("") {
+			return true, nil
+		}
 		return false, ErrEmptyOCIRegistry
 	}
 	for _, repoName := range appRepo.Spec.OCIRepositories {

@@ -324,17 +324,25 @@ type ociAPI interface {
 	CatalogAvailable(userAgent string) bool
 }
 
-type ociAPICli struct {
-	authHeader string
-	url        *url.URL
-	netClient  httpclient.Client
+// OciAPIClient enables basic interactions with an OCI registry.
+//
+// The AuthHeader is optional - if empty the http client's default Authorization
+// header will be used.
+type OciAPIClient struct {
+	AuthHeader string
+	Url        *url.URL
+	NetClient  httpclient.Client
 }
 
 // TagList retrieves the list of tags for an asset
-func (o *ociAPICli) TagList(appName string, userAgent string) (*TagList, error) {
-	url := *o.url
+func (o *OciAPIClient) TagList(appName string, userAgent string) (*TagList, error) {
+	url := *o.Url
 	url.Path = path.Join("v2", url.Path, appName, "tags", "list")
-	data, err := doReq(url.String(), o.netClient, map[string]string{"Authorization": o.authHeader}, userAgent)
+	headers := map[string]string{}
+	if o.AuthHeader != "" {
+		headers["Authorization"] = o.AuthHeader
+	}
+	data, err := doReq(url.String(), o.NetClient, headers, userAgent)
 	if err != nil {
 		return nil, err
 	}
@@ -347,17 +355,17 @@ func (o *ociAPICli) TagList(appName string, userAgent string) (*TagList, error) 
 	return &appTags, nil
 }
 
-func (o *ociAPICli) IsHelmChart(appName, tag, userAgent string) (bool, error) {
-	repoURL := *o.url
+func (o *OciAPIClient) IsHelmChart(appName, tag, userAgent string) (bool, error) {
+	repoURL := *o.Url
 	repoURL.Path = path.Join("v2", repoURL.Path, appName, "manifests", tag)
 	log.V(4).Infof("getting tag %s", repoURL.String())
-	manifestData, err := doReq(
-		repoURL.String(),
-		o.netClient,
-		map[string]string{
-			"Authorization": o.authHeader,
-			"Accept":        "application/vnd.oci.image.manifest.v1+json",
-		}, userAgent)
+	headers := map[string]string{
+		"Accept": "application/vnd.oci.image.manifest.v1+json",
+	}
+	if o.AuthHeader != "" {
+		headers["Authorization"] = o.AuthHeader
+	}
+	manifestData, err := doReq(repoURL.String(), o.NetClient, headers, userAgent)
 	if err != nil {
 		return false, err
 	}
@@ -379,17 +387,17 @@ func (o *ociAPICli) IsHelmChart(appName, tag, userAgent string) (bool, error) {
 // name.
 // In the future, this should check the oci-catalog service for possible
 // catalogs.
-func (o *ociAPICli) CatalogAvailable(userAgent string) bool {
-	indexURL := *o.url
+func (o *OciAPIClient) CatalogAvailable(userAgent string) bool {
+	indexURL := *o.Url
 	indexURL.Path = path.Join("v2", indexURL.Path, "charts-index", "manifests", "latest")
 	log.V(4).Infof("getting tag %s", indexURL.String())
-	manifestData, err := doReq(
-		indexURL.String(),
-		o.netClient,
-		map[string]string{
-			"Authorization": o.authHeader,
-			"Accept":        "application/vnd.oci.image.manifest.v1+json",
-		}, userAgent)
+	headers := map[string]string{
+		"Accept": "application/vnd.oci.image.manifest.v1+json",
+	}
+	if o.AuthHeader != "" {
+		headers["Authorization"] = o.AuthHeader
+	}
+	manifestData, err := doReq(indexURL.String(), o.NetClient, headers, userAgent)
 	if err != nil {
 		return false
 	}
@@ -688,7 +696,7 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filter *ap
 		repositories: ociRepos,
 		RepoInternal: &models.RepoInternal{Namespace: namespace, Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader},
 		puller:       &helm.OCIPuller{Resolver: ociResolver},
-		ociCli:       &ociAPICli{authHeader: authorizationHeader, url: url, netClient: netClient},
+		ociCli:       &OciAPIClient{AuthHeader: authorizationHeader, Url: url, NetClient: netClient},
 		filter:       filter,
 	}, nil
 }

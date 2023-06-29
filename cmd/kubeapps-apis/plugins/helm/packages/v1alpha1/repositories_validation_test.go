@@ -7,17 +7,18 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"io"
-	log "k8s.io/klog/v2"
 	"net/http"
 	"net/http/httptest"
 	"path"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
+	log "k8s.io/klog/v2"
 )
 
 type fakeHTTPCli struct {
@@ -287,6 +288,49 @@ func TestOCIValidate(t *testing.T) {
 					manifest: repoManifest{
 						Config: repoConfig{
 							MediaType: "application/vnd.cncf.helm.config.v1+json",
+						},
+					},
+				},
+			},
+			expectedResponse: &ValidationResponse{
+				Code:    200,
+				Message: "OK",
+			},
+		},
+		{
+			name: "it returns an EmptyOCIRegistry response if no repos listed and no catalog",
+			validator: HelmOCIValidator{
+				AppRepo: &v1alpha1.AppRepository{
+					Spec: v1alpha1.AppRepositorySpec{
+						Type:            "oci",
+						OCIRepositories: []string{},
+					},
+				},
+			},
+			repos: map[string]fakeOCIRepo{},
+			expectedResponse: &ValidationResponse{
+				Code:    400,
+				Message: "unable to determine the OCI catalog, you need to specify at least one repository",
+			},
+		},
+		{
+			name: "it returns a valid response if no repos listed but catalog is available",
+			validator: HelmOCIValidator{
+				AppRepo: &v1alpha1.AppRepository{
+					Spec: v1alpha1.AppRepositorySpec{
+						Type:            "oci",
+						OCIRepositories: []string{},
+					},
+				},
+			},
+			repos: map[string]fakeOCIRepo{
+				"charts-index": {
+					tags: repoTagsList{
+						Tags: []string{"latest"},
+					},
+					manifest: repoManifest{
+						Config: repoConfig{
+							MediaType: "application/vnd.vmware.charts.index.config.v1+json",
 						},
 					},
 				},

@@ -771,9 +771,9 @@ func Test_ociAPICli(t *testing.T) {
 	url, _ := parseRepoURL("http://oci-test")
 
 	t.Run("TagList - failed request", func(t *testing.T) {
-		apiCli := &ociAPICli{
-			url: url,
-			netClient: &badHTTPClient{
+		apiCli := &OciAPIClient{
+			Url: url,
+			NetClient: &badHTTPClient{
 				errMsg: "forbidden",
 			},
 		}
@@ -782,9 +782,9 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("TagList - successful request", func(t *testing.T) {
-		apiCli := &ociAPICli{
-			url: url,
-			netClient: &goodOCIAPIHTTPClient{
+		apiCli := &OciAPIClient{
+			Url: url,
+			NetClient: &goodOCIAPIHTTPClient{
 				response: `{"name":"test/apache","tags":["7.5.1","8.1.1"]}`,
 			},
 		}
@@ -797,20 +797,20 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("TagList with auth - failure", func(t *testing.T) {
-		apiCli := &ociAPICli{
-			url:        url,
-			authHeader: "Bearer wrong",
-			netClient:  &authenticatedOCIAPIHTTPClient{},
+		apiCli := &OciAPIClient{
+			Url:        url,
+			AuthHeader: "Bearer wrong",
+			NetClient:  &authenticatedOCIAPIHTTPClient{},
 		}
 		_, err := apiCli.TagList("apache", "my-user-agent")
 		assert.Error(t, fmt.Errorf("GET request to [http://oci-test/v2/apache/tags/list] failed due to status [500]"), err)
 	})
 
 	t.Run("TagList with auth - success", func(t *testing.T) {
-		apiCli := &ociAPICli{
-			url:        url,
-			authHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient",
-			netClient: &authenticatedOCIAPIHTTPClient{
+		apiCli := &OciAPIClient{
+			Url:        url,
+			AuthHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient",
+			NetClient: &authenticatedOCIAPIHTTPClient{
 				response: `{"name":"test/apache","tags":["7.5.1","8.1.1"]}`,
 			},
 		}
@@ -823,18 +823,18 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("IsHelmChart - failed request", func(t *testing.T) {
-		apiCli := &ociAPICli{
-			url:       url,
-			netClient: &badHTTPClient{},
+		apiCli := &OciAPIClient{
+			Url:       url,
+			NetClient: &badHTTPClient{},
 		}
 		_, err := apiCli.IsHelmChart("apache", "7.5.1", "my-user-agent")
 		assert.Error(t, fmt.Errorf("GET request to [http://oci-test/v2/apache/manifests/7.5.1] failed due to status [500]"), err)
 	})
 
 	t.Run("IsHelmChart - successful request", func(t *testing.T) {
-		apiCli := &ociAPICli{
-			url: url,
-			netClient: &goodOCIAPIHTTPClient{
+		apiCli := &OciAPIClient{
+			Url: url,
+			NetClient: &goodOCIAPIHTTPClient{
 				responseByPath: map[string]string{
 					// 7.5.1 is not a chart
 					"/v2/test/apache/manifests/7.5.1": `{"schemaVersion":2,"config":{"mediaType":"other","digest":"sha256:123","size":665}}`,
@@ -856,9 +856,9 @@ func Test_ociAPICli(t *testing.T) {
 
 	urlWithNamespace, _ := parseRepoURL("http://oci-test/test/project")
 	t.Run("CatalogAvailable - successful request", func(t *testing.T) {
-		apiCli := &ociAPICli{
-			url: urlWithNamespace,
-			netClient: &goodOCIAPIHTTPClient{
+		apiCli := &OciAPIClient{
+			Url: urlWithNamespace,
+			NetClient: &goodOCIAPIHTTPClient{
 				responseByPath: map[string]string{
 					"/v2/test/project/charts-index/manifests/latest": chartsIndexManifestJSON,
 				},
@@ -871,9 +871,9 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("CatalogAvailable - returns false for incorrect media type", func(t *testing.T) {
-		apiCli := &ociAPICli{
-			url: urlWithNamespace,
-			netClient: &goodOCIAPIHTTPClient{
+		apiCli := &OciAPIClient{
+			Url: urlWithNamespace,
+			NetClient: &goodOCIAPIHTTPClient{
 				responseByPath: map[string]string{
 					"/v2/test/project/charts-index/manifests/latest": `{"config": {"mediaType": "something-else"}}`,
 				},
@@ -886,9 +886,9 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("CatalogAvailable - returns false for a 404", func(t *testing.T) {
-		apiCli := &ociAPICli{
-			url: urlWithNamespace,
-			netClient: &goodOCIAPIHTTPClient{
+		apiCli := &OciAPIClient{
+			Url: urlWithNamespace,
+			NetClient: &goodOCIAPIHTTPClient{
 				responseByPath: map[string]string{
 					"/v2/test/project/chart-index/manifests/latest": chartsIndexJSON,
 				},
@@ -901,9 +901,9 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("CatalogAvailable - returns false on any other", func(t *testing.T) {
-		apiCli := &ociAPICli{
-			url:       urlWithNamespace,
-			netClient: &badHTTPClient{},
+		apiCli := &OciAPIClient{
+			Url:       urlWithNamespace,
+			NetClient: &badHTTPClient{},
 		}
 
 		if got, want := apiCli.CatalogAvailable("my-user-agent"), false; got != want {
@@ -1323,9 +1323,9 @@ version: 1.0.0
 					Content:  content,
 					Checksum: "123",
 				},
-				ociCli: &ociAPICli{
-					url: url,
-					netClient: &goodOCIAPIHTTPClient{
+				ociCli: &OciAPIClient{
+					Url: url,
+					NetClient: &goodOCIAPIHTTPClient{
 						responseByPath: tags,
 					},
 				},
