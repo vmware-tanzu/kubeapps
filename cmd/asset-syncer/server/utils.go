@@ -397,6 +397,7 @@ func (o *OciAPIClient) IsHelmChart(appName, tag, userAgent string) (bool, error)
 func (o *OciAPIClient) CatalogAvailable(userAgent string) bool {
 	manifest, err := o.catalogManifest(userAgent)
 	if err != nil {
+		log.Errorf("unable to get catalog manifest: %+v", err)
 		return false
 	}
 	return manifest.Config.MediaType == chartsIndexMediaType
@@ -480,6 +481,15 @@ func tagCheckerWorker(o ociAPI, tagJobs <-chan checkTagJob, resultChan chan chec
 // Caveat: Mutated image tags won't be detected as new
 func (r *OCIRegistry) Checksum() (string, error) {
 	r.tags = map[string]TagList{}
+
+	if len(r.repositories) == 0 {
+		repos, err := r.ociCli.Catalog("")
+		if err != nil {
+			return "", err
+		}
+		r.repositories = repos
+	}
+
 	for _, appName := range r.repositories {
 		tags, err := r.ociCli.TagList(appName, GetUserAgent("", ""))
 		if err != nil {

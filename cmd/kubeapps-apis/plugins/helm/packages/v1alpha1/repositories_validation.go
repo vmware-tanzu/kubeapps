@@ -60,9 +60,6 @@ func (s *Server) ValidateRepository(appRepo *apprepov1alpha1.AppRepository, secr
 func getValidator(appRepo *apprepov1alpha1.AppRepository) (HttpValidator, error) {
 	if appRepo.Spec.Type == "oci" {
 		// For the OCI case, we want to validate that all the given repositories are valid
-		if len(appRepo.Spec.OCIRepositories) == 0 {
-			return nil, ErrEmptyOCIRegistry
-		}
 		return HelmOCIValidator{
 			AppRepo: appRepo,
 		}, nil
@@ -225,13 +222,13 @@ func getOCIAppRepositoryMediaType(client httpclient.Client, repoURL string, repo
 func ValidateOCIAppRepository(appRepo *apprepov1alpha1.AppRepository, cli httpclient.Client) (bool, error) {
 
 	repoURL := strings.TrimSuffix(strings.TrimSpace(appRepo.Spec.URL), "/")
-
 	// For the OCI case, if no repositories are listed then we validate that a
 	// catalog is available for the registry, otherwise we want to validate that
 	// all the listed repositories are valid
 	if len(appRepo.Spec.OCIRepositories) == 0 {
 		u, err := url.Parse(repoURL)
 		if err != nil {
+			log.Errorf("could not parse URL: %+v", err)
 			return false, err
 		}
 		oci := utils.OciAPIClient{AuthHeader: "", Url: u, NetClient: cli}
