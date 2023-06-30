@@ -29,7 +29,7 @@
     "@babel/parser": "^7.22.5",
     "@bufbuild/connect": "^0.8.1",
     "@bufbuild/connect-web": "^0.8.3",
-    "@bufbuild/protobuf": "^1.0.0",
+    "@bufbuild/protobuf": "^1.2.1",
     "@cds/city": "^1.1.0",
     "@cds/core": "^6.2.0",
     "@cds/react": "^6.2.0",
