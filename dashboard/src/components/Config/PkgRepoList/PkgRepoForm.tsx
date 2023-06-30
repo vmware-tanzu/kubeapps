@@ -1958,7 +1958,6 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           placeholder={"nginx, jenkins"}
                           value={ociRepositories || ""}
                           onChange={handleOCIRepositoriesChange}
-                          required={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
                         />
                       </CdsTextarea>
                     )}

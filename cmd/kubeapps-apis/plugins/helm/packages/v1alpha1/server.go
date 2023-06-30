@@ -1140,7 +1140,7 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *connec
 }
 
 func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *connect.Request[corev1.GetPackageRepositorySummariesRequest]) (*connect.Response[corev1.GetPackageRepositorySummariesResponse], error) {
-	log.Infof("+helm GetPackageRepositorySummaries [%v]", request)
+	log.Infof("+helm GetPackageRepositorySummaries [%v]", request.Msg.GetContext())
 
 	if summaries, err := s.repoSummaries(ctx, request.Header(), request.Msg.GetContext().GetCluster(), request.Msg.GetContext().GetNamespace()); err != nil {
 		return nil, err
