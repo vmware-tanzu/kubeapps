@@ -1146,15 +1146,10 @@
   resolved "https://registry.yarnpkg.com/@bufbuild/connect/-/connect-0.8.6.tgz#ba85ee7ad546fe380d705826b9b5bf5b8a5c0f01"
   integrity sha512-z9gW4hcQxCz7w0kjt1JyMp7VEQQdm7CYiZHvNq4vZtMbKOje2DC8kSb62XStHHd3AdoDZq1cb1s11F5TMSwZYw==
 
-"@bufbuild/protobuf@1.2.1":
+"@bufbuild/protobuf@1.2.1", "@bufbuild/protobuf@^1.2.0", "@bufbuild/protobuf@^1.2.1":
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.2.1.tgz#f8b1fbbe79726a4eafa9772ddde147b57f85d177"
   integrity sha512-cwwGvLGqvoaOZmoP5+i4v/rbW+rHkguvTehuZyM2p/xpmaNSdT2h3B7kHw33aiffv35t1XrYHIkdJSEkSEMJuA==
-
-"@bufbuild/protobuf@^1.0.0", "@bufbuild/protobuf@^1.2.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.2.0.tgz#7efd5d4aa0540b108eb3b89b42507739e0974299"
-  integrity sha512-MBVuQMOBHxgGnZ9XCUIi8WOy5O/T4ma3TduCRhRvndv3UDbG9cHgd8h6nOYSGyBYPEvXf1z9nTwhp8mVIDbq2g==
 
 "@bufbuild/protoc-gen-connect-es@^0.8.1":
   version "0.8.6"
