@@ -318,10 +318,17 @@ type OCIManifest struct {
 	Layers []OCILayer `json:"layers"`
 }
 
+// VACCatalog representation
+type VACCatalog struct {
+	APIVersion string         `json:"apiVersion"`
+	Entries    map[string]any `json:"entries"`
+}
+
 type ociAPI interface {
 	TagList(appName, userAgent string) (*TagList, error)
 	IsHelmChart(appName, tag, userAgent string) (bool, error)
 	CatalogAvailable(userAgent string) bool
+	Catalog(userAgent string) ([]string, error)
 }
 
 // OciAPIClient enables basic interactions with an OCI registry.
@@ -388,6 +395,14 @@ func (o *OciAPIClient) IsHelmChart(appName, tag, userAgent string) (bool, error)
 // In the future, this should check the oci-catalog service for possible
 // catalogs.
 func (o *OciAPIClient) CatalogAvailable(userAgent string) bool {
+	manifest, err := o.catalogManifest(userAgent)
+	if err != nil {
+		return false
+	}
+	return manifest.Config.MediaType == chartsIndexMediaType
+}
+
+func (o *OciAPIClient) catalogManifest(userAgent string) (*OCIManifest, error) {
 	indexURL := *o.Url
 	indexURL.Path = path.Join("v2", indexURL.Path, "charts-index", "manifests", "latest")
 	log.V(4).Infof("getting tag %s", indexURL.String())
@@ -399,14 +414,58 @@ func (o *OciAPIClient) CatalogAvailable(userAgent string) bool {
 	}
 	manifestData, err := doReq(indexURL.String(), o.NetClient, headers, userAgent)
 	if err != nil {
-		return false
+		return nil, err
 	}
 	var manifest OCIManifest
 	err = json.Unmarshal(manifestData, &manifest)
 	if err != nil {
-		return false
+		return nil, err
 	}
-	return manifest.Config.MediaType == chartsIndexMediaType
+	return &manifest, nil
+}
+
+// Catalog returns the list of repositories in the (namespaced) registry
+// when discoverable.
+func (o *OciAPIClient) Catalog(userAgent string) ([]string, error) {
+	// TODO(minelson): all Kubeapps interactions with OCI registries should
+	// be updated to use the oras go lib.
+	manifest, err := o.catalogManifest(userAgent)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(manifest.Layers) != 1 || manifest.Layers[0].MediaType != "application/vnd.vmware.charts.index.layer.v1+json" {
+		log.Errorf("unexpected layer in index manifest: %v", manifest)
+		return nil, fmt.Errorf("unexpected layer in index manifest")
+	}
+
+	blobDigest := manifest.Layers[0].Digest
+
+	blobURL := *o.Url
+	blobURL.Path = path.Join("v2", blobURL.Path, "charts-index", "blobs", blobDigest)
+	log.V(4).Infof("getting blob %s", blobURL.String())
+	headers := map[string]string{
+		"Accept": "application/vnd.vmware.charts.index.layer.v1+json",
+	}
+	if o.AuthHeader != "" {
+		headers["Authorization"] = o.AuthHeader
+	}
+	blobData, err := doReq(blobURL.String(), o.NetClient, headers, userAgent)
+	if err != nil {
+		return nil, err
+	}
+	var vacCatalog VACCatalog
+	err = json.Unmarshal(blobData, &vacCatalog)
+	if err != nil {
+		return nil, err
+	}
+
+	repos := make([]string, 0, len(vacCatalog.Entries))
+	for r := range vacCatalog.Entries {
+		repos = append(repos, r)
+	}
+	sort.Strings(repos)
+	return repos, nil
 }
 
 func tagCheckerWorker(o ociAPI, tagJobs <-chan checkTagJob, resultChan chan checkTagResult) {
@@ -579,6 +638,14 @@ func (r *OCIRegistry) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 	repoURL, err := parseRepoURL(r.RepoInternal.URL)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(r.repositories) == 0 {
+		repos, err := r.ociCli.Catalog("")
+		if err != nil {
+			return nil, err
+		}
+		r.repositories = repos
 	}
 
 	chartJobs := make(chan pullChartJob, numWorkers)
