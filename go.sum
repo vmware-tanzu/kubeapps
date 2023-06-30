@@ -259,8 +259,9 @@ github.com/fatih/camelcase v1.0.0 h1:hxNvNX/xYBp0ovncs8WyWZrOrpBNub/JfaMvbURyft8
 github.com/fatih/camelcase v1.0.0/go.mod h1:yN2Sb0lFhZJUdVvtELVWefmrXpuZESvPmqwoZc+/fpc=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fatih/color v1.9.0/go.mod h1:eQcE1qtQxscV5RaZvpXrrb8Drkc3/DdQ+uUYCNjL+zU=
-github.com/fatih/color v1.13.0 h1:8LOYc1KYPPmyKMuN8QV2DNRWNbLo6LZ0iLs8+mlH53w=
 github.com/fatih/color v1.13.0/go.mod h1:kLAiJbzzSOZDVNGyDpeOxJ47H46qBXwg5ILebYFFOfk=
+github.com/fatih/color v1.14.1 h1:qfhVLaG5s+nCROl1zJsZRxFeYrHLqWroPOQ8BWiNb4w=
+github.com/fatih/color v1.14.1/go.mod h1:2oHN61fhTpgcxD3TSWCgKDiH1+x4OiDVVGH8WlgGZGg=
 github.com/felixge/httpsnoop v1.0.3 h1:s/nj+GCswXYzN5v2DpNMuMQYe+0DDwt5WVCU6CWBdXk=
 github.com/flowstack/go-jsonschema v0.1.1/go.mod h1:yL7fNggx1o8rm9RlgXv7hTBWxdBM0rVwpMwimd3F3N0=
 github.com/fluxcd/helm-controller/api v0.32.2 h1:ETkZmMEHY/qu6a9AjP6en35WrpN7NnVmhOe7IvOB7jE=
@@ -850,8 +851,8 @@ github.com/vmware-tanzu/carvel-kapp v0.57.1 h1:e08cqRuyca4lsrO/+zJeoFBgl0UoPgpiS
 github.com/vmware-tanzu/carvel-kapp v0.57.1/go.mod h1:XBclKGoBi7DYpwYzY1lHlOfBF+mEmODo63FIX0fKm2U=
 github.com/vmware-tanzu/carvel-kapp-controller v0.46.0 h1:UfJwtD0CEn8+30FKiB0rs/P8sN4uRKBb3T+LBYKJ4YA=
 github.com/vmware-tanzu/carvel-kapp-controller v0.46.0/go.mod h1:LJf4oaNfKW8kk6ddD8uRaayaUecGiqrz278oe4AEBSc=
-github.com/vmware-tanzu/carvel-vendir v0.33.1 h1:5wzx0aRyEiorkWwrpGvACJOpFcgvmCeVqhIY9TPuLvk=
-github.com/vmware-tanzu/carvel-vendir v0.33.1/go.mod h1:cZEa46rwzPt/ROdAuIgrCXLDJ+LqxNZaNxbz8MLtwWc=
+github.com/vmware-tanzu/carvel-vendir v0.34.3 h1:l3w1fq1txvk4PIaoyNlS5oxHMzWXdiSiJHMUJ/w1S9A=
+github.com/vmware-tanzu/carvel-vendir v0.34.3/go.mod h1:n3mFqV6UrLCwDy1S5Wr73XIbolTYfY+NOBqxC1ihjRk=
 github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f/go.mod h1:N2zxlSyiKSe5eX1tZViRH5QA0qijqEDrYZiPEAiq3wU=
 github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb h1:zGWFAtiMcyryUHoUjUJX0/lt1H2+i2Ka2n+D3DImSNo=
 github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb/go.mod h1:N2zxlSyiKSe5eX1tZViRH5QA0qijqEDrYZiPEAiq3wU=

@@ -74,7 +74,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/vmware-tanzu/carvel-kapp v0.57.1
 	github.com/vmware-tanzu/carvel-kapp-controller v0.46.0
-	github.com/vmware-tanzu/carvel-vendir v0.33.1
+	github.com/vmware-tanzu/carvel-vendir v0.34.3
 	golang.org/x/net v0.10.0
 	golang.org/x/sync v0.3.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc
@@ -147,7 +147,7 @@ require (
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
-	github.com/fatih/color v1.13.0 // indirect
+	github.com/fatih/color v1.14.1 // indirect
 	github.com/fluxcd/pkg/apis/acl v0.1.0 // indirect
 	github.com/fluxcd/pkg/apis/kustomize v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
