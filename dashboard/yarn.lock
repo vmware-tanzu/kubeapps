@@ -1092,47 +1092,47 @@
   resolved "https://registry.yarnpkg.com/@braintree/sanitize-url/-/sanitize-url-6.0.2.tgz#6110f918d273fe2af8ea1c4398a88774bb9fc12f"
   integrity sha512-Tbsj02wXCbqGmzdnXNk0SOF19ChhRU70BsroIi4Pm6Ehp56in6vch94mfbdQ17DozxkL3BAVjbZ4Qc1a0HFRAg==
 
-"@bufbuild/buf-darwin-arm64@1.15.0":
-  version "1.15.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/buf-darwin-arm64/-/buf-darwin-arm64-1.15.0.tgz#4d8b074ca1b697c4769cea2fcea027d85b0b6492"
-  integrity sha512-sLN6uGc8sIBALa7Q4fB6rW9NM0MXK32pH6RRDUdl7aDrp/3A6TLKKBGiHcY81axUyxDTUNFb8dOwhHTI2H8FzQ==
+"@bufbuild/buf-darwin-arm64@1.23.1":
+  version "1.23.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf-darwin-arm64/-/buf-darwin-arm64-1.23.1.tgz#8bc6cbb2121c29634712d0c9cb00278aef8ba8ae"
+  integrity sha512-klt7SNqzJAuenunjPm9LLlk0eajXCXh/xJxDFJqaAUK8qQPOTAVV7YvkE2QE0PbjyT9NUgS65OHn/T25t+B7mw==
 
-"@bufbuild/buf-darwin-x64@1.15.0":
-  version "1.15.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/buf-darwin-x64/-/buf-darwin-x64-1.15.0.tgz#33023704c80c8dea32e463e0728bb6297a0abf69"
-  integrity sha512-iHml29I/hOl7ORyp9ohiV7fC1WqPbM5UjogwVpA8j06o5SgxRhp42nd80XRAXCM+65ecwiu5JVuspicGzQFOgg==
+"@bufbuild/buf-darwin-x64@1.23.1":
+  version "1.23.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf-darwin-x64/-/buf-darwin-x64-1.23.1.tgz#a099dc66cf9a691c24a4709f75e2b0541db60e41"
+  integrity sha512-mO+CMKDZCEdMWudfYSxVCjAc6EfdzP5o2gvFyfVBULKiBfOiYZeE67vbV5HuGzIjALKP+ZiWaYnxKeCxEDuJJg==
 
-"@bufbuild/buf-linux-aarch64@1.15.0":
-  version "1.15.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/buf-linux-aarch64/-/buf-linux-aarch64-1.15.0.tgz#8e833440f090b1cafda143135f797aebc6d9e6b0"
-  integrity sha512-YQHXqV1HhdpmIUrYg+gZNWCf43XHJJO5TlJT+pzXB/92PoN8gNP3KdxeRaM2sExcCs91G6zy1/Ms9N6DpeidUQ==
+"@bufbuild/buf-linux-aarch64@1.23.1":
+  version "1.23.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf-linux-aarch64/-/buf-linux-aarch64-1.23.1.tgz#b3075b6d5e0f17e2b512092fe0f4b407f292ac5c"
+  integrity sha512-Sel6ZbnGtvC095KDZHqNC+wErZ0rhrqmjjkVc5fdllZA6of0sEk49KrL2UC9Z1AYKbmnAs4fH1bfvyJOXjqwxg==
 
-"@bufbuild/buf-linux-x64@1.15.0":
-  version "1.15.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/buf-linux-x64/-/buf-linux-x64-1.15.0.tgz#68c2cc39833c018c1e2e9660e9a87f6f61df52e3"
-  integrity sha512-DD2OcsfofawRPQKXLFMqV2GSzi4WyE7kKE1PvXBtJy7sombv5TM26vgdb+DQv4T4Z2i7vhKshnflNkfd3QXtXA==
+"@bufbuild/buf-linux-x64@1.23.1":
+  version "1.23.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf-linux-x64/-/buf-linux-x64-1.23.1.tgz#df942eb34afbb9c4062ad3cfeb92e16c4fe673a1"
+  integrity sha512-QdkdD2OZiw4pPjoXsK9UT6IzWPaqARftmdWFO+I04WfXklcUBohco1GHFhu3zG9hb8vS8KI6ONN8w8Vt4dWOJQ==
 
-"@bufbuild/buf-win32-arm64@1.15.0":
-  version "1.15.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/buf-win32-arm64/-/buf-win32-arm64-1.15.0.tgz#d9b441854bd4bd26ab678da31936561ab8d82368"
-  integrity sha512-wk65iDXWRicfrt/9Gb1voAn9eGP2giQfKMrKOoEyytnDHFolMSmQimKH6iQ1uS5Vn0gI/BVp582cF1m9YsbXEg==
+"@bufbuild/buf-win32-arm64@1.23.1":
+  version "1.23.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf-win32-arm64/-/buf-win32-arm64-1.23.1.tgz#39d547519e2a37e2587ead5fc255d9c86a7563f4"
+  integrity sha512-qfMWnBjorZFrvKzRmxzN690LhD602eseRFnSS3Z9miWF36FexI+CHdywRwF7VyMaKaRAQISS5cARB8Sw5mT2Zw==
 
-"@bufbuild/buf-win32-x64@1.15.0":
-  version "1.15.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/buf-win32-x64/-/buf-win32-x64-1.15.0.tgz#48ed4c94d195d6a763686821ef23da6afa8a868b"
-  integrity sha512-KVoMj52ghYfLwGjQ+t19XZiQy8jGSGUYIe/yVZz08rsm5msXHGYOt++Bk3wr48rcv8gts8jo2/h1Ebkj+F6emw==
+"@bufbuild/buf-win32-x64@1.23.1":
+  version "1.23.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf-win32-x64/-/buf-win32-x64-1.23.1.tgz#0706c4d88c96f9adcc50deb6b319a75fd883ded3"
+  integrity sha512-TnnWxYecVTcyeTWkf5FJ3hQ2AlwWIA2TKUMxJyyh63g0ZBF0Z7D0x+tnmNxhOXtbU38muO6x362nsTFtds5bNg==
 
-"@bufbuild/buf@^1.14.0-1":
-  version "1.15.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/buf/-/buf-1.15.0.tgz#a2d23b922d41d2c026bd37bd938a0d11717e409b"
-  integrity sha512-HX6AjKiI8TVFJKWdDGIUC/zZQG/8sf5FbmU5VdbK/U8tbfCwBADkJ6I+qP6HnDDtSU4obS164J0sibdGhAJKqg==
+"@bufbuild/buf@^1.23.1":
+  version "1.23.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf/-/buf-1.23.1.tgz#fb26701624da81887b03069eaf750e84961833bb"
+  integrity sha512-jSm3lvXVYLQA7TXy173SubUakLLDkNuKZ5mdyua6kRKWHgxXOykMeFdf1GkT0s4zg0WGNHCW0g5NrJxdz1fQgQ==
   optionalDependencies:
-    "@bufbuild/buf-darwin-arm64" "1.15.0"
-    "@bufbuild/buf-darwin-x64" "1.15.0"
-    "@bufbuild/buf-linux-aarch64" "1.15.0"
-    "@bufbuild/buf-linux-x64" "1.15.0"
-    "@bufbuild/buf-win32-arm64" "1.15.0"
-    "@bufbuild/buf-win32-x64" "1.15.0"
+    "@bufbuild/buf-darwin-arm64" "1.23.1"
+    "@bufbuild/buf-darwin-x64" "1.23.1"
+    "@bufbuild/buf-linux-aarch64" "1.23.1"
+    "@bufbuild/buf-linux-x64" "1.23.1"
+    "@bufbuild/buf-win32-arm64" "1.23.1"
+    "@bufbuild/buf-win32-x64" "1.23.1"
 
 "@bufbuild/connect-web@^0.8.3":
   version "0.8.6"
