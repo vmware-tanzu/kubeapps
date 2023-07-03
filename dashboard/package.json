@@ -79,7 +79,7 @@
     "@bufbuild/protoc-gen-connect-es": "^0.11.0",
     "@bufbuild/protoc-gen-es": "^1.2.1",
     "@craco/craco": "^7.0.0",
-    "@formatjs/cli": "^6.0.4",
+    "@formatjs/cli": "^6.1.3",
     "@testing-library/react": "^12.1.5",
     "@types/enzyme": "^3.10.12",
     "@types/jest": "^29.5.2",
