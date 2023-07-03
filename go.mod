@@ -73,7 +73,7 @@ require (
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/stretchr/testify v1.8.4
 	github.com/vmware-tanzu/carvel-kapp v0.57.1
-	github.com/vmware-tanzu/carvel-kapp-controller v0.46.0
+	github.com/vmware-tanzu/carvel-kapp-controller v0.46.1
 	github.com/vmware-tanzu/carvel-vendir v0.34.3
 	golang.org/x/net v0.10.0
 	golang.org/x/sync v0.3.0
