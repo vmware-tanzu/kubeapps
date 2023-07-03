@@ -75,7 +75,7 @@
     "yaml": "^2.2.2"
   },
   "devDependencies": {
-    "@bufbuild/buf": "^1.14.0-1",
+    "@bufbuild/buf": "^1.23.1",
     "@bufbuild/protoc-gen-connect-es": "^0.11.0",
     "@bufbuild/protoc-gen-es": "^1.2.1",
     "@craco/craco": "^7.0.0",
