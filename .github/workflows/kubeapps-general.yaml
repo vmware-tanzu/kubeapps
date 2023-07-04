@@ -19,7 +19,7 @@ on:
         default: false
 
 env:
-  CHARTMUSEUM_VERSION: "3.9.3"
+  CHARTMUSEUM_VERSION: "3.10.1"
   CHARTS_REPO_ORIGINAL: "bitnami/charts"
   BRANCH_CHARTS_REPO_ORIGINAL: "main"
   CHARTS_REPO_FORKED: "kubeapps-bot/charts"
@@ -34,11 +34,11 @@ env:
   KUBEAPPS_REPO: "vmware-tanzu/kubeapps"
   BRANCH_KUBEAPPS_REPO: "main"
   README_GENERATOR_REPO: "bitnami-labs/readme-generator-for-helm"
-  DOCKER_REGISTRY_VERSION: "2.8.1"
-  GOLANG_VERSION: "1.19.8"
+  DOCKER_REGISTRY_VERSION: "2.8.2"
+  GOLANG_VERSION: "1.19.10"
   HELM_VERSION_MIN: "v3.8.0"
-  HELM_VERSION_STABLE: "v3.11.3"
-  GITHUB_VERSION: "2.27.0"
+  HELM_VERSION_STABLE: "v3.12.1"
+  GITHUB_VERSION: "2.31.0"
   IMAGES_TO_PUSH: "apprepository-controller dashboard asset-syncer pinniped-proxy kubeapps-apis"
   # IMG_DEV_TAG is the tags used for the Kubeapps docker images. Ideally there should be an IMG_PROD_TAG
   # but its value is dynamic and GitHub actions doesn't support it in the `env` block, so it is generated
@@ -51,22 +51,22 @@ env:
   IMG_PREFIX_FOR_FORKS: "your-dockerhub-username/"
   # Currently, we only build the images for linux/amd64 because building cross-platform images is extremely slow...
   IMG_PLATFORMS: "linux/amd64"
-  KAPP_CONTROLLER_VERSION: "v0.45.0"
+  KAPP_CONTROLLER_VERSION: "v0.46.1"
   K8S_KIND_VERSION: "v1.24.12@sha256:1e12918b8bc3d4253bc08f640a231bb0d3b2c5a9b28aa3f2ca1aee93e1e8db16"
-  KIND_VERSION: "v0.18.0"
-  KUBECTL_VERSION: "v1.24.12"
+  KIND_VERSION: "v0.20.0"
+  KUBECTL_VERSION: "v1.24.15"
   MKCERT_VERSION: "v1.4.4"
-  NODE_VERSION: "16.20.0"
-  OLM_VERSION: "v0.24.0"
-  POSTGRESQL_VERSION: "15.2.0-debian-11-r22"
-  RUST_VERSION: "1.68.2"
+  NODE_VERSION: "16.20.1"
+  OLM_VERSION: "v0.25.0"
+  POSTGRESQL_VERSION: "15.3.0-debian-11-r18"
+  RUST_VERSION: "1.70.0"
   SEMVER_VERSION: "3.4.0"
-  GKE_STABLE_VERSION: "1.23"
-  GKE_REGULAR_VERSION: "1.24"
+  GKE_STABLE_VERSION: "1.25"
+  GKE_REGULAR_VERSION: "1.26"
   GKE_ZONE: "us-east1-c"
   GKE_PROJECT: "vmware-kubeapps-ci"
   GKE_CLUSTER: "kubeapps-test"
-  SRP_CLI_VERSION: "0.7.2-20230418081227-67dbd9c-113"
+  SRP_CLI_VERSION: "0.7.39-20230628070210-5a5e0e4-156"
 
 jobs:
   setup:
