@@ -67,7 +67,7 @@
     "redux": "^4.2.0",
     "redux-devtools-extension": "^2.13.9",
     "redux-thunk": "^2.4.2",
-    "remark-breaks": "3.0.2",
+    "remark-breaks": "3.0.3",
     "remark-gfm": "^3.0.1",
     "rxjs": "^7.8.1",
     "swagger-ui-react": "^4.18.1",
@@ -75,6 +75,7 @@
     "yaml": "^2.2.2"
   },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@bufbuild/buf": "^1.23.1",
     "@bufbuild/protoc-gen-connect-es": "^0.11.0",
     "@bufbuild/protoc-gen-es": "^1.2.1",
@@ -137,7 +138,7 @@
       "!src/**/*.d.ts"
     ],
     "transformIgnorePatterns": [
-      "node_modules/(?!@cds|@clr|@lit|@bufbuild|axios|bail|ccount|cds|character-entities|comma-separated-tokens|decode-named-character-reference|escape-string-regexp|hast-util-whitespace|is-plain-obj|lit|lodash-es|markdown-table|mdast-util-definitions|mdast-util-find-and-replace|mdast-util-from-markdown|mdast-util-gfm-autolink-literal|mdast-util-gfm|mdast-util-to-hast|mdast-util-to-markdown|mdast-util-to-string|micromark-core-commonmark|monaco-editor|react-monaco-editor|micromark|parse-entities|property-information|ramda|react-markdown|react-syntax-highlighter|remark-breaks|remark-gfm|remark-parse|remark-rehype|space-separated-tokens|swagger-client|swagger-ui-react|trim-lines|trough|unified|unist-builder|unist-util-generated|unist-util-is|unist-util-position|unist-util-stringify-position|unist-util-visit-parents|unist-util-visit|util-find-and-replace|vfile-message|vfile|.*css)"
+      "node_modules/(?!@cds|@clr|@lit|@bufbuild|axios|bail|ccount|cds|character-entities|comma-separated-tokens|decode-named-character-reference|escape-string-regexp|hast-util-whitespace|is-plain-obj|lit|lodash-es|markdown-table|mdast-util-definitions|mdast-util-find-and-replace|mdast-util-from-markdown|mdast-util-gfm-autolink-literal|mdast-util-gfm|mdast-util-newline-to-break|mdast-util-to-hast|mdast-util-to-markdown|mdast-util-to-string|micromark-core-commonmark|monaco-editor|react-monaco-editor|micromark|parse-entities|property-information|ramda|react-markdown|react-syntax-highlighter|remark-breaks|remark-gfm|remark-parse|remark-rehype|space-separated-tokens|swagger-client|swagger-ui-react|trim-lines|trough|unified|unist-builder|unist-util-generated|unist-util-is|unist-util-position|unist-util-stringify-position|unist-util-visit-parents|unist-util-visit|util-find-and-replace|vfile-message|vfile|.*css)"
     ]
   },
   "browserslist": {
