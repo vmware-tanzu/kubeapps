@@ -288,10 +288,10 @@
     chalk "^2.0.0"
     js-tokens "^4.0.0"
 
-"@babel/parser@^7.1.0", "@babel/parser@^7.14.7", "@babel/parser@^7.18.4", "@babel/parser@^7.20.7", "@babel/parser@^7.22.5", "@babel/parser@^7.4.3":
-  version "7.22.5"
-  resolved "https://registry.yarnpkg.com/@babel/parser/-/parser-7.22.5.tgz#721fd042f3ce1896238cf1b341c77eb7dee7dbea"
-  integrity sha512-DFZMC9LJUG9PLOclRC32G63UXwzqS2koQC8dkx+PLdmt1xSePYpbT/NbsrJy8Q/muXz7o/h/d4A7Fuyixm559Q==
+"@babel/parser@^7.1.0", "@babel/parser@^7.14.7", "@babel/parser@^7.18.4", "@babel/parser@^7.20.7", "@babel/parser@^7.22.5", "@babel/parser@^7.22.6", "@babel/parser@^7.4.3":
+  version "7.22.6"
+  resolved "https://registry.yarnpkg.com/@babel/parser/-/parser-7.22.6.tgz#201f8b47be20c76c7c5743b9c16129760bf9a975"
+  integrity sha512-EIQu22vNkceq3LbjAq7knDf/UmtI2qbcNI8GRBlijez6TpQLvSodJPYfydQmNA5buwkxxxa/PVI44jjYZ+/cLw==
 
 "@babel/plugin-bugfix-safari-id-destructuring-collision-in-function-expression@^7.22.5":
   version "7.22.5"
