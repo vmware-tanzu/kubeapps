@@ -7,11 +7,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/kubernetes/pkg/credentialprovider"
 )
 
-func GetAuthHeaderFromDockerConfig(dockerConfig *credentialprovider.DockerConfigJSON) (string, error) {
+func GetAuthHeaderFromDockerConfig(dockerConfig *DockerConfigJSON) (string, error) {
 	if len(dockerConfig.Auths) > 1 {
 		return "", fmt.Errorf("the given config should include one auth entry")
 	}
@@ -32,7 +32,7 @@ func getDataFromRegistrySecret(key string, s *corev1.Secret) (string, error) {
 		return "", fmt.Errorf("secret %q did not contain key %q", s.Name, key)
 	}
 
-	dockerConfig := &credentialprovider.DockerConfigJSON{}
+	dockerConfig := &DockerConfigJSON{}
 	err := json.Unmarshal(dockerConfigJson, dockerConfig)
 	if err != nil {
 		return "", fmt.Errorf("unable to parse secret %s as a Docker config. Got: %v", s.Name, err)

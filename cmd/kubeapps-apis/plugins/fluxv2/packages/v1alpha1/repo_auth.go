@@ -13,12 +13,12 @@ import (
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/connecterror"
+	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	log "k8s.io/klog/v2"
-	"k8s.io/kubernetes/pkg/credentialprovider"
 )
 
 const (
@@ -592,8 +592,8 @@ func newLocalOpaqueSecret(ownerRepo types.NamespacedName) *apiv1.Secret {
 }
 
 func encodeDockerAuth(credentials *corev1.DockerCredentials) ([]byte, error) {
-	config := &credentialprovider.DockerConfigJSON{
-		Auths: map[string]credentialprovider.DockerConfigEntry{
+	config := &kube.DockerConfigJSON{
+		Auths: map[string]kube.DockerConfigEntry{
 			credentials.Server: {
 				Username: credentials.Username,
 				Password: credentials.Password,
@@ -605,7 +605,7 @@ func encodeDockerAuth(credentials *corev1.DockerCredentials) ([]byte, error) {
 }
 
 func decodeDockerAuth(dockerjson []byte) (*corev1.DockerCredentials, error) {
-	config := &credentialprovider.DockerConfigJSON{}
+	config := &kube.DockerConfigJSON{}
 	if err := json.Unmarshal(dockerjson, config); err != nil {
 		return nil, err
 	}
