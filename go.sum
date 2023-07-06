@@ -282,6 +282,7 @@ github.com/fluxcd/pkg/apis/acl v0.1.0 h1:EoAl377hDQYL3WqanWCdifauXqXbMyFuK82NnX6
 github.com/fluxcd/pkg/apis/acl v0.1.0/go.mod h1:zfEZzz169Oap034EsDhmCAGgnWlcWmIObZjYMusoXS8=
 github.com/fluxcd/pkg/apis/kustomize v1.0.0 h1:5T2b/mRZiGWtP7fvSU8gZOApIc06H6SdLX3MlsE6LRo=
 github.com/fluxcd/pkg/apis/kustomize v1.0.0/go.mod h1:XaDYlKxrf9D2zZWcZ0BnSIqGtcm8mdNtJGzZWYjCnQo=
+github.com/fluxcd/pkg/apis/meta v1.0.0 h1:i9IGHd/VNEZELX7mepkiYFbJxs2J5znaB4cN9z2nPm8=
 github.com/fluxcd/pkg/apis/meta v1.0.0/go.mod h1:04ZdpZYm1x+aL93K4daNHW1UX6E8K7Gyf5za9OhrE+U=
 github.com/fluxcd/pkg/apis/meta v1.1.1 h1:sLAKLbEu7rRzJ+Mytffu3NcpfdbOBTa6hcpOQzFWm+M=
 github.com/fluxcd/pkg/apis/meta v1.1.1/go.mod h1:soCfzjFWbm1mqybDcOywWKTCEYlH3skpoNGTboVk234=
