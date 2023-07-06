@@ -103,29 +103,29 @@ const (
 	harbor_admin_pwd  = "Harbor12345"
 )
 
-func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.FluxV2RepositoriesServiceClient, error) {
+func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.FluxV2RepositoriesServiceClient, *rand.Rand, error) {
 	enableEnvVar := os.Getenv(envVarFluxIntegrationTests)
 	runTests := false
 	if enableEnvVar != "" {
 		var err error
 		runTests, err = strconv.ParseBool(enableEnvVar)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 	}
 
 	if !runTests {
 		t.Skipf("skipping flux plugin integration tests because environment variable [%q] not set to be true", envVarFluxIntegrationTests)
-		return nil, nil, nil
+		return nil, nil, nil, nil
 	} else {
 		if up, err := isLocalKindClusterUp(t); err != nil || !up {
-			return nil, nil, fmt.Errorf("Failed to find local kind cluster due to: [%v]", err)
+			return nil, nil, nil, fmt.Errorf("Failed to find local kind cluster due to: [%v]", err)
 		}
 		var fluxPluginPackagesClient fluxplugin.FluxV2PackagesServiceClient
 		var fluxPluginReposClient fluxplugin.FluxV2RepositoriesServiceClient
 		var err error
 		if fluxPluginPackagesClient, fluxPluginReposClient, err = getFluxPluginClients(t); err != nil {
-			return nil, nil, fmt.Errorf("Failed to get fluxv2 plugin due to: [%v]", err)
+			return nil, nil, nil, fmt.Errorf("Failed to get fluxv2 plugin due to: [%v]", err)
 		}
 
 		// check the fluxv2plugin-testdata-svc is deployed - without it,
@@ -133,13 +133,13 @@ func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.
 		// long time
 		typedClient, err := kubeGetTypedClient()
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 		defer cancel()
 		_, err = typedClient.CoreV1().Services("default").Get(ctx, "fluxv2plugin-testdata-svc", metav1.GetOptions{})
 		if err != nil {
-			return nil, nil, fmt.Errorf("Failed to get service [default/fluxv2plugin-testdata-svc] due to: [%v]", err)
+			return nil, nil, nil, fmt.Errorf("Failed to get service [default/fluxv2plugin-testdata-svc] due to: [%v]", err)
 		}
 
 		// Check for helmrepositories left over from manual testing. This has caused me a lot grief
@@ -149,7 +149,7 @@ func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.
 		for i := 0; i <= maxWait; i++ {
 			l, err = kubeListAllHelmRepositories(t)
 			if err != nil {
-				return nil, nil, fmt.Errorf("Failed to get list of HelmRepositories due to: [%v]", err)
+				return nil, nil, nil, fmt.Errorf("Failed to get list of HelmRepositories due to: [%v]", err)
 			} else if len(l.Items) != 0 {
 				names = []string{}
 				for _, p := range l.Items {
@@ -164,10 +164,10 @@ func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.
 		if len(l.Items) != 0 {
 			t.Logf("The following existing HelmRepositories where found in the cluster: %s", names)
 			t.Logf("You may use command [kubectl delete helmrepositories --all] to delete them")
-			return nil, nil, fmt.Errorf("Failed due to existing HelmRepositories in the cluster")
+			return nil, nil, nil, fmt.Errorf("Failed due to existing HelmRepositories in the cluster")
 		}
-		rand.Seed(time.Now().UnixNano())
-		return fluxPluginPackagesClient, fluxPluginReposClient, nil
+		rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
+		return fluxPluginPackagesClient, fluxPluginReposClient, rnd, nil
 	}
 }
 
@@ -1060,7 +1060,7 @@ func restConfig() (*rest.Config, error) {
 	return clientcmd.BuildConfigFromFlags("", kubeconfig)
 }
 
-func randSeq(n int) string {
+func randSeq(r *rand.Rand, n int) string {
 	b := make([]rune, n)
 	for i := range b {
 		b[i] = letters[rand.Intn(len(letters))]
