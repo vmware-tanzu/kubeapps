@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"math"
+	"math/rand"
 	"os"
 	"strings"
 	"testing"
@@ -58,7 +59,7 @@ type integrationTestCreatePackageSpec struct {
 }
 
 func TestKindClusterCreateInstalledPackage(t *testing.T) {
-	fluxPluginPackagesClient, fluxPluginReposClient, err := checkEnv(t)
+	fluxPluginPackagesClient, fluxPluginReposClient, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -144,7 +145,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			repoType: "oci",
 			repoUrl:  github_gfichtenholt_podinfo_oci_registry_url,
 			repoSecret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
+				Name:      "oci-repo-secret-" + randSeq(rnd, 4),
 				Namespace: "default"},
 				ghUser,
 				ghToken,
@@ -160,7 +161,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			repoType: "oci",
 			repoUrl:  gcp_stefanprodan_podinfo_oci_registry_url,
 			repoSecret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
+				Name:      "oci-repo-secret-" + randSeq(rnd, 4),
 				Namespace: "default"},
 				gcpUser,
 				string(gcpPasswd),
@@ -174,7 +175,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 	}
 
 	name := types.NamespacedName{
-		Name:      "test-create-admin" + randSeq(4),
+		Name:      "test-create-admin" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcContext, err := newGrpcAdminContext(t, name)
@@ -184,13 +185,13 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			createAndWaitForHelmRelease(t, tc, fluxPluginPackagesClient, fluxPluginReposClient, grpcContext)
+			createAndWaitForHelmRelease(t, tc, fluxPluginPackagesClient, fluxPluginReposClient, grpcContext, rnd)
 		})
 	}
 }
 
 func TestKindClusterUpdateInstalledPackage(t *testing.T) {
-	fluxPluginPackagesClient, fluxPluginReposClient, err := checkEnv(t)
+	fluxPluginPackagesClient, fluxPluginReposClient, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -304,7 +305,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				repoType: "oci",
 				repoUrl:  github_gfichtenholt_podinfo_oci_registry_url,
 				repoSecret: newBasicAuthSecret(types.NamespacedName{
-					Name:      "oci-repo-secret-" + randSeq(4),
+					Name:      "oci-repo-secret-" + randSeq(rnd, 4),
 					Namespace: "default"},
 					ghUser,
 					ghToken,
@@ -322,7 +323,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 	}
 
 	name := types.NamespacedName{
-		Name:      "test-update-admin-" + randSeq(4),
+		Name:      "test-update-admin-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcContext, err := newGrpcAdminContext(t, name)
@@ -333,7 +334,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			installedRef := createAndWaitForHelmRelease(
-				t, tc.integrationTestCreatePackageSpec, fluxPluginPackagesClient, fluxPluginReposClient, grpcContext)
+				t, tc.integrationTestCreatePackageSpec, fluxPluginPackagesClient, fluxPluginReposClient, grpcContext, rnd)
 			tc.request.InstalledPackageRef = installedRef
 
 			ctx := grpcContext
@@ -414,7 +415,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 // The goal of this integration test is to ensure that when the contents of remote HTTP helm repo is changed,
 // that fact is recorded locally and processed properly (repo/chart cache is updated with latest, etc.)
 func TestKindClusterAutoUpdateInstalledPackageFromHttpRepo(t *testing.T) {
-	fluxPluginPackagesClient, fluxPluginReposClient, err := checkEnv(t)
+	fluxPluginPackagesClient, fluxPluginReposClient, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -431,7 +432,7 @@ func TestKindClusterAutoUpdateInstalledPackageFromHttpRepo(t *testing.T) {
 	}
 
 	name := types.NamespacedName{
-		Name:      "test-auto-update-" + randSeq(4),
+		Name:      "test-auto-update-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcContext, err := newGrpcAdminContext(t, name)
@@ -440,7 +441,7 @@ func TestKindClusterAutoUpdateInstalledPackageFromHttpRepo(t *testing.T) {
 	}
 
 	// this will also make sure that response looks like expected_detail_installed_package_auto_update
-	installedRef := createAndWaitForHelmRelease(t, spec, fluxPluginPackagesClient, fluxPluginReposClient, grpcContext)
+	installedRef := createAndWaitForHelmRelease(t, spec, fluxPluginPackagesClient, fluxPluginReposClient, grpcContext, rnd)
 	podName, err := getFluxPluginTestdataPodName()
 	if err != nil {
 		t.Fatal(err)
@@ -494,7 +495,7 @@ func TestKindClusterAutoUpdateInstalledPackageFromHttpRepo(t *testing.T) {
 // The goal of this integration test is to ensure that when the contents of remote OCI helm repo is changed,
 // that fact is recorded locally and processed properly (repo/chart cache is updated with latest, etc.)
 func TestKindClusterAutoUpdateInstalledPackageFromOciRepo(t *testing.T) {
-	fluxPluginPackagesClient, fluxPluginReposClient, err := checkEnv(t)
+	fluxPluginPackagesClient, fluxPluginReposClient, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -512,7 +513,7 @@ func TestKindClusterAutoUpdateInstalledPackageFromOciRepo(t *testing.T) {
 		repoType:     "oci",
 		repoInterval: 30 * time.Second,
 		repoSecret: newBasicAuthSecret(types.NamespacedName{
-			Name:      "oci-repo-secret-" + randSeq(4),
+			Name:      "oci-repo-secret-" + randSeq(rnd, 4),
 			Namespace: "default"},
 			ghUser,
 			ghToken,
@@ -525,7 +526,7 @@ func TestKindClusterAutoUpdateInstalledPackageFromOciRepo(t *testing.T) {
 	}
 
 	name := types.NamespacedName{
-		Name:      "test-auto-update-" + randSeq(4),
+		Name:      "test-auto-update-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcContext, err := newGrpcAdminContext(t, name)
@@ -533,7 +534,7 @@ func TestKindClusterAutoUpdateInstalledPackageFromOciRepo(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	installedRef := createAndWaitForHelmRelease(t, spec, fluxPluginPackagesClient, fluxPluginReposClient, grpcContext)
+	installedRef := createAndWaitForHelmRelease(t, spec, fluxPluginPackagesClient, fluxPluginReposClient, grpcContext, rnd)
 
 	podName, err := getFluxPluginTestdataPodName()
 	if err != nil {
@@ -573,7 +574,7 @@ func TestKindClusterAutoUpdateInstalledPackageFromOciRepo(t *testing.T) {
 }
 
 func TestKindClusterDeleteInstalledPackage(t *testing.T) {
-	fluxPluginPackagesClient, fluxPluginReposClient, err := checkEnv(t)
+	fluxPluginPackagesClient, fluxPluginReposClient, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -617,7 +618,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 				repoType: "oci",
 				repoUrl:  github_gfichtenholt_podinfo_oci_registry_url,
 				repoSecret: newBasicAuthSecret(types.NamespacedName{
-					Name:      "oci-repo-secret-" + randSeq(4),
+					Name:      "oci-repo-secret-" + randSeq(rnd, 4),
 					Namespace: "default"},
 					ghUser,
 					ghToken,
@@ -649,7 +650,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 	}
 
 	name := types.NamespacedName{
-		Name:      "test-delete-admin" + randSeq(4),
+		Name:      "test-delete-admin" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcContext, err := newGrpcAdminContext(t, name)
@@ -659,7 +660,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			installedRef := createAndWaitForHelmRelease(t, tc.integrationTestCreatePackageSpec, fluxPluginPackagesClient, fluxPluginReposClient, grpcContext)
+			installedRef := createAndWaitForHelmRelease(t, tc.integrationTestCreatePackageSpec, fluxPluginPackagesClient, fluxPluginReposClient, grpcContext, rnd)
 
 			ctx := grpcContext
 			if tc.unauthorized {
@@ -773,18 +774,18 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 //
 // ref https://github.com/vmware-tanzu/kubeapps/issues/4390
 func TestKindClusterRBAC_ReadRelease(t *testing.T) {
-	fluxPluginPackagesClient, fluxPluginReposClient, err := checkEnv(t)
+	fluxPluginPackagesClient, fluxPluginReposClient, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	ns1 := "test-ns1-" + randSeq(4)
+	ns1 := "test-ns1-" + randSeq(rnd, 4)
 	if err := kubeCreateNamespaceAndCleanup(t, ns1); err != nil {
 		t.Fatal(err)
 	}
 
 	adminAcctName := types.NamespacedName{
-		Name:      "test-release-rbac-admin-" + randSeq(4),
+		Name:      "test-release-rbac-admin-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcCtxAdmin, err := newGrpcAdminContext(t, adminAcctName)
@@ -793,7 +794,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	}
 
 	loserAcctName := types.NamespacedName{
-		Name:      "test-release-rbac-loser-" + randSeq(4),
+		Name:      "test-release-rbac-loser-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, loserAcctName)
@@ -830,7 +831,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 		expectedResourceRefs: expected_resource_refs_basic,
 	}
 
-	installedRef := createAndWaitForHelmRelease(t, tc, fluxPluginPackagesClient, fluxPluginReposClient, grpcCtxAdmin)
+	installedRef := createAndWaitForHelmRelease(t, tc, fluxPluginPackagesClient, fluxPluginReposClient, grpcCtxAdmin, rnd)
 
 	ns2 := tc.request.TargetContext.Namespace
 
@@ -968,7 +969,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	}
 
 	svcAcctName := types.NamespacedName{
-		Name:      "test-release-rbac-helmreleases-" + randSeq(4),
+		Name:      "test-release-rbac-helmreleases-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcCtxReadHelmReleases, err := newGrpcContextForServiceAccountWithRules(
@@ -1063,7 +1064,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	}
 
 	svcAcctName2 := types.NamespacedName{
-		Name:      "test-release-rbac-helmreleases-and-charts-" + randSeq(4),
+		Name:      "test-release-rbac-helmreleases-and-charts-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcCtxReadHelmReleasesAndCharts, err := newGrpcContextForServiceAccountWithRules(
@@ -1115,12 +1116,12 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 }
 
 func TestKindClusterRBAC_CreateRelease(t *testing.T) {
-	fluxPluginPackagesClient, _, err := checkEnv(t)
+	fluxPluginPackagesClient, _, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	ns1 := "test-ns1-" + randSeq(4)
+	ns1 := "test-ns1-" + randSeq(rnd, 4)
 	if err := kubeCreateNamespaceAndCleanup(t, ns1); err != nil {
 		t.Fatal(err)
 	}
@@ -1140,7 +1141,7 @@ func TestKindClusterRBAC_CreateRelease(t *testing.T) {
 	}
 
 	loserAcctName := types.NamespacedName{
-		Name:      "test-release-rbac-loser-" + randSeq(4),
+		Name:      "test-release-rbac-loser-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(
@@ -1149,7 +1150,7 @@ func TestKindClusterRBAC_CreateRelease(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ns2 := "test-ns2-" + randSeq(4)
+	ns2 := "test-ns2-" + randSeq(rnd, 4)
 	if err := kubeCreateNamespaceAndCleanup(t, ns2); err != nil {
 		t.Fatal(err)
 	}
@@ -1195,7 +1196,7 @@ func TestKindClusterRBAC_CreateRelease(t *testing.T) {
 	}
 
 	svcAcctName2 := types.NamespacedName{
-		Name:      "test-release-rbac-helmreleases-2-" + randSeq(4),
+		Name:      "test-release-rbac-helmreleases-2-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcCtx2, err := newGrpcContextForServiceAccountWithRules(
@@ -1232,7 +1233,7 @@ func TestKindClusterRBAC_CreateRelease(t *testing.T) {
 	}
 
 	svcAcctName3 := types.NamespacedName{
-		Name:      "test-release-rbac-helmreleases-3-" + randSeq(4),
+		Name:      "test-release-rbac-helmreleases-3-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcCtx3, err := newGrpcContextForServiceAccountWithRules(
@@ -1262,12 +1263,12 @@ func TestKindClusterRBAC_CreateRelease(t *testing.T) {
 }
 
 func TestKindClusterRBAC_UpdateRelease(t *testing.T) {
-	fluxPluginPackagesClient, fluxPluginReposClient, err := checkEnv(t)
+	fluxPluginPackagesClient, fluxPluginReposClient, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	ns1 := "test-ns1-" + randSeq(4)
+	ns1 := "test-ns1-" + randSeq(rnd, 4)
 	if err := kubeCreateNamespaceAndCleanup(t, ns1); err != nil {
 		t.Fatal(err)
 	}
@@ -1292,7 +1293,7 @@ func TestKindClusterRBAC_UpdateRelease(t *testing.T) {
 	}
 
 	adminAcctName := types.NamespacedName{
-		Name:      "test-release-rbac-admin-" + randSeq(4),
+		Name:      "test-release-rbac-admin-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcCtxAdmin, err := newGrpcAdminContext(t, adminAcctName)
@@ -1300,12 +1301,12 @@ func TestKindClusterRBAC_UpdateRelease(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	installedRef := createAndWaitForHelmRelease(t, tc, fluxPluginPackagesClient, fluxPluginReposClient, grpcCtxAdmin)
+	installedRef := createAndWaitForHelmRelease(t, tc, fluxPluginPackagesClient, fluxPluginReposClient, grpcCtxAdmin, rnd)
 
 	ns2 := tc.request.TargetContext.Namespace
 
 	loserAcctName := types.NamespacedName{
-		Name:      "test-release-rbac-loser-" + randSeq(4),
+		Name:      "test-release-rbac-loser-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(
@@ -1342,7 +1343,7 @@ func TestKindClusterRBAC_UpdateRelease(t *testing.T) {
 	}
 
 	svcAcctName2 := types.NamespacedName{
-		Name:      "test-release-rbac-helmreleases-2-" + randSeq(4),
+		Name:      "test-release-rbac-helmreleases-2-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcCtx2, err := newGrpcContextForServiceAccountWithRules(
@@ -1375,7 +1376,7 @@ func TestKindClusterRBAC_UpdateRelease(t *testing.T) {
 	}
 
 	svcAcctName3 := types.NamespacedName{
-		Name:      "test-release-rbac-helmreleases-3-" + randSeq(4),
+		Name:      "test-release-rbac-helmreleases-3-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcCtx3, err := newGrpcContextForServiceAccountWithRules(
@@ -1404,12 +1405,12 @@ func TestKindClusterRBAC_UpdateRelease(t *testing.T) {
 }
 
 func TestKindClusterRBAC_DeleteRelease(t *testing.T) {
-	fluxPluginPackagesClient, fluxPluginReposClient, err := checkEnv(t)
+	fluxPluginPackagesClient, fluxPluginReposClient, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	ns1 := "test-ns1-" + randSeq(4)
+	ns1 := "test-ns1-" + randSeq(rnd, 4)
 	if err := kubeCreateNamespaceAndCleanup(t, ns1); err != nil {
 		t.Fatal(err)
 	}
@@ -1434,7 +1435,7 @@ func TestKindClusterRBAC_DeleteRelease(t *testing.T) {
 	}
 
 	adminAcctName := types.NamespacedName{
-		Name:      "test-release-rbac-admin-" + randSeq(4),
+		Name:      "test-release-rbac-admin-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcCtxAdmin, err := newGrpcAdminContext(t, adminAcctName)
@@ -1442,12 +1443,12 @@ func TestKindClusterRBAC_DeleteRelease(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	installedRef := createAndWaitForHelmRelease(t, tc, fluxPluginPackagesClient, fluxPluginReposClient, grpcCtxAdmin)
+	installedRef := createAndWaitForHelmRelease(t, tc, fluxPluginPackagesClient, fluxPluginReposClient, grpcCtxAdmin, rnd)
 
 	ns2 := tc.request.TargetContext.Namespace
 
 	loserAcctName := types.NamespacedName{
-		Name:      "test-release-rbac-loser-" + randSeq(4),
+		Name:      "test-release-rbac-loser-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(
@@ -1483,7 +1484,7 @@ func TestKindClusterRBAC_DeleteRelease(t *testing.T) {
 	}
 
 	svcAcctName := types.NamespacedName{
-		Name:      "test-release-rbac-helmreleases-3-" + randSeq(4),
+		Name:      "test-release-rbac-helmreleases-3-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcCtx3, err := newGrpcContextForServiceAccountWithRules(
@@ -1506,7 +1507,7 @@ func createAndWaitForHelmRelease(
 	tc integrationTestCreatePackageSpec,
 	fluxPluginPackagesClient fluxplugin.FluxV2PackagesServiceClient,
 	fluxPluginReposClient fluxplugin.FluxV2RepositoriesServiceClient,
-	grpcContext context.Context) *corev1.InstalledPackageReference {
+	grpcContext context.Context, rnd *rand.Rand) *corev1.InstalledPackageReference {
 
 	availablePackageRef := tc.request.AvailablePackageRef
 	idParts := strings.Split(availablePackageRef.Identifier, "/")
@@ -1558,7 +1559,7 @@ func createAndWaitForHelmRelease(
 	// run multiple times in a row and they fail due to the fact that the specified namespace
 	// in 'Terminating' state
 	if tc.request.TargetContext.Namespace != "" {
-		tc.request.TargetContext.Namespace += "-" + randSeq(4)
+		tc.request.TargetContext.Namespace += "-" + randSeq(rnd, 4)
 
 		if !tc.dontCreateNs {
 			// per https://github.com/vmware-tanzu/kubeapps/pull/3640#issuecomment-950383123

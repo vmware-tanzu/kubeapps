@@ -150,9 +150,9 @@ func RWMutexWriteLocked(rw *sync.RWMutex) bool {
 // TODO(minelson): Note the danger of checking private variables like this
 // is that they change underneath you. This fails with go 1.20 because
 // readerCount has changed from an Int to an atomic.Int32 (struct).
-// We'll need to update when upgrading.
+// Updated to 1.20, but warning is still applicable.
 func RWMutexReadLocked(rw *sync.RWMutex) bool {
-	return reflect.ValueOf(rw).Elem().FieldByName("readerCount").Int() > 0
+	return reflect.ValueOf(rw).Elem().FieldByName("readerCount").FieldByName("v").Int() > 0
 }
 
 // https://github.com/vmware-tanzu/kubeapps/pull/3044#discussion_r662733334
