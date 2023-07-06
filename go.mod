@@ -40,7 +40,7 @@ require (
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/stretchr/testify v1.8.4
-	github.com/vmware-tanzu/carvel-kapp v0.57.1
+	github.com/vmware-tanzu/carvel-kapp v0.56.0
 	github.com/vmware-tanzu/carvel-kapp-controller v0.46.1
 	github.com/vmware-tanzu/carvel-vendir v0.34.3
 	golang.org/x/net v0.11.0
@@ -51,12 +51,12 @@ require (
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.11.3
-	k8s.io/api v0.27.2
+	k8s.io/api v0.26.6
 	k8s.io/apiextensions-apiserver v0.26.3
 	k8s.io/apimachinery v0.27.3
 	k8s.io/apiserver v0.26.3
 	k8s.io/cli-runtime v0.26.1
-	k8s.io/client-go v0.27.2
+	k8s.io/client-go v0.26.6
 	k8s.io/klog/v2 v2.100.1
 	k8s.io/kubectl v0.26.1
 	k8s.io/utils v0.0.0-20230220204549-a5ecb0141aa5
@@ -93,7 +93,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.18.7 // indirect
 	github.com/aws/smithy-go v1.13.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/carvel-dev/semver/v4 v4.0.1-0.20230221220520-8090ce423695 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
@@ -228,3 +227,11 @@ require (
 	sigs.k8s.io/kustomize/kyaml v0.13.9 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
+
+// Until we can update to client-go 0.27 / k8s 1.27 (currently we cannot because
+// it causes an error just like
+// https://github.com/operator-framework/operator-sdk/issues/6396 as other upstream k8s libs
+// are not yet switched, which leads to the cause explained at:
+// https://github.com/operator-framework/operator-sdk/issues/6396#issuecomment-1521399563
+// Note that this also stops carvel-kapp from v0.56.0 -> v0.57.1
+exclude k8s.io/api v0.27.2

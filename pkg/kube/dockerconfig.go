@@ -1,4 +1,4 @@
-// Copyright 2019-2022 the Kubeapps contributors.
+// Copyright 2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 package kube
 
@@ -9,11 +9,28 @@ import (
 	"strings"
 )
 
-// The following is Copyright 2014 The Kubernetes Authors
-// and icensed under the Apache License, Version 2.0.
 // Including here instead of importing from k8s.io/kubernetes/credentialprovider
-// since k8s.io/kubernetes is not supported for imports and leads
-// to version issues.
+// since k8s.io/kubernetes is not supported for imports and leads to version issues.
+
+// the following pieces of code have been extracted from
+// https://github.com/kubernetes/kubernetes/blob/916c3466b96d879687bd1426af4a9e8664eb18ef/pkg/credentialprovider/provider.go#L28
+// and they are subject to the undermentioned license terms.
+
+/*
+Copyright 2014 The Kubernetes Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 
 // DockerConfigProvider is the interface that registered extensions implement
 // to materialize 'dockercfg' credentials.
