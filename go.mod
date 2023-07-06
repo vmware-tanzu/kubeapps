@@ -40,7 +40,7 @@ require (
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/stretchr/testify v1.8.4
-	github.com/vmware-tanzu/carvel-kapp v0.56.0
+	github.com/vmware-tanzu/carvel-kapp v0.57.1
 	github.com/vmware-tanzu/carvel-kapp-controller v0.46.1
 	github.com/vmware-tanzu/carvel-vendir v0.34.3
 	golang.org/x/net v0.12.0
@@ -51,12 +51,12 @@ require (
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.11.3
-	k8s.io/api v0.26.6
+	k8s.io/api v0.27.3
 	k8s.io/apiextensions-apiserver v0.26.3
-	k8s.io/apimachinery v0.26.6
+	k8s.io/apimachinery v0.27.3
 	k8s.io/apiserver v0.26.3
 	k8s.io/cli-runtime v0.26.1
-	k8s.io/client-go v0.26.6
+	k8s.io/client-go v0.27.2
 	k8s.io/klog/v2 v2.100.1
 	k8s.io/kubectl v0.26.1
 	k8s.io/utils v0.0.0-20230220204549-a5ecb0141aa5
