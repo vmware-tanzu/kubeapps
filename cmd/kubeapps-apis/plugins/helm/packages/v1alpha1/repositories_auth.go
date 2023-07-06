@@ -12,6 +12,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/vmware-tanzu/kubeapps/pkg/helm"
+	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -24,7 +25,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	log "k8s.io/klog/v2"
-	"k8s.io/kubernetes/pkg/credentialprovider"
 )
 
 const (
@@ -844,8 +844,8 @@ func decodeBearerAuth(auth string) (token string, ok bool) {
 }
 
 func encodeDockerAuth(credentials *corev1.DockerCredentials) ([]byte, error) {
-	config := &credentialprovider.DockerConfigJSON{
-		Auths: map[string]credentialprovider.DockerConfigEntry{
+	config := &kube.DockerConfigJSON{
+		Auths: map[string]kube.DockerConfigEntry{
 			credentials.Server: {
 				Username: credentials.Username,
 				Password: credentials.Password,
@@ -857,7 +857,7 @@ func encodeDockerAuth(credentials *corev1.DockerCredentials) ([]byte, error) {
 }
 
 func decodeDockerAuth(dockerjson []byte) (*corev1.DockerCredentials, error) {
-	config := &credentialprovider.DockerConfigJSON{}
+	config := &kube.DockerConfigJSON{}
 	if err := json.Unmarshal(dockerjson, config); err != nil {
 		return nil, err
 	}

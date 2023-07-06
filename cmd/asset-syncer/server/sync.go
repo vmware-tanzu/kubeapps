@@ -13,7 +13,6 @@ import (
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 	log "k8s.io/klog/v2"
-	"k8s.io/kubernetes/pkg/credentialprovider"
 )
 
 func Sync(serveOpts Config, version string, args []string) error {
@@ -41,7 +40,7 @@ func Sync(serveOpts Config, version string, args []string) error {
 	authorizationHeader := serveOpts.AuthorizationHeader
 	// The auth header may be a dockerconfig that we need to parse
 	if serveOpts.DockerConfigJson != "" {
-		dockerConfig := &credentialprovider.DockerConfigJSON{}
+		dockerConfig := &kube.DockerConfigJSON{}
 		err = json.Unmarshal([]byte(serveOpts.DockerConfigJson), dockerConfig)
 		if err != nil {
 			return fmt.Errorf("Error: %v", err)

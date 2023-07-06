@@ -7,11 +7,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
+	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/kubernetes/pkg/credentialprovider"
 )
 
 const (
@@ -64,7 +65,7 @@ func RegistrySecretsPerDomain(ctx context.Context, appRepoSecrets []string, name
 			return nil, fmt.Errorf("AppRepository secret must have a data map with a key %q. Secret %q did not", dockerConfigJSONKey, secretName)
 		}
 
-		dockerConfigJSON := credentialprovider.DockerConfigJSON{}
+		dockerConfigJSON := kube.DockerConfigJSON{}
 		if err := json.Unmarshal(dockerConfigJSONBytes, &dockerConfigJSON); err != nil {
 			return nil, err
 		}

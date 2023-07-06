@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/kubernetes/pkg/credentialprovider"
 
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,6 +25,7 @@ import (
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappcorev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
+	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 )
 
 const REPO_REF_ANNOTATION = "packaging.carvel.dev/package-repository-ref"
@@ -534,8 +534,8 @@ func isDockerAuth(secret *k8scorev1.Secret) bool {
 }
 
 func toDockerConfig(docker *corev1.DockerCredentials) ([]byte, error) {
-	dockerConfig := &credentialprovider.DockerConfigJSON{
-		Auths: map[string]credentialprovider.DockerConfigEntry{
+	dockerConfig := &kube.DockerConfigJSON{
+		Auths: map[string]kube.DockerConfigEntry{
 			docker.Server: {
 				Username: docker.Username,
 				Password: docker.Password,
@@ -551,7 +551,7 @@ func toDockerConfig(docker *corev1.DockerCredentials) ([]byte, error) {
 }
 
 func fromDockerConfig(dockerjson []byte) (*corev1.DockerCredentials, error) {
-	dockerConfig := &credentialprovider.DockerConfigJSON{}
+	dockerConfig := &kube.DockerConfigJSON{}
 	if err := json.Unmarshal(dockerjson, dockerConfig); err != nil {
 		return nil, err
 	}
