@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 	"testing"
@@ -47,7 +48,7 @@ import (
 // -rw-rw-rw-@ 1 gfichtenholt  staff  10394218 Nov  7 19:41 bitnami_index.yaml
 // Also now we are caching helmcharts themselves for each repo so that will affect how many will fit too
 func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *testing.T) {
-	fluxPlugin, _, err := checkEnv(t)
+	fluxPlugin, _, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -131,7 +132,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 	// one particular code path I'd like to test:
 	// make sure that GetAvailablePackageVersions() works w.r.t. a cache entry that's been evicted
 	name := types.NamespacedName{
-		Name:      "test-create-admin-" + randSeq(4),
+		Name:      "test-create-admin-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcContext, err := newGrpcAdminContext(t, name)
@@ -271,14 +272,14 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 //
 // ref https://github.com/vmware-tanzu/kubeapps/issues/4390
 func TestKindClusterRepoAndChartRBAC(t *testing.T) {
-	fluxPluginClient, _, err := checkEnv(t)
+	fluxPluginClient, _, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	names := []types.NamespacedName{
-		{Name: "podinfo-1", Namespace: "test-" + randSeq(4)},
-		{Name: "podinfo-2", Namespace: "test-" + randSeq(4)},
+		{Name: "podinfo-1", Namespace: "test-" + randSeq(rnd, 4)},
+		{Name: "podinfo-2", Namespace: "test-" + randSeq(rnd, 4)},
 	}
 
 	for _, n := range names {
@@ -294,7 +295,7 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 	}
 
 	svcAcctName := types.NamespacedName{
-		Name:      "test-repo-rbac-admin-" + randSeq(4),
+		Name:      "test-repo-rbac-admin-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcCtxAdmin, err := newGrpcAdminContext(t, svcAcctName)
@@ -310,7 +311,7 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 	}
 
 	svcAcctName2 := types.NamespacedName{
-		Name:      "test-repo-rbac-loser-" + randSeq(4),
+		Name:      "test-repo-rbac-loser-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, svcAcctName2)
@@ -341,7 +342,7 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 	}
 
 	svcAcctName3 := types.NamespacedName{
-		Name:      "test-repo-rbac-limited-" + randSeq(4),
+		Name:      "test-repo-rbac-limited-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 
@@ -527,7 +528,7 @@ type testCaseKindClusterAvailablePackageEndpointsForOCISpec struct {
 	unauthorized    bool
 }
 
-func testCaseKindClusterAvailablePackageEndpointsForGitHub(t *testing.T) []testCaseKindClusterAvailablePackageEndpointsForOCISpec {
+func testCaseKindClusterAvailablePackageEndpointsForGitHub(t *testing.T, rnd *rand.Rand) []testCaseKindClusterAvailablePackageEndpointsForOCISpec {
 	ghUser := os.Getenv("GITHUB_USER")
 	ghToken := os.Getenv("GITHUB_TOKEN")
 	if ghUser == "" || ghToken == "" {
@@ -538,7 +539,7 @@ func testCaseKindClusterAvailablePackageEndpointsForGitHub(t *testing.T) []testC
 			testName:    "Testing [" + github_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret",
 			registryUrl: github_stefanprodan_podinfo_oci_registry_url,
 			secret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
+				Name:      "oci-repo-secret-" + randSeq(rnd, 4),
 				Namespace: "default"},
 				ghUser,
 				ghToken,
@@ -548,7 +549,7 @@ func testCaseKindClusterAvailablePackageEndpointsForGitHub(t *testing.T) []testC
 			testName:    "Testing [" + github_stefanprodan_podinfo_oci_registry_url + "] with dockerconfigjson secret",
 			registryUrl: github_stefanprodan_podinfo_oci_registry_url,
 			secret: newDockerConfigJsonSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
+				Name:      "oci-repo-secret-" + randSeq(rnd, 4),
 				Namespace: "default"},
 				"ghcr.io", ghUser, ghToken,
 			),
@@ -556,7 +557,7 @@ func testCaseKindClusterAvailablePackageEndpointsForGitHub(t *testing.T) []testC
 	}
 }
 
-func testCaseKindClusterAvailablePackageEndpointsForHarbor(t *testing.T) []testCaseKindClusterAvailablePackageEndpointsForOCISpec {
+func testCaseKindClusterAvailablePackageEndpointsForHarbor(t *testing.T, rnd *rand.Rand) []testCaseKindClusterAvailablePackageEndpointsForOCISpec {
 	if err := setupHarborForIntegrationTest(t); err != nil {
 		t.Fatal(err)
 	}
@@ -586,7 +587,7 @@ func testCaseKindClusterAvailablePackageEndpointsForHarbor(t *testing.T) []testC
 			testName:    "Testing [" + harbor_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret (admin)",
 			registryUrl: harbor_stefanprodan_podinfo_oci_registry_url,
 			secret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
+				Name:      "oci-repo-secret-" + randSeq(rnd, 4),
 				Namespace: "default"},
 				harbor_admin_user,
 				harbor_admin_pwd,
@@ -596,7 +597,7 @@ func testCaseKindClusterAvailablePackageEndpointsForHarbor(t *testing.T) []testC
 			testName:    "Testing [" + harbor_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret (robot)",
 			registryUrl: harbor_stefanprodan_podinfo_oci_registry_url,
 			secret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
+				Name:      "oci-repo-secret-" + randSeq(rnd, 4),
 				Namespace: "default"},
 				harborRobotName,
 				harborRobotSecret,
@@ -607,7 +608,7 @@ func testCaseKindClusterAvailablePackageEndpointsForHarbor(t *testing.T) []testC
 			testName:    "Testing [" + harbor_stefanprodan_podinfo_private_oci_registry_url + "] with basic auth secret (admin)",
 			registryUrl: harbor_stefanprodan_podinfo_private_oci_registry_url,
 			secret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
+				Name:      "oci-repo-secret-" + randSeq(rnd, 4),
 				Namespace: "default"},
 				harbor_admin_user,
 				harbor_admin_pwd,
@@ -618,7 +619,7 @@ func testCaseKindClusterAvailablePackageEndpointsForHarbor(t *testing.T) []testC
 			testName:    "Testing [" + harbor_stefanprodan_podinfo_private_oci_registry_url + "] with basic auth secret (robot)",
 			registryUrl: harbor_stefanprodan_podinfo_private_oci_registry_url,
 			secret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
+				Name:      "oci-repo-secret-" + randSeq(rnd, 4),
 				Namespace: "default"},
 				harborRobotName,
 				harborRobotSecret,
@@ -635,7 +636,7 @@ func testCaseKindClusterAvailablePackageEndpointsForHarbor(t *testing.T) []testC
 			testName:    "Testing [" + harbor_stefanprodan_podinfo_private_oci_registry_url + "] bad username/secret",
 			registryUrl: harbor_stefanprodan_podinfo_private_oci_registry_url,
 			secret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
+				Name:      "oci-repo-secret-" + randSeq(rnd, 4),
 				Namespace: "default"},
 				"kaka",
 				"kaka"),
@@ -645,7 +646,7 @@ func testCaseKindClusterAvailablePackageEndpointsForHarbor(t *testing.T) []testC
 			testName:    "Testing [" + harborCorpVMwareRepoUrl + "]",
 			registryUrl: harborCorpVMwareRepoUrl,
 			secret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
+				Name:      "oci-repo-secret-" + randSeq(rnd, 4),
 				Namespace: "default"},
 				harborCorpVMwareRepoRobotUser,
 				harborCorpVMwareRepoRobotSecret),
@@ -653,7 +654,7 @@ func testCaseKindClusterAvailablePackageEndpointsForHarbor(t *testing.T) []testC
 	}
 }
 
-func testCaseKindClusterAvailablePackageEndpointsForGcp(t *testing.T) []testCaseKindClusterAvailablePackageEndpointsForOCISpec {
+func testCaseKindClusterAvailablePackageEndpointsForGcp(t *testing.T, rnd *rand.Rand) []testCaseKindClusterAvailablePackageEndpointsForOCISpec {
 	// ref: https://cloud.google.com/artifact-registry/docs/helm/authentication#token
 	gcpUser := "oauth2accesstoken"
 	gcpPasswd, err := gcloudPrintAccessToken(t)
@@ -678,7 +679,7 @@ func testCaseKindClusterAvailablePackageEndpointsForGcp(t *testing.T) []testCase
 			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with service access token",
 			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
 			secret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
+				Name:      "oci-repo-secret-" + randSeq(rnd, 4),
 				Namespace: "default"},
 				gcpUser,
 				string(gcpPasswd),
@@ -688,7 +689,7 @@ func testCaseKindClusterAvailablePackageEndpointsForGcp(t *testing.T) []testCase
 			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with JSON key",
 			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
 			secret: newDockerConfigJsonSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
+				Name:      "oci-repo-secret-" + randSeq(rnd, 4),
 				Namespace: "default"},
 				gcpServer2,
 				gcpUser2,
@@ -706,7 +707,7 @@ func testCaseKindClusterAvailablePackageEndpointsForGcp(t *testing.T) []testCase
 			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] bad username/secret",
 			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
 			secret: newDockerConfigJsonSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
+				Name:      "oci-repo-secret-" + randSeq(rnd, 4),
 				Namespace: "default"},
 				gcpServer2,
 				"kaka",
@@ -718,7 +719,7 @@ func testCaseKindClusterAvailablePackageEndpointsForGcp(t *testing.T) []testCase
 }
 
 func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
-	fluxPluginClient, fluxPluginReposClient, err := checkEnv(t)
+	fluxPluginClient, fluxPluginReposClient, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -726,9 +727,9 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 	// this is written this way so its relatively easy to comment out and run just a subset
 	// of the test cases when debugging failures
 	testCases := []testCaseKindClusterAvailablePackageEndpointsForOCISpec{}
-	testCases = append(testCases, testCaseKindClusterAvailablePackageEndpointsForGitHub(t)...)
-	testCases = append(testCases, testCaseKindClusterAvailablePackageEndpointsForHarbor(t)...)
-	testCases = append(testCases, testCaseKindClusterAvailablePackageEndpointsForGcp(t)...)
+	testCases = append(testCases, testCaseKindClusterAvailablePackageEndpointsForGitHub(t, rnd)...)
+	testCases = append(testCases, testCaseKindClusterAvailablePackageEndpointsForHarbor(t, rnd)...)
+	testCases = append(testCases, testCaseKindClusterAvailablePackageEndpointsForGcp(t, rnd)...)
 
 	// TODO (gfichtenholt) harbor plainHTTP (not HTTPS) repo with robot account
 	//   this may or may not work see https://github.com/fluxcd/source-controller/issues/807
@@ -749,7 +750,7 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 			testName:    "Testing [" + in_cluster_oci_registry_url + "]",
 			registryUrl: in_cluster_oci_registry_url,
 			secret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
+				Name:      "oci-repo-secret-" + randSeq(rnd, 4),
 				Namespace: "default"},
 				"foo",
 				"bar",
@@ -757,19 +758,19 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 		},
 	*/
 
-	testKindClusterAvailablePackageEndpointsForOCIHelper(t, testCases, fluxPluginClient, fluxPluginReposClient)
+	testKindClusterAvailablePackageEndpointsForOCIHelper(t, testCases, fluxPluginClient, fluxPluginReposClient, rnd)
 }
 
 func testKindClusterAvailablePackageEndpointsForOCIHelper(
 	t *testing.T,
 	testCases []testCaseKindClusterAvailablePackageEndpointsForOCISpec,
 	fluxPluginClient fluxplugin.FluxV2PackagesServiceClient,
-	fluxPluginReposClient fluxplugin.FluxV2RepositoriesServiceClient) {
+	fluxPluginReposClient fluxplugin.FluxV2RepositoriesServiceClient, rnd *rand.Rand) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			repoName := types.NamespacedName{
-				Name:      "my-podinfo-" + randSeq(4),
+				Name:      "my-podinfo-" + randSeq(rnd, 4),
 				Namespace: "default",
 			}
 
@@ -805,7 +806,7 @@ func testKindClusterAvailablePackageEndpointsForOCIHelper(
 			}
 
 			adminName := types.NamespacedName{
-				Name:      "test-admin-" + randSeq(4),
+				Name:      "test-admin-" + randSeq(rnd, 4),
 				Namespace: "default",
 			}
 			grpcContext, err := newGrpcAdminContext(t, adminName)
@@ -923,7 +924,7 @@ func testKindClusterAvailablePackageEndpointsForOCIHelper(
 }
 
 func TestKindClusterAvailablePackageEndpointsOCIRepo2Charts(t *testing.T) {
-	fluxPluginClient, _, err := checkEnv(t)
+	fluxPluginClient, _, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -940,7 +941,7 @@ func TestKindClusterAvailablePackageEndpointsOCIRepo2Charts(t *testing.T) {
 			testName:    "Testing [" + harbor_repo_with_2_charts_oci_registry_url + "] with basic auth secret (admin)",
 			registryUrl: harbor_repo_with_2_charts_oci_registry_url,
 			secret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
+				Name:      "oci-repo-secret-" + randSeq(rnd, 4),
 				Namespace: "default"},
 				harbor_admin_user,
 				harbor_admin_pwd,
@@ -951,7 +952,7 @@ func TestKindClusterAvailablePackageEndpointsOCIRepo2Charts(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			repoName := types.NamespacedName{
-				Name:      "my-podinfo-" + randSeq(4),
+				Name:      "my-podinfo-" + randSeq(rnd, 4),
 				Namespace: "default",
 			}
 
@@ -975,7 +976,7 @@ func TestKindClusterAvailablePackageEndpointsOCIRepo2Charts(t *testing.T) {
 			}
 
 			adminName := types.NamespacedName{
-				Name:      "test-admin-" + randSeq(4),
+				Name:      "test-admin-" + randSeq(rnd, 4),
 				Namespace: "default",
 			}
 
@@ -1010,13 +1011,13 @@ func TestKindClusterAvailablePackageEndpointsOCIRepo2Charts(t *testing.T) {
 // The goal of this integration test is to ensure that when the contents of remote HTTP helm repo is changed,
 // that fact is recorded locally and processed properly (repo/chart cache is updated with latest, etc.)
 func TestKindClusterAddRemovePackageVersionsInHttpRepo(t *testing.T) {
-	fluxPluginPackagesClient, _, err := checkEnv(t)
+	fluxPluginPackagesClient, _, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	adminAcctName := types.NamespacedName{
-		Name:      "test-add-remove-versions-repo-admin-" + randSeq(4),
+		Name:      "test-add-remove-versions-repo-admin-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcContext, err := newGrpcAdminContext(t, adminAcctName)
@@ -1026,7 +1027,7 @@ func TestKindClusterAddRemovePackageVersionsInHttpRepo(t *testing.T) {
 
 	repoName := types.NamespacedName{
 		Name:      "podinfo",
-		Namespace: "test-" + randSeq(4),
+		Namespace: "test-" + randSeq(rnd, 4),
 	}
 	if err := kubeCreateNamespaceAndCleanup(t, repoName.Namespace); err != nil {
 		t.Fatal(err)

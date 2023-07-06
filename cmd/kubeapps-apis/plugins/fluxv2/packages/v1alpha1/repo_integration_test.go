@@ -36,7 +36,7 @@ import (
 // The goal is to make sure that the events are processed by the cache fully in the order
 // they were received and the cache does not end up in inconsistent state
 func TestKindClusterAddThenDeleteRepo(t *testing.T) {
-	_, _, err := checkEnv(t)
+	_, _, _, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,13 +79,13 @@ func TestKindClusterAddThenDeleteRepo(t *testing.T) {
 }
 
 func TestKindClusterRepoWithBasicAuth(t *testing.T) {
-	fluxPluginClient, _, err := checkEnv(t)
+	fluxPluginClient, _, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	secretName := types.NamespacedName{
-		Name:      "podinfo-basic-auth-secret-" + randSeq(4),
+		Name:      "podinfo-basic-auth-secret-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	if err := kubeCreateSecretAndCleanup(t, newBasicAuthSecret(secretName, "foo", "bar")); err != nil {
@@ -93,7 +93,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 	}
 
 	repoName := types.NamespacedName{
-		Name:      "podinfo-basic-auth-" + randSeq(4),
+		Name:      "podinfo-basic-auth-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	if err := kubeAddHelmRepositoryAndCleanup(t, repoName, "", podinfo_basic_auth_repo_url, secretName.Name, 0); err != nil {
@@ -176,7 +176,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 }
 
 func TestKindClusterAddPackageRepository(t *testing.T) {
-	_, fluxPluginReposClient, err := checkEnv(t)
+	_, fluxPluginReposClient, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -293,7 +293,7 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 	}
 
 	adminAcctName := types.NamespacedName{
-		Name:      "test-add-repo-admin-" + randSeq(4),
+		Name:      "test-add-repo-admin-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcContext, err := newGrpcAdminContext(t, adminAcctName)
@@ -358,7 +358,7 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 }
 
 func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
-	_, fluxPluginReposClient, err := checkEnv(t)
+	_, fluxPluginReposClient, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -506,7 +506,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 	}
 
 	adminAcctName := types.NamespacedName{
-		Name:      "test-get-repo-admin-" + randSeq(4),
+		Name:      "test-get-repo-admin-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcAdmin, err := newGrpcAdminContext(t, adminAcctName)
@@ -515,7 +515,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 	}
 
 	loserAcctName := types.NamespacedName{
-		Name:      "test-get-repo-loser-" + randSeq(4),
+		Name:      "test-get-repo-loser-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, loserAcctName)
@@ -525,7 +525,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			repoNamespace := "test-" + randSeq(4)
+			repoNamespace := "test-" + randSeq(rnd, 4)
 
 			if err := kubeCreateNamespaceAndCleanup(t, repoNamespace); err != nil {
 				t.Fatal(err)
@@ -598,7 +598,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 }
 
 func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
-	_, fluxPluginReposClient, err := checkEnv(t)
+	_, fluxPluginReposClient, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -610,9 +610,9 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 		url  string
 	}
 
-	ns1 := "ns1-" + randSeq(4)
-	ns2 := "ns2-" + randSeq(4)
-	ns3 := "ns3-" + randSeq(4)
+	ns1 := "ns1-" + randSeq(rnd, 4)
+	ns2 := "ns2-" + randSeq(rnd, 4)
+	ns3 := "ns3-" + randSeq(rnd, 4)
 
 	for _, namespace := range []string{ns1, ns2, ns3} {
 		ns := namespace
@@ -741,7 +741,7 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 	}
 
 	adminAcctName := types.NamespacedName{
-		Name:      "test-get-summaries-admin-" + randSeq(4),
+		Name:      "test-get-summaries-admin-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcAdmin, err := newGrpcAdminContext(t, adminAcctName)
@@ -750,7 +750,7 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 	}
 
 	loserAcctName := types.NamespacedName{
-		Name:      "test-get-summaries-loser-" + randSeq(4),
+		Name:      "test-get-summaries-loser-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, loserAcctName)
@@ -800,7 +800,7 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 }
 
 func TestKindClusterUpdatePackageRepository(t *testing.T) {
-	_, fluxPluginReposClient, err := checkEnv(t)
+	_, fluxPluginReposClient, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -903,7 +903,7 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 	}
 
 	adminAcctName := types.NamespacedName{
-		Name:      "test-update-repo-admin-" + randSeq(4),
+		Name:      "test-update-repo-admin-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcAdmin, err := newGrpcAdminContext(t, adminAcctName)
@@ -912,7 +912,7 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 	}
 
 	loserAcctName := types.NamespacedName{
-		Name:      "test-update-repo-loser-" + randSeq(4),
+		Name:      "test-update-repo-loser-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, loserAcctName)
@@ -922,7 +922,7 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			repoNamespace := "test-" + randSeq(4)
+			repoNamespace := "test-" + randSeq(rnd, 4)
 
 			if err := kubeCreateNamespaceAndCleanup(t, repoNamespace); err != nil {
 				t.Fatal(err)
@@ -1052,7 +1052,7 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 }
 
 func TestKindClusterDeletePackageRepository(t *testing.T) {
-	_, fluxPluginReposClient, err := checkEnv(t)
+	_, fluxPluginReposClient, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1105,7 +1105,7 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 	}
 
 	adminAcctName := types.NamespacedName{
-		Name:      "test-delete-repo-admin-" + randSeq(4),
+		Name:      "test-delete-repo-admin-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcAdmin, err := newGrpcAdminContext(t, adminAcctName)
@@ -1114,7 +1114,7 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 	}
 
 	loserAcctName := types.NamespacedName{
-		Name:      "test-delete-repo-loser-" + randSeq(4),
+		Name:      "test-delete-repo-loser-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, loserAcctName)
@@ -1124,7 +1124,7 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			repoNamespace := "test-" + randSeq(4)
+			repoNamespace := "test-" + randSeq(rnd, 4)
 
 			if err := kubeCreateNamespaceAndCleanup(t, repoNamespace); err != nil {
 				t.Fatal(err)
@@ -1244,7 +1244,7 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 }
 
 func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
-	_, fluxPluginReposClient, err := checkEnv(t)
+	_, fluxPluginReposClient, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1259,9 +1259,9 @@ func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
 	expectedStatusCode := codes.OK
 	expectedResponse := update_repo_resp_6
 	expectedDetail := update_repo_detail_16
-	repoNamespace := "test-" + randSeq(4)
+	repoNamespace := "test-" + randSeq(rnd, 4)
 	adminAcctName := types.NamespacedName{
-		Name:      "test-update-repo-admin-" + randSeq(4),
+		Name:      "test-update-repo-admin-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 
@@ -1395,7 +1395,7 @@ func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
 }
 
 func TestKindClusterAddTagsToOciRepository(t *testing.T) {
-	fluxPluginClient, _, err := checkEnv(t)
+	fluxPluginClient, _, rnd, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1407,7 +1407,7 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 	}
 
 	adminName := types.NamespacedName{
-		Name:      "test-admin-" + randSeq(4),
+		Name:      "test-admin-" + randSeq(rnd, 4),
 		Namespace: "default",
 	}
 	grpcContext, err := newGrpcAdminContext(t, adminName)
@@ -1417,12 +1417,12 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 
 	t.Run("tests whether modifications of OCI repository contents are processed correctly", func(t *testing.T) {
 		repoName := types.NamespacedName{
-			Name:      "my-podinfo-" + randSeq(4),
+			Name:      "my-podinfo-" + randSeq(rnd, 4),
 			Namespace: "default",
 		}
 
 		secret := newBasicAuthSecret(types.NamespacedName{
-			Name:      "oci-repo-secret-" + randSeq(4),
+			Name:      "oci-repo-secret-" + randSeq(rnd, 4),
 			Namespace: "default"},
 			ghUser,
 			ghToken,
