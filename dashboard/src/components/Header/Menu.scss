@@ -33,12 +33,9 @@
 .drawer-backdrop {
   position: absolute;
   z-index: 1015;
-  top: 3rem;
-  right: 0;
-  bottom: 0;
-  left: 0;
   height: calc(100vh - 3rem);
   background-color: var(--cds-global-color-gray-900, #313131);
+  inset: 3rem 0 0;
   opacity: 0.85;
 }
 

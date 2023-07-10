@@ -3,16 +3,13 @@
 
 .centered-modal {
   position: absolute;
-  top: 50%;
-  right: auto;
-  bottom: auto;
-  left: 50%;
   overflow: auto;
   padding: 20px;
   border: 1px solid var(--cds-alias-object-border-color, #ccc);
   border-radius: 4px;
   margin-right: -50%;
   background-color: var(--cds-alias-object-interaction-background), #fff;
+  inset: 50% auto auto 50%;
   outline: none;
   transform: translate(-50%, -50%);
 }
