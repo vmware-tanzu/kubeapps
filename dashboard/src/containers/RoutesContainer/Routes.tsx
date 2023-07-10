@@ -12,10 +12,11 @@ import React from "react";
 import {
   Redirect,
   Route,
-  RouteChildrenProps,
   RouteComponentProps,
   RouteProps,
   Switch,
+  useLocation,
+  useParams,
 } from "react-router-dom";
 import { app } from "shared/url";
 import ApiDocs from "../../components/ApiDocs";
@@ -70,11 +71,6 @@ const unsupportedRoutes = {
     "Operators support has been deactivated by default for Kubeapps. It can be enabled in values configuration.",
 } as const;
 
-// Public routes that don't require authentication
-const routes = {
-  "/login": LoginForm,
-} as const;
-
 interface IRoutesProps extends IRouteComponentPropsAndRouteProps {
   cluster: string;
   currentNamespace: string;
@@ -87,22 +83,43 @@ class Routes extends React.Component<IRoutesProps> {
     return (
       <Switch>
         <Route exact={true} path="/" render={this.rootNamespacedRedirect} />
-        {Object.entries(routes).map(([route, component]) => (
-          <Route key={route} exact={true} path={route} component={component} />
-        ))}
-        {Object.entries(privateRoutes).map(([route, component]) => (
-          <PrivateRouteContainer key={route} exact={true} path={route} component={component} />
-        ))}
+        <Route key="/login" exact={true} path="/login">
+          <LoginForm />
+        </Route>
+        {Object.entries(privateRoutes).map(([route, component]) => {
+          const Component = component;
+          return (
+            <PrivateRouteContainer key={route} exact={true} path={route}>
+              <Component />
+            </PrivateRouteContainer>
+          )
+        }
+        )}
         {this.props.featureFlags?.operators &&
-          Object.entries(operatorsRoutes).map(([route, component]) => (
-            <PrivateRouteContainer key={route} exact={true} path={route} component={component} />
-          ))}
+          Object.entries(operatorsRoutes).map(([route, component]) => {
+            const Component = component;
+            return (
+              <PrivateRouteContainer key={route} exact={true} path={route}>
+                <Component />
+              </PrivateRouteContainer>
+            )
+          }
+          )}
         {!this.props.featureFlags?.operators &&
-          Object.entries(unsupportedRoutes).map(([route]) => (
-            <Route key={route} exact={true} path={route} render={this.unsupportedMessage} />
-          ))}
+          Object.entries(unsupportedRoutes).map(([route, message]) => {
+            return (
+              <Route key={route} exact={true} path={route}>
+                <div className="margin-t-sm">
+                  <AlertGroup status="warning">{message}</AlertGroup>
+                </div>
+              </Route>
+            )
+          }
+          )}
         {/* If the route doesn't match any expected path redirect to a 404 page  */}
-        <Route component={NotFound} />
+        <Route>
+          <NotFound />
+        </Route>
       </Switch>
     );
   }
@@ -119,14 +136,6 @@ class Routes extends React.Component<IRoutesProps> {
     }
     // There is not a default namespace, redirect to login page
     return <Redirect to={{ pathname: "/login" }} />;
-  };
-  private unsupportedMessage = (props: RouteChildrenProps) => {
-    const message = props.match ? unsupportedRoutes[props.match.path] : "Generic message";
-    return (
-      <div className="margin-t-sm">
-        <AlertGroup status="warning">{message}</AlertGroup>
-      </div>
-    );
   };
 }
 
