@@ -15,8 +15,6 @@ import {
   RouteComponentProps,
   RouteProps,
   Switch,
-  useLocation,
-  useParams,
 } from "react-router-dom";
 import { app } from "shared/url";
 import ApiDocs from "../../components/ApiDocs";
@@ -25,7 +23,6 @@ import AlertGroup from "components/AlertGroup";
 import PkgRepoList from "components/Config/PkgRepoList/PkgRepoList";
 import { IFeatureFlags } from "shared/Config";
 
-import PrivateRouteContainer from "../../containers/PrivateRouteContainer";
 import OperatorNew from "components/OperatorNew";
 import OperatorInstanceForm from "components/OperatorInstanceForm";
 import OperatorList from "components/OperatorList";
@@ -33,6 +30,7 @@ import OperatorView from "components/OperatorView";
 import OperatorInstance from "components/OperatorInstance";
 import OperatorInstanceUpdateForm from "components/OperatorInstanceUpdateForm";
 import LoginForm from "components/LoginForm";
+import RequireAuthentication from "components/RequireAuthentication";
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
@@ -89,9 +87,14 @@ class Routes extends React.Component<IRoutesProps> {
         {Object.entries(privateRoutes).map(([route, component]) => {
           const Component = component;
           return (
-            <PrivateRouteContainer key={route} exact={true} path={route}>
-              <Component />
-            </PrivateRouteContainer>
+            <Route key={route} exact={true} path={route} render={() => {
+              return (
+                <RequireAuthentication>
+                  <Component />
+                </RequireAuthentication>
+              )
+            }
+            } />
           )
         }
         )}
@@ -99,9 +102,14 @@ class Routes extends React.Component<IRoutesProps> {
           Object.entries(operatorsRoutes).map(([route, component]) => {
             const Component = component;
             return (
-              <PrivateRouteContainer key={route} exact={true} path={route}>
-                <Component />
-              </PrivateRouteContainer>
+              <Route key={route} exact={true} path={route} render={() => {
+                return (
+                  <RequireAuthentication>
+                    <Component />
+                  </RequireAuthentication>
+                )
+              }
+              } />
             )
           }
           )}
