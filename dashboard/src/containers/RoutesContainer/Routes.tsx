@@ -9,13 +9,7 @@ import DeploymentForm from "components/DeploymentForm";
 import LoadingWrapper from "components/LoadingWrapper";
 import PackageView from "components/PackageHeader";
 import React from "react";
-import {
-  Redirect,
-  Route,
-  RouteComponentProps,
-  RouteProps,
-  Switch,
-} from "react-router-dom";
+import { Redirect, Route, RouteComponentProps, RouteProps, Switch } from "react-router-dom";
 import { app } from "shared/url";
 import ApiDocs from "../../components/ApiDocs";
 import NotFound from "../../components/NotFound";
@@ -87,32 +81,38 @@ class Routes extends React.Component<IRoutesProps> {
         {Object.entries(privateRoutes).map(([route, component]) => {
           const Component = component;
           return (
-            <Route key={route} exact={true} path={route} render={() => {
-              return (
-                <RequireAuthentication>
-                  <Component />
-                </RequireAuthentication>
-              )
-            }
-            } />
-          )
-        }
-        )}
-        {this.props.featureFlags?.operators &&
-          Object.entries(operatorsRoutes).map(([route, component]) => {
-            const Component = component;
-            return (
-              <Route key={route} exact={true} path={route} render={() => {
+            <Route
+              key={route}
+              exact={true}
+              path={route}
+              render={() => {
                 return (
                   <RequireAuthentication>
                     <Component />
                   </RequireAuthentication>
-                )
-              }
-              } />
-            )
-          }
-          )}
+                );
+              }}
+            />
+          );
+        })}
+        {this.props.featureFlags?.operators &&
+          Object.entries(operatorsRoutes).map(([route, component]) => {
+            const Component = component;
+            return (
+              <Route
+                key={route}
+                exact={true}
+                path={route}
+                render={() => {
+                  return (
+                    <RequireAuthentication>
+                      <Component />
+                    </RequireAuthentication>
+                  );
+                }}
+              />
+            );
+          })}
         {!this.props.featureFlags?.operators &&
           Object.entries(unsupportedRoutes).map(([route, message]) => {
             return (
@@ -121,9 +121,8 @@ class Routes extends React.Component<IRoutesProps> {
                   <AlertGroup status="warning">{message}</AlertGroup>
                 </div>
               </Route>
-            )
-          }
-          )}
+            );
+          })}
         {/* If the route doesn't match any expected path redirect to a 404 page  */}
         <Route>
           <NotFound />

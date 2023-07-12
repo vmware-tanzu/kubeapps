@@ -9,7 +9,7 @@ import { screen } from "@testing-library/react";
 import "@testing-library/jest-dom/extend-expect";
 
 it("redirects to the /login route if not authenticated", () => {
-  renderWithProviders((
+  renderWithProviders(
     <Router history={createMemoryHistory()}>
       <RequireAuthentication>
         <h1>Authenticated</h1>
@@ -17,21 +17,22 @@ it("redirects to the /login route if not authenticated", () => {
       <Route path="/login">
         <h1>Login</h1>
       </Route>
-    </Router>
-  ), {
-    preloadedState: {
-      auth: {
-        authenticated: false,
-        sessionExpired: false,
-      }
-    }
-  });
+    </Router>,
+    {
+      preloadedState: {
+        auth: {
+          authenticated: false,
+          sessionExpired: false,
+        },
+      },
+    },
+  );
 
   expect(screen.getByRole("heading")).toHaveTextContent("Login");
 });
 
 it("renders the given component when authenticated", () => {
-  renderWithProviders((
+  renderWithProviders(
     <Router history={createMemoryHistory()}>
       <RequireAuthentication>
         <h1>Authenticated</h1>
@@ -39,21 +40,22 @@ it("renders the given component when authenticated", () => {
       <Route path="/login">
         <h1>Login</h1>
       </Route>
-    </Router>
-  ), {
-    preloadedState: {
-      auth: {
-        authenticated: true,
-        sessionExpired: false,
-      }
-    }
-  });
+    </Router>,
+    {
+      preloadedState: {
+        auth: {
+          authenticated: true,
+          sessionExpired: false,
+        },
+      },
+    },
+  );
 
   expect(screen.getByRole("heading")).toHaveTextContent("Authenticated");
 });
 
 it("renders modal to reload the page if the session is expired", () => {
-  renderWithProviders((
+  renderWithProviders(
     <Router history={createMemoryHistory()}>
       <RequireAuthentication>
         <h1>Authenticated</h1>
@@ -61,15 +63,16 @@ it("renders modal to reload the page if the session is expired", () => {
       <Route path="/login">
         <h1>Login</h1>
       </Route>
-    </Router>
-  ), {
-    preloadedState: {
-      auth: {
-        authenticated: false,
-        sessionExpired: true,
-      }
-    }
-  });
+    </Router>,
+    {
+      preloadedState: {
+        auth: {
+          authenticated: false,
+          sessionExpired: true,
+        },
+      },
+    },
+  );
 
   expect(screen.getByRole("dialog")).toHaveTextContent("Your session has expired");
 });

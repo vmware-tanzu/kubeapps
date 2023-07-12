@@ -19,14 +19,13 @@ import configureMockStore, { MockStore } from "redux-mock-store";
 import thunk from "redux-thunk";
 import I18n from "shared/I18n";
 import { IStoreState } from "shared/types";
-import React, { PropsWithChildren } from 'react'
-import { render } from '@testing-library/react'
-import type { RenderOptions } from '@testing-library/react'
-import { configureStore } from '@reduxjs/toolkit'
-import type { PreloadedState } from '@reduxjs/toolkit'
+import React, { PropsWithChildren } from "react";
+import { render } from "@testing-library/react";
+import type { RenderOptions } from "@testing-library/react";
+import { configureStore } from "@reduxjs/toolkit";
+import type { PreloadedState } from "@reduxjs/toolkit";
 import { reducers } from "reducers";
 import { AppStore } from "store";
-
 
 const mockStore = configureMockStore([thunk]);
 
@@ -93,9 +92,9 @@ export const mountWrapper = (store: MockStore, children: React.ReactElement) =>
 
 // This type interface extends the default options for render from RTL, as well
 // as allows the user to specify other things such as initialState, store.
-interface ExtendedRenderOptions extends Omit<RenderOptions, 'queries'> {
-  preloadedState?: PreloadedState<DefaultRootState>
-  store?: AppStore,
+interface ExtendedRenderOptions extends Omit<RenderOptions, "queries"> {
+  preloadedState?: PreloadedState<DefaultRootState>;
+  store?: AppStore;
 }
 
 export function renderWithProviders(
@@ -105,7 +104,7 @@ export function renderWithProviders(
     // Automatically create a store instance if no store was passed in
     store = configureStore({ reducer: reducers, preloadedState }),
     ...renderOptions
-  }: ExtendedRenderOptions = {}
+  }: ExtendedRenderOptions = {},
 ) {
   function Wrapper({ children }: PropsWithChildren<{}>): JSX.Element {
     return (
@@ -116,5 +115,5 @@ export function renderWithProviders(
   }
 
   // Return an object with the store and all of RTL's query functions
-  return { store, ...render(ui, { wrapper: Wrapper, ...renderOptions }) }
+  return { store, ...render(ui, { wrapper: Wrapper, ...renderOptions }) };
 }

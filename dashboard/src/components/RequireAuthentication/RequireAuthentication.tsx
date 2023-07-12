@@ -13,10 +13,8 @@ interface IRequireAuthenticationProps {
   children: ReactElement;
 }
 
-export function RequireAuthentication({
-  children,
-}: IRequireAuthenticationProps): ReactElement {
-  const { authenticated, sessionExpired } = useSelector((state: IStoreState) => state.auth)
+export function RequireAuthentication({ children }: IRequireAuthenticationProps): ReactElement {
+  const { authenticated, sessionExpired } = useSelector((state: IStoreState) => state.auth);
   const refreshPage = () => {
     window.location.reload();
   };
@@ -43,11 +41,10 @@ export function RequireAuthentication({
           </CdsModal>
         ) : (
           <Redirect to={{ pathname: "/login", state: { from: location.pathname } }} />
-        )
-        }
+        )}
       </>
     );
   }
-};
+}
 
 export default RequireAuthentication;
