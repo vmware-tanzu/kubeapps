@@ -29,10 +29,10 @@ import LoginFormContainer from "../../containers/LoginFormContainer";
 import OperatorInstanceCreateContainer from "../../containers/OperatorInstanceCreateContainer";
 import OperatorInstanceUpdateContainer from "../../containers/OperatorInstanceUpdateContainer";
 import OperatorInstanceViewContainer from "../../containers/OperatorInstanceViewContainer";
-import OperatorNewContainer from "../../containers/OperatorNewContainer";
 import OperatorsListContainer from "../../containers/OperatorsListContainer";
 import OperatorViewContainer from "../../containers/OperatorViewContainer";
 import PrivateRouteContainer from "../../containers/PrivateRouteContainer";
+import OperatorNew from "components/OperatorNew";
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
@@ -59,7 +59,7 @@ const privateRoutes = {
 const operatorsRoutes = {
   "/c/:cluster/ns/:namespace/operators": OperatorsListContainer,
   "/c/:cluster/ns/:namespace/operators/:operator": OperatorViewContainer,
-  "/c/:cluster/ns/:namespace/operators/new/:operator": OperatorNewContainer,
+  "/c/:cluster/ns/:namespace/operators/new/:operator": OperatorNew,
   "/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd": OperatorInstanceCreateContainer,
   "/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName":
     OperatorInstanceViewContainer,
