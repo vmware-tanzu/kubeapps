@@ -7,39 +7,20 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
-import { push, RouterAction } from "connected-react-router";
+import { push } from "connected-react-router";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { Operators } from "shared/Operators";
-import { IPackageManifest, IPackageManifestChannel, IStoreState } from "shared/types";
+import { IPackageManifestChannel, IStoreState } from "shared/types";
 import { api, app } from "shared/url";
-import { IOperatorsStateError } from "../../reducers/operators";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import OperatorHeader from "../OperatorView/OperatorHeader";
 import "./OperatorNew.css";
+import { useParams } from "react-router-dom";
 
-export interface IOperatorNewProps {
-  operatorName: string;
-  operator?: IPackageManifest;
-  getOperator: (cluster: string, namespace: string, name: string) => Promise<void>;
-  isFetching: boolean;
-  cluster: string;
-  namespace: string;
-  errors: IOperatorsStateError;
-  createOperator: (
-    cluster: string,
-    namespace: string,
-    name: string,
-    channel: string,
-    installPlanApproval: string,
-    csv: string,
-  ) => Promise<boolean>;
-  push: (location: string) => RouterAction;
-}
-
-export default function OperatorNew({ namespace, operatorName, cluster }: IOperatorNewProps) {
+export default function OperatorNew() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
 
   const [updateChannel, setUpdateChannel] = useState(
@@ -51,9 +32,10 @@ export default function OperatorNew({ namespace, operatorName, cluster }: IOpera
   // Approval strategy: true for automatic, false for manual
   const [approvalStrategyAutomatic, setApprovalStrategyAutomatic] = useState(true);
 
-  useEffect(() => {
-    dispatch(actions.operators.getOperator(cluster, namespace, operatorName));
-  }, [dispatch, cluster, namespace, operatorName]);
+  type OperatorNewParams = {
+    operator: string;
+  };
+  const { operator: operatorName } = useParams<OperatorNewParams>();
 
   const {
     operators: {
@@ -61,7 +43,14 @@ export default function OperatorNew({ namespace, operatorName, cluster }: IOpera
       isFetching,
       errors: { operator: errors },
     },
+    clusters: { currentCluster, clusters },
   } = useSelector((state: IStoreState) => state);
+  const namespace = clusters[currentCluster].currentNamespace;
+  const cluster = currentCluster;
+
+  useEffect(() => {
+    dispatch(actions.operators.getOperator(cluster, namespace, operatorName));
+  }, [dispatch, cluster, namespace, operatorName]);
 
   useEffect(() => {
     if (operator) {

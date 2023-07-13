@@ -7,17 +7,13 @@ import Alert from "components/js/Alert";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { IStoreState } from "shared/types";
-import OperatorNew from "./OperatorNew";
+import OperatorNew, { IOperatorNewProps } from "./OperatorNew";
+import { IOperatorsState } from "reducers/operators";
+import { IClusterState } from "reducers/cluster";
+import { MemoryRouter, Route } from "react-router-dom";
 
-const defaultProps = {
+const defaultProps: IOperatorNewProps = {
   operatorName: "foo",
-  getOperator: jest.fn(),
-  isFetching: false,
-  cluster: initialState.config.kubeappsCluster,
-  namespace: "kubeapps",
-  push: jest.fn(),
-  createOperator: jest.fn(),
-  errors: {},
 };
 
 const defaultOperator = {
@@ -70,10 +66,18 @@ afterEach(() => {
 it("calls getOperator when mounting the component", () => {
   const getOperator = jest.fn();
   actions.operators.getOperator = getOperator;
-  mountWrapper(defaultStore, <OperatorNew {...defaultProps} />);
+
+  mountWrapper(
+    defaultStore,
+    <MemoryRouter initialEntries={["/c/default/ns/default/operators/new/foo"]}>
+      <Route path={"/c/:cluster/ns/:namespace/operators/new/:operator"}>
+        <OperatorNew {...defaultProps} />
+      </Route>
+    </MemoryRouter>,
+  );
   expect(getOperator).toHaveBeenCalledWith(
-    defaultProps.cluster,
-    defaultProps.namespace,
+    initialState.clusters.currentCluster,
+    initialState.clusters.clusters[initialState.clusters.currentCluster].currentNamespace,
     defaultProps.operatorName,
   );
 });
@@ -116,23 +120,38 @@ it("shows an error if the operator doesn't have any channel defined", () => {
       channels: [],
     },
   };
+  const store = getStore({
+    ...initialState,
+    operators: { ...initialState.operators, operator },
+  } as Partial<IStoreState>);
+
   const wrapper = mountWrapper(
-    getStore({
-      ...initialState,
-      operators: { ...initialState.operators, operator },
-    } as Partial<IStoreState>),
-    <OperatorNew {...defaultProps} />,
+    store,
+    <MemoryRouter initialEntries={["/c/default/ns/default/operators/new/foo"]}>
+      <Route path={"/c/:cluster/ns/:namespace/operators/new/:operator"}>
+        <OperatorNew {...defaultProps} />
+      </Route>
+    </MemoryRouter>,
   );
+
   expect(wrapper.find(Alert)).toIncludeText(
     "Operator foo doesn't define a valid channel. This is needed to extract required info",
   );
 });
 
 it("disables the submit button if the operators ns is selected", () => {
-  const wrapper = mountWrapper(
-    getStore({ operators: { operator: defaultOperator } } as Partial<IStoreState>),
-    <OperatorNew {...defaultProps} namespace="operators" />,
-  );
+  const store = getStore({
+    operators: { operator: defaultOperator } as Partial<IOperatorsState>,
+    clusters: {
+      currentCluster: "default-cluster",
+      clusters: {
+        "default-cluster": {
+          currentNamespace: "operators",
+        } as Partial<IClusterState>,
+      },
+    },
+  } as Partial<IStoreState>);
+  const wrapper = mountWrapper(store, <OperatorNew {...defaultProps} />);
   expect(wrapper.find(CdsButton)).toBeDisabled();
   expect(wrapper.find(Alert)).toIncludeText(
     'It\'s not possible to install a namespaced operator in the "operators" namespace',
@@ -142,14 +161,24 @@ it("disables the submit button if the operators ns is selected", () => {
 it("deploys an operator", async () => {
   const createOperator = jest.fn().mockReturnValue(true);
   actions.operators.createOperator = createOperator;
-  const store = getStore({ operators: { operator: defaultOperator } } as Partial<IStoreState>);
+  const store = getStore({
+    operators: { operator: defaultOperator } as Partial<IOperatorsState>,
+    clusters: {
+      currentCluster: "default-cluster",
+      clusters: {
+        "default-cluster": {
+          currentNamespace: "kubeapps",
+        } as Partial<IClusterState>,
+      },
+    },
+  } as Partial<IStoreState>);
 
   const wrapper = mountWrapper(store, <OperatorNew {...defaultProps} />);
   const onSubmit = wrapper.find("form").prop("onSubmit") as () => Promise<void>;
   await onSubmit();
 
   expect(createOperator).toHaveBeenCalledWith(
-    defaultProps.cluster,
+    initialState.clusters.currentCluster,
     "kubeapps",
     "foo",
     "beta",
