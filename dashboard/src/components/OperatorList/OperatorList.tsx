@@ -11,8 +11,8 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { push } from "connected-react-router";
 import { flatten, get, intersection, uniq, without } from "lodash";
-import { ParsedQs } from "qs";
-import { useEffect, useState } from "react";
+import qs, { ParsedQs } from "qs";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { IPackageManifest, IPackageManifestStatus, IStoreState } from "shared/types";
 import { app } from "shared/url";
@@ -30,10 +30,9 @@ import SearchFilter from "../SearchFilter/SearchFilter";
 import OLMNotFound from "./OLMNotFound";
 import OperatorItems from "./OperatorItems";
 import "./OperatorList.css";
+import { useLocation } from "react-router-dom";
 
 export interface IOperatorListProps {
-  cluster: string;
-  namespace: string;
   filter: ParsedQs;
 }
 
@@ -73,13 +72,28 @@ function initialFilterState() {
   return result;
 }
 
-export default function OperatorList({
-  cluster,
-  namespace,
-  filter: propsFilter,
-}: IOperatorListProps) {
+export default function OperatorList() {
   const dispatch = useDispatch();
   const [filters, setFilters] = useState(initialFilterState());
+  const location = useLocation();
+  const propsFilter = useMemo(
+    () => qs.parse(location.search, { ignoreQueryPrefix: true }),
+    [location.search],
+  );
+  const {
+    operators: {
+      operators,
+      isFetching,
+      errors: {
+        operator: { fetch: opError },
+        subscriptions: { fetch: subsError },
+      },
+      subscriptions,
+      isOLMInstalled,
+    },
+    clusters: { currentCluster: cluster, clusters },
+  } = useSelector((state: IStoreState) => state);
+  const namespace = clusters[cluster].currentNamespace;
 
   useEffect(() => {
     const tmpStrRegex = /__/g;
@@ -132,18 +146,6 @@ export default function OperatorList({
     dispatch(actions.operators.checkOLMInstalled(cluster, namespace));
   }, [dispatch, cluster, namespace]);
 
-  const {
-    operators: {
-      operators,
-      isFetching,
-      errors: {
-        operator: { fetch: opError },
-        subscriptions: { fetch: subsError },
-      },
-      subscriptions,
-      isOLMInstalled,
-    },
-  } = useSelector((state: IStoreState) => state);
   const error = opError || subsError;
 
   useEffect(() => {
