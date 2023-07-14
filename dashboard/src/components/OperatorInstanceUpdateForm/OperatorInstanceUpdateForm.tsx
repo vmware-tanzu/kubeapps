@@ -18,27 +18,37 @@ import { IClusterServiceVersionCRD, IResource, IStoreState } from "shared/types"
 import * as url from "shared/url";
 import { parseToString } from "shared/yamlUtils";
 import OperatorInstanceFormBody from "../OperatorInstanceFormBody/OperatorInstanceFormBody";
+import { useParams } from "react-router-dom";
 
-export interface IOperatorInstanceUpgradeFormProps {
-  csvName: string;
-  crdName: string;
-  cluster: string;
-  namespace: string;
-  resourceName: string;
-}
-
-function OperatorInstanceUpdateForm({
-  csvName,
-  crdName,
-  cluster,
-  namespace,
-  resourceName,
-}: IOperatorInstanceUpgradeFormProps) {
+function OperatorInstanceUpdateForm() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const [defaultValues, setDefaultValues] = useState("");
   const [currentValues, setCurrentValues] = useState("");
   const [crd, setCRD] = useState(undefined as IClusterServiceVersionCRD | undefined);
   const [icon, setIcon] = useState(placeholder);
+
+  type IOperatorInstanceUpdateFormParams = {
+    csv: string;
+    crd: string;
+    instanceName: string;
+  };
+  const {
+    csv: csvName,
+    crd: crdName,
+    instanceName: resourceName,
+  } = useParams<IOperatorInstanceUpdateFormParams>();
+  const {
+    operators: {
+      isFetching,
+      csv,
+      resource,
+      errors: {
+        resource: { fetch: fetchError, update: updateError },
+      },
+    },
+    clusters: { currentCluster: cluster, clusters },
+  } = useSelector((state: IStoreState) => state);
+  const namespace = clusters[cluster].currentNamespace;
 
   useEffect(() => {
     // Clean up component state
@@ -49,17 +59,6 @@ function OperatorInstanceUpdateForm({
     dispatch(actions.operators.getResource(cluster, namespace, csvName, crdName, resourceName));
     dispatch(actions.operators.getCSV(cluster, namespace, csvName));
   }, [dispatch, cluster, namespace, csvName, crdName, resourceName]);
-
-  const {
-    operators: {
-      isFetching,
-      csv,
-      resource,
-      errors: {
-        resource: { fetch: fetchError, update: updateError },
-      },
-    },
-  } = useSelector((state: IStoreState) => state);
 
   useEffect(() => {
     if (resource) {
