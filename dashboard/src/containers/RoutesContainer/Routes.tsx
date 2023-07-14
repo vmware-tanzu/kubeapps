@@ -33,6 +33,7 @@ import PrivateRouteContainer from "../../containers/PrivateRouteContainer";
 import OperatorNew from "components/OperatorNew";
 import OperatorInstanceForm from "components/OperatorInstanceForm";
 import OperatorList from "components/OperatorList";
+import OperatorView from "components/OperatorView";
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
@@ -58,7 +59,7 @@ const privateRoutes = {
 
 const operatorsRoutes = {
   "/c/:cluster/ns/:namespace/operators": OperatorList,
-  "/c/:cluster/ns/:namespace/operators/:operator": OperatorViewContainer,
+  "/c/:cluster/ns/:namespace/operators/:operator": OperatorView,
   "/c/:cluster/ns/:namespace/operators/new/:operator": OperatorNew,
   "/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd": OperatorInstanceForm,
   "/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName":

@@ -17,20 +17,10 @@ import { api, app } from "shared/url";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import OperatorDescription from "./OperatorDescription";
 import OperatorHeader from "./OperatorHeader";
+import { useParams } from "react-router-dom";
 
-interface IOperatorViewProps {
-  operatorName: string;
-  cluster: string;
-  namespace: string;
-}
-
-export default function OperatorView({ operatorName, cluster, namespace }: IOperatorViewProps) {
+export default function OperatorView() {
   const dispatch = useDispatch();
-  useEffect(() => {
-    dispatch(actions.operators.getOperator(cluster, namespace, operatorName));
-    dispatch(actions.operators.listSubscriptions(cluster, namespace));
-  }, [dispatch, cluster, namespace, operatorName]);
-
   const {
     operators: {
       operator,
@@ -40,7 +30,19 @@ export default function OperatorView({ operatorName, cluster, namespace }: IOper
       },
       subscriptions,
     },
+    clusters: { currentCluster: cluster, clusters },
   } = useSelector((state: IStoreState) => state);
+  const namespace = clusters[cluster].currentNamespace;
+
+  type IOperatorViewParams = {
+    operator: string;
+  };
+  const { operator: operatorName } = useParams<IOperatorViewParams>();
+
+  useEffect(() => {
+    dispatch(actions.operators.getOperator(cluster, namespace, operatorName));
+    dispatch(actions.operators.listSubscriptions(cluster, namespace));
+  }, [dispatch, cluster, namespace, operatorName]);
 
   useEffect(() => {
     if (operator) {
