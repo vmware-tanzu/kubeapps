@@ -9,18 +9,13 @@ import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IClusterServiceVersion, IStoreState } from "shared/types";
-import OperatorInstanceForm, { IOperatorInstanceFormProps } from "./OperatorInstanceForm";
+import OperatorInstanceForm from "./OperatorInstanceForm";
 import OperatorAdvancedDeploymentForm from "../OperatorInstanceFormBody/OperatorAdvancedDeploymentForm/OperatorAdvancedDeploymentForm";
-
-const defaultProps: IOperatorInstanceFormProps = {
-  csvName: "foo",
-  crdName: "foo-cluster",
-  cluster: initialState.config.kubeappsCluster,
-  namespace: "kubeapps",
-};
+import { IClustersState } from "reducers/cluster";
+import { MemoryRouter, Route } from "react-router-dom";
 
 const defaultCRD = {
-  name: defaultProps.crdName,
+  name: "foo-cluster",
   kind: "Foo",
   description: "useful description",
 } as any;
@@ -100,7 +95,7 @@ it("renders a fetch error", () => {
         errors: { ...initialState.operators.errors, csv: { fetch: new FetchError("Boom!") } },
       },
     } as Partial<IStoreState>),
-    <OperatorInstanceForm {...defaultProps} />,
+    <OperatorInstanceForm />,
   );
   expect(wrapper.find(Alert)).toIncludeText("Boom!");
   expect(wrapper.find(OperatorHeader)).not.toExist();
@@ -114,7 +109,13 @@ it("renders a create error", () => {
         errors: { resource: { create: new Error("Boom!") } },
       },
     } as Partial<IStoreState>),
-    <OperatorInstanceForm {...defaultProps} />,
+    <MemoryRouter
+      initialEntries={["/c/default/ns/default/operators-instances/new/foo/foo-cluster"]}
+    >
+      <Route path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd"}>
+        <OperatorInstanceForm />
+      </Route>
+    </MemoryRouter>,
   );
   expect(wrapper.find(Alert)).toIncludeText("Boom!");
 });
@@ -122,18 +123,39 @@ it("renders a create error", () => {
 it("retrieves CSV when mounted", () => {
   const getCSV = jest.fn();
   actions.operators.getCSV = getCSV;
-  mountWrapper(defaultStore, <OperatorInstanceForm {...defaultProps} />);
-  expect(getCSV).toHaveBeenCalledWith(
-    defaultProps.cluster,
-    defaultProps.namespace,
-    defaultProps.csvName,
+  const store = getStore({
+    clusters: {
+      currentCluster: "default-cluster",
+      clusters: {
+        "default-cluster": {
+          currentNamespace: "kubeapps",
+        },
+      } as Partial<IClustersState>,
+    },
+  } as Partial<IStoreState>);
+  mountWrapper(
+    store,
+    <MemoryRouter
+      initialEntries={["/c/default/ns/default/operators-instances/new/foo/foo-cluster"]}
+    >
+      <Route path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd"}>
+        <OperatorInstanceForm />
+      </Route>
+    </MemoryRouter>,
   );
+  expect(getCSV).toHaveBeenCalledWith("default-cluster", "kubeapps", "foo");
 });
 
 it("retrieves the example values and the target CRD from the given CSV", () => {
   const wrapper = mountWrapper(
     getStore({ operators: { csv: defaultCSV } } as Partial<IStoreState>),
-    <OperatorInstanceForm {...defaultProps} />,
+    <MemoryRouter
+      initialEntries={["/c/default/ns/default/operators-instances/new/foo/foo-cluster"]}
+    >
+      <Route path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd"}>
+        <OperatorInstanceForm />
+      </Route>
+    </MemoryRouter>,
   );
   expect(wrapper.find(OperatorInstanceFormBody).props()).toMatchObject({
     defaultValues: 'kind: "Foo"\napiVersion: "v1"\n',
@@ -147,7 +169,13 @@ it("defaults to empty defaultValues if the examples annotation is not found", ()
   } as IClusterServiceVersion;
   const wrapper = mountWrapper(
     getStore({ operators: { csv } } as Partial<IStoreState>),
-    <OperatorInstanceForm {...defaultProps} />,
+    <MemoryRouter
+      initialEntries={["/c/default/ns/default/operators-instances/new/foo/foo-cluster"]}
+    >
+      <Route path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd"}>
+        <OperatorInstanceForm />
+      </Route>
+    </MemoryRouter>,
   );
   expect(wrapper.find(OperatorInstanceFormBody).props()).toMatchObject({
     defaultValues: "",
@@ -155,7 +183,7 @@ it("defaults to empty defaultValues if the examples annotation is not found", ()
 });
 
 it("renders an error if the CRD is not populated", () => {
-  const wrapper = mountWrapper(defaultStore, <OperatorInstanceForm {...defaultProps} />);
+  const wrapper = mountWrapper(defaultStore, <OperatorInstanceForm />);
   expect(wrapper.find(Alert)).toIncludeText("not found in the definition");
 });
 
@@ -164,7 +192,13 @@ it("should submit the form", () => {
   actions.operators.createResource = createResource;
   const wrapper = mountWrapper(
     getStore({ operators: { csv: defaultCSV } } as Partial<IStoreState>),
-    <OperatorInstanceForm {...defaultProps} />,
+    <MemoryRouter
+      initialEntries={["/c/default/ns/default/operators-instances/new/foo/foo-cluster"]}
+    >
+      <Route path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd"}>
+        <OperatorInstanceForm />
+      </Route>
+    </MemoryRouter>,
   );
 
   act(() => {
@@ -184,8 +218,8 @@ it("should submit the form", () => {
     },
   };
   expect(createResource).toHaveBeenCalledWith(
-    defaultProps.cluster,
-    defaultProps.namespace,
+    "default-cluster",
+    "default",
     resource.apiVersion,
     defaultCRD.name,
     resource,
