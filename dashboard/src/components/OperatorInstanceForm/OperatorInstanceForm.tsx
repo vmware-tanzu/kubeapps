@@ -23,18 +23,7 @@ import {
 import * as url from "shared/url";
 import { parseToString } from "shared/yamlUtils";
 import OperatorInstanceFormBody from "../OperatorInstanceFormBody/OperatorInstanceFormBody";
-
-export interface IOperatorInstanceFormProps {
-  csvName: string;
-  crdName: string;
-  cluster: string;
-  namespace: string;
-}
-
-export interface IOperatorInstanceFormBodyState {
-  defaultValues: string;
-  crd?: IClusterServiceVersionCRD;
-}
+import { useParams } from "react-router-dom";
 
 export function parseCSV(
   csv: IClusterServiceVersion,
@@ -71,24 +60,11 @@ export function parseCSV(
   });
 }
 
-export default function DeploymentFormBody({
-  csvName,
-  crdName,
-  cluster,
-  namespace,
-}: IOperatorInstanceFormProps) {
+export default function DeploymentFormBody() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const [defaultValues, setDefaultValues] = useState("");
   const [crd, setCRD] = useState(undefined as IClusterServiceVersionCRD | undefined);
   const [icon, setIcon] = useState(placeholder);
-
-  useEffect(() => {
-    // Clean up component state
-    setDefaultValues("");
-    setCRD(undefined);
-    setIcon(placeholder);
-    dispatch(actions.operators.getCSV(cluster, namespace, csvName));
-  }, [cluster, dispatch, namespace, csvName]);
 
   const {
     operators: {
@@ -99,7 +75,23 @@ export default function DeploymentFormBody({
         resource: { create: createError },
       },
     },
+    clusters: { currentCluster: cluster, clusters },
   } = useSelector((state: IStoreState) => state);
+  const namespace = clusters[cluster].currentNamespace;
+
+  type IDeploymentFormBodyParams = {
+    csv: string;
+    crd: string;
+  };
+  const { csv: csvName, crd: crdName } = useParams<IDeploymentFormBodyParams>();
+
+  useEffect(() => {
+    // Clean up component state
+    setDefaultValues("");
+    setCRD(undefined);
+    setIcon(placeholder);
+    dispatch(actions.operators.getCSV(cluster, namespace, csvName));
+  }, [cluster, dispatch, namespace, csvName]);
 
   useEffect(() => {
     if (csv) {

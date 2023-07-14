@@ -76,7 +76,7 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@bufbuild/buf": "^1.23.1",
+    "@bufbuild/buf": "^1.24.0",
     "@bufbuild/protoc-gen-connect-es": "^0.11.0",
     "@bufbuild/protoc-gen-es": "^1.2.1",
     "@craco/craco": "^7.0.0",
@@ -109,7 +109,7 @@
     "monaco-editor-webpack-plugin": "^7.1.0",
     "node-polyfill-webpack-plugin": "^2.0.1",
     "npm-run-all": "^4.1.5",
-    "postcss": "^8.4.25",
+    "postcss": "^8.4.26",
     "postcss-scss": "^4.0.6",
     "prettier": "^2.8.8",
     "react-dom": "^17.0.2",
@@ -124,7 +124,7 @@
     "stylelint-config-standard-scss": "^10.0.0",
     "stylelint-scss": "^5.0.1",
     "ts-jest": "^29.0.5",
-    "ts-proto": "^1.152.1",
+    "ts-proto": "^1.153.3",
     "typescript": "^4.9.5"
   },
   "resolutions": {
