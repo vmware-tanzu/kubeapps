@@ -15,20 +15,12 @@ import OperatorHeader from "components/OperatorView/OperatorHeader";
 import ApplicationStatusContainer from "containers/ApplicationStatusContainer";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
-import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IStoreState } from "shared/types";
 import OperatorInstance from "./OperatorInstance";
 import { IOperatorsState } from "reducers/operators";
 import { IClusterState } from "reducers/cluster";
 import { MemoryRouter, Route } from "react-router-dom";
-
-const defaultProps = {
-  csvName: "foo",
-  crdName: "foo.kubeapps.com",
-  cluster: initialState.config.kubeappsCluster,
-  namespace: "kubeapps",
-  instanceName: "bar",
-};
 
 const defaultCSV = {
   metadata: { name: "foo" },
@@ -117,7 +109,7 @@ it("renders a fetch error", () => {
         errors: { ...initialState.operators.errors, resource: { fetch: new FetchError("Boom!") } },
       },
     } as Partial<IStoreState>),
-    <OperatorInstance {...defaultProps} />,
+    <OperatorInstance />,
   );
   expect(wrapper.find(Alert)).toIncludeText("Boom!");
   expect(wrapper.find(OperatorHeader)).not.toExist();
@@ -131,7 +123,7 @@ it("renders an update error", () => {
         errors: { resource: { update: new Error("Boom!") } },
       },
     } as Partial<IStoreState>),
-    <OperatorInstance {...defaultProps} />,
+    <OperatorInstance />,
   );
   expect(wrapper.find(Alert)).toIncludeText("Boom!");
 });
@@ -144,7 +136,7 @@ it("renders an delete error", () => {
         errors: { resource: { update: new Error("Boom!") } },
       },
     } as Partial<IStoreState>),
-    <OperatorInstance {...defaultProps} />,
+    <OperatorInstance />,
   );
   expect(wrapper.find(Alert)).toIncludeText("Boom!");
 });
@@ -175,24 +167,20 @@ it("retrieves CSV and resource when mounted", () => {
       </Route>
     </MemoryRouter>,
   );
-  expect(getCSV).toHaveBeenCalledWith(
-    defaultProps.cluster,
-    defaultProps.namespace,
-    defaultProps.csvName,
-  );
+  expect(getCSV).toHaveBeenCalledWith("default-cluster", "kubeapps", "foo");
   expect(getResource).toHaveBeenCalledWith(
-    defaultProps.cluster,
-    defaultProps.namespace,
-    defaultProps.csvName,
-    defaultProps.crdName,
-    defaultProps.instanceName,
+    "default-cluster",
+    "kubeapps",
+    "foo",
+    "foo.kubeapps.com",
+    "bar",
   );
 });
 
 it("renders a loading wrapper", () => {
   const wrapper = mountWrapper(
     getStore({ operators: { isFetching: true } } as Partial<IStoreState>),
-    <OperatorInstance {...defaultProps} />,
+    <OperatorInstance />,
   );
   expect(wrapper.find(LoadingWrapper)).toExist();
 });
@@ -200,7 +188,7 @@ it("renders a loading wrapper", () => {
 it("renders all the subcomponents", () => {
   const wrapper = mountWrapper(
     getStore({ operators: { csv: defaultCSV, resource } } as Partial<IStoreState>),
-    <OperatorInstance {...defaultProps} />,
+    <OperatorInstance />,
   );
   expect(wrapper.find(ApplicationStatusContainer)).toExist();
   expect(wrapper.find(AccessURLTable)).toExist();
@@ -215,7 +203,7 @@ it("skips AppNotes and AppValues if the resource doesn't have spec or status", (
     getStore({
       operators: { csv: defaultCSV, resource: { ...resource, spec: undefined, status: undefined } },
     } as Partial<IStoreState>),
-    <OperatorInstance {...defaultProps} />,
+    <OperatorInstance />,
   );
   expect(wrapper.find(AppNotes)).not.toExist();
   expect(wrapper.find(AppValues)).not.toExist();
@@ -260,12 +248,7 @@ it("deletes the resource", async () => {
   await act(async () => {
     await (dialog.prop("onConfirm") as any)();
   });
-  expect(deleteResource).toHaveBeenCalledWith(
-    defaultProps.cluster,
-    defaultProps.namespace,
-    "foo",
-    resource,
-  );
+  expect(deleteResource).toHaveBeenCalledWith("default-cluster", "kubeapps", "foo", resource);
 });
 
 it("updates the state with the CRD resources", () => {

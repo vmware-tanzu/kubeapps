@@ -8,17 +8,10 @@ import OperatorHeader from "components/OperatorView/OperatorHeader";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IStoreState } from "shared/types";
-import OperatorInstanceUpdateForm, {
-  IOperatorInstanceUpgradeFormProps,
-} from "./OperatorInstanceUpdateForm";
-
-const defaultProps: IOperatorInstanceUpgradeFormProps = {
-  csvName: "foo",
-  crdName: "foo-cluster",
-  cluster: initialState.config.kubeappsCluster,
-  namespace: "kubeapps",
-  resourceName: "my-foo",
-};
+import OperatorInstanceUpdateForm from "./OperatorInstanceUpdateForm";
+import { MemoryRouter, Route } from "react-router-dom";
+import { IOperatorsState } from "reducers/operators";
+import { IClusterState } from "reducers/cluster";
 
 const defaultResource = {
   kind: "Foo",
@@ -29,7 +22,7 @@ const defaultResource = {
 } as any;
 
 const defaultCRD = {
-  name: defaultProps.crdName,
+  name: "foo-cluster",
   kind: "Foo",
   description: "useful description",
 } as any;
@@ -102,21 +95,44 @@ afterEach(() => {
 
 it("gets resource and CSV", () => {
   const getResource = jest.fn();
+  const store = getStore({
+    operators: {
+      resource: defaultResource,
+      csv: defaultCSV,
+    } as Partial<IOperatorsState>,
+    clusters: {
+      currentCluster: "default-cluster",
+      clusters: {
+        "default-cluster": {
+          currentNamespace: "kubeapps",
+        } as Partial<IClusterState>,
+      },
+    },
+  } as Partial<IStoreState>);
   const getCSV = jest.fn();
   actions.operators.getResource = getResource;
   actions.operators.getCSV = getCSV;
-  mountWrapper(defaultStore, <OperatorInstanceUpdateForm {...defaultProps} />);
-  expect(getCSV).toHaveBeenCalledWith(
-    defaultProps.cluster,
-    defaultProps.namespace,
-    defaultProps.csvName,
+  mountWrapper(
+    store,
+    <MemoryRouter
+      initialEntries={[
+        "/c/default/ns/default/operators-instances/new/foo/foo-cluster/my-foo/update",
+      ]}
+    >
+      <Route
+        path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd/:instanceName/update"}
+      >
+        <OperatorInstanceUpdateForm />
+      </Route>
+    </MemoryRouter>,
   );
+  expect(getCSV).toHaveBeenCalledWith("default-cluster", "kubeapps", "foo");
   expect(getResource).toHaveBeenCalledWith(
-    defaultProps.cluster,
-    defaultProps.namespace,
-    defaultProps.csvName,
-    defaultProps.crdName,
-    defaultProps.resourceName,
+    "default-cluster",
+    "kubeapps",
+    "foo",
+    "foo-cluster",
+    "my-foo",
   );
 });
 
@@ -128,7 +144,17 @@ it("set default and deployed values", () => {
         csv: defaultCSV,
       },
     } as Partial<IStoreState>),
-    <OperatorInstanceUpdateForm {...defaultProps} />,
+    <MemoryRouter
+      initialEntries={[
+        "/c/default/ns/default/operators-instances/new/foo/foo-cluster/my-foo/update",
+      ]}
+    >
+      <Route
+        path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd/:instanceName/update"}
+      >
+        <OperatorInstanceUpdateForm />
+      </Route>
+    </MemoryRouter>,
   );
   expect(wrapper.find(OperatorInstanceFormBody).props()).toMatchObject({
     defaultValues: 'kind: "Foo"\napiVersion: "v1"\n',
@@ -137,7 +163,20 @@ it("set default and deployed values", () => {
 });
 
 it("renders an error if the resource is not populated", () => {
-  const wrapper = mountWrapper(defaultStore, <OperatorInstanceUpdateForm {...defaultProps} />);
+  const wrapper = mountWrapper(
+    defaultStore,
+    <MemoryRouter
+      initialEntries={[
+        "/c/default/ns/default/operators-instances/new/foo/foo-cluster/my-foo/update",
+      ]}
+    >
+      <Route
+        path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd/:instanceName/update"}
+      >
+        <OperatorInstanceUpdateForm />
+      </Route>
+    </MemoryRouter>,
+  );
   expect(wrapper.find(Alert)).toIncludeText("Resource my-foo not found");
 });
 
@@ -153,7 +192,7 @@ it("renders only an error if the resource is not found", () => {
         },
       },
     } as Partial<IStoreState>),
-    <OperatorInstanceUpdateForm {...defaultProps} />,
+    <OperatorInstanceUpdateForm />,
   );
   expect(wrapper.find(Alert)).toIncludeText("not found");
   expect(wrapper.find(OperatorHeader)).not.toExist();
@@ -167,20 +206,38 @@ it("should submit the form", () => {
       operators: {
         resource: defaultResource,
         csv: defaultCSV,
+      } as Partial<IOperatorsState>,
+      clusters: {
+        currentCluster: "default-cluster",
+        clusters: {
+          "default-cluster": {
+            currentNamespace: "kubeapps",
+          } as Partial<IClusterState>,
+        },
       },
     } as Partial<IStoreState>),
-    <OperatorInstanceUpdateForm {...defaultProps} />,
+    <MemoryRouter
+      initialEntries={[
+        "/c/default/ns/default/operators-instances/new/foo/foo-cluster/my-foo/update",
+      ]}
+    >
+      <Route
+        path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd/:instanceName/update"}
+      >
+        <OperatorInstanceUpdateForm />
+      </Route>
+    </MemoryRouter>,
   );
 
   const form = wrapper.find("form");
   form.simulate("submit", { preventDefault: jest.fn() });
 
   expect(updateResource).toHaveBeenCalledWith(
-    defaultProps.cluster,
-    defaultProps.namespace,
-    defaultResource.apiVersion,
-    defaultProps.crdName,
-    defaultProps.resourceName,
-    defaultResource,
+    "default-cluster",
+    "kubeapps",
+    "v1",
+    "foo-cluster",
+    "my-foo",
+    { apiVersion: "v1", kind: "Foo", metadata: { name: "my-foo" } },
   );
 });

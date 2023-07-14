@@ -24,15 +24,14 @@ import AlertGroup from "components/AlertGroup";
 import PkgRepoList from "components/Config/PkgRepoList/PkgRepoList";
 import { IFeatureFlags } from "shared/Config";
 
-// TODO(andresmgot): Containers should be no longer needed, replace them when possible
 import LoginFormContainer from "../../containers/LoginFormContainer";
-import OperatorInstanceUpdateContainer from "../../containers/OperatorInstanceUpdateContainer";
 import PrivateRouteContainer from "../../containers/PrivateRouteContainer";
 import OperatorNew from "components/OperatorNew";
 import OperatorInstanceForm from "components/OperatorInstanceForm";
 import OperatorList from "components/OperatorList";
 import OperatorView from "components/OperatorView";
 import OperatorInstance from "components/OperatorInstance";
+import OperatorInstanceUpdateForm from "components/OperatorInstanceUpdateForm";
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
@@ -63,7 +62,7 @@ const operatorsRoutes = {
   "/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd": OperatorInstanceForm,
   "/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName": OperatorInstance,
   "/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName/update":
-    OperatorInstanceUpdateContainer,
+    OperatorInstanceUpdateForm,
 } as const;
 
 const unsupportedRoutes = {
