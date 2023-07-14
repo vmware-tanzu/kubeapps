@@ -18,6 +18,9 @@ import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IStoreState } from "shared/types";
 import OperatorInstance from "./OperatorInstance";
+import { IOperatorsState } from "reducers/operators";
+import { IClusterState } from "reducers/cluster";
+import { MemoryRouter, Route } from "react-router-dom";
 
 const defaultProps = {
   csvName: "foo",
@@ -151,7 +154,27 @@ it("retrieves CSV and resource when mounted", () => {
   const getResource = jest.fn();
   actions.operators.getCSV = getCSV;
   actions.operators.getResource = getResource;
-  mountWrapper(defaultStore, <OperatorInstance {...defaultProps} />);
+  const store = getStore({
+    operators: { csv: defaultCSV, resource } as Partial<IOperatorsState>,
+    clusters: {
+      currentCluster: "default-cluster",
+      clusters: {
+        "default-cluster": {
+          currentNamespace: "kubeapps",
+        } as Partial<IClusterState>,
+      },
+    },
+  } as Partial<IStoreState>);
+  mountWrapper(
+    store,
+    <MemoryRouter
+      initialEntries={["/c/default/ns/default/operators-instances/foo/foo.kubeapps.com/bar"]}
+    >
+      <Route path={"/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName"}>
+        <OperatorInstance />,
+      </Route>
+    </MemoryRouter>,
+  );
   expect(getCSV).toHaveBeenCalledWith(
     defaultProps.cluster,
     defaultProps.namespace,
@@ -201,9 +224,26 @@ it("skips AppNotes and AppValues if the resource doesn't have spec or status", (
 it("deletes the resource", async () => {
   const deleteResource = jest.fn().mockReturnValue(true);
   actions.operators.deleteResource = deleteResource;
+  const store = getStore({
+    operators: { csv: defaultCSV, resource } as Partial<IOperatorsState>,
+    clusters: {
+      currentCluster: "default-cluster",
+      clusters: {
+        "default-cluster": {
+          currentNamespace: "kubeapps",
+        } as Partial<IClusterState>,
+      },
+    },
+  } as Partial<IStoreState>);
   const wrapper = mountWrapper(
-    getStore({ operators: { csv: defaultCSV, resource } } as Partial<IStoreState>),
-    <OperatorInstance {...defaultProps} />,
+    store,
+    <MemoryRouter
+      initialEntries={["/c/default/ns/default/operators-instances/foo/foo.kubeapps.com/bar"]}
+    >
+      <Route path={"/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName"}>
+        <OperatorInstance />,
+      </Route>
+    </MemoryRouter>,
   );
 
   act(() => {
@@ -238,7 +278,13 @@ it("updates the state with the CRD resources", () => {
         kinds: { Foo: { apiVersion: "apps/v1", plural: "foos", namespaced: true } },
       },
     } as Partial<IStoreState>),
-    <OperatorInstance {...defaultProps} />,
+    <MemoryRouter
+      initialEntries={["/c/default/ns/default/operators-instances/foo/foo.kubeapps.com/bar"]}
+    >
+      <Route path={"/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName"}>
+        <OperatorInstance />,
+      </Route>
+    </MemoryRouter>,
   );
   expect(wrapper.find(ResourceTabs).prop("deployments")).toMatchObject([
     {
@@ -282,7 +328,13 @@ it("updates the state with all the resources if the CRD doesn't define any", () 
         kinds: { Foo: { apiVersion: "apps/v1", plural: "foos", namespaced: true } },
       },
     } as Partial<IStoreState>),
-    <OperatorInstance {...defaultProps} />,
+    <MemoryRouter
+      initialEntries={["/c/default/ns/default/operators-instances/foo/foo.kubeapps.com/bar"]}
+    >
+      <Route path={"/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName"}>
+        <OperatorInstance />,
+      </Route>
+    </MemoryRouter>,
   );
   const resources = wrapper.find(ResourceTabs).props();
   const resourcesKeys = Object.keys(resources).filter(k => k !== "otherResources");

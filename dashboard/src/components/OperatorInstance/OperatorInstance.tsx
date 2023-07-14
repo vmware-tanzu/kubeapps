@@ -29,14 +29,7 @@ import AppValues from "../AppView/AppValues/AppValues";
 import ResourceTabs from "../AppView/ResourceTabs";
 import ConfirmDialog from "../ConfirmDialog/ConfirmDialog";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
-
-export interface IOperatorInstanceProps {
-  cluster: string;
-  namespace: string;
-  csvName: string;
-  crdName: string;
-  instanceName: string;
-}
+import { useParams } from "react-router-dom";
 
 function parseResource(
   kind: IKind,
@@ -103,13 +96,7 @@ function parseResource(
   return result;
 }
 
-function OperatorInstance({
-  cluster,
-  namespace,
-  csvName,
-  crdName,
-  instanceName,
-}: IOperatorInstanceProps) {
+function OperatorInstance() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const [crd, setCRD] = useState(undefined as IClusterServiceVersionCRD | undefined);
   const [icon, setIcon] = useState(placeholder);
@@ -136,8 +123,17 @@ function OperatorInstance({
       resource,
       errors: { resource: errors },
     },
+    clusters: { currentCluster: cluster, clusters },
     kube: { kinds },
   } = useSelector((state: IStoreState) => state);
+  const namespace = clusters[cluster].currentNamespace;
+
+  type IOperatorInstanceParams = {
+    csv: string;
+    crd: string;
+    instanceName: string;
+  };
+  const { csv: csvName, crd: crdName, instanceName } = useParams<IOperatorInstanceParams>();
 
   useEffect(() => {
     dispatch(actions.operators.getResource(cluster, namespace, csvName, crdName, instanceName));
