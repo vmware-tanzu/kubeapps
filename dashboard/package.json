@@ -7,7 +7,7 @@
   "scripts": {
     "build": "npm-run-all build-css compile-lang build-js",
     "build-css": "sass src/ --no-source-map && yarn run copy-clr",
-    "build-js": "craco build",
+    "build-js": "export NODE_OPTIONS=--max-old-space-size=4096 && craco build",
     "compile-lang": "formatjs compile-folder lang src/locales/ --ast --format simple",
     "copy-clr": "shx cp ./node_modules/@clr/ui/clr-ui-dark.min.css public/clr-ui-dark.min.css && shx cp node_modules/@clr/ui/clr-ui.min.css public/clr-ui.min.css && shx cp ./node_modules/@clr/ui/clr-ui-dark.min.css.map public/clr-ui-dark.min.css.map && shx cp ./node_modules/@clr/ui/clr-ui.min.css.map public/clr-ui.min.css.map",
     "eject": "craco eject",
