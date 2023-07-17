@@ -9412,11 +9412,6 @@ lodash@^4.15.0, lodash@^4.17.19, lodash@^4.17.20, lodash@^4.17.21, lodash@^4.7.0
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
   integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==
 
-long@^4.0.0:
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/long/-/long-4.0.0.tgz#9a7b71cfb7d361a194ea555241c92f7468d5bf28"
-  integrity sha512-XsP+KhQif4bjX1kbuSiySJFNAehNxgLb6hPRGJ9QsUr8ajHkuXGdrHmFUTUUXhDwVX2R5bY4JNZEwbUiMhV+MA==
-
 long@^5.0.0:
   version "5.2.3"
   resolved "https://registry.yarnpkg.com/long/-/long-5.2.3.tgz#a3ba97f3877cf1d778eccbcb048525ebb77499e1"
@@ -14315,30 +14310,30 @@ ts-node@^10.7.0:
     v8-compile-cache-lib "^3.0.1"
     yn "3.1.1"
 
-ts-poet@^6.4.1:
-  version "6.4.1"
-  resolved "https://registry.yarnpkg.com/ts-poet/-/ts-poet-6.4.1.tgz#e68d314a07cf9c0d568a3bfd87023ec91ff77964"
-  integrity sha512-AjZEs4h2w4sDfwpHMxQKHrTlNh2wRbM5NRXmLz0RiH+yPGtSQFbe9hBpNocU8vqVNgfh0BIOiXR80xDz3kKxUQ==
+ts-poet@^6.5.0:
+  version "6.5.0"
+  resolved "https://registry.yarnpkg.com/ts-poet/-/ts-poet-6.5.0.tgz#7070bfae1d53847aa38e8e02bdbe4f1064d6d091"
+  integrity sha512-44jURLT1HG6+NsDcadM826V6Ekux+wk07Go+MX5Gfx+8zcPKfUiFEtnjL9imuRVGSCRtloRLqw4bDGZVJYGZMQ==
   dependencies:
     dprint-node "^1.0.7"
 
-ts-proto-descriptors@1.12.0:
-  version "1.12.0"
-  resolved "https://registry.yarnpkg.com/ts-proto-descriptors/-/ts-proto-descriptors-1.12.0.tgz#2075c6b281b70ce1fb2ba304a41f48f0007b403e"
-  integrity sha512-0ip8cAig6/IB23lqZ7YzhjzufGtOKPu/noVMcCj4zoUaUtml6UmyTmJ/BeFsqe/3ILBPG97KoilpUzSg1UjpDw==
+ts-proto-descriptors@1.14.0:
+  version "1.14.0"
+  resolved "https://registry.yarnpkg.com/ts-proto-descriptors/-/ts-proto-descriptors-1.14.0.tgz#bf95cfd815049763524185cec49b2557ca40faa7"
+  integrity sha512-xqLA6cBTfof+mZ/sIw/pZviyhnWWcWqRBjyjaMW5O4fIogpawT4aa0wI8rKh0rYIrQzoHxLugmFu4+rdiWaGEQ==
   dependencies:
-    long "^4.0.0"
+    long "^5.0.0"
     protobufjs "^7.2.4"
 
-ts-proto@^1.153.3:
-  version "1.153.3"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.153.3.tgz#7d8f5dea6a735a19867ab6561ce40293a7783555"
-  integrity sha512-TvIfPn3eZ9ZF07fvWTjYz7DZLKLesVmW6Zsj7Eu3vUCZO5d/qrz5VS+TMPGTAIkha3W3ZatH0UE4N841PPLVLg==
+ts-proto@^1.155.1:
+  version "1.155.1"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.155.1.tgz#ff1f13f2bc0856667d3d9dcf884efc0b79ab5fe2"
+  integrity sha512-7dGkBFJu8NVl1OJbRjcKKs05hUNcLhFXTJqI5GphkmLCKoid0SBVKhW0q1j0c0LgCZB/zoFv4L5ibgFzIB6kPQ==
   dependencies:
     case-anything "^2.1.13"
     protobufjs "^7.2.4"
-    ts-poet "^6.4.1"
-    ts-proto-descriptors "1.12.0"
+    ts-poet "^6.5.0"
+    ts-proto-descriptors "1.14.0"
 
 ts-toolbelt@^9.6.0:
   version "9.6.0"
