@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsIcon } from "@cds/react/icon";
-import { Location } from "history";
 import qs from "qs";
 import { useEffect, useState } from "react";
 import { useIntl } from "react-intl";
@@ -17,11 +16,7 @@ import actions from "actions";
 import { ThunkDispatch } from "redux-thunk";
 import { Action } from "typesafe-actions";
 
-export interface ILoginFormProps {
-  location: Location;
-}
-
-function LoginForm(props: ILoginFormProps) {
+function LoginForm() {
   const intl = useIntl();
   const [token, setToken] = useState("");
   const [cookieChecked, setCookieChecked] = useState(false);
@@ -69,7 +64,7 @@ function LoginForm(props: ILoginFormProps) {
     // TODO(minelson): I don't think this redirect has been working for a while. Nothing
     // populates this location prop with the from attribute (from the history package) other
     // than a test.
-    const { from } = (props.location.state as any) || { from: { pathname: "/" } };
+    const { from } = (location.state as any) || { from: { pathname: "/" } };
     return <ReactRouter.Redirect to={from} />;
   }
 

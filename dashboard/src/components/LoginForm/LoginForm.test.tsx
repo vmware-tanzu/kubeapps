@@ -24,17 +24,6 @@ const emptyLocation: Location = {
 
 const defaultCluster = "default-cluster";
 
-const defaultProps = {
-  location: emptyLocation,
-  checkCookieAuthentication: jest.fn().mockReturnValue({
-    then: jest.fn(f => f()),
-    catch: jest.fn(f => f()),
-  }),
-  oauthLoginURI: "",
-  appVersion: "devel",
-  authProxySkipLoginPage: false,
-};
-
 let spyOnUseDispatch: jest.SpyInstance;
 beforeEach(() => {
   const mockDispatch = jest.fn(res => res);
@@ -55,7 +44,7 @@ describe("while authenticating", () => {
         authenticating: true,
       },
     };
-    const wrapper = mountWrapper(getStore(state), <LoginForm {...defaultProps} />);
+    const wrapper = mountWrapper(getStore(state), <LoginForm />);
     expect(wrapper.find(LoadingWrapper)).toExist();
     expect(wrapper.find(TokenLogin)).not.toExist();
     expect(wrapper.find(OAuthLogin)).not.toExist();
@@ -64,7 +53,7 @@ describe("while authenticating", () => {
 
 describe("token login form", () => {
   it("renders a token login form", () => {
-    const wrapper = mountWrapper(defaultStore, <LoginForm {...defaultProps} />);
+    const wrapper = mountWrapper(defaultStore, <LoginForm />);
     expect(wrapper.find(TokenLogin)).toExist();
     expect(wrapper.find(OAuthLogin)).not.toExist();
   });
@@ -76,7 +65,7 @@ describe("token login form", () => {
         appVersion: "devel",
       },
     };
-    const wrapper = mountWrapper(getStore(state), <LoginForm {...defaultProps} />);
+    const wrapper = mountWrapper(getStore(state), <LoginForm />);
     expect(wrapper.find("a").props()).toMatchObject({
       href: "https://github.com/vmware-tanzu/kubeapps/blob/devel/site/content/docs/latest/howto/access-control.md",
       target: "_blank",
@@ -84,7 +73,7 @@ describe("token login form", () => {
   });
 
   it("updates the token in the state when the input is changed", () => {
-    const wrapper = mountWrapper(defaultStore, <LoginForm {...defaultProps} />);
+    const wrapper = mountWrapper(defaultStore, <LoginForm />);
     let input = wrapper.find("input#token");
     act(() => {
       input.simulate("change", {
@@ -105,26 +94,9 @@ describe("token login form", () => {
           authenticated: true,
         },
       };
-      const wrapper = mountWrapper(getStore(state), <LoginForm {...defaultProps} />);
+      const wrapper = mountWrapper(getStore(state), <LoginForm />);
       const redirect = wrapper.find(Redirect);
       expect(redirect.props()).toEqual({ to: { pathname: "/" } });
-    });
-
-    it("redirects to previous location", () => {
-      const location = Object.assign({}, emptyLocation);
-      location.state = { from: "/test" };
-      const state = {
-        ...defaultStore,
-        auth: {
-          authenticated: true,
-        },
-      };
-      const wrapper = mountWrapper(
-        getStore(state),
-        <LoginForm {...defaultProps} location={location} />,
-      );
-      const redirect = wrapper.find(Redirect);
-      expect(redirect.props()).toEqual({ to: "/test" });
     });
   });
 
@@ -134,7 +106,7 @@ describe("token login form", () => {
       catch: jest.fn(f => f()),
     });
     actions.auth.authenticate = authenticate;
-    const wrapper = mountWrapper(defaultStore, <LoginForm {...defaultProps} />);
+    const wrapper = mountWrapper(defaultStore, <LoginForm />);
     act(() => {
       wrapper.find("input#token").simulate("change", { target: { value: "f00b4r" } });
     });
@@ -153,7 +125,7 @@ describe("token login form", () => {
     mountWrapper(
       defaultStore,
       <MemoryRouter initialEntries={["/login?token=f00b4r"]}>
-        <LoginForm {...defaultProps} />
+        <LoginForm />
       </MemoryRouter>,
     );
     expect(authenticate).toBeCalledWith(defaultCluster, "f00b4r", false);
@@ -168,7 +140,7 @@ describe("token login form", () => {
     mountWrapper(
       defaultStore,
       <MemoryRouter initialEntries={["/login?token=bad-token"]}>
-        <LoginForm {...defaultProps} />
+        <LoginForm />
       </MemoryRouter>,
     );
     expect(authenticate).toBeCalledWith(defaultCluster, "bad-token", false);
@@ -180,7 +152,7 @@ describe("token login form", () => {
     mountWrapper(
       defaultStore,
       <MemoryRouter initialEntries={["/login?token=f00b4r"]}>
-        <LoginForm {...defaultProps} />
+        <LoginForm />
       </MemoryRouter>,
     );
     expect(authenticate).not.toBeCalled();
@@ -193,18 +165,13 @@ describe("token login form", () => {
         authenticationError,
       },
     };
-    const wrapper = mountWrapper(getStore(state), <LoginForm {...defaultProps} />);
+    const wrapper = mountWrapper(getStore(state), <LoginForm />);
 
     expect(wrapper.find(".error").exists()).toBe(true);
   });
 
   it("does not display the oauth login if oauthLoginURI provided", () => {
-    const props = {
-      ...defaultProps,
-      oauthLoginURI: "",
-    };
-
-    const wrapper = mountWrapper(defaultStore, <LoginForm {...props} />);
+    const wrapper = mountWrapper(defaultStore, <LoginForm />);
 
     expect(wrapper.find("a.button").exists()).toBe(false);
   });
@@ -218,7 +185,7 @@ describe("oauth login form", () => {
         oauthLoginURI: "/sign/in",
       } as IConfigState,
     };
-    const wrapper = mountWrapper(getStore(state), <LoginForm {...defaultProps} />);
+    const wrapper = mountWrapper(getStore(state), <LoginForm />);
 
     expect(wrapper.find("input#token").exists()).toBe(false);
   });
@@ -239,7 +206,7 @@ describe("oauth login form", () => {
     };
     const wrapper = mountWrapper(
       getStore({ ...state } as Partial<IStoreState>),
-      <LoginForm {...defaultProps} />,
+      <LoginForm />,
     );
     expect(checkCookieAuthentication).toHaveBeenCalled();
     expect(wrapper.find(OAuthLogin)).toExist();
@@ -261,7 +228,7 @@ describe("oauth login form", () => {
 
     const wrapper = mountWrapper(
       getStore({ ...state } as Partial<IStoreState>),
-      <LoginForm {...defaultProps} />,
+      <LoginForm />,
     );
     expect(wrapper.find(LoadingWrapper)).toExist();
     expect(wrapper.find(OAuthLogin)).not.toExist();
@@ -282,7 +249,7 @@ describe("oauth login form", () => {
         oauthLoginURI: "/sign/in",
       },
     };
-    mountWrapper(getStore(state), <LoginForm {...defaultProps} />);
+    mountWrapper(getStore(state), <LoginForm />);
     expect(window.location.replace).toHaveBeenCalledWith("/sign/in");
   });
 });
