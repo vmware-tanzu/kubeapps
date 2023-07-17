@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import LoadingWrapper from "components/LoadingWrapper";
-import { Location } from "history";
 import { act } from "react-dom/test-utils";
 import { MemoryRouter, Redirect } from "react-router-dom";
 import { IConfigState } from "reducers/config";
@@ -13,14 +12,6 @@ import OAuthLogin from "./OauthLogin";
 import TokenLogin from "./TokenLogin";
 import actions from "actions";
 import * as ReactRedux from "react-redux";
-
-const emptyLocation: Location = {
-  hash: "",
-  pathname: "",
-  search: "",
-  state: "",
-  key: "",
-};
 
 const defaultCluster = "default-cluster";
 
@@ -204,10 +195,7 @@ describe("oauth login form", () => {
         oauthLoginURI: "/sign/in",
       } as IConfigState,
     };
-    const wrapper = mountWrapper(
-      getStore({ ...state } as Partial<IStoreState>),
-      <LoginForm />,
-    );
+    const wrapper = mountWrapper(getStore({ ...state } as Partial<IStoreState>), <LoginForm />);
     expect(checkCookieAuthentication).toHaveBeenCalled();
     expect(wrapper.find(OAuthLogin)).toExist();
     expect(wrapper.find("a").findWhere(a => a.prop("href") === "/sign/in")).toExist();
@@ -226,10 +214,7 @@ describe("oauth login form", () => {
     });
     actions.auth.checkCookieAuthentication = checkCookieAuthentication;
 
-    const wrapper = mountWrapper(
-      getStore({ ...state } as Partial<IStoreState>),
-      <LoginForm />,
-    );
+    const wrapper = mountWrapper(getStore({ ...state } as Partial<IStoreState>), <LoginForm />);
     expect(wrapper.find(LoadingWrapper)).toExist();
     expect(wrapper.find(OAuthLogin)).not.toExist();
   });
