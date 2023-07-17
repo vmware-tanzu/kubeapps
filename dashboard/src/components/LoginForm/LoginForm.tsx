@@ -54,7 +54,7 @@ function LoginForm(props: ILoginFormProps) {
       setQueryParamTokenAttempted(true);
       dispatch(actions.auth.authenticate(cluster, queryParamToken, false));
     }
-  }, [props, queryParamToken, queryParamTokenAttempted]);
+  }, [cluster, authenticated, dispatch, oauthLoginURI, queryParamToken, queryParamTokenAttempted]);
 
   if (authenticating || !cookieChecked) {
     return (
