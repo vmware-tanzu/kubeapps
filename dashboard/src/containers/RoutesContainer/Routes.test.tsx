@@ -121,7 +121,7 @@ it("should render a loading wrapper if authenticated but the cluster and ns info
 it("should render a warning message if operators are deactivated", () => {
   const componentProps = deepClone(emptyRouteComponentProps);
   componentProps.featureFlags = { operators: false };
-  const operatorsUrl = app.config.operators("default", "default");
+  const operatorsUrl = `${app.config.operators("default", "default")}/some/path`;
 
   const wrapper = mount(
     <StaticRouter location={operatorsUrl} context={{}}>

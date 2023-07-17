@@ -5,8 +5,8 @@ import { RouterState } from "connected-react-router";
 import { mount } from "enzyme";
 import { cloneDeep, merge } from "lodash";
 import { IntlProvider } from "react-intl";
-import { Provider } from "react-redux";
-import { BrowserRouter as Router } from "react-router-dom";
+import { DefaultRootState, Provider } from "react-redux";
+import { MemoryRouter, BrowserRouter as Router } from "react-router-dom";
 import { initialState as installedPackagesInitialState } from "reducers/installedpackages";
 import { initialState as authInitialState } from "reducers/auth";
 import { initialState as availablePackagesInitialState } from "reducers/availablepackages";
@@ -19,6 +19,13 @@ import configureMockStore, { MockStore } from "redux-mock-store";
 import thunk from "redux-thunk";
 import I18n from "shared/I18n";
 import { IStoreState } from "shared/types";
+import React, { PropsWithChildren } from "react";
+import { render } from "@testing-library/react";
+import type { RenderOptions } from "@testing-library/react";
+import { configureStore } from "@reduxjs/toolkit";
+import type { PreloadedState } from "@reduxjs/toolkit";
+import { reducers } from "reducers";
+import { AppStore } from "store";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -77,3 +84,36 @@ export const mountWrapper = (store: MockStore, children: React.ReactElement) =>
       ,
     </Provider>,
   );
+
+// Things have moved on for testing to utilise the React Testing Library (RTL)
+// so that the redux documentation now recommends the following setup, which
+// we should use for new code and gradually move old code over.
+// https://redux.js.org/usage/writing-tests
+
+// This type interface extends the default options for render from RTL, as well
+// as allows the user to specify other things such as initialState, store.
+interface ExtendedRenderOptions extends Omit<RenderOptions, "queries"> {
+  preloadedState?: PreloadedState<DefaultRootState>;
+  store?: AppStore;
+}
+
+export function renderWithProviders(
+  ui: React.ReactElement,
+  {
+    preloadedState = {},
+    // Automatically create a store instance if no store was passed in
+    store = configureStore({ reducer: reducers, preloadedState }),
+    ...renderOptions
+  }: ExtendedRenderOptions = {},
+) {
+  function Wrapper({ children }: PropsWithChildren<{}>): JSX.Element {
+    return (
+      <MemoryRouter>
+        <Provider store={store}>{children}</Provider>
+      </MemoryRouter>
+    );
+  }
+
+  // Return an object with the store and all of RTL's query functions
+  return { store, ...render(ui, { wrapper: Wrapper, ...renderOptions }) };
+}

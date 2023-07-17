@@ -20,3 +20,5 @@ export default createStore(
     ),
   ),
 );
+
+export type AppStore = ReturnType<typeof createStore>;
