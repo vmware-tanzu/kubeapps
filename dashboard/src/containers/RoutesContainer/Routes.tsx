@@ -24,7 +24,6 @@ import AlertGroup from "components/AlertGroup";
 import PkgRepoList from "components/Config/PkgRepoList/PkgRepoList";
 import { IFeatureFlags } from "shared/Config";
 
-import LoginFormContainer from "../../containers/LoginFormContainer";
 import PrivateRouteContainer from "../../containers/PrivateRouteContainer";
 import OperatorNew from "components/OperatorNew";
 import OperatorInstanceForm from "components/OperatorInstanceForm";
@@ -32,6 +31,7 @@ import OperatorList from "components/OperatorList";
 import OperatorView from "components/OperatorView";
 import OperatorInstance from "components/OperatorInstance";
 import OperatorInstanceUpdateForm from "components/OperatorInstanceUpdateForm";
+import LoginForm from "components/LoginForm";
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
@@ -72,7 +72,7 @@ const unsupportedRoutes = {
 
 // Public routes that don't require authentication
 const routes = {
-  "/login": LoginFormContainer,
+  "/login": LoginForm,
 } as const;
 
 interface IRoutesProps extends IRouteComponentPropsAndRouteProps {
