@@ -63,7 +63,7 @@
     "react-redux": "^7.2.9",
     "react-router-dom": "^5.3.0",
     "react-router-hash-link": "^2.4.3",
-    "react-tooltip": "5.7.4",
+    "react-tooltip": "5.18.1",
     "react-transition-group": "^4.4.5",
     "redux": "^4.2.0",
     "redux-devtools-extension": "^2.13.9",
