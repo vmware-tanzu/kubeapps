@@ -8,8 +8,7 @@ import Catalog from "components/Catalog/Catalog";
 import DeploymentForm from "components/DeploymentForm";
 import LoadingWrapper from "components/LoadingWrapper";
 import PackageView from "components/PackageHeader";
-import React from "react";
-import { Redirect, Route, RouteComponentProps, RouteProps, Switch } from "react-router-dom";
+import { Navigate, Route, RouteProps, Routes } from "react-router-dom";
 import { app } from "shared/url";
 import ApiDocs from "../../components/ApiDocs";
 import NotFound from "../../components/NotFound";
@@ -25,8 +24,10 @@ import OperatorInstance from "components/OperatorInstance";
 import OperatorInstanceUpdateForm from "components/OperatorInstanceUpdateForm";
 import LoginForm from "components/LoginForm";
 import RequireAuthentication from "components/RequireAuthentication";
+import { useSelector } from "react-redux";
+import { IStoreState } from "shared/types";
 
-type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
+type IRouteComponentPropsAndRouteProps = RouteProps;
 
 const privateRoutes = {
   "/c/:cluster/ns/:namespace/apps": AppList,
@@ -59,7 +60,9 @@ const operatorsRoutes = {
 } as const;
 
 const unsupportedRoutes = {
-  "/c/:cluster/ns/:namespace/operators*":
+  "/c/:cluster/ns/:namespace/operators/*":
+    "Operators support has been deactivated by default for Kubeapps. It can be enabled in values configuration.",
+  "/c/:cluster/ns/:namespace/operators-instances/*":
     "Operators support has been deactivated by default for Kubeapps. It can be enabled in values configuration.",
 } as const;
 
@@ -70,80 +73,75 @@ interface IRoutesProps extends IRouteComponentPropsAndRouteProps {
   featureFlags: IFeatureFlags;
 }
 
-class Routes extends React.Component<IRoutesProps> {
-  public render() {
-    return (
-      <Switch>
-        <Route exact={true} path="/" render={this.rootNamespacedRedirect} />
-        <Route key="/login" exact={true} path="/login">
-          <LoginForm />
-        </Route>
-        {Object.entries(privateRoutes).map(([route, component]) => {
-          const Component = component;
-          return (
-            <Route
-              key={route}
-              exact={true}
-              path={route}
-              render={() => {
-                return (
-                  <RequireAuthentication>
-                    <Component />
-                  </RequireAuthentication>
-                );
-              }}
-            />
-          );
-        })}
-        {this.props.featureFlags?.operators &&
-          Object.entries(operatorsRoutes).map(([route, component]) => {
-            const Component = component;
-            return (
-              <Route
-                key={route}
-                exact={true}
-                path={route}
-                render={() => {
-                  return (
-                    <RequireAuthentication>
-                      <Component />
-                    </RequireAuthentication>
-                  );
-                }}
-              />
-            );
-          })}
-        {!this.props.featureFlags?.operators &&
-          Object.entries(unsupportedRoutes).map(([route, message]) => {
-            return (
-              <Route key={route} exact={true} path={route}>
-                <div className="margin-t-sm">
-                  <AlertGroup status="warning">{message}</AlertGroup>
-                </div>
-              </Route>
-            );
-          })}
-        {/* If the route doesn't match any expected path redirect to a 404 page  */}
-        <Route>
-          <NotFound />
-        </Route>
-      </Switch>
-    );
-  }
-  private rootNamespacedRedirect = () => {
-    if (this.props.authenticated) {
-      if (!this.props.cluster || !this.props.currentNamespace) {
+function AppRoutes() {
+  const {
+    config: { featureFlags },
+    clusters: { currentCluster: cluster, clusters },
+    auth: { authenticated },
+  } = useSelector((state: IStoreState) => state);
+  const currentNamespace = clusters[cluster].currentNamespace;
+  const rootNamespacedRedirect = () => {
+    if (authenticated) {
+      if (!cluster || !currentNamespace) {
         return <LoadingWrapper className="margin-t-xxl" loadingText="Fetching Cluster Info..." />;
       }
       return (
-        <Redirect
-          to={{ pathname: app.apps.list(this.props.cluster, this.props.currentNamespace) }}
+        <Navigate replace
+          to={{ pathname: app.apps.list(cluster, currentNamespace) }}
         />
       );
     }
     // There is not a default namespace, redirect to login page
-    return <Redirect to={{ pathname: "/login" }} />;
+    return <Navigate replace to={{ pathname: "/login" }} />;
   };
+  return (
+    <Routes>
+      <Route path="/" element={rootNamespacedRedirect()} />
+      <Route key="/login" path="/login" element={<LoginForm />} />
+      {Object.entries(privateRoutes).map(([route, component]) => {
+        const Component = component;
+        return (
+          <Route
+            key={route}
+            path={route}
+            element={
+              <RequireAuthentication>
+                <Component />
+              </RequireAuthentication>
+            }
+          />
+        );
+      })}
+      {featureFlags?.operators &&
+        Object.entries(operatorsRoutes).map(([route, component]) => {
+          const Component = component;
+          return (
+            <Route
+              key={route}
+              path={route}
+              element={
+                <RequireAuthentication>
+                  <Component />
+                </RequireAuthentication>
+              }
+            />
+          );
+        })}
+      {!featureFlags?.operators &&
+        Object.entries(unsupportedRoutes).map(([route, message]) => {
+          return (
+            <Route key={route} path={route} element={
+              <div className="margin-t-sm">
+                <AlertGroup status="warning">{message}</AlertGroup>
+              </div>
+            } />
+          );
+        })}
+      {/* If the route doesn't match any expected path redirect to a 404 page  */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+
 }
 
-export default Routes;
+export default AppRoutes;

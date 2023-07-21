@@ -4,7 +4,7 @@
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import { IStoreState } from "shared/types";
-import Routes from "./Routes";
+import AppRoutes from "./Routes";
 
 function mapStateToProps({ auth, clusters: { currentCluster, clusters }, config }: IStoreState) {
   return {
@@ -15,4 +15,4 @@ function mapStateToProps({ auth, clusters: { currentCluster, clusters }, config 
   };
 }
 
-export default withRouter(connect(mapStateToProps)(Routes));
+export default withRouter(connect(mapStateToProps)(AppRoutes));

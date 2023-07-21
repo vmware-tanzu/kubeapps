@@ -12,7 +12,7 @@ import I18n, { ISupportedLangs } from "shared/I18n";
 import store, { history } from "../store";
 // TODO(andresmgot): Containers should be no longer needed, replace them when possible
 import ConfigLoaderContainer from "./ConfigLoaderContainer";
-import Routes from "./RoutesContainer";
+import AppRoutes from "./RoutesContainer/Routes";
 
 async function initLocale() {
   const fullLang = (navigator.languages && navigator.languages[0]) || navigator.language;
@@ -40,7 +40,7 @@ function Root() {
             <Suspense fallback={null}>
               <HeadManager>
                 <Layout headerComponent={Header}>
-                  <Routes />
+                  <AppRoutes />
                 </Layout>
               </HeadManager>
             </Suspense>

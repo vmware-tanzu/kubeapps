@@ -5,12 +5,12 @@ import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import * as ReactRedux from "react-redux";
-import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import { defaultStore, getStore, initialState, mountWrapper, renderWithProviders } from "shared/specs/mountWrapper";
 import { IStoreState } from "shared/types";
 import OperatorNew from "./OperatorNew";
 import { IOperatorsState } from "reducers/operators";
 import { IClusterState } from "reducers/cluster";
-import { MemoryRouter, Route } from "react-router-dom";
+import { MemoryRouter, Route, Router, useParams } from "react-router-dom";
 
 const defaultOperator = {
   metadata: {
@@ -44,6 +44,7 @@ const defaultOperator = {
 } as any;
 
 let spyOnUseDispatch: jest.SpyInstance;
+let mockUseParams: jest.Func;
 const kubeActions = { ...actions.operators };
 beforeEach(() => {
   actions.operators = {
@@ -52,6 +53,15 @@ beforeEach(() => {
   };
   const mockDispatch = jest.fn(res => res);
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+
+  mockUseParams = jest.fn().mockReturnValue({ operator: "bar" });
+  jest.mock('react-router-dom', () => ({
+    ...jest.requireActual('react-router-dom'),
+    // useParams: mockUseParams,
+    // UPTOHERE: struggling to find way to have useParams in test.
+    useParams: () => ({ operator: "bar" }),
+    useRouteMatch: () => ({ url: "/c/default/ns/default/operators/new/foo" }),
+  }));
 });
 
 afterEach(() => {
@@ -63,14 +73,32 @@ it("calls getOperator when mounting the component", () => {
   const getOperator = jest.fn();
   actions.operators.getOperator = getOperator;
 
-  mountWrapper(
-    defaultStore,
-    <MemoryRouter initialEntries={["/c/default/ns/default/operators/new/foo"]}>
-      <Route path={"/c/:cluster/ns/:namespace/operators/new/:operator"}>
-        <OperatorNew />
-      </Route>
-    </MemoryRouter>,
+  // jest.spyOn(Router, "useParams").mockReturnValue({ operator: "foo" });
+
+  renderWithProviders(
+    <OperatorNew />,
+    {
+      preloadedState: {
+        clusters: {
+          currentCluster: "default-cluster",
+          clusters: {
+            "default-cluster": {
+              currentNamespace: "default",
+            }
+          }
+        }
+      },
+      initialEntries: ["/c/default/ns/default/operators/new/foo"],
+    }
   );
+  // mountWrapper(
+  //   defaultStore,
+  //   <MemoryRouter initialEntries={["/c/default/ns/default/operators/new/foo"]}>
+  //     <Route path={"/c/:cluster/ns/:namespace/operators/new/:operator"}>
+  //       <OperatorNew />
+  //     </Route>
+  //   </MemoryRouter>,
+  // );
   expect(getOperator).toHaveBeenCalledWith(
     initialState.clusters.currentCluster,
     initialState.clusters.clusters[initialState.clusters.currentCluster].currentNamespace,
