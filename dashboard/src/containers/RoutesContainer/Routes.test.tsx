@@ -14,6 +14,13 @@ import { app } from "shared/url";
 import NotFound from "../../components/NotFound";
 import Routes from "./Routes";
 
+// Mocking SwaggerUI to a simple empty <div> to prevent issues with Jest
+jest.mock("swagger-ui-react", () => {
+  return {
+    SwaggerUI: () => <div />,
+  };
+});
+
 const emptyRouteComponentProps: RouteComponentProps<{}> = {
   history: createMemoryHistory(),
   location: {
