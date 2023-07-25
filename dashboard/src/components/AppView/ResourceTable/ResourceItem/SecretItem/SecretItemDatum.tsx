@@ -81,7 +81,9 @@ function SecretItemDatum({ name, value }: ISecretItemDatumProps) {
           </div>
         </button>
         <div style={{ opacity: copied ? "1" : "0" }}>
-          <Tooltip id="app-status">Copied</Tooltip>
+          <Tooltip isOpen={true} id="app-status">
+            Copied
+          </Tooltip>
         </div>
       </Column>
     </Row>

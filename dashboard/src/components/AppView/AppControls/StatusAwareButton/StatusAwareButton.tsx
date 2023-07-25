@@ -53,7 +53,7 @@ export default function StatusAwareButton<T extends IStatusAwareButtonProps>(pro
     <>
       <CdsButton {...otherProps} disabled={isDisabled} data-for={id} data-tip={true} />
       {tooltip && (
-        <Tooltip id={id} place="bottom">
+        <Tooltip isOpen={true} id={id} place="bottom">
           {tooltip}
         </Tooltip>
       )}

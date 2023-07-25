@@ -182,7 +182,7 @@ export default function ApplicationStatus({
           <p className="application-status-pie-chart-text">Pod{readyPods > 1 ? "s" : ""}</p>
         </div>
       </div>
-      <Tooltip id="application-status" className="extraClass" place="right">
+      <Tooltip isOpen={true} id="application-status" className="extraClass" place="right">
         <table className="application-status-table">
           <thead>
             <tr>

@@ -40,7 +40,7 @@ function renderCellWithTooltipBase(
     return (
       <span className={className}>
         <p data-tip={stringValue}>{trimmedString}</p>
-        <Tooltip />
+        <Tooltip isOpen={true} />
       </span>
     );
   } else {
