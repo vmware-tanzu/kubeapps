@@ -85,11 +85,7 @@ function AppRoutes() {
       if (!cluster || !currentNamespace) {
         return <LoadingWrapper className="margin-t-xxl" loadingText="Fetching Cluster Info..." />;
       }
-      return (
-        <Navigate replace
-          to={{ pathname: app.apps.list(cluster, currentNamespace) }}
-        />
-      );
+      return <Navigate replace to={{ pathname: app.apps.list(cluster, currentNamespace) }} />;
     }
     // There is not a default namespace, redirect to login page
     return <Navigate replace to={{ pathname: "/login" }} />;
@@ -130,18 +126,21 @@ function AppRoutes() {
       {!featureFlags?.operators &&
         Object.entries(unsupportedRoutes).map(([route, message]) => {
           return (
-            <Route key={route} path={route} element={
-              <div className="margin-t-sm">
-                <AlertGroup status="warning">{message}</AlertGroup>
-              </div>
-            } />
+            <Route
+              key={route}
+              path={route}
+              element={
+                <div className="margin-t-sm">
+                  <AlertGroup status="warning">{message}</AlertGroup>
+                </div>
+              }
+            />
           );
         })}
       {/* If the route doesn't match any expected path redirect to a 404 page  */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
-
 }
 
 export default AppRoutes;

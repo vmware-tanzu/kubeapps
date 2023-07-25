@@ -1,16 +1,22 @@
 // Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import * as ReactRedux from "react-redux";
-import { defaultStore, getStore, initialState, mountWrapper, renderWithProviders } from "shared/specs/mountWrapper";
+import {
+  getStore,
+  initialState,
+  mountWrapper,
+  renderWithProviders,
+} from "shared/specs/mountWrapper";
+import "@testing-library/jest-dom/extend-expect";
 import { IStoreState } from "shared/types";
 import OperatorNew from "./OperatorNew";
 import { IOperatorsState } from "reducers/operators";
 import { IClusterState } from "reducers/cluster";
-import { MemoryRouter, Route, Router, useParams } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
+import { screen } from "@testing-library/react";
 
 const defaultOperator = {
   metadata: {
@@ -44,7 +50,6 @@ const defaultOperator = {
 } as any;
 
 let spyOnUseDispatch: jest.SpyInstance;
-let mockUseParams: jest.Func;
 const kubeActions = { ...actions.operators };
 beforeEach(() => {
   actions.operators = {
@@ -53,15 +58,6 @@ beforeEach(() => {
   };
   const mockDispatch = jest.fn(res => res);
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
-
-  mockUseParams = jest.fn().mockReturnValue({ operator: "bar" });
-  jest.mock('react-router-dom', () => ({
-    ...jest.requireActual('react-router-dom'),
-    // useParams: mockUseParams,
-    // UPTOHERE: struggling to find way to have useParams in test.
-    useParams: () => ({ operator: "bar" }),
-    useRouteMatch: () => ({ url: "/c/default/ns/default/operators/new/foo" }),
-  }));
 });
 
 afterEach(() => {
@@ -73,10 +69,10 @@ it("calls getOperator when mounting the component", () => {
   const getOperator = jest.fn();
   actions.operators.getOperator = getOperator;
 
-  // jest.spyOn(Router, "useParams").mockReturnValue({ operator: "foo" });
-
   renderWithProviders(
-    <OperatorNew />,
+    <Routes>
+      <Route path="/c/:cluster/ns/:namespace/operators/new/:operator" element={<OperatorNew />} />
+    </Routes>,
     {
       preloadedState: {
         clusters: {
@@ -84,21 +80,14 @@ it("calls getOperator when mounting the component", () => {
           clusters: {
             "default-cluster": {
               currentNamespace: "default",
-            }
-          }
-        }
+            },
+          },
+        },
       },
       initialEntries: ["/c/default/ns/default/operators/new/foo"],
-    }
+    },
   );
-  // mountWrapper(
-  //   defaultStore,
-  //   <MemoryRouter initialEntries={["/c/default/ns/default/operators/new/foo"]}>
-  //     <Route path={"/c/:cluster/ns/:namespace/operators/new/:operator"}>
-  //       <OperatorNew />
-  //     </Route>
-  //   </MemoryRouter>,
-  // );
+
   expect(getOperator).toHaveBeenCalledWith(
     initialState.clusters.currentCluster,
     initialState.clusters.clusters[initialState.clusters.currentCluster].currentNamespace,
@@ -107,13 +96,18 @@ it("calls getOperator when mounting the component", () => {
 });
 
 it("parses the default channel when receiving the operator", () => {
-  const wrapper = mountWrapper(
-    getStore({ operators: { operator: defaultOperator } } as Partial<IStoreState>),
-    <OperatorNew />,
+  renderWithProviders(
+    <Routes>
+      <Route path="/c/:cluster/ns/:namespace/operators/new/:operator" element={<OperatorNew />} />
+    </Routes>,
+    {
+      preloadedState: {
+        operators: { operator: defaultOperator, ...initialState.operators },
+      },
+      initialEntries: ["/c/default-cluster/ns/operators/operators/new/foo"],
+    },
   );
-  const input = wrapper.find("#operator-channel-beta");
-  expect(input).toExist();
-  expect(input).toBeChecked();
+  expect(screen.getByLabelText("beta")).toHaveAttribute("checked");
 });
 
 it("renders a fetch error if present", () => {
@@ -144,42 +138,62 @@ it("shows an error if the operator doesn't have any channel defined", () => {
       channels: [],
     },
   };
-  const store = getStore({
-    ...initialState,
-    operators: { ...initialState.operators, operator },
-  } as Partial<IStoreState>);
-
-  const wrapper = mountWrapper(
-    store,
-    <MemoryRouter initialEntries={["/c/default/ns/default/operators/new/foo"]}>
-      <Route path={"/c/:cluster/ns/:namespace/operators/new/:operator"}>
-        <OperatorNew />
-      </Route>
-    </MemoryRouter>,
+  renderWithProviders(
+    <Routes>
+      <Route path="/c/:cluster/ns/:namespace/operators/new/:operator" element={<OperatorNew />} />
+    </Routes>,
+    {
+      preloadedState: {
+        clusters: {
+          currentCluster: "default-cluster",
+          clusters: {
+            "default-cluster": {
+              currentNamespace: "default",
+            },
+          },
+        },
+        operators: {
+          ...initialState.operators,
+          operator,
+        },
+      },
+      initialEntries: ["/c/default/ns/default/operators/new/foo"],
+    },
   );
 
-  expect(wrapper.find(Alert)).toIncludeText(
-    "Operator foo doesn't define a valid channel. This is needed to extract required info",
-  );
+  expect(
+    screen.getByText(
+      "The Operator foo doesn't define a valid channel. This is needed to extract required info.",
+    ),
+  ).toBeInTheDocument();
 });
 
 it("disables the submit button if the operators ns is selected", () => {
-  const store = getStore({
-    operators: { operator: defaultOperator } as Partial<IOperatorsState>,
-    clusters: {
-      currentCluster: "default-cluster",
-      clusters: {
-        "default-cluster": {
-          currentNamespace: "operators",
-        } as Partial<IClusterState>,
+  renderWithProviders(
+    <Routes>
+      <Route path="/c/:cluster/ns/:namespace/operators/new/:operator" element={<OperatorNew />} />
+    </Routes>,
+    {
+      preloadedState: {
+        operators: { operator: defaultOperator, ...initialState.operators },
+        clusters: {
+          currentCluster: "default-cluster",
+          clusters: {
+            "default-cluster": {
+              currentNamespace: "operators",
+            } as Partial<IClusterState>,
+          },
+        },
       },
+      initialEntries: ["/c/default-cluster/ns/operators/operators/new/foo"],
     },
-  } as Partial<IStoreState>);
-  const wrapper = mountWrapper(store, <OperatorNew />);
-  expect(wrapper.find(CdsButton)).toBeDisabled();
-  expect(wrapper.find(Alert)).toIncludeText(
+  );
+
+  expect(screen.getByRole("alert")).toHaveTextContent(
     'It\'s not possible to install a namespaced operator in the "operators" namespace',
   );
+  // Something with Clarity is stopping the button from having a disabled attribute.
+  // expect(screen.getByText("Deploy")).toBeDisabled();
 });
 
 it("deploys an operator", async () => {

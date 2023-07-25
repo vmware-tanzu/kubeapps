@@ -10,7 +10,13 @@ import { cloneDeep } from "lodash";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
 import { IClusterState, IClustersState } from "reducers/cluster";
-import { defaultStore, getStore, initialState, mountWrapper, renderWithProviders } from "shared/specs/mountWrapper";
+import {
+  defaultStore,
+  getStore,
+  initialState,
+  mountWrapper,
+  renderWithProviders,
+} from "shared/specs/mountWrapper";
 import { IStoreState } from "shared/types";
 import ContextSelector from "./ContextSelector";
 import { screen } from "@testing-library/react";
@@ -29,9 +35,7 @@ beforeEach(() => {
   };
   const mockDispatch = jest.fn(res => res);
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
-  spyOnUseNavigate = jest
-    .spyOn(ReactRouter, "useNavigate")
-    .mockReturnValue(jest.fn() as any);
+  spyOnUseNavigate = jest.spyOn(ReactRouter, "useNavigate").mockReturnValue(jest.fn() as any);
 });
 
 afterEach(() => {
@@ -216,27 +220,20 @@ it("changes the location with the new namespace", async () => {
   const navigate = jest.fn();
   spyOnUseNavigate = jest.spyOn(ReactRouter, "useNavigate").mockReturnValue(navigate as any);
 
-  renderWithProviders(
-    <ContextSelector />,
-    {
-      preloadedState: {
+  renderWithProviders(<ContextSelector />, {
+    preloadedState: {
+      clusters: {
+        currentCluster: "default-cluster",
         clusters: {
-          currentCluster: "default-cluster",
-          clusters: {
-            "default-cluster": {
-              currentNamespace: "default",
-              namespaces: [
-                "default",
-                "ns-bar",
-                "other",
-              ]
-            } as Partial<IClusterState>,
-          },
-        } as Partial<IClustersState>,
-      },
-      initialEntries: ["/c/default-cluster/ns/ns-bar/catalog"],
-    }
-  );
+          "default-cluster": {
+            currentNamespace: "default",
+            namespaces: ["default", "ns-bar", "other"],
+          } as Partial<IClusterState>,
+        },
+      } as Partial<IClustersState>,
+    },
+    initialEntries: ["/c/default-cluster/ns/ns-bar/catalog"],
+  });
 
   await userEvent.selectOptions(screen.getByTestId("select-namespace"), "other");
   await userEvent.click(screen.getByText("Change Context"));
@@ -248,35 +245,24 @@ it("changes the location with the new cluster and namespace", async () => {
   const navigate = jest.fn();
   spyOnUseNavigate = jest.spyOn(ReactRouter, "useNavigate").mockReturnValue(navigate as any);
 
-  renderWithProviders(
-    <ContextSelector />,
-    {
-      preloadedState: {
+  renderWithProviders(<ContextSelector />, {
+    preloadedState: {
+      clusters: {
+        currentCluster: "default-cluster",
         clusters: {
-          currentCluster: "default-cluster",
-          clusters: {
-            "default-cluster": {
-              currentNamespace: "default",
-              namespaces: [
-                "default",
-                "ns-bar",
-                "other",
-              ]
-            } as Partial<IClusterState>,
-            "other-cluster": {
-              currentNamespace: "default",
-              namespaces: [
-                "default",
-                "ns-bar",
-                "other",
-              ],
-            } as Partial<IClusterState>,
-          },
-        } as Partial<IClustersState>,
-      },
-      initialEntries: ["/c/other-cluster/ns/other/catalog"],
-    }
-  );
+          "default-cluster": {
+            currentNamespace: "default",
+            namespaces: ["default", "ns-bar", "other"],
+          } as Partial<IClusterState>,
+          "other-cluster": {
+            currentNamespace: "default",
+            namespaces: ["default", "ns-bar", "other"],
+          } as Partial<IClusterState>,
+        },
+      } as Partial<IClustersState>,
+    },
+    initialEntries: ["/c/other-cluster/ns/other/catalog"],
+  });
 
   await userEvent.selectOptions(screen.getByTestId("select-cluster"), "other-cluster");
   await userEvent.selectOptions(screen.getByTestId("select-namespace"), "other");

@@ -15,7 +15,7 @@ import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router-dom";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
@@ -109,7 +109,7 @@ export default function PackageView() {
   // If the skipAvailablePackageDetails option is enabled, redirect to deployment form
   if (skipAvailablePackageDetails) {
     return (
-      <ReactRouter.Redirect
+      <Navigate
         to={app.apps.new(
           targetCluster,
           targetNamespace,

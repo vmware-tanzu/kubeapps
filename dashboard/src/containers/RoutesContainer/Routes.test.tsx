@@ -11,139 +11,125 @@ import { IAuthState } from "reducers/auth";
 import { IClusterState } from "reducers/cluster";
 
 it("invalid path should show a 404 error", () => {
-  renderWithProviders(
-    <AppRoutes />,
-    {
-      preloadedState: {
-        auth: {
-          authenticated: true,
-        },
+  renderWithProviders(<AppRoutes />, {
+    preloadedState: {
+      auth: {
+        authenticated: true,
       },
-      initialEntries: ["/random"],
     },
-  );
+    initialEntries: ["/random"],
+  });
 
-  expect(screen.getByRole("heading")).toHaveTextContent("The page you are looking for can't be found.");
+  expect(screen.getByRole("heading")).toHaveTextContent(
+    "The page you are looking for can't be found.",
+  );
 });
 
 it("should render a redirect to the default cluster and namespace", () => {
-  renderWithProviders(
-    <AppRoutes />,
-    {
-      preloadedState: {
-        auth: {
-          authenticated: true,
-        },
-        clusters: {
-          currentCluster: "default",
-          clusters: {
-            "default": {
-              currentNamespace: "default",
-            } as Partial<IClusterState>,
-          }
-        }
+  renderWithProviders(<AppRoutes />, {
+    preloadedState: {
+      auth: {
+        authenticated: true,
       },
-      initialEntries: ["/"],
+      clusters: {
+        currentCluster: "default",
+        clusters: {
+          default: {
+            currentNamespace: "default",
+          } as Partial<IClusterState>,
+        },
+      },
     },
-  );
+    initialEntries: ["/"],
+  });
 
   expect(screen.getByRole("heading")).toHaveTextContent("Applications");
-  expect(screen.getByRole("link", { name: "Deploy" })).toHaveAttribute("href", "/c/default/ns/default/catalog");
+  expect(screen.getByRole("link", { name: "Deploy" })).toHaveAttribute(
+    "href",
+    "/c/default/ns/default/catalog",
+  );
 });
 
 it("should render a redirect to the login page", () => {
-  renderWithProviders(
-    <AppRoutes />,
-    {
-      preloadedState: {
-        auth: {
-          authenticated: false,
-        },
+  renderWithProviders(<AppRoutes />, {
+    preloadedState: {
+      auth: {
+        authenticated: false,
       },
-      initialEntries: ["/"],
     },
-  );
+    initialEntries: ["/"],
+  });
 
   expect(screen.getByLabelText("Token")).toHaveAttribute("placeholder", "Paste token here");
 });
 
 it("should render a redirect to the login page (even with cluster or ns info)", () => {
-  renderWithProviders(
-    <AppRoutes />,
-    {
-      preloadedState: {
-        auth: {
-          authenticated: false,
-        } as Partial<IAuthState>,
+  renderWithProviders(<AppRoutes />, {
+    preloadedState: {
+      auth: {
+        authenticated: false,
+      } as Partial<IAuthState>,
+      clusters: {
+        currentCluster: "default",
         clusters: {
-          currentCluster: "default",
-          clusters: {
-            "default": {
-              currentNamespace: "default",
-            } as Partial<IClusterState>,
-          }
-        }
-      } as Partial<IStoreState>,
-      initialEntries: ["/"],
-    },
-  );
+          default: {
+            currentNamespace: "default",
+          } as Partial<IClusterState>,
+        },
+      },
+    } as Partial<IStoreState>,
+    initialEntries: ["/"],
+  });
 
   expect(screen.getByLabelText("Token")).toHaveAttribute("placeholder", "Paste token here");
 });
 
 it("should render a loading wrapper if authenticated but the cluster and ns info is not populated", () => {
-  renderWithProviders(
-    <AppRoutes />,
-    {
-      preloadedState: {
-        auth: {
-          authenticated: true,
-        },
+  renderWithProviders(<AppRoutes />, {
+    preloadedState: {
+      auth: {
+        authenticated: true,
       },
-      initialEntries: ["/"],
     },
-  );
+    initialEntries: ["/"],
+  });
 
   expect(screen.getByText("Fetching Cluster Info...")).toBeInTheDocument();
 });
 
 it("should render a warning message if operators are deactivated", () => {
-  renderWithProviders(
-    <AppRoutes />,
-    {
-      preloadedState: {
-        auth: {
-          authenticated: true,
-        },
-        config: {
-          featureFlags: {
-            operators: false,
-          }
-        }
+  renderWithProviders(<AppRoutes />, {
+    preloadedState: {
+      auth: {
+        authenticated: true,
       },
-      initialEntries: [`${app.config.operators("default", "default")}/some/path`],
+      config: {
+        featureFlags: {
+          operators: false,
+        },
+      },
     },
-  );
-  expect(screen.getByText("Operators support has been deactivated", { exact: false })).toBeInTheDocument();
+    initialEntries: [`${app.config.operators("default", "default")}/some/path`],
+  });
+  expect(
+    screen.getByText("Operators support has been deactivated", { exact: false }),
+  ).toBeInTheDocument();
 });
 
 it("should route to operators if enabled", () => {
-  renderWithProviders(
-    <AppRoutes />,
-    {
-      preloadedState: {
-        auth: {
-          authenticated: true,
-        },
-        config: {
-          featureFlags: {
-            operators: true,
-          }
-        }
+  renderWithProviders(<AppRoutes />, {
+    preloadedState: {
+      auth: {
+        authenticated: true,
       },
-      initialEntries: [`${app.config.operators("default", "default")}`],
+      config: {
+        featureFlags: {
+          operators: true,
+        },
+      },
     },
-  );
+    initialEntries: [`${app.config.operators("default", "default")}`],
+  });
 
   expect(screen.getByText("Fetching Operators...")).toBeInTheDocument();
 });
