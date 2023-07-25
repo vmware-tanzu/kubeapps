@@ -1,7 +1,7 @@
 // Copyright 2021-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import Tooltip from "components/js/Tooltip";
+import CustomTooltip from "components/js/Tooltip";
 import PageHeader from "components/PageHeader/PageHeader";
 import {
   AvailablePackageDetail,
@@ -58,7 +58,7 @@ export default function PackageHeader({
               label={
                 <>
                   Package Version{" "}
-                  <Tooltip
+                  <CustomTooltip
                     label="package-versions-tooltip"
                     id="package-versions-tooltip"
                     position="bottom-left"
@@ -73,7 +73,7 @@ export default function PackageHeader({
                       More info here
                     </a>
                     .{" "}
-                  </Tooltip>
+                  </CustomTooltip>
                 </>
               }
             />
