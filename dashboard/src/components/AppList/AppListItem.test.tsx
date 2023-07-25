@@ -1,7 +1,7 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import Tooltip from "components/js/Tooltip";
+import CustomTooltip from "components/js/Tooltip";
 import { shallow } from "enzyme";
 import {
   Context,
@@ -72,7 +72,7 @@ it("should add a tooltip with the package update available", () => {
     },
   } as IAppListItemProps;
   const wrapper = mountWrapper(defaultStore, <AppListItem {...props} />);
-  const tooltip = wrapper.find(Tooltip);
+  const tooltip = wrapper.find(CustomTooltip);
   expect(tooltip.text()).toBe("A new package version is available: 1.1.0");
 });
 
@@ -86,7 +86,7 @@ it("should add a tooltip with the app update available", () => {
     },
   } as IAppListItemProps;
   const wrapper = mountWrapper(defaultStore, <AppListItem {...props} />);
-  const tooltip = wrapper.find(Tooltip);
+  const tooltip = wrapper.find(CustomTooltip);
   expect(tooltip.text()).toBe("A new app version is available: 1.1.0");
 });
 
@@ -101,7 +101,7 @@ it("should add a tooltip with the app update available without requiring semver 
     },
   } as IAppListItemProps;
   const wrapper = mountWrapper(defaultStore, <AppListItem {...props} />);
-  const tooltip = wrapper.find(Tooltip);
+  const tooltip = wrapper.find(CustomTooltip);
   expect(tooltip.text()).toBe("A new app version is available: latest-crack");
 });
 
@@ -115,7 +115,7 @@ it("should add a tooltip with the pkg update available without requiring semver 
     },
   } as IAppListItemProps;
   const wrapper = mountWrapper(defaultStore, <AppListItem {...props} />);
-  const tooltip = wrapper.find(Tooltip);
+  const tooltip = wrapper.find(CustomTooltip);
   expect(tooltip.text()).toBe("A new package version is available: latest");
 });
 

@@ -1,7 +1,8 @@
-// Copyright 2021-2022 the Kubeapps contributors.
+// Copyright 2021-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
+import { waitFor } from "@testing-library/react";
 import actions from "actions";
 import {
   InstalledPackageReference,
@@ -9,7 +10,7 @@ import {
   InstalledPackageStatus_StatusReason,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import * as ReactRedux from "react-redux";
-import { Tooltip as ReactTooltip } from "react-tooltip";
+import { Tooltip } from "react-tooltip";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import UpgradeButton from "./UpgradeButton";
 
@@ -50,5 +51,8 @@ it("should render a deactivated button if when passing an in-progress status", a
   const wrapper = mountWrapper(defaultStore, <UpgradeButton {...disabledProps} />);
 
   expect(wrapper.find(CdsButton)).toBeDisabled();
-  expect(wrapper.find(ReactTooltip)).toExist();
+
+  await waitFor(() => {
+    expect(wrapper.find(Tooltip).prop("children")).toBe("The application is pending installation.");
+  });
 });
