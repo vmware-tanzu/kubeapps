@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import Table from "components/js/Table";
-import Tooltip from "components/js/Tooltip";
+import CustomTooltip from "components/js/Tooltip";
 import { get } from "lodash";
 import { useSelector } from "react-redux";
 import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
@@ -103,7 +103,7 @@ function getNotes(resource?: IResource) {
   return (
     <span className="tooltip-wrapper">
       Not associated with any IP.{" "}
-      <Tooltip
+      <CustomTooltip
         label="pending-tooltip"
         id={`${resource.metadata.name}-pending-tooltip`}
         icon="help"
@@ -115,7 +115,7 @@ function getNotes(resource?: IResource) {
         available for the application and the Service will stay in a "Pending" state until a URL is
         assigned. If using Minikube, you will need to run <code>minikube tunnel</code> in your
         terminal in order for an IP address to be assigned to your application.
-      </Tooltip>
+      </CustomTooltip>
     </span>
   );
 }
