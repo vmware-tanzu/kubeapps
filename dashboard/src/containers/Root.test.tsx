@@ -7,6 +7,13 @@ import { IntlProvider } from "react-intl";
 import I18n, { II18nConfig } from "shared/I18n";
 import Root from "./Root";
 
+// Mocking SwaggerUI to a simple empty <div> to prevent issues with Jest
+jest.mock("swagger-ui-react", () => {
+  return {
+    SwaggerUI: () => <div />,
+  };
+});
+
 it("renders the root component", () => {
   const wrapper = shallow(<Root />);
   expect(wrapper).toExist();
