@@ -9467,7 +9467,7 @@ lodash@^4.15.0, lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.20, lodash@^4.17.
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
   integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==
 
-long@^5.0.0:
+long@^5.0.0, long@^5.2.3:
   version "5.2.3"
   resolved "https://registry.yarnpkg.com/long/-/long-5.2.3.tgz#a3ba97f3877cf1d778eccbcb048525ebb77499e1"
   integrity sha512-lcHwpNoggQTObv5apGNCTdJrO69eHOZMi4BNC+rTLER8iHAqGrUVeLh/irVIM7zTw2bOXA8T6uNPeujwOLg/2Q==
@@ -14387,23 +14387,23 @@ ts-poet@^6.5.0:
   dependencies:
     dprint-node "^1.0.7"
 
-ts-proto-descriptors@1.14.0:
-  version "1.14.0"
-  resolved "https://registry.yarnpkg.com/ts-proto-descriptors/-/ts-proto-descriptors-1.14.0.tgz#bf95cfd815049763524185cec49b2557ca40faa7"
-  integrity sha512-xqLA6cBTfof+mZ/sIw/pZviyhnWWcWqRBjyjaMW5O4fIogpawT4aa0wI8rKh0rYIrQzoHxLugmFu4+rdiWaGEQ==
+ts-proto-descriptors@1.15.0:
+  version "1.15.0"
+  resolved "https://registry.yarnpkg.com/ts-proto-descriptors/-/ts-proto-descriptors-1.15.0.tgz#e859e3a2887da2d954c552524719b80bdb6ee355"
+  integrity sha512-TYyJ7+H+7Jsqawdv+mfsEpZPTIj9siDHS6EMCzG/z3b/PZiphsX+mWtqFfFVe5/N0Th6V3elK9lQqjnrgTOfrg==
   dependencies:
-    long "^5.0.0"
+    long "^5.2.3"
     protobufjs "^7.2.4"
 
-ts-proto@^1.156.0:
-  version "1.156.0"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.156.0.tgz#50978feb24f8f11315a51ff7916630154a5a30f5"
-  integrity sha512-GnOxEAD1mRkiqV9VLv48GrNdps8gXp+vE9rWToCPyIxCIjVjkH3ls8iXxRXOS9LSwueJT8F+N9w7Xy3zftUecA==
+ts-proto@^1.156.1:
+  version "1.156.1"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.156.1.tgz#2d917a63c410832b7411a6236e930cc9c354a641"
+  integrity sha512-zgEGjaUySjWs7e4vdg5xNk/nxMinQnIMG+0KcvEBmE1vy03Yvc7tmeoJdB7qt/p/+0taEUwEdbjegR5t1B+nEA==
   dependencies:
     case-anything "^2.1.13"
     protobufjs "^7.2.4"
     ts-poet "^6.5.0"
-    ts-proto-descriptors "1.14.0"
+    ts-proto-descriptors "1.15.0"
 
 ts-toolbelt@^9.6.0:
   version "9.6.0"
