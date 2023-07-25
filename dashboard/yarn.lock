@@ -12283,7 +12283,7 @@ react-test-renderer@^17.0.0, react-test-renderer@^17.0.2:
     react-shallow-renderer "^16.13.1"
     scheduler "^0.20.2"
 
-react-tooltip@5.18.1:
+react-tooltip@^5.18.1:
   version "5.18.1"
   resolved "https://registry.yarnpkg.com/react-tooltip/-/react-tooltip-5.18.1.tgz#72945248d1fa141d5b02e59b50a805d0098b0c01"
   integrity sha512-5zUKoMoKHTYxobzhR160+kkHdLtB+yYO8p16aQRoz2jGcOdtV0o1enNynoA4YqQb3xTjl84N8KLNoscmgMNuSg==
@@ -12566,7 +12566,7 @@ relateurl@^0.2.7:
   resolved "https://registry.yarnpkg.com/relateurl/-/relateurl-0.2.7.tgz#54dbf377e51440aca90a4cd274600d3ff2d888a9"
   integrity sha512-G08Dxvm4iDN3MLM0EsP62EDV9IuhXPR6blNz6Utcp7zyV3tr4HVNINt6MpaRWbxoOHT3Q7YN2P+jaHX8vUbgog==
 
-remark-breaks@3.0.3:
+remark-breaks@^3.0.3:
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/remark-breaks/-/remark-breaks-3.0.3.tgz#660e6c995e954e5abdd95bf77df6f1402cb911ef"
   integrity sha512-C7VkvcUp1TPUc2eAYzsPdaUh8Xj4FSbQnYA5A9f80diApLZscTDeG7efiWP65W8hV2sEy3JuGVU0i6qr5D8Hug==
