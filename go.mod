@@ -8,7 +8,7 @@ go 1.20
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/Masterminds/semver/v3 v3.2.1
-	github.com/adhocore/gronx v1.6.3
+	github.com/adhocore/gronx v1.6.4
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/bufbuild/connect-go v1.9.0
 	github.com/bufbuild/connect-grpchealth-go v1.1.1
@@ -16,7 +16,7 @@ require (
 	github.com/cppforlife/go-cli-ui v0.0.0-20220622150351-995494831c6c
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/distribution v2.8.2+incompatible
-	github.com/docker/cli v24.0.4+incompatible
+	github.com/docker/cli v24.0.5+incompatible
 	github.com/fluxcd/helm-controller/api v0.32.2
 	github.com/fluxcd/pkg/apis/meta v1.0.0
 	github.com/fluxcd/pkg/oci v0.23.0
@@ -27,7 +27,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/google/go-containerregistry v0.15.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.1
 	github.com/itchyny/gojq v0.12.13
 	github.com/jinzhu/copier v0.3.5
 	github.com/lib/pq v1.10.9
@@ -45,20 +45,20 @@ require (
 	github.com/vmware-tanzu/carvel-vendir v0.34.3
 	golang.org/x/net v0.12.0
 	golang.org/x/sync v0.3.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc
+	google.golang.org/genproto/googleapis/api v0.0.0-20230724170836-66ad5b6ff146
 	google.golang.org/grpc v1.56.2
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.11.3
-	k8s.io/api v0.26.6
+	k8s.io/api v0.26.7
 	k8s.io/apiextensions-apiserver v0.26.3
-	k8s.io/apimachinery v0.26.6
-	k8s.io/apiserver v0.26.6
-	k8s.io/cli-runtime v0.26.6
-	k8s.io/client-go v0.26.6
+	k8s.io/apimachinery v0.26.7
+	k8s.io/apiserver v0.26.7
+	k8s.io/cli-runtime v0.26.7
+	k8s.io/client-go v0.26.7
 	k8s.io/klog/v2 v2.100.1
-	k8s.io/kubectl v0.26.6
+	k8s.io/kubectl v0.26.7
 	k8s.io/utils v0.0.0-20230220204549-a5ecb0141aa5
 	oras.land/oras-go v1.2.3
 	oras.land/oras-go/v2 v2.2.1
@@ -208,19 +208,19 @@ require (
 	go.starlark.net v0.0.0-20230128213706-3f75dec8e403 // indirect
 	golang.org/x/crypto v0.11.0 // indirect
 	golang.org/x/image v0.5.0 // indirect
-	golang.org/x/oauth2 v0.8.0 // indirect
+	golang.org/x/oauth2 v0.10.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/term v0.10.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20230526203410-71b5a4ffd15e // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc // indirect
+	google.golang.org/genproto v0.0.0-20230706204954-ccb25ca9f130 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230724170836-66ad5b6ff146 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/component-base v0.26.6 // indirect
+	k8s.io/component-base v0.26.7 // indirect
 	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/kustomize/api v0.12.1 // indirect
