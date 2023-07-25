@@ -14,6 +14,13 @@ import { app } from "shared/url";
 import NotFound from "../../components/NotFound";
 import Routes from "./Routes";
 
+// Mocking SwaggerUI to a simple empty <div> to prevent issues with Jest
+jest.mock("swagger-ui-react", () => {
+  return {
+    SwaggerUI: () => <div />,
+  };
+});
+
 const emptyRouteComponentProps: RouteComponentProps<{}> = {
   history: createMemoryHistory(),
   location: {
@@ -121,7 +128,7 @@ it("should render a loading wrapper if authenticated but the cluster and ns info
 it("should render a warning message if operators are deactivated", () => {
   const componentProps = deepClone(emptyRouteComponentProps);
   componentProps.featureFlags = { operators: false };
-  const operatorsUrl = app.config.operators("default", "default");
+  const operatorsUrl = `${app.config.operators("default", "default")}/some/path`;
 
   const wrapper = mount(
     <StaticRouter location={operatorsUrl} context={{}}>

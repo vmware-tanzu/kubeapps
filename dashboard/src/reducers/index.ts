@@ -14,17 +14,21 @@ import kubeReducer from "./kube";
 import operatorReducer from "./operators";
 import reposReducer from "./repos";
 
+export const reducers = {
+  apps: installedPackagesReducer,
+  auth: authReducer,
+  packages: packageReducer,
+  config: configReducer,
+  kube: kubeReducer,
+  clusters: clusterReducer,
+  repos: reposReducer,
+  operators: operatorReducer,
+};
+
 const rootReducer = (history: History) =>
   combineReducers<IStoreState>({
     router: connectRouter(history),
-    apps: installedPackagesReducer,
-    auth: authReducer,
-    packages: packageReducer,
-    config: configReducer,
-    kube: kubeReducer,
-    clusters: clusterReducer,
-    repos: reposReducer,
-    operators: operatorReducer,
+    ...reducers,
   });
 
 export default rootReducer;
