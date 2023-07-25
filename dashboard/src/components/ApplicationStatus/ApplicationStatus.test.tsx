@@ -8,10 +8,9 @@ import {
   InstalledPackageStatus_StatusReason,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { has } from "lodash";
+import { Tooltip } from "react-tooltip";
 import { IK8sList, IKubeItem, IResource } from "shared/types";
 import ApplicationStatus from "./ApplicationStatus";
-import { act } from "@testing-library/react";
-import { Tooltip } from "react-tooltip";
 
 const defaultProps = {
   deployments: [],
@@ -335,9 +334,9 @@ describe("isFetching", () => {
         } as InstalledPackageDetail,
       });
       wrapper.update();
-      const getItem = (i?: IResource | IK8sList<IResource, {}>): IResource => {
-        return has(i, "items") ? (i as IK8sList<IResource, {}>).items[0] : (i as IResource);
-      };
+      // const getItem = (i?: IResource | IK8sList<IResource, {}>): IResource => {
+      //   return has(i, "items") ? (i as IK8sList<IResource, {}>).items[0] : (i as IResource);
+      // };
       if (!t.deployments.length && !t.statefulsets.length && !t.daemonsets.length) {
         expect(wrapper.text()).toContain("No Workload Found");
         return;
@@ -351,27 +350,26 @@ describe("isFetching", () => {
       // we would need to add waitFor, but this is also causing issues
       // for now, I'm relaxing the actual checks on the text
 
-      t.deployments.forEach(d => {
-        // const item = getItem(d.item);
-        expect(wrapper.find(Tooltip)).toExist();
-        // expect(wrapper.find(Tooltip)).toIncludeText(
-        //   `<td>${item.metadata.name}</td><td>${item.status.availableReplicas}/${item.spec.replicas}</td>`,
-        // );
-      });
-      t.statefulsets.forEach(d => {
-        // const item = getItem(d.item);
-        expect(wrapper.find(Tooltip)).toExist();
-        // expect(wrapper.find(Tooltip)).toIncludeText(
-        //   `<td>${item.metadata.name}</td><td>${item.status.readyReplicas}/${item.spec.replicas}</td>`,
-        // );
-      });
-      t.daemonsets.forEach(d => {
-        // const item = getItem(d.item);
-        expect(wrapper.find(Tooltip)).toExist();
-        // expect(wrapper.find(Tooltip)).toIncludeText(
-        //   `<td>${item.metadata.name}</td><td>${item.status.numberReady}/${item.status.currentNumberScheduled}</td>`,
-        // );
-      });
+      expect(wrapper.find(Tooltip)).toExist();
+
+      // t.deployments.forEach(d => {
+      //   const item = getItem(d.item);
+      //   expect(wrapper.find(Tooltip)).toIncludeText(
+      //     `<td>${item.metadata.name}</td><td>${item.status.availableReplicas}/${item.spec.replicas}</td>`,
+      //   );
+      // });
+      // t.statefulsets.forEach(d => {
+      //   const item = getItem(d.item);
+      //   expect(wrapper.find(Tooltip)).toIncludeText(
+      //     `<td>${item.metadata.name}</td><td>${item.status.readyReplicas}/${item.spec.replicas}</td>`,
+      //   );
+      // });
+      // t.daemonsets.forEach(d => {
+      //   const item = getItem(d.item);
+      //   expect(wrapper.find(Tooltip)).toIncludeText(
+      //     `<td>${item.metadata.name}</td><td>${item.status.numberReady}/${item.status.currentNumberScheduled}</td>`,
+      //   );
+      // });
     });
   });
 });
