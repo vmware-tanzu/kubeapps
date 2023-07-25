@@ -104,7 +104,12 @@ function UpgradeForm(props: IUpgradeFormProps) {
   ]);
 
   useEffect(() => {
-    if (installedAppAvailablePackageDetail?.defaultValues && !modifications) {
+    if (
+      installedAppAvailablePackageDetail?.defaultValues &&
+      installedAppInstalledPackageDetail?.valuesApplied &&
+      installedAppInstalledPackageDetail?.valuesApplied !== "null" &&
+      !modifications
+    ) {
       // Calculate modifications from the default values
       const defaultValuesObj = parseToJS(installedAppAvailablePackageDetail?.defaultValues);
       const deployedValuesObj = parseToJS(installedAppInstalledPackageDetail?.valuesApplied);
