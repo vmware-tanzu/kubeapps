@@ -51,12 +51,10 @@ export default function StatusAwareButton<T extends IStatusAwareButtonProps>(pro
   const tooltip = releaseStatus?.reason ? tooltips![releaseStatus.reason] : undefined;
   return (
     <>
-      <CdsButton {...otherProps} disabled={isDisabled} data-for={id} data-tip={true} />
-      {tooltip && (
-        <Tooltip isOpen={true} id={id} place="bottom">
-          {tooltip}
-        </Tooltip>
-      )}
+      <CdsButton {...otherProps} disabled={isDisabled} data-tooltip-id={id} />
+      <Tooltip id={id} place="bottom">
+        {tooltip}
+      </Tooltip>
     </>
   );
 }

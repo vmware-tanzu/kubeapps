@@ -68,23 +68,24 @@ function SecretItemDatum({ name, value }: ISecretItemDatumProps) {
         </button>
       </Column>
       <Column span={1}>
-        <button className="secret-datum-icon" aria-expanded={!hidden} onClick={setCopiedTrue}>
-          <div data-tip={true} data-for="app-status">
-            <CopyToClipboard text={decodedValue}>
-              <CdsIcon
-                shape="copy-to-clipboard"
-                size="md"
-                solid={true}
-                aria-label={`Copy ${name} secret value to the clipboard`}
-              />
-            </CopyToClipboard>
-          </div>
+        <button
+          className="secret-datum-icon"
+          aria-expanded={!hidden}
+          onClick={setCopiedTrue}
+          data-tooltip-id="tooltip-copied"
+        >
+          <CopyToClipboard text={decodedValue}>
+            <CdsIcon
+              shape="copy-to-clipboard"
+              size="md"
+              solid={true}
+              aria-label={`Copy ${name} secret value to the clipboard`}
+            />
+          </CopyToClipboard>
         </button>
-        <div style={{ opacity: copied ? "1" : "0" }}>
-          <Tooltip isOpen={true} id="app-status">
-            Copied
-          </Tooltip>
-        </div>
+        <Tooltip isOpen={copied} id="tooltip-copied">
+          Copied
+        </Tooltip>
       </Column>
     </Row>
   );

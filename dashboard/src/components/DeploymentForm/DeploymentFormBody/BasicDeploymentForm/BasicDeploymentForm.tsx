@@ -54,19 +54,20 @@ function BasicDeploymentForm(props: IBasicDeploymentFormProps) {
       }),
       columnHelper.accessor((row: IBasicFormParam) => row.type, {
         id: "type",
-        cell: (info: CellContext<IBasicFormParam, any>) => renderConfigType(info.row.original),
+        cell: (info: CellContext<IBasicFormParam, any>) =>
+          renderConfigType(info.row.original, info.row),
         header: () => <span>Type</span>,
       }),
       columnHelper.accessor((row: IBasicFormParam) => row.description, {
         id: "description",
         cell: (info: CellContext<IBasicFormParam, any>) =>
-          renderConfigDescription(info.row.original),
+          renderConfigDescription(info.row.original, info.row),
         header: () => <span>Description</span>,
       }),
       columnHelper.accessor((row: IBasicFormParam) => row.defaultValue, {
         id: "defaultValue",
         cell: (info: CellContext<IBasicFormParam, any>) =>
-          renderConfigDefaultValue(info.row.original),
+          renderConfigDefaultValue(info.row.original, info.row),
         header: () => <span>Default Value</span>,
       }),
       columnHelper.accessor((row: IBasicFormParam) => row.currentValue, {
@@ -84,7 +85,7 @@ function BasicDeploymentForm(props: IBasicDeploymentFormProps) {
         columnHelper.accessor((row: IBasicFormParam) => row.deployedValue, {
           id: "deployedValue",
           cell: (info: CellContext<IBasicFormParam, any>) =>
-            renderConfigDeployedValue(info.row.original),
+            renderConfigDeployedValue(info.row.original, info.row),
           header: () => <span>Deployed Value</span>,
         }),
       );
