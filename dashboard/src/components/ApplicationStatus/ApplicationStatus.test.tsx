@@ -7,7 +7,6 @@ import {
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
-import { has } from "lodash";
 import { Tooltip } from "react-tooltip";
 import { IK8sList, IKubeItem, IResource } from "shared/types";
 import ApplicationStatus from "./ApplicationStatus";
