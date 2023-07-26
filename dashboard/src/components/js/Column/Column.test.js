@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { shallow } from "enzyme";
-import React from "react";
 import Column from ".";
 
 const randomColumn = () => Math.floor(Math.random() * Math.floor(11)) + 1;

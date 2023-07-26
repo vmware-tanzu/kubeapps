@@ -1,16 +1,16 @@
 // Copyright 2020-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { deepClone } from "@cds/core/internal/utils/identity";
+import { deepClone } from "@cds/core/internal";
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import * as ReactRedux from "react-redux";
-import { app } from "shared/url";
 import { Link } from "react-router-dom";
 import { IClustersState } from "reducers/cluster";
 import { SupportedThemes } from "shared/Config";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { IStoreState } from "shared/types";
+import { app } from "shared/url";
 import Menu from "./Menu";
 
 const defaultProps = {
