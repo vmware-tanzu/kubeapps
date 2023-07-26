@@ -45,7 +45,6 @@
     "strictPropertyInitialization": true /* Check for class properties that are declared but not set in the constructor. */,
     /* Completeness */
     "skipLibCheck": true /* Skip type checking all .d.ts files. */,
-    "suppressImplicitAnyIndexErrors": true /* Suppresses reporting the error about implicit anys when indexing into objects */
   },
   "exclude": [
     "node_modules",
