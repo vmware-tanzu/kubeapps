@@ -13,7 +13,7 @@ export const FULL_LIFECYCLE = "Full Lifecycle";
 export const DEEP_INSIGHTS = "Deep Insights";
 export const AUTO_PILOT = "Auto Pilot";
 
-const levels = {
+const levels: { [index: string]: number } = {
   [BASIC_INSTALL]: 1,
   [SEAMLESS_UPGRADES]: 2,
   [FULL_LIFECYCLE]: 3,

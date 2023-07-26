@@ -55,7 +55,7 @@ export default class Namespace {
 // The namespace information will contain a map[cluster]:namespace with the default namespaces
 const namespaceKey = "kubeapps_namespace";
 
-function parseStoredNS() {
+function parseStoredNS(): { [index: string]: any } {
   const ns = localStorage.getItem(namespaceKey) || "{}";
   let parsedNS = {};
   try {

@@ -60,7 +60,11 @@ export default function HeadManager({ children }: IHeadManagerProps) {
         <link rel="stylesheet" type="text/css" href="./custom_style.css" />
 
         {/*  Set the clarity-ui css style */}
-        <link rel="stylesheet" type="text/css" href={getThemeFile(SupportedThemes[theme])} />
+        <link
+          rel="stylesheet"
+          type="text/css"
+          href={getThemeFile(SupportedThemes[theme as keyof typeof SupportedThemes])}
+        />
 
         <meta name="theme-color" content="#304250" />
         <meta

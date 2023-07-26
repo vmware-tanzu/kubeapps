@@ -62,12 +62,15 @@ export default class Config {
     const fallbackTheme = SupportedThemes.light;
 
     // Retrieve the system theme preference (configurable via Values.dashboard.defaultTheme)
-    const systemTheme = config.theme != null ? SupportedThemes[config.theme] : undefined;
+    const systemTheme =
+      config.theme != null
+        ? SupportedThemes[config.theme as keyof typeof SupportedThemes]
+        : undefined;
 
     // Retrieve the user theme preference
     const userTheme =
       localStorage.getItem("user-theme") != null
-        ? SupportedThemes[localStorage.getItem("user-theme") as string]
+        ? SupportedThemes[localStorage.getItem("user-theme") as keyof typeof SupportedThemes]
         : undefined;
 
     // Retrieve the browser theme preference

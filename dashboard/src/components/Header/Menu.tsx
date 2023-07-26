@@ -57,7 +57,11 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
     <>
       <Helmet>
         {/*  Override the clarity-ui css style */}
-        <link rel="stylesheet" type="text/css" href={getThemeFile(SupportedThemes[theme])} />
+        <link
+          rel="stylesheet"
+          type="text/css"
+          href={getThemeFile(SupportedThemes[theme as keyof typeof SupportedThemes])}
+        />
       </Helmet>
 
       <div className={open ? "drawer-backdrop" : ""} />
