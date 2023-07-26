@@ -1,4 +1,4 @@
-// Copyright 2019-2022 the Kubeapps contributors.
+// Copyright 2019-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsIcon } from "@cds/react/icon";
@@ -163,7 +163,7 @@ export default function ApplicationStatus({
   }
   return (
     <section aria-label="Application status" className="application-status-pie-chart">
-      <div data-tip={true} data-for="application-status">
+      <div data-tooltip-id="tooltip-application-status">
         <h5 className="application-status-pie-chart-title">{ready ? "Ready" : "Not Ready"}</h5>
         <PieChart
           data={[{ value: 1, color: "#0072a3" }]}
@@ -182,7 +182,7 @@ export default function ApplicationStatus({
           <p className="application-status-pie-chart-text">Pod{readyPods > 1 ? "s" : ""}</p>
         </div>
       </div>
-      <Tooltip id="application-status" className="extraClass" place="right">
+      <Tooltip id="tooltip-application-status" className="extraClass" place="right">
         <table className="application-status-table">
           <thead>
             <tr>

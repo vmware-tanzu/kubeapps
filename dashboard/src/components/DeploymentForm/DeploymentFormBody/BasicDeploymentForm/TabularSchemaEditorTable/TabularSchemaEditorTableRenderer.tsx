@@ -1,4 +1,4 @@
-// Copyright 2022 the Kubeapps contributors.
+// Copyright 2022-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
@@ -19,18 +19,21 @@ function renderCellWithTooltip(
   className = "",
   trimFromBeginning = false,
   maxLength = MAX_LENGTH,
+  key: string | number = "0",
 ) {
   // If the value is an object/array, we need to stringify it
   const stringValue = ["string", "number"].includes(typeof value?.[property])
     ? value?.[property] || ""
     : JSON.stringify(value?.[property]);
-  return renderCellWithTooltipBase(stringValue, className, trimFromBeginning, maxLength);
+  return renderCellWithTooltipBase(stringValue, className, trimFromBeginning, maxLength, key);
 }
+
 function renderCellWithTooltipBase(
   stringValue: string,
   className = "",
   trimFromBeginning = false,
   maxLength = MAX_LENGTH,
+  key: string | number = "0",
 ) {
   if (stringValue?.length > maxLength) {
     const trimmedString = trimFromBeginning
@@ -38,9 +41,9 @@ function renderCellWithTooltipBase(
       : stringValue.substring(0, maxLength - 1) + "...";
 
     return (
-      <span className={className}>
-        <p data-tip={stringValue}>{trimmedString}</p>
-        <Tooltip />
+      <span data-tooltip-id={`tooltip-${key}-${trimmedString}`} className={className}>
+        <p>{trimmedString}</p>
+        <Tooltip id={`tooltip-${key}-${trimmedString}`}>{stringValue}</Tooltip>
       </span>
     );
   } else {
@@ -110,29 +113,35 @@ export function renderConfigKey(value: IBasicFormParam, row: any, _saveAllChange
               <></>
             )}
           </CdsButton>
-          {renderCellWithTooltipBase(stringKey, "breakable self-center", true, MAX_LENGTH / 1.5)}
+          {renderCellWithTooltipBase(
+            stringKey,
+            "breakable self-center",
+            true,
+            MAX_LENGTH / 1.5,
+            row.id,
+          )}
         </div>
       </>
     </div>
   );
 }
 
-export function renderConfigType(value: IBasicFormParam) {
+export function renderConfigType(value: IBasicFormParam, row: any) {
   const stringType =
     value?.type === "array" ? `${value?.type}<${value?.items?.type}>` : value?.type;
-  return renderCellWithTooltipBase(stringType, "italics");
+  return renderCellWithTooltipBase(stringType, "italics", false, MAX_LENGTH, row.id);
 }
 
-export function renderConfigDescription(value: IBasicFormParam) {
-  return renderCellWithTooltip(value, "title", "breakable");
+export function renderConfigDescription(value: IBasicFormParam, row: any) {
+  return renderCellWithTooltip(value, "title", "breakable", false, MAX_LENGTH, row.id);
 }
 
-export function renderConfigDefaultValue(value: IBasicFormParam) {
-  return renderCellWithTooltip(value, "defaultValue", "breakable");
+export function renderConfigDefaultValue(value: IBasicFormParam, row: any) {
+  return renderCellWithTooltip(value, "defaultValue", "breakable", false, MAX_LENGTH, row.id);
 }
 
-export function renderConfigDeployedValue(value: IBasicFormParam) {
-  return renderCellWithTooltip(value, "deployedValue");
+export function renderConfigDeployedValue(value: IBasicFormParam, row: any) {
+  return renderCellWithTooltip(value, "deployedValue", "", false, MAX_LENGTH, row.id);
 }
 
 export function renderConfigCurrentValuePro(

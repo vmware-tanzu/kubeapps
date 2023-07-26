@@ -8,7 +8,7 @@ import actions from "actions";
 import { filterNames, filtersToQuery } from "components/Catalog/Catalog";
 import Alert from "components/js/Alert";
 import Table from "components/js/Table";
-import Tooltip from "components/js/Tooltip";
+import CustomTooltip from "components/js/Tooltip";
 import PageHeader from "components/PageHeader/PageHeader";
 import { push } from "connected-react-router";
 import {
@@ -169,7 +169,7 @@ function PkgRepoList() {
             </CdsButton>
             <p>Not ready</p>
             {repo?.status?.userReason && (
-              <Tooltip
+              <CustomTooltip
                 label="notready-tooltip"
                 id={`${repo.name}-notready-tooltip`}
                 icon="info-circle"
@@ -178,7 +178,7 @@ function PkgRepoList() {
                 iconProps={{ solid: true, size: "sm" }}
               >
                 {repo?.status?.userReason}
-              </Tooltip>
+              </CustomTooltip>
             )}
           </>
         ),
@@ -340,7 +340,7 @@ function getRepoNameLinkAndTooltip(cluster: string, repo: PackageRepositorySumma
     <div className="color-icon-info">
       <span className="tooltip-wrapper">
         {linkObj}
-        <Tooltip
+        <CustomTooltip
           label="pending-tooltip"
           id={`${repo.name}-pending-tooltip`}
           icon="info-circle"
@@ -349,7 +349,7 @@ function getRepoNameLinkAndTooltip(cluster: string, repo: PackageRepositorySumma
           iconProps={{ solid: true, size: "sm" }}
         >
           {repo.description}
-        </Tooltip>
+        </CustomTooltip>
       </span>
     </div>
   ) : (
