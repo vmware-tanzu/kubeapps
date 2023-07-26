@@ -14,7 +14,11 @@ function getSecretData(secret: ISecret) {
   return Object.keys(data).map(k => (
     <div key={`cel-${secret.metadata.name}/${k}`} className="secret-table-cel">
       <div className="secret-table-content">
-        <SecretItemDatum key={`${secret.metadata.name}/${k}`} name={k} value={data[k]} />
+        <SecretItemDatum
+          key={`${secret.metadata.name}/${k}`}
+          name={`secret-${k}`}
+          value={data[k]}
+        />
       </div>
     </div>
   ));

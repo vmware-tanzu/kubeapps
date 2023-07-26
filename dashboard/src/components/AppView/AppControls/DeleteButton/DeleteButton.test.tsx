@@ -1,9 +1,10 @@
-// Copyright 2020-2022 the Kubeapps contributors.
+// Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
+import { waitFor } from "@testing-library/react";
 import actions from "actions";
-import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
+import ConfirmDialog from "components/ConfirmDialog";
 import Alert from "components/js/Alert";
 import {
   InstalledPackageReference,
@@ -12,7 +13,7 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
-import { Tooltip as ReactTooltip } from "react-tooltip";
+import { Tooltip } from "react-tooltip";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { DeleteError, IInstalledPackageState, IStoreState } from "shared/types";
 import DeleteButton from "./DeleteButton";
@@ -88,7 +89,10 @@ it("should render an enabled button and tooltip if when passing a pending status
   const wrapper = mountWrapper(defaultStore, <DeleteButton {...disabledProps} />);
 
   expect(wrapper.find(CdsButton)).not.toBeDisabled();
-  expect(wrapper.find(ReactTooltip)).toIncludeText("The application is pending installation.");
+
+  await waitFor(() => {
+    expect(wrapper.find(Tooltip).prop("children")).toBe("The application is pending installation.");
+  });
 });
 
 it("should render a deactivated button if when passing a uninstalled status", async () => {
@@ -103,5 +107,8 @@ it("should render a deactivated button if when passing a uninstalled status", as
   const wrapper = mountWrapper(defaultStore, <DeleteButton {...disabledProps} />);
 
   expect(wrapper.find(CdsButton)).toBeDisabled();
-  expect(wrapper.find(ReactTooltip)).toIncludeText("The application is being deleted.");
+
+  await waitFor(() => {
+    expect(wrapper.find(Tooltip).prop("children")).toBe("The application is being deleted.");
+  });
 });

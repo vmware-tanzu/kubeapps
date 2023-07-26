@@ -1,7 +1,7 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import Tooltip from "components/js/Tooltip";
+import CustomTooltip from "components/js/Tooltip";
 import { InstalledPackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { getAppStatusLabel, getPluginIcon, getPluginName } from "shared/utils";
 import placeholder from "icons/placeholder.svg";
@@ -45,7 +45,7 @@ function AppListItem(props: IAppListItemProps) {
 
   const tooltip = tooltipContent ? (
     <div className="color-icon-info">
-      <Tooltip
+      <CustomTooltip
         label="update-tooltip"
         id={`${app.name}-update-tooltip`}
         icon="circle-arrow"
@@ -53,7 +53,7 @@ function AppListItem(props: IAppListItemProps) {
         iconProps={{ solid: true, size: "md" }}
       >
         {tooltipContent}
-      </Tooltip>
+      </CustomTooltip>
     </div>
   ) : (
     <></>
