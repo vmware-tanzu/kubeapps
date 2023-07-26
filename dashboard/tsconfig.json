@@ -20,7 +20,6 @@
     "rootDir": "src" /* Specify the root folder within your source files. */,
     /* JavaScript Support */
     "allowJs": true /* Allow JavaScript files to be a part of your program. Use the `checkJS` option to get errors from these files. */,
-    "checkJs": true /* Enable error reporting in type-checked JavaScript files. */,
     /* Emit */
     "noEmit": true /* Deactivate emitting files from a compilation. */,
     "outDir": "build/dist" /* Specify an output folder for all emitted files. */,
