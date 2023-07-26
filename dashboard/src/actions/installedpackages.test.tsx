@@ -50,12 +50,9 @@ describe("fetches installed packages", () => {
   let requestInstalledPackageListMock: jest.Mock;
   const installedPackageSummaries: InstalledPackageSummary[] = [validInstalledPackageSummary];
   beforeEach(() => {
-    requestInstalledPackageListMock = jest.fn(
-      () =>
-        ({
-          installedPackageSummaries,
-        } as GetInstalledPackageSummariesResponse),
-    );
+    requestInstalledPackageListMock = jest.fn(() => {
+      return { installedPackageSummaries } as GetInstalledPackageSummariesResponse;
+    });
     InstalledPackage.GetInstalledPackageSummaries = requestInstalledPackageListMock;
   });
   afterEach(() => {
