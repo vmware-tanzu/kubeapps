@@ -17,7 +17,7 @@ import Routes from "./RoutesContainer";
 async function initLocale() {
   const fullLang = (navigator.languages && navigator.languages[0]) || navigator.language;
   const lang = fullLang.toLowerCase().split(/[_-]+/)[0];
-  return await I18n.getCustomConfig(ISupportedLangs[lang]);
+  return await I18n.getCustomConfig(ISupportedLangs[lang as keyof typeof ISupportedLangs]);
 }
 
 function Root() {

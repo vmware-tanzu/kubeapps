@@ -46,7 +46,7 @@ function getData(
   getters: Array<(r: any) => string | JSX.Element | JSX.Element[]>,
   resource?: IKubeItem<IResource | ISecret>,
 ) {
-  const data = {
+  const data: { [index: string]: any } = {
     name,
   };
   if (!resource || resource.isFetching) {

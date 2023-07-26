@@ -1,16 +1,16 @@
 // Copyright 2021-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AlertGroupTypes, AlertSizes, AlertStatusTypes } from "@cds/core/alert/alert.interfaces";
 import { CdsAlert, CdsAlertActions, CdsAlertGroup } from "@cds/react/alert";
 import React from "react";
+
 export interface IAlertGroupProps {
   children: React.ReactNode;
   alertActions?: string | JSX.Element;
   closable?: boolean;
-  status?: AlertStatusTypes;
-  type?: AlertGroupTypes;
-  size?: AlertSizes;
+  status?: "neutral" | "info" | "success" | "warning" | "danger" | "alt" | "loading";
+  type?: "default" | "banner" | "light";
+  size?: "default" | "sm";
 }
 
 // Opinionated wrapper of Clarity AlertGroup

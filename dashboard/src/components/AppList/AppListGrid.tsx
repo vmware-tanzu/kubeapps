@@ -64,8 +64,8 @@ function AppListGrid(props: IAppListProps) {
           );
         })}
         {filteredCRs.map(r => {
-          const csv = props.csvs.find(c =>
-            c.spec.customresourcedefinitions.owned?.some(crd => crd.kind === r.kind),
+          const csv = props.csvs.find(
+            c => c.spec.customresourcedefinitions.owned?.some(crd => crd.kind === r.kind),
           );
           return (
             <CustomResourceListItem

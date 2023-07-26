@@ -1,13 +1,13 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { deepClone } from "@cds/core/internal/utils/identity";
+import { deepClone } from "@cds/core/internal";
 import AlertGroup from "components/AlertGroup";
 import LoadingWrapper from "components/LoadingWrapper";
 import { mount } from "enzyme";
 import { createMemoryHistory } from "history";
 import { Provider } from "react-redux";
-import { StaticRouter, Redirect, RouteComponentProps } from "react-router-dom";
+import { Redirect, RouteComponentProps, StaticRouter } from "react-router-dom";
 import { IFeatureFlags } from "shared/Config";
 import { defaultStore } from "shared/specs/mountWrapper";
 import { app } from "shared/url";

@@ -16,8 +16,8 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
 import { app } from "shared/url";
-import useOutsideClick from "../js/hooks/useOutsideClick/useOutsideClick";
 import Row from "../js/Row";
+import useOutsideClick from "../js/hooks/useOutsideClick/useOutsideClick";
 import "./ContextSelector.css";
 
 function ContextSelector() {

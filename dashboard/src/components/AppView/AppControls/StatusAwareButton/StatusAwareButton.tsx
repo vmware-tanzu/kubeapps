@@ -30,7 +30,7 @@ export default function StatusAwareButton<T extends IStatusAwareButtonProps>(pro
     InstalledPackageStatus_StatusReason.UNINSTALLED,
     InstalledPackageStatus_StatusReason.PENDING,
   ];
-  const defaultStatusesToDeactivateTooltips = {
+  const defaultStatusesToDeactivateTooltips: { [index: string]: string } = {
     [InstalledPackageStatus_StatusReason.UNINSTALLED]: "The application is being deleted.",
     [InstalledPackageStatus_StatusReason.PENDING]: "The application is pending installation.",
   };
