@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import actions from "actions";
-import Alert from "components/js/Alert";
 import {
   AvailablePackageDetail,
   AvailablePackageReference,
@@ -13,12 +12,10 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { createMemoryHistory } from "history";
 import * as ReactRedux from "react-redux";
-import { Route, Routes, Router } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import { IConfigState } from "reducers/config";
-import { getStore, mountWrapper, renderWithProviders } from "shared/specs/mountWrapper";
+import { getStore, renderWithProviders } from "shared/specs/mountWrapper";
 import { IPackageState, IStoreState } from "../../shared/types";
-import AvailablePackageMaintainers from "./AvailablePackageMaintainers";
-import PackageReadme from "./PackageReadme";
 import PackageView from "./PackageView";
 import { screen } from "@testing-library/react";
 import "@testing-library/jest-dom/extend-expect";
@@ -117,7 +114,6 @@ afterEach(() => {
 const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/packages/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.cluster}/${defaultProps.packageNamespace}/${defaultProps.id}`;
 const routePath =
   "/c/:cluster/ns/:namespace/packages/:pluginName/:pluginVersion/:packageCluster/:packageNamespace/:packageId";
-const history = createMemoryHistory({ initialEntries: [routePathParam] });
 
 it("triggers the fetchAvailablePackageVersions when mounting", () => {
   const spy = jest.fn();
