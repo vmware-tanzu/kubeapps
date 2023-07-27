@@ -1,10 +1,13 @@
 // Copyright 2021-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { MonacoDiffEditor } from "react-monaco-editor";
 import { SupportedThemes } from "shared/Config";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IStoreState } from "shared/types";
-import OperatorAdvancedDeploymentForm from "./OperatorAdvancedDeploymentForm";
+import OperatorAdvancedDeploymentForm, {
+  IOperatorAdvancedDeploymentFormProps,
+} from "./OperatorAdvancedDeploymentForm";
 
 beforeEach(() => {
   // mock the window.matchMedia for selecting the theme
@@ -48,8 +51,10 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-const defaultProps = {
+const defaultProps: IOperatorAdvancedDeploymentFormProps = {
   handleValuesChange: jest.fn(),
+  appValues: "",
+  oldAppValues: "",
 };
 
 it("includes values", () => {
@@ -57,13 +62,13 @@ it("includes values", () => {
     defaultStore,
     <OperatorAdvancedDeploymentForm {...defaultProps} appValues="foo: bar" />,
   );
-  expect(wrapper.find("MonacoDiffEditor").prop("value")).toBe("foo: bar");
+  expect(wrapper.find(MonacoDiffEditor).prop("value")).toBe("foo: bar");
 });
 
 it("sets light theme by default", () => {
   const wrapper = mountWrapper(defaultStore, <OperatorAdvancedDeploymentForm {...defaultProps} />);
   wrapper.update();
-  expect(wrapper.find("MonacoDiffEditor").prop("theme")).toBe("light");
+  expect(wrapper.find(MonacoDiffEditor).prop("theme")).toBe("light");
 });
 
 it("changes theme", () => {
@@ -71,6 +76,5 @@ it("changes theme", () => {
     getStore({ config: { theme: SupportedThemes.dark } } as Partial<IStoreState>),
     <OperatorAdvancedDeploymentForm {...defaultProps} />,
   );
-  wrapper.update();
-  expect(wrapper.find("MonacoDiffEditor").prop("theme")).toBe("vs-dark");
+  expect(wrapper.find(MonacoDiffEditor).prop("theme")).toBe("vs-dark");
 });

@@ -1,6 +1,7 @@
 // Copyright 2021-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { MonacoDiffEditor } from "react-monaco-editor";
 import { SupportedThemes } from "shared/Config";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IStoreState } from "shared/types";
@@ -61,12 +62,12 @@ it("includes values", () => {
     defaultStore,
     <AdvancedDeploymentForm {...defaultProps} valuesFromTheParentContainer="foo: bar" />,
   );
-  expect(wrapper.find("MonacoDiffEditor").prop("value")).toBe("foo: bar");
+  expect(wrapper.find(MonacoDiffEditor).prop("value")).toBe("foo: bar");
 });
 
 it("sets light theme by default", () => {
   const wrapper = mountWrapper(defaultStore, <AdvancedDeploymentForm {...defaultProps} />);
-  expect(wrapper.find("MonacoDiffEditor").prop("theme")).toBe("light");
+  expect(wrapper.find(MonacoDiffEditor).prop("theme")).toBe("light");
 });
 
 it("changes theme", () => {
@@ -74,5 +75,5 @@ it("changes theme", () => {
     getStore({ config: { theme: SupportedThemes.dark } } as Partial<IStoreState>),
     <AdvancedDeploymentForm {...defaultProps} />,
   );
-  expect(wrapper.find("MonacoDiffEditor").prop("theme")).toBe("vs-dark");
+  expect(wrapper.find(MonacoDiffEditor).prop("theme")).toBe("vs-dark");
 });
