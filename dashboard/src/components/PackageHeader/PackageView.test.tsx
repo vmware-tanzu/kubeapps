@@ -10,7 +10,6 @@ import {
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
-import { createMemoryHistory } from "history";
 import * as ReactRedux from "react-redux";
 import { Route, Routes } from "react-router-dom";
 import { IConfigState } from "reducers/config";
@@ -283,6 +282,12 @@ describe("when setting the skipAvailablePackageDetails option", () => {
     renderWithProviders(
       <Routes>
         <Route path={routePath} element={<PackageView />} />
+        <Route
+          path={
+            "/c/:cluster/ns/:namespace/apps/new/:pluginName/:pluginVersion/:packageCluster/:packageNamespace/:something/versions/:versionId"
+          }
+          element={<h1>NewApp</h1>}
+        />
       </Routes>,
       {
         store,
@@ -291,6 +296,7 @@ describe("when setting the skipAvailablePackageDetails option", () => {
     );
 
     expect(screen.queryByText("readme")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "NewApp" })).toBeInTheDocument();
   });
 });
 

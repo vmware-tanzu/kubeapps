@@ -4,7 +4,6 @@
 import { act } from "@testing-library/react";
 import actions from "actions";
 import LoadingWrapper from "components/LoadingWrapper";
-import * as ReactRedux from "react-redux";
 import { Route, Routes } from "react-router-dom";
 import { IConfigState } from "reducers/config";
 import {
@@ -16,7 +15,6 @@ import {
 import { IStoreState } from "shared/types";
 import LoginForm from "./LoginForm";
 import OAuthLogin from "./OauthLogin";
-import actions from "actions";
 import * as ReactRedux from "react-redux";
 import { screen } from "@testing-library/react";
 import "@testing-library/jest-dom/extend-expect";

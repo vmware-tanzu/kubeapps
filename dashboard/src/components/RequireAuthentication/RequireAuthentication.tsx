@@ -4,7 +4,7 @@
 import { CdsButton } from "@cds/react/button";
 import { CdsModal, CdsModalActions, CdsModalContent } from "@cds/react/modal";
 import { ReactElement } from "react";
-import { Navigate, Redirect, useLocation } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import "./RequireAuthentication.css";
 import { useSelector } from "react-redux";
 import { IStoreState } from "shared/types";

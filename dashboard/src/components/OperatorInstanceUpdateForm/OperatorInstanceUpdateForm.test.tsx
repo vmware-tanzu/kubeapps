@@ -6,12 +6,36 @@ import Alert from "components/js/Alert";
 import OperatorInstanceFormBody from "components/OperatorInstanceFormBody/OperatorInstanceFormBody";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
 import * as ReactRedux from "react-redux";
-import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import {
+  getStore,
+  initialState,
+  mountWrapper,
+  renderWithProviders,
+} from "shared/specs/mountWrapper";
 import { FetchError, IStoreState } from "shared/types";
 import OperatorInstanceUpdateForm from "./OperatorInstanceUpdateForm";
-import { MemoryRouter, Route } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { IOperatorsState } from "reducers/operators";
 import { IClusterState } from "reducers/cluster";
+import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import "@testing-library/jest-dom/extend-expect";
+
+// Ensure the monaco editor doesn't run any browser-only js.
+jest.mock("react-monaco-editor", () => {
+  const FakeEditor = jest.fn(props => {
+    return (
+      <textarea
+        data-auto={props.wrapperClassName}
+        onChange={e => props.onChange(e.target.value)}
+        value={props.value}
+      ></textarea>
+    );
+  });
+  return {
+    MonacoDiffEditor: FakeEditor,
+  };
+});
 
 const defaultResource = {
   kind: "Foo",
@@ -112,20 +136,21 @@ it("gets resource and CSV", () => {
   const getCSV = jest.fn();
   actions.operators.getResource = getResource;
   actions.operators.getCSV = getCSV;
-  mountWrapper(
-    store,
-    <MemoryRouter
-      initialEntries={[
-        "/c/default/ns/default/operators-instances/new/foo/foo-cluster/my-foo/update",
-      ]}
-    >
+  renderWithProviders(
+    <Routes>
       <Route
         path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd/:instanceName/update"}
-      >
-        <OperatorInstanceUpdateForm />
-      </Route>
-    </MemoryRouter>,
+        element={<OperatorInstanceUpdateForm />}
+      />
+    </Routes>,
+    {
+      store,
+      initialEntries: [
+        "/c/default/ns/default/operators-instances/new/foo/foo-cluster/my-foo/update",
+      ],
+    },
   );
+
   expect(getCSV).toHaveBeenCalledWith("default-cluster", "kubeapps", "foo");
   expect(getResource).toHaveBeenCalledWith(
     "default-cluster",
@@ -137,47 +162,48 @@ it("gets resource and CSV", () => {
 });
 
 it("set default and deployed values", () => {
-  const wrapper = mountWrapper(
-    getStore({
-      operators: {
-        resource: defaultResource,
-        csv: defaultCSV,
-      },
-    } as Partial<IStoreState>),
-    <MemoryRouter
-      initialEntries={[
-        "/c/default/ns/default/operators-instances/new/foo/foo-cluster/my-foo/update",
-      ]}
-    >
+  const store = getStore({
+    operators: {
+      resource: defaultResource,
+      csv: defaultCSV,
+    },
+  } as Partial<IStoreState>);
+  renderWithProviders(
+    <Routes>
       <Route
         path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd/:instanceName/update"}
-      >
-        <OperatorInstanceUpdateForm />
-      </Route>
-    </MemoryRouter>,
+        element={<OperatorInstanceUpdateForm />}
+      />
+    </Routes>,
+    {
+      store,
+      initialEntries: [
+        "/c/default/ns/default/operators-instances/new/foo/foo-cluster/my-foo/update",
+      ],
+    },
   );
-  expect(wrapper.find(OperatorInstanceFormBody).props()).toMatchObject({
-    defaultValues: 'kind: "Foo"\napiVersion: "v1"\n',
-    deployedValues: 'kind: "Foo"\napiVersion: "v1"\nmetadata:\n  name: "my-foo"\n',
-  });
+
+  expect(screen.getByRole("textbox")).toHaveTextContent(
+    'kind: "Foo" apiVersion: "v1" metadata: name: "my-foo"',
+  );
 });
 
 it("renders an error if the resource is not populated", () => {
-  const wrapper = mountWrapper(
-    defaultStore,
-    <MemoryRouter
-      initialEntries={[
-        "/c/default/ns/default/operators-instances/new/foo/foo-cluster/my-foo/update",
-      ]}
-    >
+  renderWithProviders(
+    <Routes>
       <Route
         path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd/:instanceName/update"}
-      >
-        <OperatorInstanceUpdateForm />
-      </Route>
-    </MemoryRouter>,
+        element={<OperatorInstanceUpdateForm />}
+      />
+    </Routes>,
+    {
+      initialEntries: [
+        "/c/default/ns/default/operators-instances/new/foo/foo-cluster/my-foo/update",
+      ],
+    },
   );
-  expect(wrapper.find(Alert)).toIncludeText("Resource my-foo not found");
+
+  expect(screen.getByRole("alert")).toHaveTextContent("Resource my-foo not found");
 });
 
 it("renders only an error if the resource is not found", () => {
@@ -198,39 +224,39 @@ it("renders only an error if the resource is not found", () => {
   expect(wrapper.find(OperatorHeader)).not.toExist();
 });
 
-it("should submit the form", () => {
+it("should submit the form", async () => {
   const updateResource = jest.fn();
   actions.operators.updateResource = updateResource;
-  const wrapper = mountWrapper(
-    getStore({
-      operators: {
-        resource: defaultResource,
-        csv: defaultCSV,
-      } as Partial<IOperatorsState>,
+  const store = getStore({
+    operators: {
+      resource: defaultResource,
+      csv: defaultCSV,
+    } as Partial<IOperatorsState>,
+    clusters: {
+      currentCluster: "default-cluster",
       clusters: {
-        currentCluster: "default-cluster",
-        clusters: {
-          "default-cluster": {
-            currentNamespace: "kubeapps",
-          } as Partial<IClusterState>,
-        },
+        "default-cluster": {
+          currentNamespace: "kubeapps",
+        } as Partial<IClusterState>,
       },
-    } as Partial<IStoreState>),
-    <MemoryRouter
-      initialEntries={[
-        "/c/default/ns/default/operators-instances/new/foo/foo-cluster/my-foo/update",
-      ]}
-    >
+    },
+  } as Partial<IStoreState>);
+  renderWithProviders(
+    <Routes>
       <Route
         path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd/:instanceName/update"}
-      >
-        <OperatorInstanceUpdateForm />
-      </Route>
-    </MemoryRouter>,
+        element={<OperatorInstanceUpdateForm />}
+      />
+    </Routes>,
+    {
+      store,
+      initialEntries: [
+        "/c/default/ns/default/operators-instances/new/foo/foo-cluster/my-foo/update",
+      ],
+    },
   );
 
-  const form = wrapper.find("form");
-  form.simulate("submit", { preventDefault: jest.fn() });
+  await userEvent.click(screen.getByText("Deploy"));
 
   expect(updateResource).toHaveBeenCalledWith(
     "default-cluster",
