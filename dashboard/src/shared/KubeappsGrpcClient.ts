@@ -36,7 +36,7 @@ export class KubeappsGrpcClient {
       return await next(req);
     };
     this.transport = createGrpcWebTransport({
-      baseUrl: `/${URL.api.kubeappsapis}`,
+      baseUrl: `./${URL.api.kubeappsapis}`,
       interceptors: [auth],
     });
   }

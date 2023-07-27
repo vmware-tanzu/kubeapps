@@ -5,7 +5,7 @@ import actions from "actions";
 import Alert from "components/js/Alert";
 import Table from "components/js/Table";
 import TableRow from "components/js/Table/components/TableRow";
-import Tooltip from "components/js/Tooltip";
+import CustomTooltip from "components/js/Tooltip";
 import {
   PackageRepositoriesPermissions,
   PackageRepositorySummary,
@@ -270,7 +270,7 @@ describe("global and namespaced repositories", () => {
       wrapper.find("h3").filterWhere((h: any) => h.text().includes("Namespace Repositories")),
     ).not.toExist();
     // no tooltip for the global repo as it does not have a description.
-    expect(wrapper.find(Tooltip)).not.toExist();
+    expect(wrapper.find(CustomTooltip)).not.toExist();
   });
 
   it("shows global and namespaced repositories", () => {
@@ -329,7 +329,7 @@ describe("global and namespaced repositories", () => {
     act(() => {
       wrapper.find("input[type='checkbox']").simulate("change");
     });
-    const tooltipText = wrapper.find(Tooltip).html();
+    const tooltipText = wrapper.find(CustomTooltip).html();
     expect(tooltipText).toContain("my description 1 2 3 4");
   });
 

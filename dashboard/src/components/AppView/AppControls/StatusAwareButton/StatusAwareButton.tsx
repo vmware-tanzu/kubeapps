@@ -1,4 +1,4 @@
-// Copyright 2021-2022 the Kubeapps contributors.
+// Copyright 2021-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
@@ -30,7 +30,7 @@ export default function StatusAwareButton<T extends IStatusAwareButtonProps>(pro
     InstalledPackageStatus_StatusReason.UNINSTALLED,
     InstalledPackageStatus_StatusReason.PENDING,
   ];
-  const defaultStatusesToDeactivateTooltips = {
+  const defaultStatusesToDeactivateTooltips: { [index: string]: string } = {
     [InstalledPackageStatus_StatusReason.UNINSTALLED]: "The application is being deleted.",
     [InstalledPackageStatus_StatusReason.PENDING]: "The application is pending installation.",
   };
@@ -51,12 +51,10 @@ export default function StatusAwareButton<T extends IStatusAwareButtonProps>(pro
   const tooltip = releaseStatus?.reason ? tooltips![releaseStatus.reason] : undefined;
   return (
     <>
-      <CdsButton {...otherProps} disabled={isDisabled} data-for={id} data-tip={true} />
-      {tooltip && (
-        <Tooltip id={id} place="bottom">
-          {tooltip}
-        </Tooltip>
-      )}
+      <CdsButton {...otherProps} disabled={isDisabled} data-tooltip-id={id} />
+      <Tooltip id={id} place="bottom">
+        {tooltip}
+      </Tooltip>
     </>
   );
 }

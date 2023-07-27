@@ -16,7 +16,7 @@ export function toFilterRule(
     const variables = namesArray.reduce((acc, n, i) => {
       acc[`$var${i}`] = n;
       return acc;
-    }, {});
+    }, {} as any);
     const jq = namesArray.map((_v, i) => `.name == $var${i}`).join(" or ");
     filter = { jq, variables };
   }

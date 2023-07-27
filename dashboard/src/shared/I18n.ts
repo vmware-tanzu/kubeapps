@@ -15,7 +15,7 @@ export enum ISupportedLangs {
   en = "en",
 }
 
-const messages = {};
+const messages: { [key: string]: any } = {};
 
 // Load here the compiled messages for each supported language
 messages[ISupportedLangs.en] = messages_en;

@@ -1,18 +1,25 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { deepClone } from "@cds/core/internal/utils/identity";
+import { deepClone } from "@cds/core/internal";
 import AlertGroup from "components/AlertGroup";
 import LoadingWrapper from "components/LoadingWrapper";
 import { mount } from "enzyme";
 import { createMemoryHistory } from "history";
 import { Provider } from "react-redux";
-import { StaticRouter, Redirect, RouteComponentProps } from "react-router-dom";
+import { Redirect, RouteComponentProps, StaticRouter } from "react-router-dom";
 import { IFeatureFlags } from "shared/Config";
 import { defaultStore } from "shared/specs/mountWrapper";
 import { app } from "shared/url";
 import NotFound from "../../components/NotFound";
 import Routes from "./Routes";
+
+// Mocking SwaggerUI to a simple empty <div> to prevent issues with Jest
+jest.mock("swagger-ui-react", () => {
+  return {
+    SwaggerUI: () => <div />,
+  };
+});
 
 const emptyRouteComponentProps: RouteComponentProps<{}> = {
   history: createMemoryHistory(),

@@ -319,7 +319,7 @@ it("updates the state with all the resources if the CRD doesn't define any", () 
       </Route>
     </MemoryRouter>,
   );
-  const resources = wrapper.find(ResourceTabs).props();
+  const resources: { [index: string]: any } = wrapper.find(ResourceTabs).props();
   const resourcesKeys = Object.keys(resources).filter(k => k !== "otherResources");
   resourcesKeys.forEach(k => expect(resources[k].length).toBe(1));
 });
