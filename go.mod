@@ -10,7 +10,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/adhocore/gronx v1.6.4
 	github.com/ahmetb/go-linq/v3 v3.2.0
-	github.com/bufbuild/connect-go v1.9.0
+	github.com/bufbuild/connect-go v1.10.0
 	github.com/bufbuild/connect-grpchealth-go v1.1.1
 	github.com/containerd/containerd v1.7.2
 	github.com/cppforlife/go-cli-ui v0.0.0-20220622150351-995494831c6c
