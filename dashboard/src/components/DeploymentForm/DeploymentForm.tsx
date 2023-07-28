@@ -28,16 +28,6 @@ import { FetchError, IStoreState } from "shared/types";
 import * as url from "shared/url";
 import { getPluginsAllowingSA, getPluginsRequiringSA, k8sObjectNameRegex } from "shared/utils";
 import DeploymentFormBody from "./DeploymentFormBody";
-interface IRouteParams {
-  cluster: string;
-  namespace: string;
-  pluginName: string;
-  pluginVersion: string;
-  packageCluster: string;
-  packageNamespace: string;
-  packageId: string;
-  packageVersion?: string;
-}
 
 export default function DeploymentForm() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
@@ -50,7 +40,7 @@ export default function DeploymentForm() {
     packageCluster,
     packageNamespace,
     packageVersion,
-  } = ReactRouter.useParams() as IRouteParams;
+  } = ReactRouter.useParams();
   const {
     packages: { isFetching: packagesIsFetching, selected: selectedPackage },
     apps,
@@ -107,7 +97,7 @@ export default function DeploymentForm() {
     // Populate the service account list if the plugin requires it
     if (getPluginsAllowingSA().includes(pluginObj.name)) {
       // We assume the user has enough permissions to do that. Fallback to a simple input maybe?
-      Kube.getServiceAccountNames(targetCluster, targetNamespace)
+      Kube.getServiceAccountNames(targetCluster || "", targetNamespace || "")
         .then(saList => setServiceAccountList(saList.serviceaccountNames))
         ?.catch(e => {
           dispatch(handleErrorAction(e));
@@ -142,8 +132,8 @@ export default function DeploymentForm() {
       const deployed = await dispatch(
         // Installation always happen in the cluster/namespace passed in the URL
         actions.installedpackages.installPackage(
-          targetCluster,
-          targetNamespace,
+          targetCluster || "",
+          targetNamespace || "",
           selectedPackage.availablePackageDetail,
           releaseName,
           appValues,
@@ -171,7 +161,12 @@ export default function DeploymentForm() {
   const selectVersion = (e: React.ChangeEvent<HTMLSelectElement>) => {
     dispatch(
       push(
-        url.app.apps.new(targetCluster, targetNamespace, packageReference, e.currentTarget.value),
+        url.app.apps.new(
+          targetCluster || "",
+          targetNamespace || "",
+          packageReference,
+          e.currentTarget.value,
+        ),
       ),
     );
   };
@@ -196,7 +191,7 @@ export default function DeploymentForm() {
     return (
       <LoadingWrapper
         className="margin-t-xxl"
-        loadingText={`Fetching ${decodeURIComponent(packageId)}...`}
+        loadingText={`Fetching ${decodeURIComponent(packageId || "")}...`}
       />
     );
   }
@@ -293,7 +288,7 @@ export default function DeploymentForm() {
               </CdsFormGroup>
               <DeploymentFormBody
                 deploymentEvent="install"
-                packageId={packageId}
+                packageId={packageId || ""}
                 packageVersion={packageVersion!}
                 packagesIsFetching={packagesIsFetching}
                 selected={selectedPackage}

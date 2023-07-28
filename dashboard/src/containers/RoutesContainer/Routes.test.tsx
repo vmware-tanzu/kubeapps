@@ -10,6 +10,13 @@ import { IStoreState } from "shared/types";
 import { IAuthState } from "reducers/auth";
 import { IClusterState } from "reducers/cluster";
 
+// Mocking SwaggerUI to a simple empty <div> to prevent issues with Jest
+jest.mock("swagger-ui-react", () => {
+  return {
+    SwaggerUI: () => <div />,
+  };
+});
+
 it("invalid path should show a 404 error", () => {
   renderWithProviders(<AppRoutes />, {
     preloadedState: {

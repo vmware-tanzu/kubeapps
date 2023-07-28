@@ -40,7 +40,7 @@ export function RequireAuthentication({ children }: IRequireAuthenticationProps)
             </CdsModalActions>
           </CdsModal>
         ) : (
-          <Navigate replace to={{ pathname: "/login", state: { from: location.pathname } }} />
+          <Navigate replace to={"/login"} state={{ from: location.pathname }} />
         )}
       </>
     );

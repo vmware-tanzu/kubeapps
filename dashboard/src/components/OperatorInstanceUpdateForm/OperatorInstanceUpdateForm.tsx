@@ -56,8 +56,16 @@ function OperatorInstanceUpdateForm() {
     setCurrentValues("");
     setCRD(undefined);
     setIcon(placeholder);
-    dispatch(actions.operators.getResource(cluster, namespace, csvName, crdName, resourceName));
-    dispatch(actions.operators.getCSV(cluster, namespace, csvName));
+    dispatch(
+      actions.operators.getResource(
+        cluster,
+        namespace,
+        csvName || "",
+        crdName || "",
+        resourceName || "",
+      ),
+    );
+    dispatch(actions.operators.getCSV(cluster, namespace, csvName || ""));
   }, [dispatch, cluster, namespace, csvName, crdName, resourceName]);
 
   useEffect(() => {
@@ -68,7 +76,7 @@ function OperatorInstanceUpdateForm() {
 
   useEffect(() => {
     if (csv) {
-      parseCSV(csv, crdName, setIcon, setCRD, setDefaultValues);
+      parseCSV(csv, crdName || "", setIcon, setCRD, setDefaultValues);
     }
   }, [csv, crdName]);
 
@@ -82,14 +90,22 @@ function OperatorInstanceUpdateForm() {
         cluster,
         namespace,
         updatedResource.apiVersion,
-        crdName.split(".")[0],
-        resourceName,
+        (crdName || "").split(".")[0],
+        resourceName || "",
         updatedResource,
       ),
     );
     if (created) {
       dispatch(
-        push(url.app.operatorInstances.view(cluster, namespace, csvName, crdName, resourceName)),
+        push(
+          url.app.operatorInstances.view(
+            cluster,
+            namespace,
+            csvName || "",
+            crdName || "",
+            resourceName || "",
+          ),
+        ),
       );
     }
   };

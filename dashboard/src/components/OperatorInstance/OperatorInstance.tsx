@@ -136,13 +136,21 @@ function OperatorInstance() {
   const { csv: csvName, crd: crdName, instanceName } = useParams<IOperatorInstanceParams>();
 
   useEffect(() => {
-    dispatch(actions.operators.getResource(cluster, namespace, csvName, crdName, instanceName));
-    dispatch(actions.operators.getCSV(cluster, namespace, csvName));
+    dispatch(
+      actions.operators.getResource(
+        cluster,
+        namespace,
+        csvName || "",
+        crdName || "",
+        instanceName || "",
+      ),
+    );
+    dispatch(actions.operators.getCSV(cluster, namespace, csvName || ""));
   }, [dispatch, cluster, namespace, csvName, crdName, instanceName]);
 
   useEffect(() => {
     if (csv) {
-      parseCSV(csv, crdName, setIcon, setCRD);
+      parseCSV(csv, crdName || "", setIcon, setCRD);
     }
   }, [csv, crdName]);
 
@@ -157,7 +165,15 @@ function OperatorInstance() {
 
   const onUpdateClick = () =>
     dispatch(
-      push(app.operatorInstances.update(cluster, namespace, csvName, crdName, instanceName)),
+      push(
+        app.operatorInstances.update(
+          cluster,
+          namespace,
+          csvName || "",
+          crdName || "",
+          instanceName || "",
+        ),
+      ),
     );
   const handleDeleteClick = async () => {
     setDeleting(true);

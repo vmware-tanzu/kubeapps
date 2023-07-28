@@ -90,12 +90,12 @@ export default function DeploymentFormBody() {
     setDefaultValues("");
     setCRD(undefined);
     setIcon(placeholder);
-    dispatch(actions.operators.getCSV(cluster, namespace, csvName));
+    dispatch(actions.operators.getCSV(cluster, namespace, csvName || ""));
   }, [cluster, dispatch, namespace, csvName]);
 
   useEffect(() => {
     if (csv) {
-      parseCSV(csv, crdName, setIcon, setCRD, setDefaultValues);
+      parseCSV(csv, crdName || "", setIcon, setCRD, setDefaultValues);
     }
   }, [csv, crdName]);
 

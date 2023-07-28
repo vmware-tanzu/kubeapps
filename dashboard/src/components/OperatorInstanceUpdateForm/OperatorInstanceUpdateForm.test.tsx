@@ -3,7 +3,6 @@
 
 import actions from "actions";
 import Alert from "components/js/Alert";
-import OperatorInstanceFormBody from "components/OperatorInstanceFormBody/OperatorInstanceFormBody";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
 import * as ReactRedux from "react-redux";
 import {
@@ -14,7 +13,7 @@ import {
 } from "shared/specs/mountWrapper";
 import { FetchError, IStoreState } from "shared/types";
 import OperatorInstanceUpdateForm from "./OperatorInstanceUpdateForm";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import { IOperatorsState } from "reducers/operators";
 import { IClusterState } from "reducers/cluster";
 import { screen } from "@testing-library/react";

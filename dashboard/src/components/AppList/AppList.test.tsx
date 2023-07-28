@@ -91,6 +91,7 @@ context("when changing props", () => {
       <MemoryRouter initialEntries={["/foo?q=foo"]}>
         <AppList />
       </MemoryRouter>,
+      false,
     );
     expect(wrapper.find(SearchFilter).prop("value")).toEqual("foo");
   });
@@ -104,6 +105,7 @@ context("when changing props", () => {
       <MemoryRouter initialEntries={["/foo?allns=yes"]}>
         <AppList />
       </MemoryRouter>,
+      false,
     );
     expect(wrapper.find("input[type='checkbox']")).toBeChecked();
   });
@@ -158,6 +160,7 @@ context("when changing props", () => {
         <MemoryRouter initialEntries={["/foo?allns=yes"]}>
           <AppList />
         </MemoryRouter>,
+        false,
       );
       expect(setAllNS).not.toHaveBeenCalledWith(false);
     });
@@ -300,6 +303,7 @@ context("when apps available", () => {
       <MemoryRouter initialEntries={["/foo?q=bar"]}>
         <AppList />
       </MemoryRouter>,
+      false,
     );
     expect(wrapper.find(AppListItem).key()).toBe("fooNs-foobar/bar");
   });
@@ -366,6 +370,7 @@ context("when apps available", () => {
       <MemoryRouter initialEntries={["/foo?q=bar"]}>
         <AppList />
       </MemoryRouter>,
+      false,
     );
     expect(wrapper.find(AppListItem).first().key()).toBe("fooNs-foobar/bar");
     expect(wrapper.find(AppListItem).last().key()).toBe("barNs-foobar/bar");
@@ -418,6 +423,7 @@ context("when custom resources available", () => {
       <MemoryRouter initialEntries={["/foo?q=nop"]}>
         <AppList />
       </MemoryRouter>,
+      false,
     );
     const itemList = wrapper.find(CustomResourceListItem);
     expect(itemList).not.toExist();

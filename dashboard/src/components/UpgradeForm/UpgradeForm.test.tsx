@@ -22,7 +22,7 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { cloneDeep } from "lodash";
 import * as ReactRedux from "react-redux";
-import { MemoryRouter, Route } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import PackagesService from "shared/PackagesService";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import {
@@ -169,10 +169,11 @@ describe("it behaves like a loading component", () => {
       mountWrapper(
         getStore({ ...state } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <UpgradeForm />,
-          </Route>
+          <Routes>
+            <Route path={routePath} element={<UpgradeForm />} />
+          </Routes>
         </MemoryRouter>,
+        false,
       ).find(LoadingWrapper),
     ).toExist();
   });
@@ -188,10 +189,11 @@ describe("it behaves like a loading component", () => {
       mountWrapper(
         getStore({ ...state } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <UpgradeForm />,
-          </Route>
+          <Routes>
+            <Route path={routePath} element={<UpgradeForm />} />
+          </Routes>
         </MemoryRouter>,
+        false,
       ).find(LoadingWrapper),
     ).toExist();
   });
@@ -208,10 +210,11 @@ describe("it behaves like a loading component", () => {
       mountWrapper(
         getStore({ ...state } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <UpgradeForm />,
-          </Route>
+          <Routes>
+            <Route path={routePath} element={<UpgradeForm />} />
+          </Routes>
         </MemoryRouter>,
+        false,
       ).find(LoadingWrapper),
     ).toExist();
   });
@@ -230,10 +233,11 @@ describe("it behaves like a loading component", () => {
       mountWrapper(
         getStore({ ...state } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <UpgradeForm />,
-          </Route>
+          <Routes>
+            <Route path={routePath} element={<UpgradeForm />} />
+          </Routes>
         </MemoryRouter>,
+        false,
       ).find(LoadingWrapper),
     ).toExist();
   });
@@ -254,10 +258,11 @@ it("fetches the available versions", () => {
   mountWrapper(
     getStore({ ...state } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam]}>
-      <Route path={routePath}>
-        <UpgradeForm />,
-      </Route>
+      <Routes>
+        <Route path={routePath} element={<UpgradeForm />} />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
   expect(getAvailablePackageVersions).toHaveBeenCalledWith({
     context: {
@@ -284,10 +289,11 @@ it("hides the PackageVersionSelector in the PackageHeader", () => {
   const wrapper = mountWrapper(
     getStore({ ...state } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam]}>
-      <Route path={routePath}>
-        <UpgradeForm />,
-      </Route>
+      <Routes>
+        <Route path={routePath} element={<UpgradeForm />} />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
   expect(wrapper.find(PackageVersionSelector)).toHaveLength(1);
   expect(wrapper.find(PackageHeader)).toHaveProp("hideVersionsSelector", true);
@@ -310,10 +316,11 @@ it("does not fetch the current package version if there is already one in the st
   mountWrapper(
     getStore({ ...state } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam]}>
-      <Route path={routePath}>
-        <UpgradeForm />,
-      </Route>
+      <Routes>
+        <Route path={routePath} element={<UpgradeForm />} />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
   expect(getAvailablePackageDetail).not.toHaveBeenCalled();
 });
@@ -344,10 +351,11 @@ describe("renders an error", () => {
     const wrapper = mountWrapper(
       getStore({ ...state } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <UpgradeForm />,
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<UpgradeForm />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
     expect(wrapper.find(Alert).exists()).toBe(true);
     expect(wrapper.find(Alert).first()).toIncludeText("wrong format!");
@@ -372,10 +380,11 @@ it("empty values applied is allowed", () => {
   const wrapper = mountWrapper(
     getStore({ ...state } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam]}>
-      <Route path={routePath}>
-        <UpgradeForm />,
-      </Route>
+      <Routes>
+        <Route path={routePath} element={<UpgradeForm />} />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
   expect(wrapper.find(DeploymentFormBody).prop("packageVersion")).toBe("1.0.0");
 });
@@ -399,10 +408,11 @@ it("defaults the upgrade version to the current version", () => {
   const wrapper = mountWrapper(
     getStore({ ...state } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam]}>
-      <Route path={routePath}>
-        <UpgradeForm />,
-      </Route>
+      <Routes>
+        <Route path={routePath} element={<UpgradeForm />} />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
   expect(wrapper.find(DeploymentFormBody).prop("packageVersion")).toBe("1.0.0");
 });
@@ -432,10 +442,11 @@ it("uses the selected version passed in the component's props", () => {
   mountWrapper(
     getStore({ ...state } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam + "/1.5.0"]}>
-      <Route path={routePath + "/:version"}>
-        <UpgradeForm version={"1.5.0"} />,
-      </Route>
+      <Routes>
+        <Route path={routePath + "/:version"} element={<UpgradeForm version={"1.5.0"} />} />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
 
   expect(fetchAndSelectAvailablePackageDetail).toHaveBeenCalledWith(
@@ -466,10 +477,11 @@ it("forwards the appValues when modified", () => {
   const wrapper = mountWrapper(
     getStore({ ...state } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam]}>
-      <Route path={routePath}>
-        <UpgradeForm />,
-      </Route>
+      <Routes>
+        <Route path={routePath} element={<UpgradeForm />} />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
 
   const handleValuesChange: (v: string) => void = wrapper
@@ -505,10 +517,11 @@ it("triggers an upgrade when submitting the form", async () => {
   const wrapper = mountWrapper(
     getStore({ ...state } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam]}>
-      <Route path={routePath}>
-        <UpgradeForm />,
-      </Route>
+      <Routes>
+        <Route path={routePath} element={<UpgradeForm />} />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
 
   await act(async () => {
@@ -558,10 +571,11 @@ describe("when receiving new props", () => {
     const wrapper = mountWrapper(
       getStore({ ...state } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <UpgradeForm />,
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<UpgradeForm />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
 
     wrapper.setProps({ deployed: { values: defaultValues } });
@@ -587,10 +601,11 @@ describe("when receiving new props", () => {
     const wrapper = mountWrapper(
       getStore({ ...state } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <UpgradeForm />,
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<UpgradeForm />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
 
     expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual(expectedValues);
@@ -612,10 +627,11 @@ describe("when receiving new props", () => {
     const wrapper = mountWrapper(
       getStore({ ...state }),
       <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <UpgradeForm />,
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<UpgradeForm />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
     act(() => {
       const handleValuesChange: (v: string) => void = wrapper
@@ -734,10 +750,11 @@ describe("when receiving new props", () => {
       const wrapper = mountWrapper(
         getStore({ ...newState }),
         <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <UpgradeForm />,
-          </Route>
+          <Routes>
+            <Route path={routePath} element={<UpgradeForm />} />
+          </Routes>
         </MemoryRouter>,
+        false,
       );
       expect(wrapper.find(DeploymentFormBody).prop("appValues")).toEqual(t.result);
     });
@@ -764,10 +781,11 @@ it("shows, by default, the default values of the deployed package plus any modif
   const wrapper = mountWrapper(
     getStore({ ...state } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam]}>
-      <Route path={routePath}>
-        <UpgradeForm />,
-      </Route>
+      <Routes>
+        <Route path={routePath} element={<UpgradeForm />} />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
 
   expect(wrapper.find(DeploymentFormBody).prop("deployedValues")).toBe(expectedValues);

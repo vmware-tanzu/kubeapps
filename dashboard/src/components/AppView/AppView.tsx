@@ -150,8 +150,7 @@ export interface IRouteParams {
 
 export default function AppView() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
-  const { cluster, namespace, releaseName, pluginName, pluginVersion } =
-    ReactRouter.useParams() as IRouteParams;
+  const { cluster, namespace, releaseName, pluginName, pluginVersion } = ReactRouter.useParams();
   const [appViewResourceRefs, setAppViewResourceRefs] = useState({
     ingresses: [],
     deployments: [],
@@ -325,7 +324,7 @@ export default function AppView() {
       ) : (
         <section>
           <PageHeader
-            title={releaseName}
+            title={releaseName || ""}
             titleSize="md"
             subtitle={
               selectedAvailablePkg?.availablePackageRef ? (
@@ -333,8 +332,8 @@ export default function AppView() {
                   from package{" "}
                   <Link
                     to={url.app.packages.get(
-                      cluster,
-                      namespace,
+                      cluster || "",
+                      namespace || "",
                       selectedAvailablePkg.availablePackageRef,
                     )}
                   >

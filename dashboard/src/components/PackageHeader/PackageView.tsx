@@ -23,17 +23,6 @@ import { app } from "shared/url";
 import PackageHeader from "./PackageHeader";
 import PackageReadme from "./PackageReadme";
 
-interface IRouteParams {
-  cluster: string;
-  namespace: string;
-  pluginName: string;
-  pluginVersion: string;
-  packageCluster: string;
-  packageNamespace: string;
-  packageId: string;
-  packageVersion?: string;
-}
-
 export default function PackageView() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const location = ReactRouter.useLocation();
@@ -46,7 +35,7 @@ export default function PackageView() {
     packageCluster,
     packageNamespace,
     packageVersion,
-  } = ReactRouter.useParams() as IRouteParams;
+  } = ReactRouter.useParams();
   const {
     packages: { isFetching, selected: selectedPackage },
     config: { skipAvailablePackageDetails },
@@ -111,8 +100,8 @@ export default function PackageView() {
     return (
       <Navigate
         to={app.apps.new(
-          targetCluster,
-          targetNamespace,
+          targetCluster || "",
+          targetNamespace || "",
           packageReference,
           selectedPackage.pkgVersion,
         )}
@@ -129,9 +118,9 @@ export default function PackageView() {
           deployButton={
             <Link
               to={app.apps.new(
-                targetCluster,
-                targetNamespace,
-                packageReference,
+                targetCluster || "",
+                targetNamespace || "",
+                packageReference || "",
                 selectedPackage.pkgVersion,
               )}
             >
@@ -154,9 +143,9 @@ export default function PackageView() {
             <div className="after-readme-button">
               <Link
                 to={app.apps.new(
-                  targetCluster,
-                  targetNamespace,
-                  packageReference,
+                  targetCluster || "",
+                  targetNamespace || "",
+                  packageReference || "",
                   selectedPackage.pkgVersion,
                 )}
               >

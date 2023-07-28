@@ -40,7 +40,7 @@ export default function OperatorView() {
   const { operator: operatorName } = useParams<IOperatorViewParams>();
 
   useEffect(() => {
-    dispatch(actions.operators.getOperator(cluster, namespace, operatorName));
+    dispatch(actions.operators.getOperator(cluster, namespace, operatorName || ""));
     dispatch(actions.operators.listSubscriptions(cluster, namespace));
   }, [dispatch, cluster, namespace, operatorName]);
 
@@ -53,7 +53,7 @@ export default function OperatorView() {
     }
   }, [dispatch, operator, cluster, namespace]);
 
-  const redirect = () => dispatch(push(app.operators.new(cluster, namespace, operatorName)));
+  const redirect = () => dispatch(push(app.operators.new(cluster, namespace, operatorName || "")));
 
   if (error) {
     return (

@@ -8,13 +8,12 @@ import Catalog from "components/Catalog/Catalog";
 import DeploymentForm from "components/DeploymentForm";
 import LoadingWrapper from "components/LoadingWrapper";
 import PackageView from "components/PackageHeader";
-import { Navigate, Route, RouteProps, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { app } from "shared/url";
 import ApiDocs from "../../components/ApiDocs";
 import NotFound from "../../components/NotFound";
 import AlertGroup from "components/AlertGroup";
 import PkgRepoList from "components/Config/PkgRepoList/PkgRepoList";
-import { IFeatureFlags } from "shared/Config";
 
 import OperatorNew from "components/OperatorNew";
 import OperatorInstanceForm from "components/OperatorInstanceForm";
@@ -26,8 +25,6 @@ import LoginForm from "components/LoginForm";
 import RequireAuthentication from "components/RequireAuthentication";
 import { useSelector } from "react-redux";
 import { IStoreState } from "shared/types";
-
-type IRouteComponentPropsAndRouteProps = RouteProps;
 
 const privateRoutes = {
   "/c/:cluster/ns/:namespace/apps": AppList,
@@ -65,13 +62,6 @@ const unsupportedRoutes = {
   "/c/:cluster/ns/:namespace/operators-instances/*":
     "Operators support has been deactivated by default for Kubeapps. It can be enabled in values configuration.",
 } as const;
-
-interface IRoutesProps extends IRouteComponentPropsAndRouteProps {
-  cluster: string;
-  currentNamespace: string;
-  authenticated: boolean;
-  featureFlags: IFeatureFlags;
-}
 
 function AppRoutes() {
   const {
