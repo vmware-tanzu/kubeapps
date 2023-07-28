@@ -174,7 +174,7 @@ it("behaves as a loading component when fetching is false but no package is avai
     },
   );
 
-  expect(screen.queryByLabelText("Loading")).toBeInTheDocument();
+  expect(screen.getByLabelText("Loading")).toBeInTheDocument();
 });
 
 it("behaves as a loading component when fetching is true and the package is available", () => {
@@ -192,7 +192,7 @@ it("behaves as a loading component when fetching is true and the package is avai
     },
   );
 
-  expect(screen.queryByLabelText("Loading")).toBeInTheDocument();
+  expect(screen.getByLabelText("Loading")).toBeInTheDocument();
 });
 
 it("does not render the app version, home and sources sections if not set", () => {
@@ -230,8 +230,8 @@ it("renders the app version when set", () => {
     },
   );
 
-  expect(screen.queryByText("App Version")).toBeInTheDocument();
-  expect(screen.queryByText(testVersion.appVersion)).toBeInTheDocument();
+  expect(screen.getByText("App Version")).toBeInTheDocument();
+  expect(screen.getByText(testVersion.appVersion)).toBeInTheDocument();
 });
 
 it("renders the home link when set", () => {
@@ -270,7 +270,7 @@ describe("when setting the skipAvailablePackageDetails option", () => {
       },
     );
 
-    expect(screen.queryByText("readme")).toBeInTheDocument();
+    expect(screen.getByText("readme")).toBeInTheDocument();
   });
 
   it("redirects when skipAvailablePackageDetails is set to true", () => {
@@ -296,7 +296,7 @@ describe("when setting the skipAvailablePackageDetails option", () => {
     );
 
     expect(screen.queryByText("readme")).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "NewApp" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "NewApp" })).toBeInTheDocument();
   });
 });
 

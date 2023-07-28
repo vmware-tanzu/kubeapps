@@ -218,7 +218,7 @@ describe("filter operators", () => {
       },
     );
 
-    expect(screen.queryByText(`Search: ${sampleOperator.metadata.name}`)).toBeInTheDocument();
+    expect(screen.getByText(`Search: ${sampleOperator.metadata.name}`)).toBeInTheDocument();
   });
 
   it("transforms the received '__' in query params into a ','", () => {
@@ -237,7 +237,7 @@ describe("filter operators", () => {
       },
     );
 
-    expect(screen.queryByText("Provider: kubeapps, inc")).toBeInTheDocument();
+    expect(screen.getByText("Provider: kubeapps, inc")).toBeInTheDocument();
   });
 
   it("show a message if the filter doesn't match any operator", () => {

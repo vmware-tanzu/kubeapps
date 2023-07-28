@@ -68,7 +68,7 @@ describe("token login form", () => {
     );
 
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Token")).toBeInTheDocument();
+    expect(screen.getByLabelText("Token")).toBeInTheDocument();
   });
 
   it("renders a link to the access control documentation", () => {

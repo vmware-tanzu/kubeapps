@@ -82,7 +82,7 @@ export const getStore = (extraState: object) => {
 export const mountWrapper = (
   store: MockStore,
   children: React.ReactElement,
-  includeRouter: boolean = true,
+  includeRouter = true,
 ) => {
   const childrenNode = includeRouter ? <Router>{children}</Router> : children;
   return mount(
