@@ -107,10 +107,16 @@ test("Create a new private package repository successfully", async ({ page }) =>
   await page.locator("text=Command Palette").click();
   await page.getByLabel("input").click();
   await page.getByLabel("input").fill(">find");
-  await page.locator("div").filter({ hasText: /^Find$/ }).nth(1).click();
+  await page
+    .locator("div")
+    .filter({ hasText: /^Find$/ })
+    .nth(1)
+    .click();
   await page.getByPlaceholder("Find").fill("tag: 2.4.48");
   // Note the U+200C, which is a zero-width non-joiner, character instead of a space
-  await expect(page.locator(".values-editor div.modified")).toContainText("tag:·‌2.4.48-debian-10-r75");
+  await expect(page.locator(".values-editor div.modified")).toContainText(
+    "tag:·‌2.4.48-debian-10-r75",
+  );
 
   // Deploy upgrade
   await page.click('cds-button:has-text("Deploy")');

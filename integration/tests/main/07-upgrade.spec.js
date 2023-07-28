@@ -47,7 +47,11 @@ test("Upgrades an application", async ({ page }) => {
   await page.locator("text=Command Palette").click();
   await page.getByLabel("input").click();
   await page.getByLabel("input").fill(">find");
-  await page.locator("div").filter({ hasText: /^Find$/ }).nth(1).click();
+  await page
+    .locator("div")
+    .filter({ hasText: /^Find$/ })
+    .nth(1)
+    .click();
   await page.getByPlaceholder("Find").fill("replicaCount: ");
   // Note the U+200C, which is a zero-width non-joiner, character instead of a space
   await expect(page.locator(".values-editor div.modified")).toContainText("replicaCount:·‌2");
