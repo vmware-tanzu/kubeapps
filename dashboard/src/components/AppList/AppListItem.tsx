@@ -1,10 +1,11 @@
 // Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import CustomTooltip from "components/js/Tooltip";
+import { CdsIcon } from "@cds/react/icon";
 import { InstalledPackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
-import { getAppStatusLabel, getPluginIcon, getPluginName } from "shared/utils";
 import placeholder from "icons/placeholder.svg";
+import { Tooltip } from "react-tooltip";
+import { getAppStatusLabel, getPluginIcon, getPluginName } from "shared/utils";
 import * as url from "../../shared/url";
 import InfoCard from "../InfoCard/InfoCard";
 import "./AppListItem.css";
@@ -45,15 +46,12 @@ function AppListItem(props: IAppListItemProps) {
 
   const tooltip = tooltipContent ? (
     <div className="color-icon-info">
-      <CustomTooltip
-        label="update-tooltip"
-        id={`${app.name}-update-tooltip`}
-        icon="circle-arrow"
-        position="top-left"
-        iconProps={{ solid: true, size: "md" }}
-      >
+      <span data-tooltip-id={`${app.name}-update-tooltip`}>
+        <CdsIcon shape="circle-arrow" size="md" solid={true} />
+      </span>
+      <Tooltip id={`${app.name}-update-tooltip`} place="top-end" className="small-tooltip">
         {tooltipContent}
-      </CustomTooltip>
+      </Tooltip>
     </div>
   ) : (
     <></>

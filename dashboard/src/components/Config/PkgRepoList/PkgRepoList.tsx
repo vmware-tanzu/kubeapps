@@ -6,21 +6,21 @@ import { CdsIcon } from "@cds/react/icon";
 import { CdsToggle, CdsToggleGroup } from "@cds/react/toggle";
 import actions from "actions";
 import { filterNames, filtersToQuery } from "components/Catalog/Catalog";
+import PageHeader from "components/PageHeader/PageHeader";
 import Alert from "components/js/Alert";
 import Table from "components/js/Table";
-import CustomTooltip from "components/js/Tooltip";
-import PageHeader from "components/PageHeader/PageHeader";
 import { push } from "connected-react-router";
 import {
   PackageRepositoriesPermissions,
   PackageRepositoryReference,
   PackageRepositorySummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import qs from "qs";
 import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation } from "react-router-dom";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
+import { Tooltip } from "react-tooltip";
 import { IStoreState } from "shared/types";
 import { app } from "shared/url";
 import { getPluginName } from "shared/utils";
@@ -169,16 +169,14 @@ function PkgRepoList() {
             </CdsButton>
             <p>Not ready</p>
             {repo?.status?.userReason && (
-              <CustomTooltip
-                label="notready-tooltip"
-                id={`${repo.name}-notready-tooltip`}
-                icon="info-circle"
-                position="top-right"
-                small={true}
-                iconProps={{ solid: true, size: "sm" }}
-              >
-                {repo?.status?.userReason}
-              </CustomTooltip>
+              <>
+                <span data-tooltip-id={`${repo.name}-notready-tooltip`}>
+                  <CdsIcon shape="info-circle" size="sm" solid={true} />
+                </span>
+                <Tooltip id={`${repo.name}-notready-tooltip`} place="top-end">
+                  {repo?.status?.userReason}
+                </Tooltip>
+              </>
             )}
           </>
         ),
@@ -338,18 +336,11 @@ function getRepoNameLinkAndTooltip(cluster: string, repo: PackageRepositorySumma
   );
   return repo.description ? (
     <div className="color-icon-info">
-      <span className="tooltip-wrapper">
-        {linkObj}
-        <CustomTooltip
-          label="pending-tooltip"
-          id={`${repo.name}-pending-tooltip`}
-          icon="info-circle"
-          position="top-right"
-          small={true}
-          iconProps={{ solid: true, size: "sm" }}
-        >
+      <span data-tooltip-id={`${repo.name}-pending-tooltip`} className="tooltip-wrapper">
+        {linkObj} <CdsIcon shape="info-circle" size="sm" solid={true} />
+        <Tooltip id={`${repo.name}-pending-tooltip`} place="top-end">
           {repo.description}
-        </CustomTooltip>
+        </Tooltip>
       </span>
     </div>
   ) : (
