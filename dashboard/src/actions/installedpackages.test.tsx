@@ -1,4 +1,4 @@
-// Copyright 2018-2022 the Kubeapps contributors.
+// Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import {
@@ -50,12 +50,9 @@ describe("fetches installed packages", () => {
   let requestInstalledPackageListMock: jest.Mock;
   const installedPackageSummaries: InstalledPackageSummary[] = [validInstalledPackageSummary];
   beforeEach(() => {
-    requestInstalledPackageListMock = jest.fn(
-      () =>
-        ({
-          installedPackageSummaries,
-        } as GetInstalledPackageSummariesResponse),
-    );
+    requestInstalledPackageListMock = jest.fn(() => {
+      return { installedPackageSummaries } as GetInstalledPackageSummariesResponse;
+    });
     InstalledPackage.GetInstalledPackageSummaries = requestInstalledPackageListMock;
   });
   afterEach(() => {

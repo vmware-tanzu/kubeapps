@@ -1,4 +1,4 @@
-// Copyright 2020-2022 the Kubeapps contributors.
+// Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
@@ -16,8 +16,8 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
 import { app } from "shared/url";
-import useOutsideClick from "../js/hooks/useOutsideClick/useOutsideClick";
 import Row from "../js/Row";
+import useOutsideClick from "../js/hooks/useOutsideClick/useOutsideClick";
 import "./ContextSelector.css";
 
 function ContextSelector() {

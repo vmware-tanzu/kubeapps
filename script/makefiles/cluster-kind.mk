@@ -1,4 +1,4 @@
-# Copyright 2021-2022 the Kubeapps contributors.
+# Copyright 2021-2023 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
 # This file provides targets which create a local k8s cluster setup

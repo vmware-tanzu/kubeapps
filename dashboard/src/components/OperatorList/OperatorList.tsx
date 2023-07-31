@@ -1,4 +1,4 @@
-// Copyright 2020-2022 the Kubeapps contributors.
+// Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
@@ -67,7 +67,7 @@ export const filterNames = {
 };
 
 function initialFilterState() {
-  const result = {};
+  const result: { [index: string]: any } = {};
   Object.values(filterNames).forEach(f => (result[f] = []));
   return result;
 }
@@ -97,7 +97,7 @@ export default function OperatorList() {
 
   useEffect(() => {
     const tmpStrRegex = /__/g;
-    const newFilters = {};
+    const newFilters: { [index: string]: any } = {};
     Object.keys(propsFilter).forEach(filter => {
       const filterValue = propsFilter[filter]?.toString() || "";
       newFilters[filter] = filterValue.split(",").map(a => a.replace(tmpStrRegex, ","));

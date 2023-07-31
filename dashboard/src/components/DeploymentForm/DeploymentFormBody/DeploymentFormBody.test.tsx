@@ -1,4 +1,4 @@
-// Copyright 2019-2022 the Kubeapps contributors.
+// Copyright 2019-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
@@ -9,12 +9,12 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { act } from "react-dom/test-utils";
 import { MonacoDiffEditor } from "react-monaco-editor";
+import configureMockStore from "redux-mock-store";
+import thunk from "redux-thunk";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { IPackageState } from "shared/types";
 import BasicDeploymentForm from "./BasicDeploymentForm";
 import DeploymentFormBody, { IDeploymentFormBodyProps } from "./DeploymentFormBody";
-import configureMockStore from "redux-mock-store";
-import thunk from "redux-thunk";
 
 beforeEach(() => {
   // mock the window.matchMedia for selecting the theme

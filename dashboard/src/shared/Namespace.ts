@@ -1,4 +1,4 @@
-// Copyright 2018-2022 the Kubeapps contributors.
+// Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { get } from "lodash";
@@ -55,7 +55,7 @@ export default class Namespace {
 // The namespace information will contain a map[cluster]:namespace with the default namespaces
 const namespaceKey = "kubeapps_namespace";
 
-function parseStoredNS() {
+function parseStoredNS(): { [index: string]: any } {
   const ns = localStorage.getItem(namespaceKey) || "{}";
   let parsedNS = {};
   try {

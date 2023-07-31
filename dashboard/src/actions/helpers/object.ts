@@ -1,4 +1,4 @@
-// Copyright 2018-2022 the Kubeapps contributors.
+// Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { isEmpty } from "lodash";
@@ -24,7 +24,7 @@ export function isEmptyDeep(obj: any): boolean {
 
 // Remove empty keys from an object (recursively)
 export function removeEmptyFields(obj: object) {
-  const res = { ...obj };
+  const res: { [index: string]: any } = { ...obj };
   Object.keys(res).forEach(k => {
     if (isEmptyDeep(res[k])) {
       delete res[k];

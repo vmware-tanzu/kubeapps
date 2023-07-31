@@ -1,4 +1,4 @@
-// Copyright 2019-2022 the Kubeapps contributors.
+// Copyright 2019-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import {
@@ -568,7 +568,11 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     setCustomCA(e.target.value);
   };
   const handleAuthRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType[e.target.value]);
+    setAuthMethod(
+      PackageRepositoryAuth_PackageRepositoryAuthType[
+        e.target.value as keyof typeof PackageRepositoryAuth_PackageRepositoryAuthType
+      ],
+    );
     clearAuthProvider();
 
     // reset the pull secret copy from auth
@@ -576,8 +580,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
 
     // if the user selects the docker config, suggest also setting the pull secret
     if (
-      PackageRepositoryAuth_PackageRepositoryAuthType[e.target.value] ===
-      PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON
+      PackageRepositoryAuth_PackageRepositoryAuthType[
+        e.target.value as keyof typeof PackageRepositoryAuth_PackageRepositoryAuthType
+      ] === PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON
     ) {
       setHelmPsAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType.DOCKER_CONFIG_JSON);
       // if user hasn't set any field yet, suggest using the same pullsecret
@@ -593,7 +598,11 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     }
   };
   const handleImgPSChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setHelmPsAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType[e.target.value]);
+    setHelmPsAuthMethod(
+      PackageRepositoryAuth_PackageRepositoryAuthType[
+        e.target.value as keyof typeof PackageRepositoryAuth_PackageRepositoryAuthType
+      ],
+    );
   };
   const handleTypeRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newType = e.target.value;

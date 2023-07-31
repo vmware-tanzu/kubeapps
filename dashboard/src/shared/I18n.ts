@@ -1,4 +1,4 @@
-// Copyright 2021-2022 the Kubeapps contributors.
+// Copyright 2021-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import messages_en from "../locales/en.json";
@@ -15,7 +15,7 @@ export enum ISupportedLangs {
   en = "en",
 }
 
-const messages = {};
+const messages: { [key: string]: any } = {};
 
 // Load here the compiled messages for each supported language
 messages[ISupportedLangs.en] = messages_en;

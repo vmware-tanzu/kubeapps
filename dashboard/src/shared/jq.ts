@@ -1,4 +1,4 @@
-// Copyright 2021-2022 the Kubeapps contributors.
+// Copyright 2021-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { IPkgRepositoryFilter } from "./types";
@@ -16,7 +16,7 @@ export function toFilterRule(
     const variables = namesArray.reduce((acc, n, i) => {
       acc[`$var${i}`] = n;
       return acc;
-    }, {});
+    }, {} as any);
     const jq = namesArray.map((_v, i) => `.name == $var${i}`).join(" or ");
     filter = { jq, variables };
   }

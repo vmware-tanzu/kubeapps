@@ -1,4 +1,4 @@
-// Copyright 2020-2022 the Kubeapps contributors.
+// Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
@@ -57,7 +57,11 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
     <>
       <Helmet>
         {/*  Override the clarity-ui css style */}
-        <link rel="stylesheet" type="text/css" href={getThemeFile(SupportedThemes[theme])} />
+        <link
+          rel="stylesheet"
+          type="text/css"
+          href={getThemeFile(SupportedThemes[theme as keyof typeof SupportedThemes])}
+        />
       </Helmet>
 
       <div className={open ? "drawer-backdrop" : ""} />

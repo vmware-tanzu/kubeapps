@@ -1,4 +1,4 @@
-// Copyright 2018-2022 the Kubeapps contributors.
+// Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { Code } from "@bufbuild/connect";
@@ -179,7 +179,7 @@ export class Auth {
   // we use a default namespace for both invalid tokens and tokens without the expected
   // key.
   public static defaultNamespaceFromToken(token: string) {
-    const payload = jwt.decode(token);
+    const payload = jwt.decode(token) as { [index: string]: any };
     const namespaceKey = "kubernetes.io/serviceaccount/namespace";
     if (payload && payload[namespaceKey]) {
       return payload[namespaceKey];

@@ -1,8 +1,10 @@
-// Copyright 2018-2022 the Kubeapps contributors.
+// Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import actions from "actions";
 import LoadingWrapper from "components/LoadingWrapper";
 import { act } from "react-dom/test-utils";
+import * as ReactRedux from "react-redux";
 import { MemoryRouter, Redirect } from "react-router-dom";
 import { IConfigState } from "reducers/config";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
@@ -10,8 +12,6 @@ import { IStoreState } from "shared/types";
 import LoginForm from "./LoginForm";
 import OAuthLogin from "./OauthLogin";
 import TokenLogin from "./TokenLogin";
-import actions from "actions";
-import * as ReactRedux from "react-redux";
 
 const defaultCluster = "default-cluster";
 

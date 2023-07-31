@@ -1,4 +1,4 @@
-// Copyright 2019-2022 the Kubeapps contributors.
+// Copyright 2019-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsIcon } from "@cds/react/icon";
@@ -46,7 +46,7 @@ function getData(
   getters: Array<(r: any) => string | JSX.Element | JSX.Element[]>,
   resource?: IKubeItem<IResource | ISecret>,
 ) {
-  const data = {
+  const data: { [index: string]: any } = {
     name,
   };
   if (!resource || resource.isFetching) {

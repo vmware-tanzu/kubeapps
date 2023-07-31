@@ -1,8 +1,7 @@
-// Copyright 2020-2022 the Kubeapps contributors.
+// Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { shallow } from "enzyme";
-import React from "react";
 import Column from ".";
 
 const randomColumn = () => Math.floor(Math.random() * Math.floor(11)) + 1;
