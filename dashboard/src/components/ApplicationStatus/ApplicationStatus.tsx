@@ -9,6 +9,7 @@ import {
   InstalledPackageDetail,
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
+  ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { flatten, get } from "lodash";
 import { useEffect, useState } from "react";
@@ -17,8 +18,6 @@ import { Tooltip } from "react-tooltip";
 import { IK8sList, IKubeItem, IResource, IStoreState } from "../../shared/types";
 import "./ApplicationStatus.css";
 import { filterByResourceRefs } from "containers/helpers";
-// import ResourceRef from "shared/ResourceRef";
-import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 
 interface IApplicationStatusProps {
   deployRefs: ResourceRef[];
@@ -76,21 +75,21 @@ export default function ApplicationStatus({
   );
   useEffect(() => {
     setDeployments(filterByResourceRefs(deployRefs, kube.items));
-  }, [deployRefs]);
+  }, [deployRefs, kube.items]);
 
   const [statefulsets, setStatefulsets] = useState<
     IKubeItem<IResource | IK8sList<IResource, {}>>[]
   >([]);
   useEffect(() => {
     setStatefulsets(filterByResourceRefs(statefulsetRefs, kube.items));
-  }, [statefulsetRefs]);
+  }, [statefulsetRefs, kube.items]);
 
   const [daemonsets, setDaemonsets] = useState<IKubeItem<IResource | IK8sList<IResource, {}>>[]>(
     [],
   );
   useEffect(() => {
     setDaemonsets(filterByResourceRefs(daemonsetRefs, kube.items));
-  }, [daemonsetRefs]);
+  }, [daemonsetRefs, kube.items]);
 
   const [workloads, setWorkloads] = useState([] as IWorkload[]);
   const [totalPods, setTotalPods] = useState(0);

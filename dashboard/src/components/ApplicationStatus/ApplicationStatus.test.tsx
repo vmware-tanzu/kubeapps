@@ -5,6 +5,7 @@ import {
   InstalledPackageDetail,
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
+  ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Tooltip } from "react-tooltip";
 import { IK8sList, IKubeItem, IKubeState, IResource } from "shared/types";
@@ -12,7 +13,6 @@ import ApplicationStatus from "./ApplicationStatus";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { initialKinds } from "reducers/kube";
 import { keyForResourceRef } from "shared/ResourceRef";
-import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 
 const defaultProps = {
   deployRefs: [],
@@ -374,8 +374,8 @@ describe("isFetching", () => {
     resources: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>,
     kind: string,
   ) => {
-    let resourceRefs: ResourceRef[] = [];
-    let kubeItems: IKubeState["items"] = {};
+    const resourceRefs: ResourceRef[] = [];
+    const kubeItems: IKubeState["items"] = {};
     resources.forEach(r => {
       const item = r.item;
       if (Array.isArray((item as IK8sList<IResource, {}>).items)) {
