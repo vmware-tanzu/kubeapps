@@ -33,7 +33,7 @@ import {
 } from "shared/types";
 import { getPluginsSupportingRollback } from "shared/utils";
 import { parseToString, parseToJS } from "shared/yamlUtils";
-import ApplicationStatus from "../../containers/ApplicationStatusContainer";
+import ApplicationStatus from "../ApplicationStatus/ApplicationStatus";
 import * as url from "../../shared/url";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";

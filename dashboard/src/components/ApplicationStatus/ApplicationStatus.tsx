@@ -1,6 +1,7 @@
 // Copyright 2019-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { useSelector } from "react-redux";
 import { CdsIcon } from "@cds/react/icon";
 import isSomeResourceLoading from "components/AppView/helpers";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
@@ -13,13 +14,16 @@ import { flatten, get } from "lodash";
 import { useEffect, useState } from "react";
 import { PieChart } from "react-minimal-pie-chart";
 import { Tooltip } from "react-tooltip";
-import { IK8sList, IKubeItem, IResource } from "../../shared/types";
+import { IK8sList, IKubeItem, IResource, IStoreState } from "../../shared/types";
 import "./ApplicationStatus.css";
+import { filterByResourceRefs } from "containers/helpers";
+// import ResourceRef from "shared/ResourceRef";
+import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 
 interface IApplicationStatusProps {
-  deployments: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
-  statefulsets: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
-  daemonsets: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
+  deployRefs: ResourceRef[];
+  statefulsetRefs: ResourceRef[];
+  daemonsetRefs: ResourceRef[];
   info?: InstalledPackageDetail;
 }
 
@@ -60,11 +64,34 @@ function codeToString(status: InstalledPackageStatus | null | undefined) {
 }
 
 export default function ApplicationStatus({
-  deployments,
-  statefulsets,
-  daemonsets,
+  deployRefs,
+  statefulsetRefs,
+  daemonsetRefs,
   info,
 }: IApplicationStatusProps) {
+  const { kube } = useSelector((state: IStoreState) => state);
+
+  const [deployments, setDeployments] = useState<IKubeItem<IResource | IK8sList<IResource, {}>>[]>(
+    [],
+  );
+  useEffect(() => {
+    setDeployments(filterByResourceRefs(deployRefs, kube.items));
+  }, [deployRefs]);
+
+  const [statefulsets, setStatefulsets] = useState<
+    IKubeItem<IResource | IK8sList<IResource, {}>>[]
+  >([]);
+  useEffect(() => {
+    setStatefulsets(filterByResourceRefs(statefulsetRefs, kube.items));
+  }, [statefulsetRefs]);
+
+  const [daemonsets, setDaemonsets] = useState<IKubeItem<IResource | IK8sList<IResource, {}>>[]>(
+    [],
+  );
+  useEffect(() => {
+    setDaemonsets(filterByResourceRefs(daemonsetRefs, kube.items));
+  }, [daemonsetRefs]);
+
   const [workloads, setWorkloads] = useState([] as IWorkload[]);
   const [totalPods, setTotalPods] = useState(0);
   const [readyPods, setReadyPods] = useState(0);
