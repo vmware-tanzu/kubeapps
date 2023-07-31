@@ -12,7 +12,7 @@ import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
-import ApplicationStatusContainer from "containers/ApplicationStatusContainer";
+import ApplicationStatus from "components/ApplicationStatus/ApplicationStatus";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
@@ -190,7 +190,7 @@ it("renders all the subcomponents", () => {
     getStore({ operators: { csv: defaultCSV, resource } } as Partial<IStoreState>),
     <OperatorInstance />,
   );
-  expect(wrapper.find(ApplicationStatusContainer)).toExist();
+  expect(wrapper.find(ApplicationStatus)).toExist();
   expect(wrapper.find(AccessURLTable)).toExist();
   expect(wrapper.find(AppSecrets)).toExist();
   expect(wrapper.find(AppNotes)).toExist();
