@@ -5,7 +5,7 @@ import actions from "actions";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import PageHeader from "components/PageHeader";
-import ApplicationStatusContainer from "containers/ApplicationStatusContainer";
+import ApplicationStatus from "components/ApplicationStatus/ApplicationStatus";
 import {
   AvailablePackageDetail,
   AvailablePackageReference,
@@ -456,7 +456,7 @@ describe("AppView", () => {
         wrapper = mountWrapper(getStore(validState), <AppView />);
       });
       expect(wrapper.find(PackageInfo)).toExist();
-      expect(wrapper.find(ApplicationStatusContainer)).toExist();
+      expect(wrapper.find(ApplicationStatus)).toExist();
       expect(wrapper.find(".control-buttons")).toExist();
       expect(wrapper.find(AppNotes)).toExist();
       expect(wrapper.find(ResourceTabs)).toExist();
@@ -526,7 +526,7 @@ describe("AppView", () => {
     });
     wrapper.update();
 
-    const applicationStatus = wrapper.find(ApplicationStatusContainer);
+    const applicationStatus = wrapper.find(ApplicationStatus);
     expect(applicationStatus).toExist();
 
     expect(applicationStatus.prop("statefulsetRefs")).toEqual([resourceRefs.statefulset]);

@@ -54,6 +54,7 @@
     "qs": "^6.11.2",
     "react": "^17.0.2",
     "react-copy-to-clipboard": "^5.1.0",
+    "react-error-boundary": "^4.0.10",
     "react-helmet": "^6.1.0",
     "react-intl": "^6.4.4",
     "react-markdown": "^8.0.5",
@@ -126,7 +127,7 @@
     "stylelint-config-standard-scss": "^10.0.0",
     "stylelint-scss": "^5.0.1",
     "ts-jest": "^29.1.1",
-    "ts-proto": "^1.156.1",
+    "ts-proto": "^1.156.2",
     "typescript": "^5.1.6"
   },
   "resolutions": {
