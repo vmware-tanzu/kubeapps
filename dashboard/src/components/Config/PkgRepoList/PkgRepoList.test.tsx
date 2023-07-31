@@ -1,27 +1,27 @@
 // Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { act, waitFor } from "@testing-library/react";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import Table from "components/js/Table";
 import TableRow from "components/js/Table/components/TableRow";
-import CustomTooltip from "components/js/Tooltip";
+import { ReactWrapper } from "enzyme";
 import {
   PackageRepositoriesPermissions,
   PackageRepositorySummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
-import { act } from "react-dom/test-utils";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import * as ReactRedux from "react-redux";
 import { Link } from "react-router-dom";
+import { Tooltip } from "react-tooltip";
 import { IPackageRepositoryState } from "reducers/repos";
 import { Kube } from "shared/Kube";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { IStoreState, PluginNames } from "shared/types";
 import { PkgRepoControl } from "./PkgRepoControl";
 import { PkgRepoDisabledControl } from "./PkgRepoDisabledControl";
 import PkgRepoList from "./PkgRepoList";
-import { ReactWrapper } from "enzyme";
 
 const {
   clusters: { currentCluster, clusters },
@@ -270,7 +270,7 @@ describe("global and namespaced repositories", () => {
       wrapper.find("h3").filterWhere((h: any) => h.text().includes("Namespace Repositories")),
     ).not.toExist();
     // no tooltip for the global repo as it does not have a description.
-    expect(wrapper.find(CustomTooltip)).not.toExist();
+    expect(wrapper.find(Tooltip)).not.toExist();
   });
 
   it("shows global and namespaced repositories", () => {
@@ -309,7 +309,7 @@ describe("global and namespaced repositories", () => {
     );
   });
 
-  it("shows a tooltip for the repo", () => {
+  it("shows a tooltip for the repo", async () => {
     const wrapper = mountWrapper(
       getStore({
         repos: {
@@ -329,8 +329,9 @@ describe("global and namespaced repositories", () => {
     act(() => {
       wrapper.find("input[type='checkbox']").simulate("change");
     });
-    const tooltipText = wrapper.find(CustomTooltip).html();
-    expect(tooltipText).toContain("my description 1 2 3 4");
+    await waitFor(() => {
+      expect(wrapper.find(Tooltip).prop("children")).toBe("my description 1 2 3 4");
+    });
   });
 
   it("use the correct namespace in the link when listing in all namespaces", () => {
