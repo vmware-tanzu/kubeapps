@@ -1,12 +1,13 @@
 // Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { act } from "@testing-library/react";
 import actions from "actions";
-import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import SearchFilter from "components/SearchFilter/SearchFilter";
-import { act } from "react-dom/test-utils";
+import Alert from "components/js/Alert";
 import * as ReactRedux from "react-redux";
+import { MemoryRouter, Route } from "react-router-dom";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { IPackageManifest, IStoreState } from "shared/types";
 import InfoCard from "../InfoCard/InfoCard";
@@ -14,7 +15,6 @@ import { AUTO_PILOT, BASIC_INSTALL } from "../OperatorView/OperatorCapabilityLev
 import OLMNotFound from "./OLMNotFound";
 import OperatorItems from "./OperatorItems";
 import OperatorList, { filterNames } from "./OperatorList";
-import { MemoryRouter, Route } from "react-router-dom";
 
 let spyOnUseDispatch: jest.SpyInstance;
 const kubeActions = { ...actions.operators };

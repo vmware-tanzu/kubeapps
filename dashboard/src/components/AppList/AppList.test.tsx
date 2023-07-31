@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { deepClone } from "@cds/core/internal";
+import { act } from "@testing-library/react";
 import actions from "actions";
 import LoadingWrapper from "components/LoadingWrapper";
 import SearchFilter from "components/SearchFilter/SearchFilter";
@@ -18,7 +19,6 @@ import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import context from "jest-plugin-context";
 import qs from "qs";
 import React from "react";
-import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { MemoryRouter } from "react-router-dom";
 import { Kube } from "shared/Kube";

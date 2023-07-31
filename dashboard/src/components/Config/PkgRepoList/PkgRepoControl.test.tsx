@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
+import { act } from "@testing-library/react";
 import actions from "actions";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
 import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
-import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { PkgRepoAddButton } from "./PkgRepoButton";

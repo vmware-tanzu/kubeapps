@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { deepClone } from "@cds/core/internal";
+import { act } from "@testing-library/react";
 import actions from "actions";
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import InfoCard from "components/InfoCard/InfoCard";
@@ -20,7 +21,6 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { createMemoryHistory } from "history";
 import React from "react";
-import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
 import { MemoryRouter, Route, Router } from "react-router-dom";

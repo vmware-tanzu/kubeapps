@@ -1,11 +1,12 @@
 // Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { act } from "@testing-library/react";
 import actions from "actions";
-import Alert from "components/js/Alert";
+import ApplicationStatus from "components/ApplicationStatus/ApplicationStatus";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import PageHeader from "components/PageHeader";
-import ApplicationStatus from "components/ApplicationStatus/ApplicationStatus";
+import Alert from "components/js/Alert";
 import {
   AvailablePackageDetail,
   AvailablePackageReference,
@@ -22,7 +23,6 @@ import {
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
-import { act } from "react-dom/test-utils";
 import { MemoryRouter, Route } from "react-router-dom";
 import { IConfigState } from "reducers/config";
 import { InstalledPackage } from "shared/InstalledPackage";

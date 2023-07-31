@@ -1,9 +1,9 @@
 // Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { act } from "@testing-library/react";
 import actions from "actions";
 import LoadingWrapper from "components/LoadingWrapper";
-import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { MemoryRouter, Redirect } from "react-router-dom";
 import { IConfigState } from "reducers/config";

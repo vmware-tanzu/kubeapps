@@ -1,8 +1,8 @@
 // Copyright 2019-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { act } from "@testing-library/react";
 import { mount } from "enzyme";
-import { act } from "react-dom/test-utils";
 import { IBasicFormParam } from "shared/types";
 import TextParam, { ITextParamProps } from "./TextParam";
 

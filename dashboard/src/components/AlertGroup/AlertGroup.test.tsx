@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsAlert, CdsAlertGroup } from "@cds/react/alert";
+import { act } from "@testing-library/react";
 import { mount } from "enzyme";
-import { act } from "react-dom/test-utils";
 import AlertGroup from "./AlertGroup";
 
 it("should render children components", () => {
