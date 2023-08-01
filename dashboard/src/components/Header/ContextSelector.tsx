@@ -9,6 +9,7 @@ import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds
 import actions from "actions";
 import Column from "components/Column";
 import Row from "components/Row";
+import useOutsideClick from "components/hooks/useOutsideClick";
 import Alert from "components/js/Alert";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -17,7 +18,6 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
 import { app } from "shared/url";
-import useOutsideClick from "../js/hooks/useOutsideClick/useOutsideClick";
 import "./ContextSelector.css";
 
 function ContextSelector() {
