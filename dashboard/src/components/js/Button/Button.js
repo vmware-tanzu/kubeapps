@@ -3,10 +3,9 @@
 
 import cs from "classnames";
 import PropTypes from "prop-types";
-import React from "react";
 import { Link } from "react-router-dom";
-import Spinner from "../Spinner";
 // Custom Styles
+import { CdsProgressCircle } from "@cds/react/progress-circle";
 import "./Button.scss";
 
 // Constants
@@ -81,7 +80,13 @@ const Button = ({
     // Normal Button
     return (
       <button className={css} title={title} onClick={onClick} disabled={disabled} type={type}>
-        {loading ? <Spinner inline text={loadingText} /> : children}
+        {loading ? (
+          <CdsProgressCircle size="xs" status="info">
+            {loadingText}
+          </CdsProgressCircle>
+        ) : (
+          children
+        )}
       </button>
     );
   }
