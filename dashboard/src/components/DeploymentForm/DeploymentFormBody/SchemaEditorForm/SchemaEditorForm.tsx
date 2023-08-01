@@ -9,7 +9,7 @@ import Column from "components/Column";
 import Row from "components/Row";
 import { isEmpty } from "lodash";
 import { useEffect, useState } from "react";
-import { monaco, MonacoDiffEditor } from "react-monaco-editor";
+import { MonacoDiffEditor, monaco } from "react-monaco-editor";
 import { useSelector } from "react-redux";
 import { schemaToObject, validateSchema } from "shared/schema";
 import { IAjvValidateResult, IStoreState } from "shared/types";

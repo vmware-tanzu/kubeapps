@@ -3,8 +3,8 @@
 
 import { CdsButton } from "@cds/react/button";
 import { act } from "@testing-library/react";
+import LoadingWrapper from "components/LoadingWrapper";
 import { mount, shallow } from "enzyme";
-import LoadingWrapper from "../../../../components/LoadingWrapper/LoadingWrapper";
 import RollbackDialog from "./RollbackDialog";
 
 const defaultProps = {

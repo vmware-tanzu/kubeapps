@@ -4,20 +4,20 @@
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
-import Alert from "components/js/Alert";
 import Column from "components/Column";
-import Row from "components/Row";
+import LoadingWrapper from "components/LoadingWrapper";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
+import Row from "components/Row";
+import Alert from "components/js/Alert";
 import { push } from "connected-react-router";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
 import { Operators } from "shared/Operators";
 import { IStoreState } from "shared/types";
 import { api, app } from "shared/url";
-import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import OperatorDescription from "./OperatorDescription";
 import OperatorHeader from "./OperatorHeader";
-import { useParams } from "react-router-dom";
 
 export default function OperatorView() {
   const dispatch = useDispatch();

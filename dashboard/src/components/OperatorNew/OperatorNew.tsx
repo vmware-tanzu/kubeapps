@@ -3,22 +3,22 @@
 
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
-import Alert from "components/js/Alert";
 import Column from "components/Column";
-import Row from "components/Row";
+import LoadingWrapper from "components/LoadingWrapper";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
+import Row from "components/Row";
+import Alert from "components/js/Alert";
 import { push } from "connected-react-router";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { Operators } from "shared/Operators";
 import { IPackageManifestChannel, IStoreState } from "shared/types";
 import { api, app } from "shared/url";
-import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import OperatorHeader from "../OperatorView/OperatorHeader";
 import "./OperatorNew.css";
-import { useParams } from "react-router-dom";
 
 export default function OperatorNew() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsIcon } from "@cds/react/icon";
+import LoadingWrapper from "components/LoadingWrapper";
 import Table from "components/js/Table";
 import { filterByResourceRefs } from "containers/helpers";
 import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
@@ -9,7 +10,6 @@ import { get } from "lodash";
 import { useSelector } from "react-redux";
 import { Tooltip } from "react-tooltip";
 import { IK8sList, IKubeItem, IResource, IServiceSpec, IStoreState } from "shared/types";
-import LoadingWrapper from "../../../components/LoadingWrapper/LoadingWrapper";
 import isSomeResourceLoading from "../helpers";
 import { GetURLItemFromIngress, ShouldGenerateLink } from "./AccessURLItem/AccessURLIngressHelper";
 import { GetURLItemFromService } from "./AccessURLItem/AccessURLServiceHelper";

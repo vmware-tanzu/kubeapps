@@ -7,11 +7,11 @@ import { CdsSelect } from "@cds/react/select";
 import actions from "actions";
 import { handleErrorAction } from "actions/auth";
 import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
-import Alert from "components/js/Alert";
 import Column from "components/Column";
-import Row from "components/Row";
 import LoadingWrapper from "components/LoadingWrapper";
 import PackageHeader from "components/PackageHeader/PackageHeader";
+import Row from "components/Row";
+import Alert from "components/js/Alert";
 import { push } from "connected-react-router";
 import {
   AvailablePackageReference,

@@ -18,8 +18,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import Column from "components/Column";
-import Row from "components/Row";
 import LoadingWrapper from "components/LoadingWrapper";
+import Row from "components/Row";
 import { useState } from "react";
 import { IBasicFormParam } from "shared/types";
 import DebouncedInput from "./DebouncedInput";

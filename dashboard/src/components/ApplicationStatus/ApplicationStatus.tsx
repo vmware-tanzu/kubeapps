@@ -1,10 +1,10 @@
 // Copyright 2019-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useSelector } from "react-redux";
 import { CdsIcon } from "@cds/react/icon";
 import isSomeResourceLoading from "components/AppView/helpers";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
+import { filterByResourceRefs } from "containers/helpers";
 import {
   InstalledPackageDetail,
   InstalledPackageStatus,
@@ -14,10 +14,10 @@ import {
 import { flatten, get } from "lodash";
 import { useEffect, useState } from "react";
 import { PieChart } from "react-minimal-pie-chart";
+import { useSelector } from "react-redux";
 import { Tooltip } from "react-tooltip";
 import { IK8sList, IKubeItem, IResource, IStoreState } from "../../shared/types";
 import "./ApplicationStatus.css";
-import { filterByResourceRefs } from "containers/helpers";
 
 interface IApplicationStatusProps {
   deployRefs: ResourceRef[];

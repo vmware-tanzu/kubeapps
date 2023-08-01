@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { shallow } from "enzyme";
-import React from "react";
 import Button, { ButtonThemes, ButtonTypes } from ".";
 import Spinner from "../Spinner";
 

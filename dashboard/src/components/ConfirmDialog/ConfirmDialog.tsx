@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
+import LoadingWrapper from "components/LoadingWrapper";
 import Alert from "components/js/Alert";
 import { DeleteError, FetchWarning } from "shared/types";
-import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import "./ConfirmDialog.css";
 
 interface IConfirmDialogProps {
