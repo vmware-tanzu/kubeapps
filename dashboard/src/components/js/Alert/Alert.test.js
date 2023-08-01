@@ -3,8 +3,6 @@
 
 import { CdsIcon } from "@cds/react/icon";
 import { shallow } from "enzyme";
-import React from "react";
-import Button from "../Button";
 import Alert, { AlertIcons, AlertThemes } from "./Alert";
 
 describe(Alert, () => {
@@ -20,7 +18,7 @@ describe(Alert, () => {
 
     expect(wrapper.text()).toContain(text);
     expect(wrapper.find("button")).not.toExist();
-    expect(wrapper.find(Button)).not.toExist();
+    expect(wrapper.find("Button")).not.toExist();
   });
 
   it("renders a functional action button when the props are present", () => {

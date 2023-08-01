@@ -5,7 +5,6 @@ import { CdsIcon } from "@cds/react/icon";
 import cs from "classnames";
 import PropTypes from "prop-types";
 import React from "react";
-import Button from "../Button";
 import "./Alert.scss";
 import AlerTypes from "./Alert.types";
 
@@ -59,9 +58,9 @@ const Alert = ({ app, action, children, customIcon, compact, theme, onClick, onC
           <div className="alert-text">{children}</div>
           {onClick != null && action != null && (
             <div className="alert-actions">
-              <Button className="alert-action" onClick={onClick}>
+              <button className="alert-action" onClick={onClick}>
                 {action}
-              </Button>
+              </button>
             </div>
           )}
         </div>
