@@ -4,9 +4,9 @@
 import Row from "components/Row";
 import { InstalledPackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Link } from "react-router-dom";
+import { IClusterServiceVersion, IResource } from "shared/types";
 import * as url from "shared/url";
-import { IClusterServiceVersion, IResource } from "../../shared/types";
-import { escapeRegExp } from "../../shared/utils";
+import { escapeRegExp } from "shared/utils";
 import Alert from "../js/Alert";
 import "./AppList.css";
 import AppListItem from "./AppListItem";

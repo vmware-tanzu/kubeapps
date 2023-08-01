@@ -1,29 +1,29 @@
 // Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import AlertGroup from "components/AlertGroup";
+import ApiDocs from "components/ApiDocs";
 import AppList from "components/AppList/AppList";
 import AppUpgrade from "components/AppUpgrade";
 import AppView from "components/AppView";
 import Catalog from "components/Catalog/Catalog";
+import PkgRepoList from "components/Config/PkgRepoList/PkgRepoList";
 import DeploymentForm from "components/DeploymentForm";
 import LoadingWrapper from "components/LoadingWrapper";
+import NotFound from "components/NotFound";
 import PackageView from "components/PackageHeader";
 import React from "react";
 import { Redirect, Route, RouteComponentProps, RouteProps, Switch } from "react-router-dom";
-import { app } from "shared/url";
-import ApiDocs from "../../components/ApiDocs";
-import NotFound from "../../components/NotFound";
-import AlertGroup from "components/AlertGroup";
-import PkgRepoList from "components/Config/PkgRepoList/PkgRepoList";
 import { IFeatureFlags } from "shared/Config";
+import { app } from "shared/url";
 
-import OperatorNew from "components/OperatorNew";
-import OperatorInstanceForm from "components/OperatorInstanceForm";
-import OperatorList from "components/OperatorList";
-import OperatorView from "components/OperatorView";
-import OperatorInstance from "components/OperatorInstance";
-import OperatorInstanceUpdateForm from "components/OperatorInstanceUpdateForm";
 import LoginForm from "components/LoginForm";
+import OperatorInstance from "components/OperatorInstance";
+import OperatorInstanceForm from "components/OperatorInstanceForm";
+import OperatorInstanceUpdateForm from "components/OperatorInstanceUpdateForm";
+import OperatorList from "components/OperatorList";
+import OperatorNew from "components/OperatorNew";
+import OperatorView from "components/OperatorView";
 import RequireAuthentication from "components/RequireAuthentication";
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;

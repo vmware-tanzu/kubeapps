@@ -16,7 +16,7 @@ import { useEffect, useState } from "react";
 import { PieChart } from "react-minimal-pie-chart";
 import { useSelector } from "react-redux";
 import { Tooltip } from "react-tooltip";
-import { IK8sList, IKubeItem, IResource, IStoreState } from "../../shared/types";
+import { IK8sList, IKubeItem, IResource, IStoreState } from "shared/types";
 import "./ApplicationStatus.css";
 
 interface IApplicationStatusProps {

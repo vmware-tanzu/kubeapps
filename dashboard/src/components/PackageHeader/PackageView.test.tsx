@@ -16,7 +16,7 @@ import * as ReactRedux from "react-redux";
 import { Route, Router } from "react-router-dom";
 import { IConfigState } from "reducers/config";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IPackageState, IStoreState } from "../../shared/types";
+import { IPackageState, IStoreState } from "shared/types";
 import AvailablePackageMaintainers from "./AvailablePackageMaintainers";
 import PackageReadme from "./PackageReadme";
 import PackageView from "./PackageView";

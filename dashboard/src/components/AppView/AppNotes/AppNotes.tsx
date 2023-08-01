@@ -1,12 +1,12 @@
 // Copyright 2021-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import HeadingRenderer from "components/MarkdownRenderer/HeadingRenderer";
+import LinkRenderer from "components/MarkdownRenderer/LinkRenderer";
+import TableRenderer from "components/MarkdownRenderer/TableRenderer";
 import ReactMarkdown from "react-markdown";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
-import HeadingRenderer from "../../MarkdownRenderer/HeadingRenderer";
-import LinkRenderer from "../../MarkdownRenderer/LinkRenderer";
-import TableRenderer from "../../MarkdownRenderer/TableRenderer";
 
 export interface IAppNotesProps {
   title?: string;

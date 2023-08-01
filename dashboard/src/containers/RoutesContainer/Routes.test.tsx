@@ -4,6 +4,7 @@
 import { deepClone } from "@cds/core/internal";
 import AlertGroup from "components/AlertGroup";
 import LoadingWrapper from "components/LoadingWrapper";
+import NotFound from "components/NotFound";
 import { mount } from "enzyme";
 import { createMemoryHistory } from "history";
 import { Provider } from "react-redux";
@@ -11,7 +12,6 @@ import { Redirect, RouteComponentProps, StaticRouter } from "react-router-dom";
 import { IFeatureFlags } from "shared/Config";
 import { defaultStore } from "shared/specs/mountWrapper";
 import { app } from "shared/url";
-import NotFound from "../../components/NotFound";
 import Routes from "./Routes";
 
 // Mocking SwaggerUI to a simple empty <div> to prevent issues with Jest
