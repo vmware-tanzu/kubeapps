@@ -3,7 +3,7 @@
 
 import { CdsButton } from "@cds/react/button";
 import { CdsModal } from "@cds/react/modal";
-import { waitFor } from "@testing-library/react";
+import { act, waitFor } from "@testing-library/react";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import {
@@ -12,7 +12,6 @@ import {
   InstalledPackageStatus_StatusReason,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
-import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { Tooltip } from "react-tooltip";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";

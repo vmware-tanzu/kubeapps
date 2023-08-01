@@ -1,18 +1,18 @@
 // Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { act } from "@testing-library/react";
 import actions from "actions";
-import Alert from "components/js/Alert";
 import OperatorInstanceFormBody from "components/OperatorInstanceFormBody/OperatorInstanceFormBody";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
-import { act } from "react-dom/test-utils";
+import Alert from "components/js/Alert";
 import * as ReactRedux from "react-redux";
+import { MemoryRouter, Route } from "react-router-dom";
+import { IClustersState } from "reducers/cluster";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IClusterServiceVersion, IStoreState } from "shared/types";
-import OperatorInstanceForm from "./OperatorInstanceForm";
 import OperatorAdvancedDeploymentForm from "../OperatorInstanceFormBody/OperatorAdvancedDeploymentForm/OperatorAdvancedDeploymentForm";
-import { IClustersState } from "reducers/cluster";
-import { MemoryRouter, Route } from "react-router-dom";
+import OperatorInstanceForm from "./OperatorInstanceForm";
 
 const defaultCRD = {
   name: "foo-cluster",

@@ -2,12 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
-import { waitFor } from "@testing-library/react";
+import { act, waitFor } from "@testing-library/react";
 import {
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
-import { act } from "react-dom/test-utils";
 import { Tooltip } from "react-tooltip";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import StatusAwareButton, { IStatusAwareButtonProps } from "./StatusAwareButton";

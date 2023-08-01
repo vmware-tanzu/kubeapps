@@ -1,9 +1,9 @@
-// Copyright 2019-2022 the Kubeapps contributors.
+// Copyright 2019-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
+import { act } from "@testing-library/react";
 import { mount, shallow } from "enzyme";
-import { act } from "react-dom/test-utils";
 import LoadingWrapper from "../../../../components/LoadingWrapper/LoadingWrapper";
 import RollbackDialog from "./RollbackDialog";
 

@@ -1,8 +1,8 @@
 // Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { act } from "@testing-library/react";
 import { shallow } from "enzyme";
-import { act } from "react-dom/test-utils";
 import { IntlProvider } from "react-intl";
 import I18n, { II18nConfig } from "shared/I18n";
 import Root from "./Root";

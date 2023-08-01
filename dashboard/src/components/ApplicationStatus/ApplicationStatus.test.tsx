@@ -1,18 +1,20 @@
 // Copyright 2019-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { act } from "@testing-library/react";
 import {
   InstalledPackageDetail,
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
   ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import { has } from "lodash";
 import { Tooltip } from "react-tooltip";
-import { IK8sList, IKubeItem, IKubeState, IResource } from "shared/types";
-import ApplicationStatus from "./ApplicationStatus";
-import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { initialKinds } from "reducers/kube";
 import { keyForResourceRef } from "shared/ResourceRef";
+import { getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { IK8sList, IKubeItem, IKubeState, IResource } from "shared/types";
+import ApplicationStatus from "./ApplicationStatus";
 
 const defaultProps = {
   deployRefs: [],
@@ -446,33 +448,43 @@ describe("isFetching", () => {
       }
       expect(wrapper.text()).toContain(t.deployed ? "Ready" : "Not Ready");
 
-      // TODO(agamez) the tooltip does not appear in the DOM,
-      // even with a manual mouseover event.
-      // see https://github.com/ReactTooltip/react-tooltip/issues/1058
-      // and https://github.com/ReactTooltip/react-tooltip/pull/932/
-      // we would need to add waitFor, but this is also causing issues
-      // for now, I'm relaxing the actual checks on the text
+      // Cloning the tooltip with the isOpen prop set to true,
+      // this way we can later test the tooltip content
+      act(() => {
+        wrapper.setProps({
+          children: (
+            <Tooltip {...wrapper.find(Tooltip).props()} isOpen={true}>
+              {wrapper.find(Tooltip).prop("children")}
+            </Tooltip>
+          ),
+        });
+      });
+      wrapper.update();
 
       expect(wrapper.find(Tooltip)).toExist();
 
-      // t.deployments.forEach(d => {
-      //   const item = getItem(d.item);
-      //   expect(wrapper.find(Tooltip)).toIncludeText(
-      //     `<td>${item.metadata.name}</td><td>${item.status.availableReplicas}/${item.spec.replicas}</td>`,
-      //   );
-      // });
-      // t.statefulsets.forEach(d => {
-      //   const item = getItem(d.item);
-      //   expect(wrapper.find(Tooltip)).toIncludeText(
-      //     `<td>${item.metadata.name}</td><td>${item.status.readyReplicas}/${item.spec.replicas}</td>`,
-      //   );
-      // });
-      // t.daemonsets.forEach(d => {
-      //   const item = getItem(d.item);
-      //   expect(wrapper.find(Tooltip)).toIncludeText(
-      //     `<td>${item.metadata.name}</td><td>${item.status.numberReady}/${item.status.currentNumberScheduled}</td>`,
-      //   );
-      // });
+      t.deployments.forEach(d => {
+        const item = getItem(d.item);
+        expect(wrapper.find(Tooltip).html()).toContain(
+          `<td>${item.metadata.name}</td><td>${item.status.availableReplicas}/${item.spec.replicas}</td>`,
+        );
+      });
+      t.statefulsets.forEach(d => {
+        const item = getItem(d.item);
+        expect(wrapper.find(Tooltip).html()).toContain(
+          `<td>${item.metadata.name}</td><td>${item.status.readyReplicas}/${item.spec.replicas}</td>`,
+        );
+      });
+      t.daemonsets.forEach(d => {
+        const item = getItem(d.item);
+        expect(wrapper.find(Tooltip).html()).toContain(
+          `<td>${item.metadata.name}</td><td>${item.status.numberReady}/${item.status.currentNumberScheduled}</td>`,
+        );
+      });
     });
   });
 });
+
+function getItem(i?: IResource | IK8sList<IResource, {}>): IResource {
+  return has(i, "items") ? (i as IK8sList<IResource, {}>).items[0] : (i as IResource);
+}

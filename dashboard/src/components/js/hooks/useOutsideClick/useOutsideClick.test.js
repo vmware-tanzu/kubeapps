@@ -1,10 +1,10 @@
-// Copyright 2020-2022 the Kubeapps contributors.
+// Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { act } from "@testing-library/react";
 import { mount } from "enzyme";
 import PropTypes from "prop-types";
-import React, { useRef } from "react";
-import { act } from "react-dom/test-utils";
+import { useRef } from "react";
 import useOutsideClick from ".";
 
 const TestComponent = ({ callback, enabled }) => {
