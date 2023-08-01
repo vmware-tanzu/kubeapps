@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsIcon } from "@cds/react/icon";
-import isSomeResourceLoading from "components/AppView/helpers";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import { filterByResourceRefs } from "containers/helpers";
 import {
@@ -11,7 +10,7 @@ import {
   InstalledPackageStatus_StatusReason,
   ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
-import { flatten, get } from "lodash";
+import { flatten, get, some } from "lodash";
 import { useEffect, useState } from "react";
 import { PieChart } from "react-minimal-pie-chart";
 import { useSelector } from "react-redux";
@@ -143,7 +142,7 @@ export default function ApplicationStatus({
 
   const ready = totalPods === readyPods;
 
-  if (isSomeResourceLoading(deployments.concat(statefulsets).concat(daemonsets))) {
+  if (some(deployments.concat(statefulsets).concat(daemonsets), r => r.isFetching)) {
     return (
       <div className="status-loading-wrapper margin-t-xl">
         <LoadingWrapper loadingText="Loading..." size={"md"} />
