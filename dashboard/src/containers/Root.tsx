@@ -10,9 +10,8 @@ import { IntlProvider } from "react-intl";
 import { Provider } from "react-redux";
 import I18n, { ISupportedLangs } from "shared/I18n";
 import store, { history } from "../store";
-// TODO(andresmgot): Containers should be no longer needed, replace them when possible
-import ConfigLoaderContainer from "./ConfigLoaderContainer";
-import AppRoutes from "./RoutesContainer/Routes";
+import Routes from "./RoutesContainer";
+import ConfigLoader from "components/ConfigLoader";
 
 async function initLocale() {
   const fullLang = (navigator.languages && navigator.languages[0]) || navigator.language;
@@ -35,17 +34,17 @@ function Root() {
         messages={i18nConfig.messages}
         defaultLocale="en"
       >
-        <ConfigLoaderContainer>
+        <ConfigLoader>
           <ConnectedRouter history={history}>
             <Suspense fallback={null}>
               <HeadManager>
                 <Layout headerComponent={Header}>
-                  <AppRoutes />
+                  <Routes />
                 </Layout>
               </HeadManager>
             </Suspense>
           </ConnectedRouter>
-        </ConfigLoaderContainer>
+        </ConfigLoader>
       </IntlProvider>
     </Provider>
   );
