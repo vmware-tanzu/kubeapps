@@ -4,8 +4,8 @@
 import { CdsControlMessage } from "@cds/react/forms";
 import { CdsInput } from "@cds/react/input";
 import { CdsRange } from "@cds/react/range";
-import Column from "components/js/Column";
-import Row from "components/js/Row";
+import Column from "components/Column";
+import Row from "components/Row";
 import { isEmpty, toNumber } from "lodash";
 import { useState } from "react";
 import { validateValuesSchema } from "shared/schema";

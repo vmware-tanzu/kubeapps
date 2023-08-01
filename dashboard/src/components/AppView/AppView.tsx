@@ -4,11 +4,11 @@
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import { handleErrorAction } from "actions/auth";
+import Column from "components/Column";
 import ErrorAlert from "components/ErrorAlert";
-import Alert from "components/js/Alert";
-import Column from "components/js/Column";
-import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader";
+import Row from "components/Row";
+import Alert from "components/js/Alert";
 import { push } from "connected-react-router";
 import {
   InstalledPackageReference,
@@ -31,10 +31,10 @@ import {
   IStoreState,
   NotFoundNetworkError,
 } from "shared/types";
+import * as url from "shared/url";
 import { getPluginsSupportingRollback } from "shared/utils";
-import { parseToString, parseToJS } from "shared/yamlUtils";
+import { parseToJS, parseToString } from "shared/yamlUtils";
 import ApplicationStatus from "../ApplicationStatus/ApplicationStatus";
-import * as url from "../../shared/url";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
 import DeleteButton from "./AppControls/DeleteButton/DeleteButton";

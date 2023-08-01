@@ -17,8 +17,8 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import Column from "components/js/Column";
-import Row from "components/js/Row";
+import Column from "components/Column";
+import Row from "components/Row";
 import LoadingWrapper from "components/LoadingWrapper";
 import { useState } from "react";
 import { IBasicFormParam } from "shared/types";

@@ -3,8 +3,8 @@
 
 import { CdsIcon } from "@cds/react/icon";
 import { CdsInput } from "@cds/react/input";
-import Column from "components/js/Column";
-import Row from "components/js/Row";
+import Column from "components/Column";
+import Row from "components/Row";
 import React from "react";
 
 export interface ISearchFilterProps {

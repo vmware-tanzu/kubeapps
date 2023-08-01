@@ -1,6 +1,7 @@
 // Copyright 2021-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { CustomComponent } from "RemoteComponent";
 import actions from "actions";
 import { push } from "connected-react-router";
 import {
@@ -9,10 +10,9 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { CustomComponent } from "RemoteComponent";
 import { IStoreState } from "shared/types";
+import * as urls from "shared/url";
 import { IAppViewResourceRefs } from "../AppView";
-import * as urls from "../../../shared/url";
 
 export interface ICustomAppViewProps {
   resourceRefs: IAppViewResourceRefs;

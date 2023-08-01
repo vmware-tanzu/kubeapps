@@ -5,8 +5,8 @@ import { CdsIcon } from "@cds/react/icon";
 import { InstalledPackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import placeholder from "icons/placeholder.svg";
 import { Tooltip } from "react-tooltip";
+import * as url from "shared/url";
 import { getAppStatusLabel, getPluginIcon, getPluginName } from "shared/utils";
-import * as url from "../../shared/url";
 import InfoCard from "../InfoCard/InfoCard";
 import "./AppListItem.css";
 
