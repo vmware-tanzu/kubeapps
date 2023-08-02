@@ -1,6 +1,7 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { CdsButton } from "@cds/react/button";
 import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import AlertGroup from "components/AlertGroup";
 import LoadingWrapper from "components/LoadingWrapper";
@@ -64,15 +65,13 @@ function ConfirmDialog({
                 {extraElem && <p>{extraElem}</p>}
               </CdsModalContent>
               <CdsModalActions>
-                {/* TODO(andresmgot): CdsButton "type" property doesn't work, so we need to use a normal <button>
-                  https://github.com/vmware/clarity/issues/5038
-                  */}
-                <button className="btn btn-info-outline" type="button" onClick={closeModal}>
+                <CdsButton type="button" onClick={closeModal} action="outline">
                   Cancel
-                </button>
-                <button className="btn btn-danger" type="submit" onClick={onConfirm}>
+                </CdsButton>
+
+                <CdsButton type="button" onClick={onConfirm} status="danger">
                   {confirmationButtonText || "Delete"}
-                </button>
+                </CdsButton>
               </CdsModalActions>
             </>
           )}
