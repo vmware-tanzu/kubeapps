@@ -4,11 +4,11 @@
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
-import Alert from "components/js/Alert";
 import Column from "components/Column";
-import Row from "components/Row";
 import LoadingWrapper from "components/LoadingWrapper";
+import Row from "components/Row";
 import { push } from "connected-react-router";
 import { AvailablePackageReference } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
@@ -101,7 +101,11 @@ export default function PackageView() {
   };
 
   if (selectedPackage.error) {
-    return <Alert theme="danger">Unable to fetch package: {selectedPackage.error.message}</Alert>;
+    return (
+      <AlertGroup status="danger">
+        Unable to fetch the package: {selectedPackage.error.message}.
+      </AlertGroup>
+    );
   }
   if (isFetching || !selectedPackage.availablePackageDetail || !selectedPackage.pkgVersion) {
     return <LoadingWrapper loaded={false} />;

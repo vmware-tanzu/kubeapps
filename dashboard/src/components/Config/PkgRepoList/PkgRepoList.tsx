@@ -5,10 +5,10 @@ import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import { CdsToggle, CdsToggleGroup } from "@cds/react/toggle";
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import { filterNames, filtersToQuery } from "components/Catalog/Catalog";
 import LoadingWrapper from "components/LoadingWrapper";
 import PageHeader from "components/PageHeader/PageHeader";
-import Alert from "components/js/Alert";
 import Table from "components/js/Table";
 import { push } from "connected-react-router";
 import {
@@ -29,7 +29,6 @@ import { PkgRepoAddButton } from "./PkgRepoButton";
 import { PkgRepoControl } from "./PkgRepoControl";
 import { PkgRepoDisabledControl } from "./PkgRepoDisabledControl";
 import "./PkgRepoList.css";
-
 function PkgRepoList() {
   const dispatch = useDispatch();
   const location = useLocation();
@@ -252,33 +251,35 @@ function PkgRepoList() {
       <div className="catalog-container">
         {!supportedCluster ? (
           <div className="page-content">
-            <Alert theme="warning">
-              <h5>Package Repositories can't be managed from this cluster.</h5>
-              <p>
-                Currently, the Package Repositories must be managed from the default cluster (the
-                one on which Kubeapps has been installed).
-              </p>
-              <p>
-                Any <i>global</i> Package Repository defined in the default cluster can be later
-                used across any target cluster.
-                <br />
-                However, <i>namespaced</i> Package Repositories can only be used on the default
-                cluster.
-              </p>
-            </Alert>
+            <AlertGroup status="warning" closable={false}>
+              Package Repositories can't be managed from this cluster.
+              <br />
+              <br />
+              Currently, the <b>
+                Package Repositories must be managed from the default cluster
+              </b>{" "}
+              (the one on which Kubeapps has been installed).
+              <br />
+              <br />
+              Any <i>global</i> Package Repository defined in the default cluster can be later used
+              across any target cluster.
+              <br />
+              However, <i>namespaced</i> Package Repositories can only be used on the default
+              cluster.
+            </AlertGroup>
             {getGlobalReposTable(globalRepos, true)}
           </div>
         ) : (
           <div className="page-content">
             {errors.fetch && (
-              <Alert theme="danger">
-                An error occurred while fetching repositories: {errors.fetch.message}
-              </Alert>
+              <AlertGroup status="danger">
+                An error occurred while fetching repositories: {errors.fetch.message}.
+              </AlertGroup>
             )}
             {errors.delete && (
-              <Alert theme="danger">
-                An error occurred while deleting the repository: {errors.delete.message}
-              </Alert>
+              <AlertGroup status="danger">
+                An error occurred while deleting the repository: {errors.delete.message}.
+              </AlertGroup>
             )}
             {!errors.fetch && (
               <>

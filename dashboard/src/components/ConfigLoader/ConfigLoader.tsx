@@ -1,7 +1,8 @@
 // Copyright 2019-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
+import Column from "components/Column";
 import LoadingWrapper, { ILoadingWrapperProps } from "components/LoadingWrapper/LoadingWrapper";
 import React from "react";
 import { useIntl } from "react-intl";
@@ -20,9 +21,11 @@ function ConfigLoader({ getConfig, error, ...otherProps }: IConfigLoaderProps) {
   return (
     <>
       {error ? (
-        <Alert theme="danger">
-          Unable to load {kubeappsTitle} configuration: {error?.message}
-        </Alert>
+        <Column>
+          <AlertGroup status="danger" closable={false}>
+            Unable to load the {kubeappsTitle} configuration: {error?.message}.
+          </AlertGroup>
+        </Column>
       ) : (
         <LoadingWrapper
           className="margin-t-xxl"

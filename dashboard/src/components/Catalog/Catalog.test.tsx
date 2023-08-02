@@ -4,10 +4,10 @@
 import { deepClone } from "@cds/core/internal";
 import { act } from "@testing-library/react";
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import InfoCard from "components/InfoCard/InfoCard";
 import LoadingWrapper from "components/LoadingWrapper";
-import Alert from "components/js/Alert";
 import {
   AvailablePackageReference,
   AvailablePackageSummary,
@@ -332,8 +332,8 @@ it("should render an error if it exists", () => {
     getStore({ ...populatedState, packages: packages } as IStoreState),
     <Catalog />,
   );
-  const error = wrapper.find(Alert);
-  expect(error.prop("theme")).toBe("danger");
+  const error = wrapper.find(AlertGroup);
+  expect(error.prop("status")).toBe("danger");
   expect(error).toIncludeText("Boom!");
 });
 

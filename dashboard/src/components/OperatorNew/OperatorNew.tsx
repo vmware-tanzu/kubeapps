@@ -3,11 +3,11 @@
 
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import Column from "components/Column";
 import LoadingWrapper from "components/LoadingWrapper";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import Row from "components/Row";
-import Alert from "components/js/Alert";
 import { push } from "connected-react-router";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -64,16 +64,16 @@ export default function OperatorNew() {
 
   if (errors.fetch) {
     return (
-      <Alert theme="danger">
-        An error occurred while fetching the operator {operatorName}: {errors.fetch.message}
-      </Alert>
+      <AlertGroup status="danger">
+        An error occurred while fetching the operator {operatorName}: {errors.fetch.message}.
+      </AlertGroup>
     );
   }
   if (errors.create) {
     return (
-      <Alert theme="danger">
-        An error occurred while creating the operator {operatorName}: {errors.create.message}
-      </Alert>
+      <AlertGroup status="danger">
+        An error occurred while creating the operator {operatorName}: {errors.create.message}.
+      </AlertGroup>
     );
   }
   if (isFetching || !operator) {
@@ -81,10 +81,10 @@ export default function OperatorNew() {
   }
   if (!updateChannel) {
     return (
-      <Alert theme="danger">
+      <AlertGroup status="danger">
         The Operator {operatorName} doesn't define a valid channel. This is needed to extract
         required info.
-      </Alert>
+      </AlertGroup>
     );
   }
   const { currentCSVDesc } = updateChannel;
@@ -144,9 +144,9 @@ export default function OperatorNew() {
           <Column span={9}>
             <form onSubmit={handleDeploy} className="kubeapps-form">
               {disableInstall && (
-                <Alert theme="danger">
-                  It's not possible to install a namespaced operator in the "operators" namespace
-                </Alert>
+                <AlertGroup status="danger">
+                  It's not possible to install a namespaced operator in the "operators" namespace.
+                </AlertGroup>
               )}
               <div className="clr-form-control">
                 <label className="clr-control-label">Update Channel</label>

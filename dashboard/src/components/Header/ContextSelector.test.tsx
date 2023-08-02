@@ -5,7 +5,7 @@ import { CdsButton } from "@cds/react/button";
 import { CdsModal } from "@cds/react/modal";
 import { act } from "@testing-library/react";
 import actions from "actions";
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
 import { createMemoryHistory } from "history";
 import { cloneDeep } from "lodash";
 import * as ReactRedux from "react-redux";
@@ -179,7 +179,7 @@ it("shows an error creating a namespace", () => {
   wrapper.update();
 
   // The error will be within the modal
-  expect(wrapper.find(CdsModal).find(Alert)).toExist();
+  expect(wrapper.find(CdsModal).find(AlertGroup)).toExist();
 });
 
 it("disables the create button if not allowed", () => {

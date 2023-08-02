@@ -1,7 +1,7 @@
 // Copyright 2020-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import { cloneDeep } from "lodash";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
@@ -54,7 +54,7 @@ it("shows an alert if the operator doesn't have a channel", () => {
     getStore({ operators: { operator: operatorWithoutChannel } } as Partial<IStoreState>),
     <OperatorSummary />,
   );
-  expect(wrapper.find(Alert)).toExist();
+  expect(wrapper.find(AlertGroup)).toExist();
 });
 
 it("doesn't fail with missing info", () => {

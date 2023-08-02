@@ -4,6 +4,7 @@
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import AppNotes from "components/AppView/AppNotes/AppNotes";
 import AppSecrets from "components/AppView/AppSecrets";
 import { IAppViewResourceRefs } from "components/AppView/AppView";
@@ -13,7 +14,6 @@ import { parseCSV } from "components/OperatorInstanceForm/OperatorInstanceForm";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
 import Row from "components/Row";
-import Alert from "components/js/Alert";
 import { push } from "connected-react-router";
 import placeholder from "icons/placeholder.svg";
 import { useEffect, useState } from "react";
@@ -173,9 +173,9 @@ function OperatorInstance() {
 
   if (errors.fetch) {
     return (
-      <Alert theme="danger">
-        An error occurred while fetching the instance: {errors.fetch.message}
-      </Alert>
+      <AlertGroup status="danger">
+        An error occurred while fetching the instance: {errors.fetch.message}.
+      </AlertGroup>
     );
   }
   const error = errors.delete || errors.update;
@@ -208,7 +208,7 @@ function OperatorInstance() {
           loadingText={`Fetching ${instanceName}...`}
           loaded={!isFetching}
         >
-          {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
+          {error && <AlertGroup status="danger">An error occurred: {error.message}.</AlertGroup>}
           {resource && (
             <Row>
               <Column span={3}>

@@ -3,11 +3,11 @@
 
 import { act } from "@testing-library/react";
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import DeploymentFormBody from "components/DeploymentForm/DeploymentFormBody";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import PackageHeader from "components/PackageHeader/PackageHeader";
 import PackageVersionSelector from "components/PackageHeader/PackageVersionSelector";
-import Alert from "components/js/Alert";
 import {
   AvailablePackageDetail,
   AvailablePackageReference,
@@ -349,8 +349,8 @@ describe("renders an error", () => {
         </Route>
       </MemoryRouter>,
     );
-    expect(wrapper.find(Alert).exists()).toBe(true);
-    expect(wrapper.find(Alert).first()).toIncludeText("wrong format!");
+    expect(wrapper.find(AlertGroup).exists()).toBe(true);
+    expect(wrapper.find(AlertGroup).first()).toIncludeText("wrong format!");
   });
 });
 

@@ -7,10 +7,10 @@ import { CdsIcon } from "@cds/react/icon";
 import { CdsInput } from "@cds/react/input";
 import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import Column from "components/Column";
 import Row from "components/Row";
 import useOutsideClick from "components/hooks/useOutsideClick";
-import Alert from "components/js/Alert";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router-dom";
@@ -179,7 +179,12 @@ function ContextSelector() {
               {newNSModalIsOpen && (
                 <CdsModal closable={true} onCloseChange={closeNewNSModal}>
                   <CdsModalHeader>Create a New Namespace</CdsModalHeader>
-                  {error && <Alert theme="danger">An error occurred: {error.error.message}</Alert>}
+                  {error && (
+                    <AlertGroup status="danger">
+                      An error occurred: {error.error.message}.
+                    </AlertGroup>
+                  )}
+
                   <form onSubmit={createNewNS}>
                     <CdsModalContent>
                       <CdsFormGroup>

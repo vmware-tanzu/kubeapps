@@ -4,11 +4,11 @@
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import Column from "components/Column";
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import LoadingWrapper from "components/LoadingWrapper";
 import Row from "components/Row";
-import Alert from "components/js/Alert";
 import { push } from "connected-react-router";
 import { flatten, get, intersection, isEqual, trimStart, uniq, without } from "lodash";
 import qs from "qs";
@@ -407,15 +407,14 @@ export default function Catalog() {
         }
       />
       {error && (
-        <Alert theme="danger">
-          An error occurred while fetching the catalog: {error.message}.{" "}
-          {!hasFinishedFetching && (
-            <CdsButton size="sm" action="flat" onClick={forceRetry} type="button">
-              {" "}
-              Try again{" "}
-            </CdsButton>
-          )}
-        </Alert>
+        <AlertGroup
+          status="danger"
+          alertActions={
+            !hasFinishedFetching ? <CdsButton onClick={forceRetry}>Try again</CdsButton> : <></>
+          }
+        >
+          An error occurred while fetching the catalog: {error.message}.
+        </AlertGroup>
       )}
       {isEqual(filters, initialFilterState()) &&
       hasFinishedFetching &&

@@ -5,8 +5,8 @@ import { CdsSelect } from "@cds/react/select";
 import { act } from "@testing-library/react";
 import actions from "actions";
 import { JSONSchemaType } from "ajv";
+import AlertGroup from "components/AlertGroup";
 import PackageHeader from "components/PackageHeader/PackageHeader";
-import Alert from "components/js/Alert";
 import {
   AvailablePackageDetail,
   AvailablePackageReference,
@@ -227,9 +227,11 @@ describe("renders an error", () => {
         </Route>
       </Router>,
     );
-    expect(wrapper.find(Alert)).toExist();
+    expect(wrapper.find(AlertGroup)).toExist();
     expect(
-      wrapper.find(Alert).findWhere(a => a.html().includes("An error occurred: wrong format!")),
+      wrapper
+        .find(AlertGroup)
+        .findWhere(a => a.html().includes("An error occurred: wrong format!")),
     ).toExist();
     expect(wrapper.find(PackageHeader)).toExist();
   });
@@ -246,11 +248,11 @@ describe("renders an error", () => {
         </Route>
       </Router>,
     );
-    expect(wrapper.find(Alert)).toExist();
+    expect(wrapper.find(AlertGroup)).toExist();
     expect(
       wrapper
-        .find(Alert)
-        .findWhere(a => a.html().includes("Unable to retrieve the current app: not found")),
+        .find(AlertGroup)
+        .findWhere(a => a.html().includes("Unable to retrieve the package: not found")),
     ).toExist();
     expect(wrapper.find(PackageHeader)).not.toExist();
   });

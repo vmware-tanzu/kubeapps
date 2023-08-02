@@ -5,7 +5,7 @@ import { Any } from "@bufbuild/protobuf";
 import { CdsButton } from "@cds/react/button";
 import { act, waitFor } from "@testing-library/react";
 import actions from "actions";
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
 import {
   DockerCredentials,
   OpaqueCredentials,
@@ -172,7 +172,7 @@ it("shows an error creating a repo", async () => {
     );
   });
   wrapper.update();
-  expect(wrapper.find(Alert)).toIncludeText("boom!");
+  expect(wrapper.find(AlertGroup)).toIncludeText("boom!");
 });
 
 it("shows an error deleting a repo", async () => {
@@ -188,7 +188,7 @@ it("shows an error deleting a repo", async () => {
     );
   });
   wrapper.update();
-  expect(wrapper.find(Alert)).toIncludeText("boom!");
+  expect(wrapper.find(AlertGroup)).toIncludeText("boom!");
 });
 
 it("shows an error fetching a repo", async () => {
@@ -204,7 +204,7 @@ it("shows an error fetching a repo", async () => {
     );
   });
   wrapper.update();
-  expect(wrapper.find(Alert)).toIncludeText("boom!");
+  expect(wrapper.find(AlertGroup)).toIncludeText("boom!");
 });
 
 it("shows an error updating a repo", async () => {
@@ -220,7 +220,7 @@ it("shows an error updating a repo", async () => {
     );
   });
   wrapper.update();
-  expect(wrapper.find(Alert)).toIncludeText("boom!");
+  expect(wrapper.find(AlertGroup)).toIncludeText("boom!");
 });
 
 it("disables unavailable plugins", async () => {

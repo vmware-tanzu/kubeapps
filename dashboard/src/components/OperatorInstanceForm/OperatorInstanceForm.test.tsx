@@ -5,7 +5,7 @@ import { act } from "@testing-library/react";
 import actions from "actions";
 import OperatorInstanceFormBody from "components/OperatorInstanceFormBody/OperatorInstanceFormBody";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
 import * as ReactRedux from "react-redux";
 import { MemoryRouter, Route } from "react-router-dom";
 import { IClustersState } from "reducers/cluster";
@@ -97,7 +97,7 @@ it("renders a fetch error", () => {
     } as Partial<IStoreState>),
     <OperatorInstanceForm />,
   );
-  expect(wrapper.find(Alert)).toIncludeText("Boom!");
+  expect(wrapper.find(AlertGroup)).toIncludeText("Boom!");
   expect(wrapper.find(OperatorHeader)).not.toExist();
 });
 
@@ -117,7 +117,7 @@ it("renders a create error", () => {
       </Route>
     </MemoryRouter>,
   );
-  expect(wrapper.find(Alert)).toIncludeText("Boom!");
+  expect(wrapper.find(AlertGroup)).toIncludeText("Boom!");
 });
 
 it("retrieves CSV when mounted", () => {
@@ -184,7 +184,7 @@ it("defaults to empty defaultValues if the examples annotation is not found", ()
 
 it("renders an error if the CRD is not populated", () => {
   const wrapper = mountWrapper(defaultStore, <OperatorInstanceForm />);
-  expect(wrapper.find(Alert)).toIncludeText("not found in the definition");
+  expect(wrapper.find(AlertGroup)).toIncludeText("not found in the definition");
 });
 
 it("should submit the form", () => {

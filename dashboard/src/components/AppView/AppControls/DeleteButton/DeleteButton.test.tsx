@@ -4,8 +4,8 @@
 import { CdsButton } from "@cds/react/button";
 import { act, waitFor } from "@testing-library/react";
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import ConfirmDialog from "components/ConfirmDialog";
-import Alert from "components/js/Alert";
 import {
   InstalledPackageReference,
   InstalledPackageStatus,
@@ -54,7 +54,7 @@ it("deletes an application", async () => {
   await act(async () => {
     await (
       wrapper
-        .find(".btn")
+        .find(CdsButton)
         .filterWhere(b => b.text() === "Delete")
         .prop("onClick") as any
     )();
@@ -73,7 +73,7 @@ it("renders an error", async () => {
   });
   wrapper.update();
 
-  expect(wrapper.find(Alert)).toIncludeText("Boom!");
+  expect(wrapper.find(AlertGroup)).toIncludeText("Boom!");
 });
 
 it("should render an enabled button and tooltip if when passing a pending status", async () => {

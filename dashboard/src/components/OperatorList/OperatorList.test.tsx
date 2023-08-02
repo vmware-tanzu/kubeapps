@@ -3,9 +3,9 @@
 
 import { act } from "@testing-library/react";
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import SearchFilter from "components/SearchFilter/SearchFilter";
-import Alert from "components/js/Alert";
 import * as ReactRedux from "react-redux";
 import { MemoryRouter, Route } from "react-router-dom";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
@@ -68,7 +68,7 @@ it("renders a LoadingWrapper if fetching", () => {
   const wrapper = mountWrapper(
     getStore({
       ...initialState,
-      operators: { ...initialState.operators, isFetcing: true },
+      operators: { ...initialState.operators, isFetching: true },
     } as Partial<IStoreState>),
     <OperatorList />,
   );
@@ -90,7 +90,7 @@ it("renders an error", () => {
     } as Partial<IStoreState>),
     <OperatorList />,
   );
-  const error = wrapper.find(Alert).filterWhere(a => a.prop("theme") === "danger");
+  const error = wrapper.find(AlertGroup).filterWhere(a => a.prop("status") === "danger");
   expect(error).toExist();
   expect(error).toIncludeText("Forbidden!");
 });

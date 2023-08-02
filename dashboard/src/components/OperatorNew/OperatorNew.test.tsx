@@ -3,14 +3,14 @@
 
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
 import * as ReactRedux from "react-redux";
+import { MemoryRouter, Route } from "react-router-dom";
+import { IClusterState } from "reducers/cluster";
+import { IOperatorsState } from "reducers/operators";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { IStoreState } from "shared/types";
 import OperatorNew from "./OperatorNew";
-import { IOperatorsState } from "reducers/operators";
-import { IClusterState } from "reducers/cluster";
-import { MemoryRouter, Route } from "react-router-dom";
 
 const defaultOperator = {
   metadata: {
@@ -95,7 +95,7 @@ it("renders a fetch error if present", () => {
     } as Partial<IStoreState>),
     <OperatorNew />,
   );
-  expect(wrapper.find(Alert)).toIncludeText("Boom");
+  expect(wrapper.find(AlertGroup)).toIncludeText("Boom");
 });
 
 it("renders a create error if present", () => {
@@ -105,7 +105,7 @@ it("renders a create error if present", () => {
     } as Partial<IStoreState>),
     <OperatorNew />,
   );
-  expect(wrapper.find(Alert)).toIncludeText("Boom");
+  expect(wrapper.find(AlertGroup)).toIncludeText("Boom");
 });
 
 it("shows an error if the operator doesn't have any channel defined", () => {
@@ -130,7 +130,7 @@ it("shows an error if the operator doesn't have any channel defined", () => {
     </MemoryRouter>,
   );
 
-  expect(wrapper.find(Alert)).toIncludeText(
+  expect(wrapper.find(AlertGroup)).toIncludeText(
     "Operator foo doesn't define a valid channel. This is needed to extract required info",
   );
 });
@@ -149,7 +149,7 @@ it("disables the submit button if the operators ns is selected", () => {
   } as Partial<IStoreState>);
   const wrapper = mountWrapper(store, <OperatorNew />);
   expect(wrapper.find(CdsButton)).toBeDisabled();
-  expect(wrapper.find(Alert)).toIncludeText(
+  expect(wrapper.find(AlertGroup)).toIncludeText(
     'It\'s not possible to install a namespaced operator in the "operators" namespace',
   );
 });

@@ -62,7 +62,7 @@ it("deletes the repo and refreshes list", async () => {
   );
   const confirmButton = wrapper
     .find(ConfirmDialog)
-    .find(".btn")
+    .find(CdsButton)
     .filterWhere(b => b.text() === "Delete");
   await act(async () => {
     await (confirmButton.prop("onClick") as any)();
@@ -96,7 +96,7 @@ it("show error message when package repository deletion fails ", async () => {
   );
   const confirmButton = wrapper
     .find(ConfirmDialog)
-    .find(".btn")
+    .find(CdsButton)
     .filterWhere(b => b.text() === "Delete");
   await act(async () => {
     await (confirmButton.prop("onClick") as any)();

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsIcon } from "@cds/react/icon";
+import AlertGroup from "components/AlertGroup";
 import LoadingWrapper from "components/LoadingWrapper";
-import Alert from "components/js/Alert";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import HeadingRenderer from "../MarkdownRenderer/HeadingRenderer";
@@ -27,7 +27,7 @@ function PackageReadme({ error, readme }: IPackageReadmeProps) {
         </div>
       );
     }
-    return <Alert theme="danger">Unable to fetch package README: {error}</Alert>;
+    return <AlertGroup status="danger">Unable to fetch the package's README: {error}.</AlertGroup>;
   }
   return (
     <LoadingWrapper

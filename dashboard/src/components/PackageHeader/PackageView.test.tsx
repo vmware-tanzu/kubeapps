@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import actions from "actions";
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
 import {
   AvailablePackageDetail,
   AvailablePackageReference,
@@ -376,7 +376,7 @@ describe("renders errors", () => {
         </Route>
       </Router>,
     );
-    expect(wrapper.find(Alert)).toExist();
-    expect(wrapper.find(Alert).text()).toContain("Unable to fetch package: Boom!");
+    expect(wrapper.find(AlertGroup)).toExist();
+    expect(wrapper.find(AlertGroup).text()).toContain("Unable to fetch the package: Boom!");
   });
 });

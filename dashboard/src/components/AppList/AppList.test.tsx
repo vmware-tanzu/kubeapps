@@ -4,6 +4,7 @@
 import { deepClone } from "@cds/core/internal";
 import { act } from "@testing-library/react";
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import LoadingWrapper from "components/LoadingWrapper";
 import SearchFilter from "components/SearchFilter/SearchFilter";
 import {
@@ -24,7 +25,6 @@ import { MemoryRouter } from "react-router-dom";
 import { Kube } from "shared/Kube";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IStoreState } from "shared/types";
-import Alert from "../js/Alert";
 import AppList from "./AppList";
 import AppListItem from "./AppListItem";
 import CustomResourceListItem from "./CustomResourceListItem";
@@ -211,8 +211,8 @@ context("when an error is present", () => {
 
   it("renders a generic error message", () => {
     const wrapper = mountWrapper(getStore(state), <AppList />);
-    expect(wrapper.find(Alert)).toExist();
-    expect(wrapper.find(Alert).html()).toContain("Boom!");
+    expect(wrapper.find(AlertGroup)).toExist();
+    expect(wrapper.find(AlertGroup).html()).toContain("Boom!");
   });
 
   it("renders a Application header (when error)", () => {

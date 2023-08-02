@@ -71,7 +71,7 @@
   display: flex;
   justify-content: flex-end;
 
-  cds-button {
+  cds-button.flat-btn {
     --color: var(--cds-global-color-gray-50, #fafafa);
 
     margin-top: 1em;

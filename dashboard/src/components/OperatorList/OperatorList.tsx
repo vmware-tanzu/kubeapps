@@ -4,12 +4,12 @@
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import { filtersToQuery } from "components/Catalog/Catalog";
 import Column from "components/Column";
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import LoadingWrapper from "components/LoadingWrapper";
 import Row from "components/Row";
-import Alert from "components/js/Alert";
 import { push } from "connected-react-router";
 import { flatten, get, intersection, uniq, without } from "lodash";
 import qs, { ParsedQs } from "qs";
@@ -210,19 +210,18 @@ export default function OperatorList() {
           />
         }
       />
-      <Alert theme="warning">
-        <div>
-          Operators integration is under heavy development and currently in beta state. If you find
-          an issue please report it{" "}
-          <a
-            target="_blank"
-            rel="noopener noreferrer"
-            href="https://github.com/vmware-tanzu/kubeapps/issues"
-          >
-            here.
-          </a>
-        </div>
-      </Alert>
+      <AlertGroup status="warning">
+        Operators integration is under heavy development and currently in beta state. If you find an
+        issue, please{" "}
+        <a
+          target="_blank"
+          rel="noopener noreferrer"
+          href="https://github.com/vmware-tanzu/kubeapps/issues/new"
+        >
+          report it here
+        </a>
+        .
+      </AlertGroup>
       <LoadingWrapper
         className="margin-t-xxl"
         loadingText="Fetching Operators..."
@@ -233,9 +232,9 @@ export default function OperatorList() {
         ) : (
           <>
             {error && (
-              <Alert theme="danger">
-                An error occurred while fetching Operators: {error.message}
-              </Alert>
+              <AlertGroup status="danger">
+                An error occurred while fetching Operators: {error.message}.
+              </AlertGroup>
             )}
             {operators.length === 0 ? (
               <div className="section-not-found">

@@ -3,8 +3,8 @@
 
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
+import AlertGroup from "components/AlertGroup";
 import ConfirmDialog from "components/ConfirmDialog";
-import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
 import Tabs from "components/Tabs";
 import { useEffect, useState } from "react";
@@ -83,7 +83,7 @@ function DeploymentFormBody({
   return (
     <>
       <form onSubmit={parseAndDeploy}>
-        {parseError && <Alert theme="danger">{parseError.message}</Alert>}
+        {parseError && <AlertGroup status="danger">{parseError.message}.</AlertGroup>}
         <ConfirmDialog
           modalIsOpen={modalIsOpen}
           loading={false}

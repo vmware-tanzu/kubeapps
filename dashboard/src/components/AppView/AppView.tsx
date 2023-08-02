@@ -4,12 +4,12 @@
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import { handleErrorAction } from "actions/auth";
+import AlertGroup from "components/AlertGroup";
 import Column from "components/Column";
 import ErrorAlert from "components/ErrorAlert";
 import LoadingWrapper from "components/LoadingWrapper";
 import PageHeader from "components/PageHeader/PageHeader";
 import Row from "components/Row";
-import Alert from "components/js/Alert";
 import { push } from "connected-react-router";
 import {
   InstalledPackageReference,
@@ -46,7 +46,6 @@ import AppValues from "./AppValues/AppValues";
 import CustomAppView from "./CustomAppView";
 import PackageInfo from "./PackageInfo/PackageInfo";
 import ResourceTabs from "./ResourceTabs";
-
 export interface IAppViewResourceRefs {
   deployments: ResourceRef[];
   statefulsets: ResourceRef[];
@@ -305,6 +304,7 @@ export default function AppView() {
       />
     );
   }
+
   return (
     <LoadingWrapper
       loaded={!isFetching}
@@ -313,12 +313,12 @@ export default function AppView() {
     >
       {!selectedInstalledPkg || !selectedInstalledPkg?.installedPackageRef ? (
         error ? (
-          <Alert theme="danger">
-            An error occurred while fetching the application: {error?.message}.{" "}
-            <CdsButton size="sm" action="flat" onClick={goToAppsView} type="button">
-              Go Back{" "}
-            </CdsButton>
-          </Alert>
+          <AlertGroup
+            status="danger"
+            alertActions={<CdsButton onClick={goToAppsView}>Go back</CdsButton>}
+          >
+            An error occurred while fetching the application: {error?.message}.
+          </AlertGroup>
         ) : (
           <></>
         )
@@ -351,15 +351,15 @@ export default function AppView() {
           />
           {error &&
             (error.constructor === FetchWarning ? (
-              <Alert theme="warning">
-                There is a problem with this package: {error["message"]}
-              </Alert>
+              <AlertGroup status="warning">
+                There is a problem with this package: {error["message"]}.
+              </AlertGroup>
             ) : error.constructor === DeleteError ? (
-              <Alert theme="danger">
-                Unable to delete the application. Received: {error["message"]}
-              </Alert>
+              <AlertGroup status="danger">
+                Unable to delete the application. Received: {error["message"]}.
+              </AlertGroup>
             ) : (
-              <Alert theme="danger">An error occurred: {error["message"]}</Alert>
+              <AlertGroup status="danger">An error occurred: {error["message"]}.</AlertGroup>
             ))}
           {!selectedInstalledPkg || !selectedInstalledPkg?.status ? (
             <LoadingWrapper loadingText={`Loading ${releaseName}...`} />

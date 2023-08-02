@@ -2,16 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import actions from "actions";
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
 import Column from "components/Column";
-import Row from "components/Row";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
+import Row from "components/Row";
 import { push } from "connected-react-router";
 import placeholder from "icons/placeholder.svg";
 import { get } from "lodash";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import {
@@ -23,7 +24,6 @@ import {
 import * as url from "shared/url";
 import { parseToString } from "shared/yamlUtils";
 import OperatorInstanceFormBody from "../OperatorInstanceFormBody/OperatorInstanceFormBody";
-import { useParams } from "react-router-dom";
 
 export function parseCSV(
   csv: IClusterServiceVersion,
@@ -101,9 +101,9 @@ export default function DeploymentFormBody() {
 
   if (!fetchError && !isFetching && !crd) {
     return (
-      <Alert theme="danger">
-        {crdName} not found in the definition of {csvName}
-      </Alert>
+      <AlertGroup status="danger">
+        The CRD "{crdName}" was not found in the definition of "{csvName}".
+      </AlertGroup>
     );
   }
 
@@ -139,9 +139,9 @@ export default function DeploymentFormBody() {
 
   if (fetchError) {
     return (
-      <Alert theme="danger">
-        An error occurred while fetching the ClusterServiceVersion: {fetchError.message}
-      </Alert>
+      <AlertGroup status="danger">
+        An error occurred while fetching the ClusterServiceVersion: {fetchError.message}.
+      </AlertGroup>
     );
   }
   return (
@@ -149,9 +149,9 @@ export default function DeploymentFormBody() {
       <OperatorHeader title={`Create ${crd?.kind}`} icon={icon} />
       <section>
         {createError && (
-          <Alert theme="danger">
-            An error occurred while creating the instance: {createError.message}
-          </Alert>
+          <AlertGroup status="danger">
+            An error occurred while creating the instance: {createError.message}.
+          </AlertGroup>
         )}
         <Row>
           <Column span={3}>

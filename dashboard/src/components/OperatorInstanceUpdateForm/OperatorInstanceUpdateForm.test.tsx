@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import actions from "actions";
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
 import OperatorInstanceFormBody from "components/OperatorInstanceFormBody/OperatorInstanceFormBody";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
 import * as ReactRedux from "react-redux";
+import { MemoryRouter, Route } from "react-router-dom";
+import { IClusterState } from "reducers/cluster";
+import { IOperatorsState } from "reducers/operators";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IStoreState } from "shared/types";
 import OperatorInstanceUpdateForm from "./OperatorInstanceUpdateForm";
-import { MemoryRouter, Route } from "react-router-dom";
-import { IOperatorsState } from "reducers/operators";
-import { IClusterState } from "reducers/cluster";
 
 const defaultResource = {
   kind: "Foo",
@@ -177,7 +177,7 @@ it("renders an error if the resource is not populated", () => {
       </Route>
     </MemoryRouter>,
   );
-  expect(wrapper.find(Alert)).toIncludeText("Resource my-foo not found");
+  expect(wrapper.find(AlertGroup)).toIncludeText("Resource my-foo not found");
 });
 
 it("renders only an error if the resource is not found", () => {
@@ -194,7 +194,7 @@ it("renders only an error if the resource is not found", () => {
     } as Partial<IStoreState>),
     <OperatorInstanceUpdateForm />,
   );
-  expect(wrapper.find(Alert)).toIncludeText("not found");
+  expect(wrapper.find(AlertGroup)).toIncludeText("not found");
   expect(wrapper.find(OperatorHeader)).not.toExist();
 });
 

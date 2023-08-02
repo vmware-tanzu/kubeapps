@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
+import AlertGroup from "components/AlertGroup";
 import LoadingWrapper from "components/LoadingWrapper";
-import Alert from "components/js/Alert";
 import { DeleteError, FetchWarning } from "shared/types";
 import "./ConfirmDialog.css";
 
@@ -39,15 +39,17 @@ function ConfirmDialog({
           {headerText && <CdsModalHeader>{headerText}</CdsModalHeader>}
           {error &&
             (error.constructor === FetchWarning ? (
-              <Alert theme="warning">
-                There is a problem with this package: {error["message"]}
-              </Alert>
+              <AlertGroup withMargin={false} status="warning">
+                There is a problem with this package: {error["message"]}.
+              </AlertGroup>
             ) : error.constructor === DeleteError ? (
-              <Alert theme="danger">
-                Unable to delete the application. Received: {error["message"]}
-              </Alert>
+              <AlertGroup withMargin={false} status="danger">
+                Unable to delete the application. Received: {error["message"]}.
+              </AlertGroup>
             ) : (
-              <Alert theme="danger">An error occurred: {error["message"]}</Alert>
+              <AlertGroup withMargin={false} status="danger">
+                An error occurred: {error["message"]}.
+              </AlertGroup>
             ))}
           {loading === true ? (
             <div className="center">

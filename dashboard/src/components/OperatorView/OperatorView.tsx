@@ -4,11 +4,11 @@
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import Column from "components/Column";
 import LoadingWrapper from "components/LoadingWrapper";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import Row from "components/Row";
-import Alert from "components/js/Alert";
 import { push } from "connected-react-router";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -57,9 +57,9 @@ export default function OperatorView() {
 
   if (error) {
     return (
-      <Alert theme="danger">
-        An error occurred while fetching the Operator {operatorName}: {error.message}
-      </Alert>
+      <AlertGroup status="danger">
+        An error occurred while fetching the Operator {operatorName}: {error.message}.
+      </AlertGroup>
     );
   }
   if (isFetching || !operator) {
@@ -68,10 +68,10 @@ export default function OperatorView() {
   const channel = Operators.getDefaultChannel(operator);
   if (!channel) {
     return (
-      <Alert theme="danger">
+      <AlertGroup status="danger">
         Operator {operatorName} doesn't define a valid channel. This is needed to extract required
         info.
-      </Alert>
+      </AlertGroup>
     );
   }
   const { currentCSVDesc } = channel;
