@@ -20,7 +20,7 @@ function ConfigLoader({ ...otherProps }: IConfigLoaderProps) {
   const intl = useIntl();
   React.useEffect(() => {
     dispatch(actions.config.getConfig());
-  });
+  }, [dispatch]);
   const kubeappsTitle = intl.formatMessage({ id: "Kubeapps", defaultMessage: "Kubeapps" });
 
   const {

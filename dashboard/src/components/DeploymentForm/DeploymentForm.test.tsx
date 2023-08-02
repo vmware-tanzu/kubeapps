@@ -15,7 +15,6 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { GetServiceAccountNamesResponse } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources_pb";
-import { createMemoryHistory } from "history";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -53,15 +52,16 @@ const defaultSelectedPkg = {
 const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.packageCluster}/${defaultProps.packageNamespace}/${defaultProps.pkgName}/versions/${defaultProps.version}`;
 const routePath =
   "/c/:cluster/ns/:namespace/apps/new/:pluginName/:pluginVersion/:packageCluster/:packageNamespace/:packageId/versions/:packageVersion";
-const history = createMemoryHistory({ initialEntries: [routePathParam] });
 
 let spyOnUseDispatch: jest.SpyInstance;
 let spyOnUseNavigate: jest.SpyInstance;
+let mockNavigate: jest.Func;
 
 beforeEach(() => {
-  const mockDispatch = jest.fn();
+  const mockDispatch = jest.fn().mockReturnValue(true);
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
-  spyOnUseNavigate = jest.spyOn(ReactRouter, "useNavigate").mockReturnValue(jest.fn());
+  mockNavigate = jest.fn();
+  spyOnUseNavigate = jest.spyOn(ReactRouter, "useNavigate").mockReturnValue(mockNavigate);
   // mock the window.matchMedia for selecting the theme
   Object.defineProperty(window, "matchMedia", {
     writable: true,
@@ -411,8 +411,8 @@ describe("renders an error", () => {
       {} as ReconciliationOptions,
     );
 
-    expect(history.location.pathname).toBe(
-      `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/my.plugin/0.0.1/${defaultProps.packageCluster}/${defaultProps.packageNamespace}/foo/versions/0.0.1`,
+    expect(navigate).toHaveBeenCalledWith(
+      `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/my.plugin/0.0.1/${defaultProps.releaseName}`,
     );
   });
 });
