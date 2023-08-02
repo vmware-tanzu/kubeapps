@@ -195,6 +195,9 @@ function ContextSelector() {
                       </CdsFormGroup>
                     </CdsModalContent>
                     <CdsModalActions>
+                      <CdsButton type="button" action="outline" onClick={closeNewNSModal}>
+                        Cancel
+                      </CdsButton>
                       <CdsButton type="submit">Submit</CdsButton>
                     </CdsModalActions>
                   </form>
