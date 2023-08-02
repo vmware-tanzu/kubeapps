@@ -33,7 +33,7 @@
     "@cds/city": "^1.1.0",
     "@cds/core": "^6.4.5",
     "@cds/react": "^6.4.5",
-    "@clr/ui": "^15.7.0",
+    "@clr/ui": "^15.8.0",
     "@paciolan/remote-component": "^2.13.0",
     "@tanstack/match-sorter-utils": "^8.7.6",
     "@tanstack/react-table": "^8.9.3",
@@ -71,7 +71,7 @@
     "remark-breaks": "^3.0.3",
     "remark-gfm": "^3.0.1",
     "rxjs": "^7.8.1",
-    "swagger-ui-react": "^5.2.0",
+    "swagger-ui-react": "^5.3.0",
     "typesafe-actions": "^5.1.0",
     "yaml": "^2.2.2"
   },
