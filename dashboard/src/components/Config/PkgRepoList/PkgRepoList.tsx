@@ -60,11 +60,11 @@ function PkgRepoList() {
     ) {
       // All Namespaces. Global namespace or other cluster, show global repos only
       dispatch(actions.repos.fetchRepoSummaries(""));
-      return () => { };
+      return () => {};
     }
     // In other case, fetch global and namespace repos
     dispatch(actions.repos.fetchRepoSummaries(namespace, true));
-    return () => { };
+    return () => {};
   }, [dispatch, supportedCluster, namespace, helmGlobalNamespace, carvelGlobalNamespace]);
 
   useEffect(() => {
@@ -75,7 +75,7 @@ function PkgRepoList() {
     if (supportedCluster) {
       dispatch(actions.repos.fetchReposPermissions(kubeappsCluster, namespace));
     }
-    return () => { };
+    return () => {};
   }, [dispatch, supportedCluster, kubeappsCluster, namespace]);
 
   useEffect(() => {

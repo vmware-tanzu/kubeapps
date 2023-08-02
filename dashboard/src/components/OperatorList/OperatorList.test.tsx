@@ -1,7 +1,7 @@
 // Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { act } from "@testing-library/react";
+import { act, screen } from "@testing-library/react";
 import actions from "actions";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import SearchFilter from "components/SearchFilter/SearchFilter";
@@ -21,7 +21,6 @@ import OLMNotFound from "./OLMNotFound";
 import OperatorItems from "./OperatorItems";
 import OperatorList, { filterNames } from "./OperatorList";
 import { Route, Routes } from "react-router-dom";
-import { screen } from "@testing-library/react";
 import "@testing-library/jest-dom/extend-expect";
 
 let spyOnUseDispatch: jest.SpyInstance;

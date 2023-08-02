@@ -3,7 +3,7 @@
 
 import { CdsButton } from "@cds/react/button";
 import { CdsModal } from "@cds/react/modal";
-import { act } from "@testing-library/react";
+import { act, screen } from "@testing-library/react";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import { cloneDeep } from "lodash";
@@ -19,7 +19,6 @@ import {
 } from "shared/specs/mountWrapper";
 import { IStoreState } from "shared/types";
 import ContextSelector from "./ContextSelector";
-import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 let spyOnUseDispatch: jest.SpyInstance;
