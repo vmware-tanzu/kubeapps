@@ -13,7 +13,7 @@ it("renders a loading wrapper", () => {
     getStore({
       config: {
         loaded: false,
-      }
+      },
     }),
     <ConfigLoader />,
   );
@@ -27,7 +27,7 @@ context("when there is an error", () => {
       getStore({
         config: {
           error: new Error("Wrong config!"),
-        }
+        },
       }),
       <ConfigLoader />,
     );

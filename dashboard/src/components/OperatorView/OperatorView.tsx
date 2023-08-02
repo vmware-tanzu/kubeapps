@@ -8,7 +8,7 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
-import { push } from "connected-react-router";
+import { usePush } from "hooks/push";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Operators } from "shared/Operators";
@@ -53,7 +53,8 @@ export default function OperatorView() {
     }
   }, [dispatch, operator, cluster, namespace]);
 
-  const redirect = () => dispatch(push(app.operators.new(cluster, namespace, operatorName || "")));
+  const push = usePush();
+  const redirect = () => push(app.operators.new(cluster, namespace, operatorName || ""));
 
   if (error) {
     return (

@@ -18,17 +18,14 @@ interface IConfigLoaderProps extends ILoadingWrapperProps {
 function ConfigLoader({ ...otherProps }: IConfigLoaderProps) {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const intl = useIntl();
-  const getConfig = () => { dispatch(actions.config.getConfig()) };
-  React.useEffect(() => getConfig(), [getConfig]);
+  React.useEffect(() => {
+    dispatch(actions.config.getConfig());
+  });
   const kubeappsTitle = intl.formatMessage({ id: "Kubeapps", defaultMessage: "Kubeapps" });
 
   const {
-    config: {
-      error,
-      loaded,
-    }
+    config: { error, loaded },
   } = useSelector((state: IStoreState) => state);
-
 
   return (
     <>

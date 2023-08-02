@@ -149,13 +149,13 @@ const populatedState = {
 
 let spyOnUseDispatch: jest.SpyInstance;
 let spyOnUseNavigate: jest.SpyInstance;
+let mockNavigate: jest.Func;
 
 beforeEach(() => {
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
-  spyOnUseNavigate = jest
-    .spyOn(ReactRouter, "useNavigate")
-    .mockReturnValue({ push: jest.fn() } as any);
+  mockNavigate = jest.fn();
+  spyOnUseNavigate = jest.spyOn(ReactRouter, "useNavigate").mockReturnValue(mockNavigate);
 });
 
 afterEach(() => {
@@ -397,13 +397,7 @@ describe("filters by the searched item", () => {
       (wrapper.find(SearchFilter).prop("onChange") as any)("bar");
     });
     wrapper.update();
-    expect(mockDispatch).toHaveBeenCalledWith({
-      payload: {
-        args: ["/c/default-cluster/ns/kubeapps/catalog?Search=bar"],
-        method: "push",
-      },
-      type: "@@router/CALL_HISTORY_METHOD",
-    });
+    expect(mockNavigate).toHaveBeenCalledWith("/c/default-cluster/ns/kubeapps/catalog?Search=bar");
   });
 });
 
@@ -455,13 +449,9 @@ describe("filters by application type", () => {
     input.simulate("change", { target: { value: "Packages", checked: true } });
 
     // It should have pushed with the filter
-    expect(mockDispatch).toHaveBeenCalledWith({
-      payload: {
-        args: ["/c/default-cluster/ns/kubeapps/catalog?Type=Packages"],
-        method: "push",
-      },
-      type: "@@router/CALL_HISTORY_METHOD",
-    });
+    expect(mockNavigate).toHaveBeenCalledWith(
+      "/c/default-cluster/ns/kubeapps/catalog?Type=Packages",
+    );
   });
 
   it("filters only operators", () => {
@@ -509,13 +499,9 @@ describe("filters by application type", () => {
     input.simulate("change", { target: { value: "Operators", checked: true } });
 
     // It should have pushed with the filter
-    expect(mockDispatch).toHaveBeenCalledWith({
-      payload: {
-        args: ["/c/default-cluster/ns/kubeapps/catalog?Type=Operators"],
-        method: "push",
-      },
-      type: "@@router/CALL_HISTORY_METHOD",
-    });
+    expect(mockNavigate).toHaveBeenCalledWith(
+      "/c/default-cluster/ns/kubeapps/catalog?Type=Operators",
+    );
   });
 });
 
@@ -782,13 +768,9 @@ describe("filters by package repository", () => {
     // It should have pushed with the filter and fetches global repos since
     // the "kubeapps" namespace isn't the global repos namespace.
     expect(fetchRepos).toHaveBeenCalledWith("kubeapps", true);
-    expect(mockDispatch).toHaveBeenCalledWith({
-      payload: {
-        args: ["/c/default-cluster/ns/kubeapps/catalog?Repository=foo"],
-        method: "push",
-      },
-      type: "@@router/CALL_HISTORY_METHOD",
-    });
+    expect(mockNavigate).toHaveBeenCalledWith(
+      "/c/default-cluster/ns/kubeapps/catalog?Repository=foo",
+    );
   });
 
   it("push filter for repo in other ns", () => {
@@ -813,13 +795,7 @@ describe("filters by package repository", () => {
 
     // It should have pushed with the filter
     expect(fetchRepos).toHaveBeenCalledWith("my-ns", true);
-    expect(mockDispatch).toHaveBeenCalledWith({
-      payload: {
-        args: ["/c/default-cluster/ns/my-ns/catalog?Repository=foo"],
-        method: "push",
-      },
-      type: "@@router/CALL_HISTORY_METHOD",
-    });
+    expect(mockNavigate).toHaveBeenCalledWith("/c/default-cluster/ns/my-ns/catalog?Repository=foo");
   });
 
   it("does not additionally fetch global repos when the global repo (helm plugin) is selected", () => {
@@ -909,13 +885,9 @@ describe("filters by operator provider", () => {
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "you");
     input.simulate("change", { target: { value: "you" } });
     // It should have pushed with the filter
-    expect(mockDispatch).toHaveBeenCalledWith({
-      payload: {
-        args: ["/c/default-cluster/ns/kubeapps/catalog?Provider=you"],
-        method: "push",
-      },
-      type: "@@router/CALL_HISTORY_METHOD",
-    });
+    expect(mockNavigate).toHaveBeenCalledWith(
+      "/c/default-cluster/ns/kubeapps/catalog?Provider=you",
+    );
   });
 
   it("push filter for operator provider with comma", () => {
@@ -934,13 +906,9 @@ describe("filters by operator provider", () => {
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "you");
     input.simulate("change", { target: { value: "you, inc" } });
     // It should have pushed with the filter
-    expect(mockDispatch).toHaveBeenCalledWith({
-      payload: {
-        args: ["/c/default-cluster/ns/kubeapps/catalog?Provider=you__%20inc"],
-        method: "push",
-      },
-      type: "@@router/CALL_HISTORY_METHOD",
-    });
+    expect(mockNavigate).toHaveBeenCalledWith(
+      "/c/default-cluster/ns/kubeapps/catalog?Provider=you__%20inc",
+    );
   });
 
   it("filters by operator provider", () => {
@@ -1007,14 +975,10 @@ describe("filters by category", () => {
     expect(wrapper.find(InfoCard)).toHaveLength(2);
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "Database");
     input.simulate("change", { target: { value: "Database" } });
-    // It should have pushed with the filter
-    expect(mockDispatch).toHaveBeenCalledWith({
-      payload: {
-        args: ["/c/default-cluster/ns/kubeapps/catalog?Category=Database"],
-        method: "push",
-      },
-      type: "@@router/CALL_HISTORY_METHOD",
-    });
+
+    expect(mockNavigate).toHaveBeenCalledWith(
+      "/c/default-cluster/ns/kubeapps/catalog?Category=Database",
+    );
   });
 
   it("filters a category", () => {

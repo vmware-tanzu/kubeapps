@@ -8,7 +8,7 @@ import FilterGroup from "components/FilterGroup/FilterGroup";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
-import { push } from "connected-react-router";
+import { usePush } from "hooks/push";
 import { flatten, get, intersection, isEqual, trimStart, uniq, without } from "lodash";
 import qs from "qs";
 import React, { useEffect } from "react";
@@ -203,8 +203,9 @@ export default function Catalog() {
     }
   }, [hasRequestedFirstPage, isFetching]);
 
+  const push = usePush();
   const pushFilters = (newFilters: any) => {
-    dispatch(push(app.catalog(cluster || "", namespace || "") + filtersToQuery(newFilters)));
+    push(app.catalog(cluster || "", namespace || "") + filtersToQuery(newFilters));
   };
   const addFilter = (type: string, value: string) => {
     pushFilters({

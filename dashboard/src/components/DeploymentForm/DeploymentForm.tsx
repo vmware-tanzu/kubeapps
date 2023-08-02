@@ -12,7 +12,7 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import LoadingWrapper from "components/LoadingWrapper";
 import PackageHeader from "components/PackageHeader/PackageHeader";
-import { push } from "connected-react-router";
+import { usePush } from "hooks/push";
 import {
   AvailablePackageReference,
   ReconciliationOptions,
@@ -125,6 +125,7 @@ export default function DeploymentForm() {
     setReleaseName(e.target.value);
   };
 
+  const push = usePush();
   const handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setDeploying(true);
@@ -143,30 +144,26 @@ export default function DeploymentForm() {
       );
       setDeploying(false);
       if (deployed) {
-        dispatch(
-          push(
-            // Redirect to the installed package, note that the cluster/ns are the ones passed
-            // in the URL, not the ones from the package.
-            url.app.apps.get({
-              context: { cluster: targetCluster, namespace: targetNamespace },
-              plugin: pluginObj,
-              identifier: releaseName,
-            } as AvailablePackageReference),
-          ),
+        push(
+          // Redirect to the installed package, note that the cluster/ns are the ones passed
+          // in the URL, not the ones from the package.
+          url.app.apps.get({
+            context: { cluster: targetCluster, namespace: targetNamespace },
+            plugin: pluginObj,
+            identifier: releaseName,
+          } as AvailablePackageReference),
         );
       }
     }
   };
 
   const selectVersion = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    dispatch(
-      push(
-        url.app.apps.new(
-          targetCluster || "",
-          targetNamespace || "",
-          packageReference,
-          e.currentTarget.value,
-        ),
+    push(
+      url.app.apps.new(
+        targetCluster || "",
+        targetNamespace || "",
+        packageReference,
+        e.currentTarget.value,
       ),
     );
   };

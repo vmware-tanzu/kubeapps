@@ -8,7 +8,7 @@ import Row from "components/js/Row";
 import { parseCSV } from "components/OperatorInstanceForm/OperatorInstanceForm";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
-import { push } from "connected-react-router";
+import { usePush } from "hooks/push";
 import placeholder from "icons/placeholder.svg";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -26,6 +26,7 @@ function OperatorInstanceUpdateForm() {
   const [currentValues, setCurrentValues] = useState("");
   const [crd, setCRD] = useState(undefined as IClusterServiceVersionCRD | undefined);
   const [icon, setIcon] = useState(placeholder);
+  const push = usePush();
 
   type IOperatorInstanceUpdateFormParams = {
     csv: string;
@@ -96,15 +97,13 @@ function OperatorInstanceUpdateForm() {
       ),
     );
     if (created) {
-      dispatch(
-        push(
-          url.app.operatorInstances.view(
-            cluster,
-            namespace,
-            csvName || "",
-            crdName || "",
-            resourceName || "",
-          ),
+      push(
+        url.app.operatorInstances.view(
+          cluster,
+          namespace,
+          csvName || "",
+          crdName || "",
+          resourceName || "",
         ),
       );
     }

@@ -4,12 +4,11 @@
 import Header from "components/Header";
 import HeadManager from "components/HeadManager/HeadManager";
 import Layout from "components/Layout";
-import { ConnectedRouter } from "connected-react-router";
 import { Suspense, useEffect, useState } from "react";
 import { IntlProvider } from "react-intl";
 import { Provider } from "react-redux";
 import I18n, { ISupportedLangs } from "shared/I18n";
-import store, { history } from "../store";
+import store from "../store";
 import Routes from "./RoutesContainer";
 import ConfigLoader from "components/ConfigLoader";
 
@@ -35,15 +34,13 @@ function Root() {
         defaultLocale="en"
       >
         <ConfigLoader>
-          <ConnectedRouter history={history}>
-            <Suspense fallback={null}>
-              <HeadManager>
-                <Layout headerComponent={Header}>
-                  <Routes />
-                </Layout>
-              </HeadManager>
-            </Suspense>
-          </ConnectedRouter>
+          <Suspense fallback={null}>
+            <HeadManager>
+              <Layout headerComponent={Header}>
+                <Routes />
+              </Layout>
+            </HeadManager>
+          </Suspense>
         </ConfigLoader>
       </IntlProvider>
     </Provider>

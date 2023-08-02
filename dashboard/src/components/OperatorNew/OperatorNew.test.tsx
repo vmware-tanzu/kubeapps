@@ -17,6 +17,7 @@ import { IOperatorsState } from "reducers/operators";
 import { IClusterState } from "reducers/cluster";
 import { Route, Routes } from "react-router-dom";
 import { screen } from "@testing-library/react";
+import { act } from "react-dom/test-utils";
 
 const defaultOperator = {
   metadata: {
@@ -212,8 +213,10 @@ it("deploys an operator", async () => {
   } as Partial<IStoreState>);
 
   const wrapper = mountWrapper(store, <OperatorNew />);
-  const onSubmit = wrapper.find("form").prop("onSubmit") as () => Promise<void>;
-  await onSubmit();
+  await act(async () => {
+    const onSubmit = wrapper.find("form").prop("onSubmit") as () => Promise<void>;
+    await onSubmit();
+  });
 
   expect(createOperator).toHaveBeenCalledWith(
     initialState.clusters.currentCluster,

@@ -9,7 +9,7 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import LoadingWrapper from "components/LoadingWrapper";
-import { push } from "connected-react-router";
+import { usePush } from "hooks/push";
 import { AvailablePackageReference } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { useEffect, useState } from "react";
@@ -75,17 +75,18 @@ export default function PackageView() {
   }, [dispatch, packageId, packageNamespace, packageCluster, pluginName, pluginVersion]);
 
   // Select version handler
+  const push = usePush();
   const selectVersion = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const versionRegex = /\/versions\/(.*)/;
     if (versionRegex.test(location.pathname)) {
       // If the current URL already has the version, replace it
-      dispatch(push(location.pathname.replace(versionRegex, `/versions/${event.target.value}`)));
+      push(location.pathname.replace(versionRegex, `/versions/${event.target.value}`));
     } else {
       // Otherwise, append the version
       const trimmedPath = location.pathname.endsWith("/")
         ? location.pathname.slice(0, -1)
         : location.pathname;
-      dispatch(push(trimmedPath.concat(`/versions/${event.target.value}`)));
+      push(trimmedPath.concat(`/versions/${event.target.value}`));
     }
   };
 

@@ -7,7 +7,7 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
-import { push } from "connected-react-router";
+import { usePush } from "hooks/push";
 import placeholder from "icons/placeholder.svg";
 import { get } from "lodash";
 import { useEffect, useState } from "react";
@@ -78,6 +78,7 @@ export default function DeploymentFormBody() {
     clusters: { currentCluster: cluster, clusters },
   } = useSelector((state: IStoreState) => state);
   const namespace = clusters[cluster].currentNamespace;
+  const push = usePush();
 
   type IDeploymentFormBodyParams = {
     csv: string;
@@ -123,15 +124,13 @@ export default function DeploymentFormBody() {
       ),
     );
     if (created) {
-      dispatch(
-        push(
-          url.app.operatorInstances.view(
-            cluster,
-            namespace,
-            csv.metadata.name,
-            crd.name,
-            resource.metadata.name,
-          ),
+      push(
+        url.app.operatorInstances.view(
+          cluster,
+          namespace,
+          csv.metadata.name,
+          crd.name,
+          resource.metadata.name,
         ),
       );
     }

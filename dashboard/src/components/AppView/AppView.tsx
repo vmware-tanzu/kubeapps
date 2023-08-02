@@ -9,7 +9,7 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader";
-import { push } from "connected-react-router";
+import { usePush } from "hooks/push";
 import {
   InstalledPackageReference,
   ResourceRef,
@@ -169,6 +169,7 @@ export default function AppView() {
     },
     config: { customAppViews },
   } = useSelector((state: IStoreState) => state);
+  const push = usePush();
 
   const [fetchError, setFetchError] = useState(error);
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
@@ -266,7 +267,7 @@ export default function AppView() {
   };
 
   const goToAppsView = () => {
-    dispatch(push(url.app.apps.list(cluster, namespace)));
+    push(url.app.apps.list(cluster, namespace));
   };
 
   if (fetchError) {

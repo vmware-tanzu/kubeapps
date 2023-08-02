@@ -9,7 +9,7 @@ import { filterNames, filtersToQuery } from "components/Catalog/Catalog";
 import PageHeader from "components/PageHeader/PageHeader";
 import Alert from "components/js/Alert";
 import Table from "components/js/Table";
-import { push } from "connected-react-router";
+import { usePush } from "hooks/push";
 import {
   PackageRepositoriesPermissions,
   PackageRepositoryReference,
@@ -60,11 +60,11 @@ function PkgRepoList() {
     ) {
       // All Namespaces. Global namespace or other cluster, show global repos only
       dispatch(actions.repos.fetchRepoSummaries(""));
-      return () => {};
+      return () => { };
     }
     // In other case, fetch global and namespace repos
     dispatch(actions.repos.fetchRepoSummaries(namespace, true));
-    return () => {};
+    return () => { };
   }, [dispatch, supportedCluster, namespace, helmGlobalNamespace, carvelGlobalNamespace]);
 
   useEffect(() => {
@@ -75,18 +75,19 @@ function PkgRepoList() {
     if (supportedCluster) {
       dispatch(actions.repos.fetchReposPermissions(kubeappsCluster, namespace));
     }
-    return () => {};
+    return () => { };
   }, [dispatch, supportedCluster, kubeappsCluster, namespace]);
 
   useEffect(() => {
     fecthPermissions();
   }, [fecthPermissions]);
 
+  const push = usePush();
   const submitFilters = (allns: boolean) => {
     if (allns) {
-      dispatch(push("?allns=yes"));
+      push("?allns=yes");
     } else {
-      dispatch(push("?allns=no"));
+      push("?allns=no");
     }
   };
   const toggleListAllNS = () => {

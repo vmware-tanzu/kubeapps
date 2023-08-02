@@ -1,7 +1,6 @@
 // Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { routerMiddleware } from "connected-react-router";
 import { createHashHistory } from "history";
 import { applyMiddleware, createStore } from "redux";
 import { composeWithDevTools } from "redux-devtools-extension";
@@ -12,13 +11,8 @@ import createRootReducer from "../reducers";
 export const history = createHashHistory();
 
 export default createStore(
-  createRootReducer(history), // add router state to reducer
-  composeWithDevTools(
-    applyMiddleware(
-      thunkMiddleware,
-      routerMiddleware(history), // // for dispatching history actions
-    ),
-  ),
+  createRootReducer(),
+  composeWithDevTools(applyMiddleware(thunkMiddleware)),
 );
 
 export type AppStore = ReturnType<typeof createStore>;

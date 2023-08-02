@@ -23,6 +23,7 @@ import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { cloneDeep } from "lodash";
 import * as ReactRedux from "react-redux";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import * as ReactRouter from "react-router";
 import PackagesService from "shared/PackagesService";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import {
@@ -115,6 +116,9 @@ const selectedPkg = {
 const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.releaseName}/upgrade`;
 const routePath = "/c/:cluster/ns/:namespace/apps/:pluginName/:pluginVersion/:releaseName/upgrade";
 
+let spyOnUseNavigate: jest.SpyInstance;
+let mockNavigate: jest.Func;
+
 beforeEach(() => {
   // mock the window.matchMedia for selecting the theme
   Object.defineProperty(window, "matchMedia", {
@@ -151,10 +155,14 @@ beforeEach(() => {
       clearRect: jest.fn(),
     })),
   });
+
+  mockNavigate = jest.fn();
+  spyOnUseNavigate = jest.spyOn(ReactRouter, "useNavigate").mockReturnValue(mockNavigate);
 });
 
 afterEach(() => {
   jest.restoreAllMocks();
+  spyOnUseNavigate.mockRestore();
 });
 
 describe("it behaves like a loading component", () => {
@@ -540,13 +548,9 @@ it("triggers an upgrade when submitting the form", async () => {
     appValues,
     schema,
   );
-  expect(mockDispatch).toHaveBeenCalledWith({
-    payload: {
-      args: [url.app.apps.get(installedPkgDetail.installedPackageRef!)],
-      method: "push",
-    },
-    type: "@@router/CALL_HISTORY_METHOD",
-  });
+  expect(mockNavigate).toHaveBeenCalledWith(
+    url.app.apps.get(installedPkgDetail.installedPackageRef!),
+  );
 });
 
 describe("when receiving new props", () => {

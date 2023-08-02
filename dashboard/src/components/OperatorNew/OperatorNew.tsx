@@ -7,7 +7,7 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
-import { push } from "connected-react-router";
+import { usePush } from "hooks/push";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
@@ -37,6 +37,7 @@ export default function OperatorNew() {
   };
   const params = useParams<OperatorNewParams>();
   const operatorName = params.operator || "";
+  const push = usePush();
 
   const {
     operators: {
@@ -125,7 +126,7 @@ export default function OperatorNew() {
     );
     if (deployed) {
       // Success, redirect to operator page
-      dispatch(push(app.operators.list(cluster, namespace)));
+      push(app.operators.list(cluster, namespace));
     }
   };
 

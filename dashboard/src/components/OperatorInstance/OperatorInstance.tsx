@@ -13,7 +13,7 @@ import Row from "components/js/Row";
 import { parseCSV } from "components/OperatorInstanceForm/OperatorInstanceForm";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
-import { push } from "connected-react-router";
+import { usePush } from "hooks/push";
 import placeholder from "icons/placeholder.svg";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -163,16 +163,15 @@ function OperatorInstance() {
     }
   }, [crd, resource, cluster, kinds, namespace]);
 
+  const push = usePush();
   const onUpdateClick = () =>
-    dispatch(
-      push(
-        app.operatorInstances.update(
-          cluster,
-          namespace,
-          csvName || "",
-          crdName || "",
-          instanceName || "",
-        ),
+    push(
+      app.operatorInstances.update(
+        cluster,
+        namespace,
+        csvName || "",
+        crdName || "",
+        instanceName || "",
       ),
     );
   const handleDeleteClick = async () => {
@@ -183,7 +182,7 @@ function OperatorInstance() {
     setDeleting(false);
     closeModal();
     if (deleted) {
-      dispatch(push(app.apps.list(cluster, namespace)));
+      push(app.apps.list(cluster, namespace));
     }
   };
 
