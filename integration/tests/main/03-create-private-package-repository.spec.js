@@ -113,9 +113,8 @@ test("Create a new private package repository successfully", async ({ page }) =>
     .nth(1)
     .click();
   await page.getByPlaceholder("Find").fill("tag: 2.4.48");
-  // Note the U+200C, which is a zero-width non-joiner, character instead of a space
   await expect(page.locator(".values-editor div.modified")).toContainText(
-    "tag:·‌2.4.48-debian-10-r75",
+    "tag: 2.4.48-debian-10-r75",
   );
 
   // Deploy upgrade

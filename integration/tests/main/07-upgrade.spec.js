@@ -53,8 +53,7 @@ test("Upgrades an application", async ({ page }) => {
     .nth(1)
     .click();
   await page.getByPlaceholder("Find").fill("replicaCount: ");
-  // Note the U+200C, which is a zero-width non-joiner, character instead of a space
-  await expect(page.locator(".values-editor div.modified")).toContainText("replicaCount:·‌2");
+  await expect(page.locator(".values-editor div.modified")).toContainText("replicaCount: 2");
 
   // Set release name
   const releaseNameLocator = page.locator("#releaseName");
