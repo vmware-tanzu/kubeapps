@@ -23,8 +23,8 @@ test("Deploys package with default values in main cluster", async ({ page }) => 
   await page.click('cds-button:has-text("Deploy") >> nth=0');
 
   // Deploy package
-  await page.waitForSelector('select[name="package-versions"]');
-  const versionSelector = await page.locator('select[name="package-versions"]');
+  const versionSelector = page.locator('select[name="package-versions"]');
+  await versionSelector.waitFor();
   await versionSelector?.selectOption("2.0.0");
   await expect(versionSelector).toHaveValue("2.0.0", { timeout: 5000 });
   const releaseNameLocator = page.locator("#releaseName");
@@ -46,5 +46,5 @@ test("Deploys package with default values in main cluster", async ({ page }) => 
 
   // Clean up
   await page.locator('cds-button:has-text("Delete")').click();
-  await page.locator('cds-modal-actions button:has-text("Delete")').click();
+  await page.locator('cds-modal-actions cds-button:has-text("Delete")').click();
 });

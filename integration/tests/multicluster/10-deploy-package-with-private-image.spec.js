@@ -96,5 +96,5 @@ test("Deploy a chart using a private container image", async ({ page }) => {
 
   // Clean up
   await page.locator('cds-button:has-text("Delete")').click();
-  await page.locator('cds-modal-actions button:has-text("Delete")').click();
+  await page.locator('cds-modal-actions cds-button:has-text("Delete")').click();
 });

@@ -49,7 +49,7 @@ test("Deploys an Operator", async ({ page }) => {
 
   // Delete
   await page.locator('cds-button:has-text("Delete")').click();
-  await page.locator('cds-modal-actions button:has-text("Delete")').click();
+  await page.locator('cds-modal-actions cds-button:has-text("Delete")').click();
 
   await page.waitForSelector('css=h1 >> text="Applications"');
 });
