@@ -578,30 +578,6 @@ describe("AppView actions", () => {
 
     expect(store.getActions()).toEqual([
       {
-        type: LOCATION_CHANGE,
-        payload: {
-          location: {
-            hash: "",
-            key: "default",
-            pathname: "/c/cluster-1/ns/default/apps/my.plugin/0.0.1/mr-sunshine",
-            search: "",
-            state: null,
-          },
-        },
-      },
-      {
-        type: LOCATION_CHANGE,
-        payload: {
-          location: {
-            hash: "",
-            key: "default",
-            pathname: "/c/cluster-1/ns/default/apps/my.plugin/0.0.1/mr-sunshine",
-            search: "",
-            state: null,
-          },
-        },
-      },
-      {
         type: getType(actions.installedpackages.requestInstalledPackage),
       },
       {
@@ -662,30 +638,6 @@ describe("AppView actions", () => {
 
     const watch = true;
     expect(store.getActions()).toEqual([
-      {
-        type: LOCATION_CHANGE,
-        payload: {
-          location: {
-            hash: "",
-            key: "default",
-            pathname: "/c/cluster-1/ns/default/apps/my.plugin/0.0.1/mr-sunshine",
-            search: "",
-            state: null,
-          },
-        },
-      },
-      {
-        type: LOCATION_CHANGE,
-        payload: {
-          location: {
-            hash: "",
-            key: "default",
-            pathname: "/c/cluster-1/ns/default/apps/my.plugin/0.0.1/mr-sunshine",
-            search: "",
-            state: null,
-          },
-        },
-      },
       {
         type: getType(actions.installedpackages.requestInstalledPackage),
       },
