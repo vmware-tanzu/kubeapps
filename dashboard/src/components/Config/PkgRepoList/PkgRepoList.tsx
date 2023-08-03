@@ -9,7 +9,7 @@ import AlertGroup from "components/AlertGroup";
 import { filterNames, filtersToQuery } from "components/Catalog/Catalog";
 import LoadingWrapper from "components/LoadingWrapper";
 import PageHeader from "components/PageHeader/PageHeader";
-import Table from "components/js/Table";
+import Table from "components/Table";
 import { push } from "connected-react-router";
 import {
   PackageRepositoriesPermissions,

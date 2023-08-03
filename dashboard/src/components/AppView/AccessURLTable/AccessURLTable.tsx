@@ -3,7 +3,7 @@
 
 import { CdsIcon } from "@cds/react/icon";
 import LoadingWrapper from "components/LoadingWrapper";
-import Table from "components/js/Table";
+import Table from "components/Table";
 import { filterByResourceRefs } from "containers/helpers";
 import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { get, some } from "lodash";
