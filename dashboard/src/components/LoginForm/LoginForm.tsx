@@ -34,22 +34,41 @@ function LoginForm() {
     auth: { authenticated, authenticating, authenticationError },
   } = useSelector((state: IStoreState) => state);
 
+  const oAuthEnabledAndConfigured = authProxyEnabled && oauthLoginURI !== "";
+
+  if (oAuthEnabledAndConfigured && authProxySkipLoginPage) {
+    // If the oauth login page should be skipped, simply redirect to the login URI.
+    window.location.replace(oauthLoginURI);
+  }
+
   useEffect(() => {
-    if (authProxyEnabled) {
+    if (oAuthEnabledAndConfigured) {
       dispatch(actions.auth.checkCookieAuthentication(cluster)).then(() => setCookieChecked(true));
     } else {
       setCookieChecked(true);
     }
-  }, [dispatch, authProxyEnabled, cluster]);
+  }, [dispatch, oAuthEnabledAndConfigured, cluster]);
 
   useEffect(() => {
     // In token auth, if not yet authenticated, if the token is passed in the query param,
     // use it straight away; if it fails, stop don't retry
-    if (!oauthLoginURI && !authenticated && !queryParamTokenAttempted && queryParamToken !== "") {
+    if (
+      !oAuthEnabledAndConfigured &&
+      !authenticated &&
+      !queryParamTokenAttempted &&
+      queryParamToken !== ""
+    ) {
       setQueryParamTokenAttempted(true);
       dispatch(actions.auth.authenticate(cluster, queryParamToken, false));
     }
-  }, [cluster, authenticated, dispatch, oauthLoginURI, queryParamToken, queryParamTokenAttempted]);
+  }, [
+    cluster,
+    authenticated,
+    dispatch,
+    oAuthEnabledAndConfigured,
+    queryParamToken,
+    queryParamTokenAttempted,
+  ]);
 
   if (authenticating || !cookieChecked) {
     return (
@@ -77,14 +96,10 @@ function LoginForm() {
     setToken(e.target.value);
   };
 
-  if (oauthLoginURI && authProxySkipLoginPage) {
-    // If the oauth login page should be skipped, simply redirect to the login URI.
-    window.location.replace(oauthLoginURI);
-  }
   return (
     <div className="login-wrapper">
       <form className="login clr-form" onSubmit={handleSubmit}>
-        {oauthLoginURI ? (
+        {oAuthEnabledAndConfigured ? (
           <OAuthLogin authenticationError={authenticationError} oauthLoginURI={oauthLoginURI} />
         ) : (
           <TokenLogin

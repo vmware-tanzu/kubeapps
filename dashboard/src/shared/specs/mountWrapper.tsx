@@ -1,7 +1,6 @@
 // Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { RouterState } from "connected-react-router";
 import { mount } from "enzyme";
 import { cloneDeep, merge } from "lodash";
 import { IntlProvider } from "react-intl";
@@ -39,6 +38,7 @@ export const initialState = {
     kubeappsNamespace: "kubeapps",
     helmGlobalNamespace: "kubeapps-repos-global",
     carvelGlobalNamespace: "kapp-controller-packaging-global",
+    oauthLoginURI: "/oauth/login",
   } as IStoreState["config"],
   kube: cloneDeep(kubeInitialState),
   clusters: {
@@ -59,7 +59,6 @@ export const initialState = {
   } as IStoreState["clusters"],
   repos: cloneDeep(reposInitialState),
   operators: cloneDeep(operatorsInitialState),
-  router: {} as RouterState,
 } as IStoreState;
 
 export const defaultStore = mockStore(initialState);
@@ -75,15 +74,26 @@ export const getStore = (extraState: object) => {
   return mockStore(merge(state, extraState));
 };
 
-export const mountWrapper = (store: MockStore, children: React.ReactElement) =>
-  mount(
+// Originally this helper always wrapped the children in a Router, but when upgrading to
+// react-router 6, many tests would fail as they also have a MemoryRouter (and react-router 6
+// does not allow routers within routers). Rather than rewrite all those tests using the newer
+// RTL/screen, an `include_router` option has been added here so the existing tests can run
+// with only minor changes.
+export const mountWrapper = (
+  store: MockStore,
+  children: React.ReactElement,
+  includeRouter = true,
+) => {
+  const childrenNode = includeRouter ? <Router>{children}</Router> : children;
+  return mount(
     <Provider store={store}>
       <IntlProvider locale={locale} key={locale} messages={messages} defaultLocale={locale}>
-        <Router>{children}</Router>
+        {childrenNode}
       </IntlProvider>
       ,
     </Provider>,
   );
+};
 
 // Things have moved on for testing to utilise the React Testing Library (RTL)
 // so that the redux documentation now recommends the following setup, which
@@ -95,6 +105,7 @@ export const mountWrapper = (store: MockStore, children: React.ReactElement) =>
 interface ExtendedRenderOptions extends Omit<RenderOptions, "queries"> {
   preloadedState?: PreloadedState<DefaultRootState>;
   store?: AppStore;
+  initialEntries?: Array<string>;
 }
 
 export function renderWithProviders(
@@ -103,13 +114,16 @@ export function renderWithProviders(
     preloadedState = {},
     // Automatically create a store instance if no store was passed in
     store = configureStore({ reducer: reducers, preloadedState }),
+    initialEntries = ["/"],
     ...renderOptions
   }: ExtendedRenderOptions = {},
 ) {
   function Wrapper({ children }: PropsWithChildren<{}>): JSX.Element {
     return (
-      <MemoryRouter>
-        <Provider store={store}>{children}</Provider>
+      <MemoryRouter initialEntries={initialEntries}>
+        <Provider store={store}>
+          <IntlProvider locale="en">{children}</IntlProvider>
+        </Provider>
       </MemoryRouter>
     );
   }
