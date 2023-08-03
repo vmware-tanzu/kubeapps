@@ -1,7 +1,7 @@
 // Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { ActionType, deprecated } from "typesafe-actions";
 import { useNavigate, useLocation, Location } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -28,8 +28,15 @@ export function usePush() {
   const location = useLocation();
   const dispatch = useDispatch();
 
+  // We avoid triggering a location change on the first render of the hook.
+  const firstRun = useRef(true);
+
   useEffect(() => {
-    dispatch(locationChange({ location }));
+    if (!firstRun.current) {
+      dispatch(locationChange({ location }));
+    } else {
+      firstRun.current = false;
+    }
   }, [dispatch, location]);
 
   return (url: string) => {

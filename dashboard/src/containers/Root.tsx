@@ -11,7 +11,7 @@ import I18n, { ISupportedLangs } from "shared/I18n";
 import store from "../store";
 import Routes from "./RoutesContainer";
 import ConfigLoader from "components/ConfigLoader";
-import { BrowserRouter } from "react-router-dom";
+import { HashRouter } from "react-router-dom";
 
 async function initLocale() {
   const fullLang = (navigator.languages && navigator.languages[0]) || navigator.language;
@@ -35,7 +35,7 @@ function Root() {
         defaultLocale="en"
       >
         <ConfigLoader>
-          <BrowserRouter>
+          <HashRouter>
             <Suspense fallback={null}>
               <HeadManager>
                 <Layout headerComponent={Header}>
@@ -43,7 +43,7 @@ function Root() {
                 </Layout>
               </HeadManager>
             </Suspense>
-          </BrowserRouter>
+          </HashRouter>
         </ConfigLoader>
       </IntlProvider>
     </Provider>
