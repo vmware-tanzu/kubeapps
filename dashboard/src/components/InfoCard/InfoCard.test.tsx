@@ -7,22 +7,6 @@ import { Link } from "react-router-dom";
 import CardBlock from "./Card/CardBlock";
 import InfoCard from "./InfoCard";
 
-// it("should render a Card", () => {
-//   const wrapper = shallow(
-//     <InfoCard
-//       title="foo"
-//       info="foobar"
-//       link="/a/link/somewhere"
-//       icon="an-icon.png"
-//       tag1Class="blue"
-//       tag1Content="database"
-//       tag2Class="red"
-//       tag2Content="running"
-//     />,
-//   );
-//   expect(wrapper).toMatchSnapshot();
-// });
-
 it("should generate a stub link if it's not provided", () => {
   const wrapper = shallow(
     <InfoCard
