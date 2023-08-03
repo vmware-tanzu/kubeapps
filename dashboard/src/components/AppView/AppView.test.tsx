@@ -46,7 +46,6 @@ import AppView from "./AppView";
 import CustomAppView from "./CustomAppView";
 import PackageInfo from "./PackageInfo/PackageInfo";
 import ResourceTabs from "./ResourceTabs";
-import { LOCATION_CHANGE } from "hooks/push";
 
 const routeParams = {
   cluster: "cluster-1",
