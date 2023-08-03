@@ -1,12 +1,11 @@
-// Copyright 2018-2022 the Kubeapps contributors.
+// Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsIcon } from "@cds/react/icon";
+import { CdsInput } from "@cds/react/input";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import React from "react";
-import Input from "../js/Input";
-import "./SearchFilter.css";
 
 export interface ISearchFilterProps {
   value: string;
@@ -43,16 +42,18 @@ function SearchFilter(props: ISearchFilterProps) {
             <CdsIcon size="sm" shape="search" />
           </Column>
           <Column span={10}>
-            <Input
-              id="search"
-              name="search"
-              type="text"
-              placeholder={props.placeholder}
-              autoComplete="off"
-              onChange={handleChange}
-              value={value}
-              {...Input.defaultProps}
-            />
+            <CdsInput aria-label="Search box">
+              <input
+                aria-label="Search box"
+                id="search"
+                name="search"
+                type="text"
+                placeholder={props.placeholder}
+                autoComplete="off"
+                onChange={handleChange}
+                value={value}
+              />
+            </CdsInput>
           </Column>
         </Row>
       </form>

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
-import { waitFor } from "@testing-library/react";
+import { act, waitFor } from "@testing-library/react";
 import actions from "actions";
 import ConfirmDialog from "components/ConfirmDialog";
 import Alert from "components/js/Alert";
@@ -11,7 +11,6 @@ import {
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
-import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { Tooltip } from "react-tooltip";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";

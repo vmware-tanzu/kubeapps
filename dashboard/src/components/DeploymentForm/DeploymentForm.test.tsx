@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsSelect } from "@cds/react/select";
+import { act } from "@testing-library/react";
 import actions from "actions";
 import { JSONSchemaType } from "ajv";
-import Alert from "components/js/Alert";
 import PackageHeader from "components/PackageHeader/PackageHeader";
+import Alert from "components/js/Alert";
 import {
   AvailablePackageDetail,
   AvailablePackageReference,
@@ -15,7 +16,6 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { GetServiceAccountNamesResponse } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources_pb";
 import { createMemoryHistory } from "history";
-import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
 import { MemoryRouter, Route, Router } from "react-router-dom";

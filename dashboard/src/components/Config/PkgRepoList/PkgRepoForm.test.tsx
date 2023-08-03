@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Any } from "@bufbuild/protobuf";
-// import { Any } from "gen/google/protobuf/any";
 import { CdsButton } from "@cds/react/button";
-import { waitFor } from "@testing-library/react";
+import { act, waitFor } from "@testing-library/react";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import {
@@ -25,7 +24,6 @@ import {
   HelmPackageRepositoryCustomDetail,
   RepositoryFilterRule,
 } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
-import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { IPackageRepositoryState } from "reducers/repos";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";

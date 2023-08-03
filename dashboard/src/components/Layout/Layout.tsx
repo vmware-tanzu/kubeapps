@@ -1,10 +1,11 @@
-// Copyright 2018-2022 the Kubeapps contributors.
+// Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import actions from "actions";
+import { CdsButton } from "@cds/react/button";
 import AlertGroup from "components/AlertGroup";
 import Header from "components/Header";
-import ErrorBoundaryContainer from "containers/ErrorBoundaryContainer";
+import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
@@ -12,6 +13,7 @@ import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
 import Clarity from "./Clarity";
 import "./Layout.css";
+import Alert from "components/js/Alert";
 
 function Layout({ children }: any) {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
@@ -31,6 +33,17 @@ function Layout({ children }: any) {
     }
   }, [dispatch, authenticated, operators, clusters.currentCluster]);
 
+  function fallbackRender({ error }: FallbackProps) {
+    return (
+      <Alert theme="danger">
+        An error occurred: {error.message}.{" "}
+        <CdsButton size="sm" action="flat" onClick={logout} type="button">
+          Log out
+        </CdsButton>
+      </Alert>
+    );
+  }
+
   return (
     <section className="layout">
       <Clarity />
@@ -38,7 +51,7 @@ function Layout({ children }: any) {
       <main>
         <div className="container kubeapps-main-container">
           <div className="content-area">
-            <ErrorBoundaryContainer logout={logout}>
+            <ErrorBoundary fallbackRender={fallbackRender}>
               {kindsError && (
                 <div className="margin-t-sm">
                   <AlertGroup status="warning" closable={true} size="sm">
@@ -47,7 +60,7 @@ function Layout({ children }: any) {
                 </div>
               )}
               {children}
-            </ErrorBoundaryContainer>
+            </ErrorBoundary>
           </div>
         </div>
       </main>

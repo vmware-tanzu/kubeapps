@@ -1,42 +1,78 @@
 // Copyright 2019-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { mount, shallow } from "enzyme";
+import { act } from "@testing-library/react";
 import {
   InstalledPackageDetail,
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
+  ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import { has } from "lodash";
 import { Tooltip } from "react-tooltip";
-import { IK8sList, IKubeItem, IResource } from "shared/types";
+import { initialKinds } from "reducers/kube";
+import { keyForResourceRef } from "shared/ResourceRef";
+import { getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { IK8sList, IKubeItem, IKubeState, IResource } from "shared/types";
 import ApplicationStatus from "./ApplicationStatus";
 
 const defaultProps = {
-  deployments: [],
-  statefulsets: [],
-  daemonsets: [],
+  deployRefs: [],
+  statefulsetRefs: [],
+  daemonsetRefs: [],
 };
 
 it("renders a loading status", () => {
   const deployments = [
     {
-      isFetching: true,
-    },
+      apiVersion: "v1",
+      kind: "Deployment",
+      namespace: "foo",
+      name: "deployment-1",
+    } as ResourceRef,
   ];
-  const wrapper = shallow(<ApplicationStatus {...defaultProps} deployments={deployments} />);
+  const store = getStore({
+    kube: {
+      items: {
+        "v1/Deployment/foo/deployment-1": {
+          isFetching: true,
+        },
+      },
+      kinds: initialKinds,
+    },
+  });
+  const wrapper = mountWrapper(
+    store,
+    <ApplicationStatus {...defaultProps} deployRefs={deployments} />,
+  );
+
   expect(wrapper.text()).toContain("Loading");
 });
 
 it("renders a deleting status", () => {
   const deployments = [
     {
-      isFetching: false,
-    },
+      apiVersion: "v1",
+      kind: "Deployment",
+      namespace: "foo",
+      name: "deployment-1",
+    } as ResourceRef,
   ];
-  const wrapper = shallow(
+  const store = getStore({
+    kube: {
+      items: {
+        "v1/Deployment/foo/deployment-1": {
+          isFetching: false,
+        },
+      },
+      kinds: initialKinds,
+    },
+  });
+  const wrapper = mountWrapper(
+    store,
     <ApplicationStatus
       {...defaultProps}
-      deployments={deployments}
+      deployRefs={deployments}
       info={
         {
           status: {
@@ -48,19 +84,34 @@ it("renders a deleting status", () => {
       }
     />,
   );
+
   expect(wrapper.text()).toContain("Deleted");
 });
 
 it("renders a failed status", () => {
   const deployments = [
     {
-      isFetching: false,
-    },
+      apiVersion: "v1",
+      kind: "Deployment",
+      namespace: "foo",
+      name: "deployment-1",
+    } as ResourceRef,
   ];
-  const wrapper = shallow(
+  const store = getStore({
+    kube: {
+      items: {
+        "v1/Deployment/foo/deployment-1": {
+          isFetching: false,
+        },
+      },
+      kinds: initialKinds,
+    },
+  });
+  const wrapper = mountWrapper(
+    store,
     <ApplicationStatus
       {...defaultProps}
-      deployments={deployments}
+      deployRefs={deployments}
       info={
         {
           status: {
@@ -72,6 +123,7 @@ it("renders a failed status", () => {
       }
     />,
   );
+
   expect(wrapper.text()).toContain("Failed");
 });
 
@@ -319,56 +371,120 @@ describe("isFetching", () => {
       infoReason: InstalledPackageStatus_StatusReason.PENDING,
     },
   ];
+
+  const getRefsAndStateForTest = (
+    resources: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>,
+    kind: string,
+  ) => {
+    const resourceRefs: ResourceRef[] = [];
+    const kubeItems: IKubeState["items"] = {};
+    resources.forEach(r => {
+      const item = r.item;
+      if (Array.isArray((item as IK8sList<IResource, {}>).items)) {
+        (item as IK8sList<IResource, {}>).items.forEach(i => {
+          const ref = new ResourceRef({
+            apiVersion: "v1",
+            kind: kind,
+            namespace: "foo",
+            name: i.metadata.name,
+          });
+          resourceRefs.push(ref);
+          kubeItems[keyForResourceRef(ref)] = r;
+        });
+      } else {
+        const ref = new ResourceRef({
+          apiVersion: "v1",
+          kind: kind,
+          namespace: "foo",
+          name: (item as IResource).metadata.name,
+        });
+        resourceRefs.push(ref);
+        kubeItems[keyForResourceRef(ref)] = r;
+      }
+    });
+    return { resourceRefs, kubeItems };
+  };
+
   tests.forEach(t => {
     it(t.title, () => {
-      const wrapper = mount(<ApplicationStatus {...defaultProps} />);
-      wrapper.setProps({
-        deployments: t.deployments,
-        statefulsets: t.statefulsets,
-        daemonsets: t.daemonsets,
-        info: {
-          status: {
-            reason: t.infoReason,
-          } as InstalledPackageStatus,
-        } as InstalledPackageDetail,
+      // Calculate resource refs from input.
+      const { resourceRefs: deployRefs, kubeItems: kubeItemsDeploys } = getRefsAndStateForTest(
+        t.deployments,
+        "Deployment",
+      );
+      const { resourceRefs: daemonsetRefs, kubeItems: kubeItemsDaemonSets } =
+        getRefsAndStateForTest(t.daemonsets, "Daemonset");
+      const { resourceRefs: statefulsetRefs, kubeItems: kubeItemsStatefulSets } =
+        getRefsAndStateForTest(t.statefulsets, "Statefulset");
+
+      const kubeState: IKubeState = {
+        items: { ...kubeItemsDeploys, ...kubeItemsDaemonSets, ...kubeItemsStatefulSets },
+        kinds: initialKinds,
+      };
+
+      const store = getStore({
+        kube: kubeState,
       });
-      wrapper.update();
-      // const getItem = (i?: IResource | IK8sList<IResource, {}>): IResource => {
-      //   return has(i, "items") ? (i as IK8sList<IResource, {}>).items[0] : (i as IResource);
-      // };
+
+      const info = {
+        status: {
+          reason: t.infoReason,
+        } as InstalledPackageStatus,
+      } as InstalledPackageDetail;
+      const wrapper = mountWrapper(
+        store,
+        <ApplicationStatus
+          {...defaultProps}
+          deployRefs={deployRefs}
+          daemonsetRefs={daemonsetRefs}
+          statefulsetRefs={statefulsetRefs}
+          info={info}
+        />,
+      );
+
       if (!t.deployments.length && !t.statefulsets.length && !t.daemonsets.length) {
         expect(wrapper.text()).toContain("No Workload Found");
         return;
       }
       expect(wrapper.text()).toContain(t.deployed ? "Ready" : "Not Ready");
 
-      // TODO(agamez) the tooltip does not appear in the DOM,
-      // even with a manual mouseover event.
-      // see https://github.com/ReactTooltip/react-tooltip/issues/1058
-      // and https://github.com/ReactTooltip/react-tooltip/pull/932/
-      // we would need to add waitFor, but this is also causing issues
-      // for now, I'm relaxing the actual checks on the text
+      // Cloning the tooltip with the isOpen prop set to true,
+      // this way we can later test the tooltip content
+      act(() => {
+        wrapper.setProps({
+          children: (
+            <Tooltip {...wrapper.find(Tooltip).props()} isOpen={true}>
+              {wrapper.find(Tooltip).prop("children")}
+            </Tooltip>
+          ),
+        });
+      });
+      wrapper.update();
 
       expect(wrapper.find(Tooltip)).toExist();
 
-      // t.deployments.forEach(d => {
-      //   const item = getItem(d.item);
-      //   expect(wrapper.find(Tooltip)).toIncludeText(
-      //     `<td>${item.metadata.name}</td><td>${item.status.availableReplicas}/${item.spec.replicas}</td>`,
-      //   );
-      // });
-      // t.statefulsets.forEach(d => {
-      //   const item = getItem(d.item);
-      //   expect(wrapper.find(Tooltip)).toIncludeText(
-      //     `<td>${item.metadata.name}</td><td>${item.status.readyReplicas}/${item.spec.replicas}</td>`,
-      //   );
-      // });
-      // t.daemonsets.forEach(d => {
-      //   const item = getItem(d.item);
-      //   expect(wrapper.find(Tooltip)).toIncludeText(
-      //     `<td>${item.metadata.name}</td><td>${item.status.numberReady}/${item.status.currentNumberScheduled}</td>`,
-      //   );
-      // });
+      t.deployments.forEach(d => {
+        const item = getItem(d.item);
+        expect(wrapper.find(Tooltip).html()).toContain(
+          `<td>${item.metadata.name}</td><td>${item.status.availableReplicas}/${item.spec.replicas}</td>`,
+        );
+      });
+      t.statefulsets.forEach(d => {
+        const item = getItem(d.item);
+        expect(wrapper.find(Tooltip).html()).toContain(
+          `<td>${item.metadata.name}</td><td>${item.status.readyReplicas}/${item.spec.replicas}</td>`,
+        );
+      });
+      t.daemonsets.forEach(d => {
+        const item = getItem(d.item);
+        expect(wrapper.find(Tooltip).html()).toContain(
+          `<td>${item.metadata.name}</td><td>${item.status.numberReady}/${item.status.currentNumberScheduled}</td>`,
+        );
+      });
     });
   });
 });
+
+function getItem(i?: IResource | IK8sList<IResource, {}>): IResource {
+  return has(i, "items") ? (i as IK8sList<IResource, {}>).items[0] : (i as IResource);
+}

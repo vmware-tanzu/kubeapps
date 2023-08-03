@@ -2,25 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
+import { act } from "@testing-library/react";
 import actions from "actions";
 import AccessURLTable from "components/AppView/AccessURLTable/AccessURLTable";
 import AppNotes from "components/AppView/AppNotes/AppNotes";
 import AppSecrets from "components/AppView/AppSecrets";
 import AppValues from "components/AppView/AppValues/AppValues";
 import ResourceTabs from "components/AppView/ResourceTabs";
+import ApplicationStatus from "components/ApplicationStatus/ApplicationStatus";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
-import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
-import ApplicationStatusContainer from "containers/ApplicationStatusContainer";
-import { act } from "react-dom/test-utils";
+import Alert from "components/js/Alert";
 import * as ReactRedux from "react-redux";
+import { MemoryRouter, Route } from "react-router-dom";
+import { IClusterState } from "reducers/cluster";
+import { IOperatorsState } from "reducers/operators";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IStoreState } from "shared/types";
 import OperatorInstance from "./OperatorInstance";
-import { IOperatorsState } from "reducers/operators";
-import { IClusterState } from "reducers/cluster";
-import { MemoryRouter, Route } from "react-router-dom";
 
 const defaultCSV = {
   metadata: { name: "foo" },
@@ -190,7 +190,7 @@ it("renders all the subcomponents", () => {
     getStore({ operators: { csv: defaultCSV, resource } } as Partial<IStoreState>),
     <OperatorInstance />,
   );
-  expect(wrapper.find(ApplicationStatusContainer)).toExist();
+  expect(wrapper.find(ApplicationStatus)).toExist();
   expect(wrapper.find(AccessURLTable)).toExist();
   expect(wrapper.find(AppSecrets)).toExist();
   expect(wrapper.find(AppNotes)).toExist();

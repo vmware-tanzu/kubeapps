@@ -1,13 +1,13 @@
-// Copyright 2020-2022 the Kubeapps contributors.
+// Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
 import { CdsModal } from "@cds/react/modal";
+import { act } from "@testing-library/react";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import { createMemoryHistory } from "history";
 import { cloneDeep } from "lodash";
-import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
 import { Router } from "react-router-dom";

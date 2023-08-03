@@ -4,9 +4,9 @@
 import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import { CdsModal } from "@cds/react/modal";
+import { act } from "@testing-library/react";
 import actions from "actions";
 import { PackageRepositoryReference } from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
-import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IPkgRepoAddButtonProps, PkgRepoAddButton } from "./PkgRepoButton";

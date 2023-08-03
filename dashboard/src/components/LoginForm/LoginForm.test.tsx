@@ -1,9 +1,9 @@
 // Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { act } from "@testing-library/react";
 import actions from "actions";
 import LoadingWrapper from "components/LoadingWrapper";
-import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { MemoryRouter, Redirect } from "react-router-dom";
 import { IConfigState } from "reducers/config";
@@ -174,8 +174,14 @@ describe("oauth login form", () => {
       ...defaultStore,
       config: {
         oauthLoginURI: "/sign/in",
+        authProxyEnabled: true,
       } as IConfigState,
     };
+    const checkCookieAuthentication = jest.fn().mockReturnValue({
+      then: jest.fn(() => false),
+      catch: jest.fn(() => false),
+    });
+    actions.auth.checkCookieAuthentication = checkCookieAuthentication;
     const wrapper = mountWrapper(getStore(state), <LoginForm />);
 
     expect(wrapper.find("input#token").exists()).toBe(false);
@@ -206,6 +212,7 @@ describe("oauth login form", () => {
       ...defaultStore,
       config: {
         authProxyEnabled: true,
+        oauthLoginURI: "/sign/in",
       } as IConfigState,
     };
     const checkCookieAuthentication = jest.fn().mockReturnValue({
@@ -232,9 +239,18 @@ describe("oauth login form", () => {
       config: {
         authProxySkipLoginPage: true,
         oauthLoginURI: "/sign/in",
+        authProxyEnabled: true,
       },
     };
-    mountWrapper(getStore(state), <LoginForm />);
+    const checkCookieAuthentication = jest.fn().mockReturnValue({
+      then: jest.fn(() => true),
+      catch: jest.fn(() => true),
+    });
+    actions.auth.checkCookieAuthentication = checkCookieAuthentication;
+
+    act(() => {
+      mountWrapper(getStore(state), <LoginForm />);
+    });
     expect(window.location.replace).toHaveBeenCalledWith("/sign/in");
   });
 });

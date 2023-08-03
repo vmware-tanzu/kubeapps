@@ -1,11 +1,11 @@
-// Copyright 2020-2022 the Kubeapps contributors.
+// Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
+import { act } from "@testing-library/react";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
-import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
-import { act } from "react-dom/test-utils";
+import Alert from "components/js/Alert";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import OperatorAdvancedDeploymentForm from "./OperatorAdvancedDeploymentForm/OperatorAdvancedDeploymentForm";
 import OperatorInstanceFormBody, { IOperatorInstanceFormProps } from "./OperatorInstanceFormBody";
