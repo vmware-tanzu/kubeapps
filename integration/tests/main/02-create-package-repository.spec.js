@@ -1,4 +1,4 @@
-// Copyright 2022 the Kubeapps contributors.
+// Copyright 2022-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 const { test, expect } = require("@playwright/test");
@@ -37,5 +37,5 @@ test("Create a new package repository successfully", async ({ page }) => {
   await page.locator("text=Package Repositories").click();
   await expect(page).not.toContain("text=Fetching Package Repositories...");
   await page.locator("#delete-repo-my-repo div").click();
-  await page.locator('button:has-text("Delete")').click();
+  await page.locator('cds-button:has-text("Delete")').click();
 });
