@@ -16,7 +16,7 @@ const Card = ({ children, clickable, htmlTag, onClick }) => {
     onClick,
   };
 
-  // Make the card focuseable by keyboard navigation. I'm not adding it based on the
+  // Make the card focusable by keyboard navigation. I'm not adding it based on the
   // clickable prop because I assume there's something around the card that manages
   // the onClick event.
   if (typeof onClick === "function") {
