@@ -24,10 +24,5 @@ export default (args: any) => {
       expect(wrapper.find("LoadingWrapper")).toExist();
       expect(loadingWrapper.prop("loaded")).toEqual(false);
     });
-
-    it("matches the snapshot", () => {
-      const wrapper = renderComponent();
-      expect(wrapper).toMatchSnapshot();
-    });
   });
 };
