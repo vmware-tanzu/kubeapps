@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { shallow } from "enzyme";
-import React from "react";
 import Table from ".";
+import { ITableColumnProps } from "./Table";
 import TableRow from "./components/TableRow";
 
-const columns = [
+const columns: ITableColumnProps[] = [
   {
     accessor: "uuid",
     Header: "UUID",
@@ -39,7 +39,7 @@ describe(Table, () => {
       .find("thead tr")
       .children()
       .forEach((th, i) => {
-        expect(th).toHaveText(columns[i].title);
+        expect(th).toHaveText(columns[i].Header);
       });
   });
 
@@ -54,7 +54,10 @@ describe(Table, () => {
       .children()
       .forEach((tr, rowIter) => {
         tr.children().forEach((td, colIter) => {
-          expect(td).toHaveText(rows[rowIter][columns[colIter].key]);
+          const row = rows[rowIter];
+          const columnAccessor = columns[colIter].accessor;
+          const expectedValue = row[columnAccessor as keyof typeof row];
+          expect(td).toHaveText(expectedValue);
         });
       });
   });
