@@ -60,8 +60,7 @@ function Header() {
                   <NavLink
                     key={path}
                     to={path}
-                    activeClassName="active"
-                    className="nav-link nav-text"
+                    className={({ isActive }) => "nav-link nav-text" + (isActive ? " active" : "")}
                   >
                     {title}
                   </NavLink>

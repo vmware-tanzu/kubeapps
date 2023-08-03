@@ -9,30 +9,19 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import LoadingWrapper from "components/LoadingWrapper";
-import { push } from "connected-react-router";
+import { usePush } from "hooks/push";
 import { AvailablePackageReference } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router-dom";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
 import { app } from "shared/url";
 import PackageHeader from "./PackageHeader";
 import PackageReadme from "./PackageReadme";
-
-interface IRouteParams {
-  cluster: string;
-  namespace: string;
-  pluginName: string;
-  pluginVersion: string;
-  packageCluster: string;
-  packageNamespace: string;
-  packageId: string;
-  packageVersion?: string;
-}
 
 export default function PackageView() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
@@ -46,7 +35,7 @@ export default function PackageView() {
     packageCluster,
     packageNamespace,
     packageVersion,
-  } = ReactRouter.useParams() as IRouteParams;
+  } = ReactRouter.useParams();
   const {
     packages: { isFetching, selected: selectedPackage },
     config: { skipAvailablePackageDetails },
@@ -86,17 +75,18 @@ export default function PackageView() {
   }, [dispatch, packageId, packageNamespace, packageCluster, pluginName, pluginVersion]);
 
   // Select version handler
+  const push = usePush();
   const selectVersion = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const versionRegex = /\/versions\/(.*)/;
     if (versionRegex.test(location.pathname)) {
       // If the current URL already has the version, replace it
-      dispatch(push(location.pathname.replace(versionRegex, `/versions/${event.target.value}`)));
+      push(location.pathname.replace(versionRegex, `/versions/${event.target.value}`));
     } else {
       // Otherwise, append the version
       const trimmedPath = location.pathname.endsWith("/")
         ? location.pathname.slice(0, -1)
         : location.pathname;
-      dispatch(push(trimmedPath.concat(`/versions/${event.target.value}`)));
+      push(trimmedPath.concat(`/versions/${event.target.value}`));
     }
   };
 
@@ -109,10 +99,10 @@ export default function PackageView() {
   // If the skipAvailablePackageDetails option is enabled, redirect to deployment form
   if (skipAvailablePackageDetails) {
     return (
-      <ReactRouter.Redirect
+      <Navigate
         to={app.apps.new(
-          targetCluster,
-          targetNamespace,
+          targetCluster || "",
+          targetNamespace || "",
           packageReference,
           selectedPackage.pkgVersion,
         )}
@@ -129,9 +119,9 @@ export default function PackageView() {
           deployButton={
             <Link
               to={app.apps.new(
-                targetCluster,
-                targetNamespace,
-                packageReference,
+                targetCluster || "",
+                targetNamespace || "",
+                packageReference || "",
                 selectedPackage.pkgVersion,
               )}
             >
@@ -154,9 +144,9 @@ export default function PackageView() {
             <div className="after-readme-button">
               <Link
                 to={app.apps.new(
-                  targetCluster,
-                  targetNamespace,
-                  packageReference,
+                  targetCluster || "",
+                  targetNamespace || "",
+                  packageReference || "",
                   selectedPackage.pkgVersion,
                 )}
               >

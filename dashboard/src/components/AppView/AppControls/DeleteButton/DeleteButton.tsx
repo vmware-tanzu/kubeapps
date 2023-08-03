@@ -4,7 +4,7 @@
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
-import { push } from "connected-react-router";
+import { usePush } from "hooks/push";
 import {
   InstalledPackageReference,
   InstalledPackageStatus,
@@ -33,6 +33,7 @@ export default function DeleteButton({
   const [deleting, setDeleting] = useState(false);
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const error = useSelector((state: IStoreState) => state.apps.error);
+  const push = usePush();
 
   const openModal = () => setModal(true);
   const closeModal = () => setModal(false);
@@ -43,13 +44,8 @@ export default function DeleteButton({
     );
     setDeleting(false);
     if (deleted) {
-      dispatch(
-        push(
-          app.apps.list(
-            installedPackageRef.context?.cluster,
-            installedPackageRef.context?.namespace,
-          ),
-        ),
+      push(
+        app.apps.list(installedPackageRef.context?.cluster, installedPackageRef.context?.namespace),
       );
     }
   };

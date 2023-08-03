@@ -626,7 +626,6 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *connect
 		Namespace: release.Namespace,
 		// For OCI charts, the name is *not* just the chart name from the release,
 		// but includes the repo and project: `test-oci/kubeapps%2Fsimplechart`
-		// UPTOHERE: Investigate what happened in kubeops when this last worked perhaps?
 		ChartName:  release.Chart.Metadata.Name,
 		Version:    release.Chart.Metadata.Version,
 		AppVersion: release.Chart.Metadata.AppVersion,

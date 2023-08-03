@@ -4,15 +4,14 @@
 import Header from "components/Header";
 import HeadManager from "components/HeadManager/HeadManager";
 import Layout from "components/Layout";
-import { ConnectedRouter } from "connected-react-router";
 import { Suspense, useEffect, useState } from "react";
 import { IntlProvider } from "react-intl";
 import { Provider } from "react-redux";
 import I18n, { ISupportedLangs } from "shared/I18n";
-import store, { history } from "../store";
-// TODO(andresmgot): Containers should be no longer needed, replace them when possible
-import ConfigLoaderContainer from "./ConfigLoaderContainer";
+import store from "../store";
 import Routes from "./RoutesContainer";
+import ConfigLoader from "components/ConfigLoader";
+import { HashRouter } from "react-router-dom";
 
 async function initLocale() {
   const fullLang = (navigator.languages && navigator.languages[0]) || navigator.language;
@@ -35,8 +34,8 @@ function Root() {
         messages={i18nConfig.messages}
         defaultLocale="en"
       >
-        <ConfigLoaderContainer>
-          <ConnectedRouter history={history}>
+        <ConfigLoader>
+          <HashRouter>
             <Suspense fallback={null}>
               <HeadManager>
                 <Layout headerComponent={Header}>
@@ -44,8 +43,8 @@ function Root() {
                 </Layout>
               </HeadManager>
             </Suspense>
-          </ConnectedRouter>
-        </ConfigLoaderContainer>
+          </HashRouter>
+        </ConfigLoader>
       </IntlProvider>
     </Provider>
   );

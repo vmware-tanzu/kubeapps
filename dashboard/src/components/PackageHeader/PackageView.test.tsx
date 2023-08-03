@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import actions from "actions";
-import Alert from "components/js/Alert";
 import {
   AvailablePackageDetail,
   AvailablePackageReference,
@@ -11,15 +10,14 @@ import {
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
-import { createMemoryHistory } from "history";
 import * as ReactRedux from "react-redux";
-import { Route, Router } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import { IConfigState } from "reducers/config";
-import { getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { getStore, renderWithProviders } from "shared/specs/mountWrapper";
 import { IPackageState, IStoreState } from "../../shared/types";
-import AvailablePackageMaintainers from "./AvailablePackageMaintainers";
-import PackageReadme from "./PackageReadme";
 import PackageView from "./PackageView";
+import { screen } from "@testing-library/react";
+import "@testing-library/jest-dom/extend-expect";
 
 const defaultProps = {
   packageID: "testrepo/test",
@@ -115,19 +113,20 @@ afterEach(() => {
 const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/packages/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.cluster}/${defaultProps.packageNamespace}/${defaultProps.id}`;
 const routePath =
   "/c/:cluster/ns/:namespace/packages/:pluginName/:pluginVersion/:packageCluster/:packageNamespace/:packageId";
-const history = createMemoryHistory({ initialEntries: [routePathParam] });
 
 it("triggers the fetchAvailablePackageVersions when mounting", () => {
   const spy = jest.fn();
   actions.availablepackages.fetchAvailablePackageVersions = spy;
-  mountWrapper(
-    getStore(defaultState),
-    <Router history={history}>
-      <Route path={routePath}>
-        <PackageView />
-      </Route>
-    </Router>,
+  renderWithProviders(
+    <Routes>
+      <Route path={routePath} element={<PackageView />} />
+    </Routes>,
+    {
+      store: getStore(defaultState),
+      initialEntries: [routePathParam],
+    },
   );
+
   expect(spy).toHaveBeenCalledWith({
     context: { cluster: defaultProps.cluster, namespace: defaultProps.packageNamespace },
     identifier: defaultProps.id,
@@ -139,14 +138,16 @@ describe("when receiving new props", () => {
   it("finds and selects the package version when version changes", () => {
     const spy = jest.fn();
     actions.availablepackages.fetchAndSelectAvailablePackageDetail = spy;
-    mountWrapper(
-      getStore(defaultState),
-      <Router history={history}>
-        <Route path={routePath}>
-          <PackageView />
-        </Route>
-      </Router>,
+    renderWithProviders(
+      <Routes>
+        <Route path={routePath} element={<PackageView />} />
+      </Routes>,
+      {
+        store: getStore(defaultState),
+        initialEntries: [routePathParam],
+      },
     );
+
     expect(spy).toHaveBeenCalledWith(
       {
         context: { cluster: defaultProps.cluster, namespace: defaultProps.packageNamespace },
@@ -159,146 +160,167 @@ describe("when receiving new props", () => {
 });
 
 it("behaves as a loading component when fetching is false but no package is available", () => {
-  const wrapper = mountWrapper(
-    getStore({
-      ...defaultState,
-      packages: { ...defaultPackageState, selected: {}, isFetching: false },
-    } as IStoreState),
-    <Router history={history}>
-      <Route path={routePath}>
-        <PackageView />
-      </Route>
-    </Router>,
+  const store = getStore({
+    ...defaultState,
+    packages: { ...defaultPackageState, selected: {}, isFetching: false },
+  } as IStoreState);
+  renderWithProviders(
+    <Routes>
+      <Route path={routePath} element={<PackageView />} />
+    </Routes>,
+    {
+      store,
+      initialEntries: [routePathParam],
+    },
   );
-  expect(wrapper.find("LoadingWrapper")).toExist();
+
+  expect(screen.getByLabelText("Loading")).toBeInTheDocument();
 });
 
 it("behaves as a loading component when fetching is true and the package is available", () => {
-  const wrapper = mountWrapper(
-    getStore({
-      ...defaultState,
-      packages: { ...defaultPackageState, isFetching: false },
-    } as IStoreState),
-    <Router history={history}>
-      <Route path={routePath}>
-        <PackageView />
-      </Route>
-    </Router>,
+  const store = getStore({
+    ...defaultState,
+    packages: { ...defaultPackageState, isFetching: true },
+  } as IStoreState);
+  renderWithProviders(
+    <Routes>
+      <Route path={routePath} element={<PackageView />} />
+    </Routes>,
+    {
+      store,
+      initialEntries: [routePathParam],
+    },
   );
-  expect(wrapper.find("LoadingWrapper")).toExist();
+
+  expect(screen.getByLabelText("Loading")).toBeInTheDocument();
 });
 
 it("does not render the app version, home and sources sections if not set", () => {
-  const wrapper = mountWrapper(
-    getStore({
-      ...defaultState,
-      packages: {
-        ...defaultPackageState,
-        selected: { availablePackageDetail: undefined },
-      },
-    } as IStoreState),
-    <Router history={history}>
-      <Route path={routePath}>
-        <PackageView />
-      </Route>
-    </Router>,
+  const store = getStore({
+    ...defaultState,
+    packages: {
+      ...defaultPackageState,
+      selected: { availablePackageDetail: undefined },
+    },
+  } as IStoreState);
+  renderWithProviders(
+    <Routes>
+      <Route path={routePath} element={<PackageView />} />
+    </Routes>,
+    {
+      store,
+      initialEntries: [routePathParam],
+    },
   );
 
-  expect(wrapper.contains("App Version")).toBe(false);
-  expect(wrapper.contains("Home")).toBe(false);
-  expect(wrapper.contains("Related")).toBe(false);
-  expect(wrapper.contains("Maintainers")).toBe(false);
+  expect(screen.queryByText("App Version")).not.toBeInTheDocument();
+  expect(screen.queryByText("Home")).not.toBeInTheDocument();
+  expect(screen.queryByText("Related")).not.toBeInTheDocument();
+  expect(screen.queryByText("Maintainers")).not.toBeInTheDocument();
 });
 
 it("renders the app version when set", () => {
-  const wrapper = mountWrapper(
-    getStore(defaultState),
-    <Router history={history}>
-      <Route path={routePath}>
-        <PackageView />
-      </Route>
-    </Router>,
+  renderWithProviders(
+    <Routes>
+      <Route path={routePath} element={<PackageView />} />
+    </Routes>,
+    {
+      store: getStore(defaultState),
+      initialEntries: [routePathParam],
+    },
   );
-  expect(wrapper.contains("App Version")).toBe(true);
-  expect(wrapper.contains(<div>{testVersion.appVersion}</div>)).toBe(true);
+
+  expect(screen.getByText("App Version")).toBeInTheDocument();
+  expect(screen.getByText(testVersion.appVersion)).toBeInTheDocument();
 });
 
 it("renders the home link when set", () => {
-  const wrapper = mountWrapper(
-    getStore(defaultState),
-    <Router history={history}>
-      <Route path={routePath}>
-        <PackageView />
-      </Route>
-    </Router>,
+  const store = getStore(defaultState);
+  renderWithProviders(
+    <Routes>
+      <Route path={routePath} element={<PackageView />} />
+    </Routes>,
+    {
+      store,
+      initialEntries: [routePathParam],
+    },
   );
-  expect(wrapper.contains("Home")).toBe(true);
-  expect(
-    wrapper.contains(
-      <a href="https://example.com" target="_blank" rel="noopener noreferrer">
-        {"https://example.com"}
-      </a>,
-    ),
-  ).toBe(true);
+
+  expect(screen.getByText("Home")).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "https://example.com" })).toHaveAttribute(
+    "href",
+    "https://example.com",
+  );
 });
 
 describe("when setting the skipAvailablePackageDetails option", () => {
   it("does not redirect when skipAvailablePackageDetails is set to false", () => {
-    const wrapper = mountWrapper(
-      getStore({
-        ...defaultState,
-        config: { skipAvailablePackageDetails: false },
-      } as IStoreState),
-      <Router history={history}>
-        <Route path={routePath}>
-          <PackageView />
-        </Route>
-      </Router>,
+    const store = getStore({
+      ...defaultState,
+      config: { skipAvailablePackageDetails: false },
+    } as IStoreState);
+
+    renderWithProviders(
+      <Routes>
+        <Route path={routePath} element={<PackageView />} />
+      </Routes>,
+      {
+        store,
+        initialEntries: [routePathParam],
+      },
     );
-    expect(wrapper.containsMatchingElement(<PackageReadme />)).toBe(true);
+
+    expect(screen.getByText("readme")).toBeInTheDocument();
   });
 
   it("redirects when skipAvailablePackageDetails is set to true", () => {
-    const history = createMemoryHistory({ initialEntries: [routePathParam] });
-    const wrapper = mountWrapper(
-      getStore({
-        ...defaultState,
-        config: { skipAvailablePackageDetails: true },
-      } as IStoreState),
-      <Router history={history}>
-        <Route path={routePath}>
-          <PackageView />
-        </Route>
-      </Router>,
+    const store = getStore({
+      ...defaultState,
+      config: { skipAvailablePackageDetails: true },
+    } as IStoreState);
+
+    renderWithProviders(
+      <Routes>
+        <Route path={routePath} element={<PackageView />} />
+        <Route
+          path={
+            "/c/:cluster/ns/:namespace/apps/new/:pluginName/:pluginVersion/:packageCluster/:packageNamespace/:something/versions/:versionId"
+          }
+          element={<h1>NewApp</h1>}
+        />
+      </Routes>,
+      {
+        store,
+        initialEntries: [routePathParam],
+      },
     );
-    expect(wrapper.containsMatchingElement(<PackageReadme />)).toBe(false);
-    expect(history.location.pathname).toEqual(
-      `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.cluster}/${defaultProps.packageNamespace}/${defaultProps.id}/versions/${testVersion.pkgVersion}`,
-    );
+
+    expect(screen.queryByText("readme")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "NewApp" })).toBeInTheDocument();
   });
 });
 
 describe("AvailablePackageMaintainers githubIDAsNames prop value", () => {
   const tests: Array<{
-    expected: boolean;
+    expectGHLink: boolean;
     name: string;
     repoURL: string;
     maintainers: Array<{ name: string; email?: string }>;
   }> = [
     {
-      expected: true,
+      expectGHLink: true,
       name: "the stable Helm repo uses github IDs",
       maintainers: [{ name: "Bitnami" }],
       repoURL: "https://kubernetes-charts.storage.googleapis.com",
     },
     {
-      expected: true,
+      expectGHLink: true,
       name: "the incubator Helm repo uses github IDs",
       maintainers: [{ name: "Bitnami", email: "email: containers@bitnami.com" }],
       repoURL: "https://kubernetes-charts-incubator.storage.googleapis.com",
     },
     {
-      expected: false,
+      expectGHLink: false,
       name: "a random Helm repo does not use github IDs as names",
       maintainers: [{ name: "Bitnami" }],
       repoURL: "https://examplerepo.com",
@@ -313,21 +335,29 @@ describe("AvailablePackageMaintainers githubIDAsNames prop value", () => {
       ];
       myAvailablePkgDetail.repoUrl = t.repoURL;
 
-      const wrapper = mountWrapper(
-        getStore({
-          ...defaultState,
-          packages: {
-            selected: { availablePackageDetail: myAvailablePkgDetail, pkgVersion: "0.0.1" },
-          },
-        } as IStoreState),
-        <Router history={history}>
-          <Route path={routePath}>
-            <PackageView />
-          </Route>
-        </Router>,
+      const store = getStore({
+        ...defaultState,
+        packages: {
+          selected: { availablePackageDetail: myAvailablePkgDetail, pkgVersion: "0.0.1" },
+        },
+      } as IStoreState);
+      renderWithProviders(
+        <Routes>
+          <Route path={routePath} element={<PackageView />} />
+        </Routes>,
+        {
+          store,
+          initialEntries: [routePathParam],
+        },
       );
-      const availablePackageMaintainers = wrapper.find(AvailablePackageMaintainers);
-      expect(availablePackageMaintainers.props().githubIDAsNames).toBe(t.expected);
+
+      const maintainerLink = screen.getByRole("link", { name: "John Smith" });
+      expect(maintainerLink).toBeInTheDocument();
+      if (t.expectGHLink) {
+        expect(maintainerLink).toHaveAttribute("href", "https://github.com/John Smith");
+      } else {
+        expect(maintainerLink).toHaveAttribute("href", "mailto:john@example.com");
+      }
     });
   }
 });
@@ -335,48 +365,42 @@ describe("AvailablePackageMaintainers githubIDAsNames prop value", () => {
 it("renders the sources links when set", () => {
   const myAvailablePkgDetail = defaultAvailablePkgDetail;
   myAvailablePkgDetail.sourceUrls = ["https://example.com", "https://example2.com"];
-  const wrapper = mountWrapper(
-    getStore({
-      ...defaultState,
-      packages: { selected: { availablePackageDetail: myAvailablePkgDetail, pkgVersion: "0.0.1" } },
-    } as IStoreState),
-    <Router history={history}>
-      <Route path={routePath}>
-        <PackageView />
-      </Route>
-    </Router>,
+  const store = getStore({
+    ...defaultState,
+    packages: { selected: { availablePackageDetail: myAvailablePkgDetail, pkgVersion: "0.0.1" } },
+  } as IStoreState);
+  renderWithProviders(
+    <Routes>
+      <Route path={routePath} element={<PackageView />} />
+    </Routes>,
+    {
+      store,
+      initialEntries: [routePathParam],
+    },
   );
-  expect(wrapper.contains("Related")).toBe(true);
-  expect(
-    wrapper.contains(
-      <a href="https://example.com" target="_blank" rel="noopener noreferrer">
-        {"https://example.com"}
-      </a>,
-    ),
-  ).toBe(true);
-  expect(
-    wrapper.contains(
-      <a href="https://example2.com" target="_blank" rel="noopener noreferrer">
-        {"https://example2.com"}
-      </a>,
-    ),
-  ).toBe(true);
+
+  expect(screen.getByText("Related")).toBeInTheDocument();
+  expect(screen.getAllByRole("link", { name: "https://example.com" })[0]).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "https://example2.com" })).toBeInTheDocument();
 });
 
 describe("renders errors", () => {
   it("renders a not found error if it exists", () => {
-    const wrapper = mountWrapper(
-      getStore({
-        ...defaultState,
-        packages: { ...defaultPackageState, selected: { error: new Error("Boom!") } },
-      } as IStoreState),
-      <Router history={history}>
-        <Route path={routePath}>
-          <PackageView />
-        </Route>
-      </Router>,
+    const store = getStore({
+      ...defaultState,
+      packages: { ...defaultPackageState, selected: { error: new Error("Boom!") } },
+    } as IStoreState);
+    renderWithProviders(
+      <Routes>
+        <Route path={routePath} element={<PackageView />} />
+      </Routes>,
+      {
+        store,
+        initialEntries: [routePathParam],
+      },
     );
-    expect(wrapper.find(Alert)).toExist();
-    expect(wrapper.find(Alert).text()).toContain("Unable to fetch package: Boom!");
+
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("Unable to fetch package: Boom!");
   });
 });

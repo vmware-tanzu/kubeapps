@@ -1,7 +1,6 @@
 // Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { LocationChangeAction, LOCATION_CHANGE } from "connected-react-router";
 import {
   PackageRepositoriesPermissions,
   PackageRepositoryDetail,
@@ -17,6 +16,7 @@ import { PluginNames } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { PkgReposAction } from "../actions/repos";
+import { LOCATION_CHANGE, PushAction } from "hooks/push";
 
 export interface IPackageRepositoryState {
   errors: {
@@ -71,7 +71,7 @@ const fluxPackageRepositoryCustomDetail = {
 
 const reposReducer = (
   state: IPackageRepositoryState = initialState,
-  action: PkgReposAction | LocationChangeAction,
+  action: PkgReposAction | PushAction,
 ): IPackageRepositoryState => {
   switch (action.type) {
     case getType(actions.repos.receiveRepoSummaries):

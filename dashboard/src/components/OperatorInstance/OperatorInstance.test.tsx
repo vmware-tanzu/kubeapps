@@ -15,7 +15,7 @@ import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
 import Alert from "components/js/Alert";
 import * as ReactRedux from "react-redux";
-import { MemoryRouter, Route } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { IClusterState } from "reducers/cluster";
 import { IOperatorsState } from "reducers/operators";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
@@ -162,10 +162,14 @@ it("retrieves CSV and resource when mounted", () => {
     <MemoryRouter
       initialEntries={["/c/default/ns/default/operators-instances/foo/foo.kubeapps.com/bar"]}
     >
-      <Route path={"/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName"}>
-        <OperatorInstance />,
-      </Route>
+      <Routes>
+        <Route
+          path={"/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName"}
+          element={<OperatorInstance />}
+        />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
   expect(getCSV).toHaveBeenCalledWith("default-cluster", "kubeapps", "foo");
   expect(getResource).toHaveBeenCalledWith(
@@ -228,10 +232,14 @@ it("deletes the resource", async () => {
     <MemoryRouter
       initialEntries={["/c/default/ns/default/operators-instances/foo/foo.kubeapps.com/bar"]}
     >
-      <Route path={"/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName"}>
-        <OperatorInstance />,
-      </Route>
+      <Routes>
+        <Route
+          path={"/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName"}
+          element={<OperatorInstance />}
+        />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
 
   act(() => {
@@ -264,10 +272,14 @@ it("updates the state with the CRD resources", () => {
     <MemoryRouter
       initialEntries={["/c/default/ns/default/operators-instances/foo/foo.kubeapps.com/bar"]}
     >
-      <Route path={"/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName"}>
-        <OperatorInstance />,
-      </Route>
+      <Routes>
+        <Route
+          path={"/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName"}
+          element={<OperatorInstance />}
+        />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
   expect(wrapper.find(ResourceTabs).prop("deployments")).toMatchObject([
     {
@@ -314,10 +326,14 @@ it("updates the state with all the resources if the CRD doesn't define any", () 
     <MemoryRouter
       initialEntries={["/c/default/ns/default/operators-instances/foo/foo.kubeapps.com/bar"]}
     >
-      <Route path={"/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName"}>
-        <OperatorInstance />,
-      </Route>
+      <Routes>
+        <Route
+          path={"/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName"}
+          element={<OperatorInstance />}
+        />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
   const resources: { [index: string]: any } = wrapper.find(ResourceTabs).props();
   const resourcesKeys = Object.keys(resources).filter(k => k !== "otherResources");
