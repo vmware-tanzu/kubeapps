@@ -37,5 +37,5 @@ test("Create a new package repository successfully", async ({ page }) => {
   await page.locator("text=Package Repositories").click();
   await expect(page).not.toContain("text=Fetching Package Repositories...");
   await page.locator("#delete-repo-my-repo div").click();
-  await page.locator('cds-button:has-text("Delete")').click();
+  await page.locator('cds-modal-actions cds-button:has-text("Delete")').click();
 });
