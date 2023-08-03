@@ -102,7 +102,7 @@
     "axios-mock-adapter": "^1.21.5",
     "cross-env": "^7.0.3",
     "enzyme": "^3.11.0",
-    "eslint-config-prettier": "^8.9.0",
+    "eslint-config-prettier": "^8.10.0",
     "eslint-import-resolver-typescript": "^3.5.5",
     "eslint-plugin-prettier": "^5.0.0",
     "eslint-plugin-redos": "^4.4.5",
