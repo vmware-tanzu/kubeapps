@@ -1,4 +1,4 @@
-// Copyright 2018-2022 the Kubeapps contributors.
+// Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import actions from "actions";
@@ -60,8 +60,7 @@ function Header() {
                   <NavLink
                     key={path}
                     to={path}
-                    activeClassName="active"
-                    className="nav-link nav-text"
+                    className={({ isActive }) => "nav-link nav-text" + (isActive ? " active" : "")}
                   >
                     {title}
                   </NavLink>

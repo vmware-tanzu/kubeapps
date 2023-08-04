@@ -10,13 +10,13 @@ import { filterNames, filtersToQuery } from "components/Catalog/Catalog";
 import LoadingWrapper from "components/LoadingWrapper";
 import PageHeader from "components/PageHeader/PageHeader";
 import Table from "components/Table";
-import { push } from "connected-react-router";
 import {
   PackageRepositoriesPermissions,
   PackageRepositoryReference,
   PackageRepositorySummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
+import { usePush } from "hooks/push";
 import qs from "qs";
 import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -81,11 +81,12 @@ function PkgRepoList() {
     fecthPermissions();
   }, [fecthPermissions]);
 
+  const push = usePush();
   const submitFilters = (allns: boolean) => {
     if (allns) {
-      dispatch(push("?allns=yes"));
+      push("?allns=yes");
     } else {
-      dispatch(push("?allns=no"));
+      push("?allns=no");
     }
   };
   const toggleListAllNS = () => {

@@ -9,7 +9,7 @@ import Column from "components/Column";
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import LoadingWrapper from "components/LoadingWrapper";
 import Row from "components/Row";
-import { push } from "connected-react-router";
+import { usePush } from "hooks/push";
 import { flatten, get, intersection, isEqual, trimStart, uniq, without } from "lodash";
 import qs from "qs";
 import React, { useEffect } from "react";
@@ -71,11 +71,6 @@ export function filtersToQuery(filters: any) {
   return query;
 }
 
-interface IRouteParams {
-  cluster: string;
-  namespace: string;
-}
-
 export default function Catalog() {
   const {
     packages: {
@@ -98,7 +93,7 @@ export default function Catalog() {
       configuredPlugins,
     },
   } = useSelector((state: IStoreState) => state);
-  const { cluster, namespace } = ReactRouter.useParams() as IRouteParams;
+  const { cluster, namespace } = ReactRouter.useParams();
   const location = ReactRouter.useLocation();
   const dispatch = useDispatch();
 
@@ -173,8 +168,8 @@ export default function Catalog() {
       }
       dispatch(
         actions.availablepackages.fetchAvailablePackageSummaries(
-          cluster,
-          namespace,
+          cluster || "",
+          namespace || "",
           reposFilter,
           localNextPageToken,
           size,
@@ -208,8 +203,9 @@ export default function Catalog() {
     }
   }, [hasRequestedFirstPage, isFetching]);
 
+  const push = usePush();
   const pushFilters = (newFilters: any) => {
-    dispatch(push(app.catalog(cluster, namespace) + filtersToQuery(newFilters)));
+    push(app.catalog(cluster || "", namespace || "") + filtersToQuery(newFilters));
   };
   const addFilter = (type: string, value: string) => {
     pushFilters({
@@ -270,7 +266,7 @@ export default function Catalog() {
   useEffect(() => {
     // Ignore operators if specified
     if (featureFlags?.operators) {
-      dispatch(actions.operators.getCSVs(cluster, namespace));
+      dispatch(actions.operators.getCSVs(cluster || "", namespace || ""));
     }
   }, [dispatch, cluster, namespace, featureFlags]);
 
@@ -345,8 +341,8 @@ export default function Catalog() {
     dispatch(actions.availablepackages.clearErrorPackage());
     dispatch(
       actions.availablepackages.fetchAvailablePackageSummaries(
-        cluster,
-        namespace,
+        cluster || "",
+        namespace || "",
         reposFilter,
         localNextPageToken,
         size,
@@ -428,7 +424,7 @@ export default function Catalog() {
             Manage your Package Repositories in Kubeapps by visiting the Package repositories
             configuration page.
           </p>
-          <Link to={app.config.pkgrepositories(cluster, namespace)}>
+          <Link to={app.config.pkgrepositories(cluster || "", namespace || "")}>
             <CdsButton>Manage Package Repositories</CdsButton>
           </Link>
           <p>
@@ -552,8 +548,8 @@ export default function Catalog() {
                     <CatalogItems
                       availablePackageSummaries={filteredAvailablePackageSummaries}
                       csvs={filteredCSVs}
-                      cluster={cluster}
-                      namespace={namespace}
+                      cluster={cluster || ""}
+                      namespace={namespace || ""}
                       isFirstPage={isFirstPage}
                       hasLoadedFirstPage={hasLoadedFirstPage}
                       hasFinishedFetching={hasFinishedFetching && !localIsFetchingRef.current}

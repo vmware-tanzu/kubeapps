@@ -1,17 +1,22 @@
 // Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { act } from "@testing-library/react";
+import "@testing-library/jest-dom/extend-expect";
+import { act, screen } from "@testing-library/react";
 import actions from "actions";
 import LoadingWrapper from "components/LoadingWrapper";
 import * as ReactRedux from "react-redux";
-import { MemoryRouter, Redirect } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import { IConfigState } from "reducers/config";
-import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
+import {
+  defaultStore,
+  getStore,
+  mountWrapper,
+  renderWithProviders,
+} from "shared/specs/mountWrapper";
 import { IStoreState } from "shared/types";
 import LoginForm from "./LoginForm";
 import OAuthLogin from "./OauthLogin";
-import TokenLogin from "./TokenLogin";
 
 const defaultCluster = "default-cluster";
 
@@ -35,18 +40,34 @@ describe("while authenticating", () => {
         authenticating: true,
       },
     };
-    const wrapper = mountWrapper(getStore(state), <LoginForm />);
-    expect(wrapper.find(LoadingWrapper)).toExist();
-    expect(wrapper.find(TokenLogin)).not.toExist();
-    expect(wrapper.find(OAuthLogin)).not.toExist();
+    renderWithProviders(
+      <Routes>
+        <Route path="/login" element={<LoginForm />} />
+      </Routes>,
+      {
+        store: getStore(state),
+        initialEntries: ["/login"],
+      },
+    );
+
+    expect(screen.getByRole("img")).toHaveAttribute("aria-label", "Loading");
+    expect(screen.queryByLabelText("Token")).not.toBeInTheDocument();
   });
 });
 
 describe("token login form", () => {
   it("renders a token login form", () => {
-    const wrapper = mountWrapper(defaultStore, <LoginForm />);
-    expect(wrapper.find(TokenLogin)).toExist();
-    expect(wrapper.find(OAuthLogin)).not.toExist();
+    renderWithProviders(
+      <Routes>
+        <Route path="/login" element={<LoginForm />} />
+      </Routes>,
+      {
+        initialEntries: ["/login"],
+      },
+    );
+
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Token")).toBeInTheDocument();
   });
 
   it("renders a link to the access control documentation", () => {
@@ -56,11 +77,20 @@ describe("token login form", () => {
         appVersion: "devel",
       },
     };
-    const wrapper = mountWrapper(getStore(state), <LoginForm />);
-    expect(wrapper.find("a").props()).toMatchObject({
-      href: "https://github.com/vmware-tanzu/kubeapps/blob/devel/site/content/docs/latest/howto/access-control.md",
-      target: "_blank",
-    });
+    renderWithProviders(
+      <Routes>
+        <Route path="/login" element={<LoginForm />} />
+      </Routes>,
+      {
+        initialEntries: ["/login"],
+        store: getStore(state),
+      },
+    );
+
+    expect(screen.queryByRole("link", { name: "More Info" })).toHaveAttribute(
+      "href",
+      "https://github.com/vmware-tanzu/kubeapps/blob/devel/site/content/docs/latest/howto/access-control.md",
+    );
   });
 
   it("updates the token in the state when the input is changed", () => {
@@ -85,9 +115,18 @@ describe("token login form", () => {
           authenticated: true,
         },
       };
-      const wrapper = mountWrapper(getStore(state), <LoginForm />);
-      const redirect = wrapper.find(Redirect);
-      expect(redirect.props()).toEqual({ to: { pathname: "/" } });
+      renderWithProviders(
+        <Routes>
+          <Route path="/login" element={<LoginForm />} />
+          <Route path="/" element={<h1>home</h1>} />
+        </Routes>,
+        {
+          store: getStore(state),
+          initialEntries: ["/login"],
+        },
+      );
+
+      expect(screen.getByRole("heading", { name: "home" })).toBeInTheDocument();
     });
   });
 
@@ -113,12 +152,16 @@ describe("token login form", () => {
       catch: jest.fn(f => f()),
     });
     actions.auth.authenticate = authenticate;
-    mountWrapper(
-      defaultStore,
-      <MemoryRouter initialEntries={["/login?token=f00b4r"]}>
-        <LoginForm />
-      </MemoryRouter>,
+    renderWithProviders(
+      <Routes>
+        <Route path="/login" element={<LoginForm />} />
+      </Routes>,
+      {
+        store: defaultStore,
+        initialEntries: ["/login?token=f00b4r"],
+      },
     );
+
     expect(authenticate).toBeCalledWith(defaultCluster, "f00b4r", false);
   });
 
@@ -128,24 +171,32 @@ describe("token login form", () => {
       catch: jest.fn(f => f()),
     });
     actions.auth.authenticate = authenticate;
-    mountWrapper(
-      defaultStore,
-      <MemoryRouter initialEntries={["/login?token=bad-token"]}>
-        <LoginForm />
-      </MemoryRouter>,
+    renderWithProviders(
+      <Routes>
+        <Route path="/login" element={<LoginForm />} />
+      </Routes>,
+      {
+        store: defaultStore,
+        initialEntries: ["/login?token=bad-token"],
+      },
     );
+
     expect(authenticate).toBeCalledWith(defaultCluster, "bad-token", false);
     expect(authenticate).toBeCalledTimes(1);
   });
 
   it("does not call the authenticate handler in oauth login if token is passed as query param", () => {
     const authenticate = jest.fn();
-    mountWrapper(
-      defaultStore,
-      <MemoryRouter initialEntries={["/login?token=f00b4r"]}>
-        <LoginForm />
-      </MemoryRouter>,
+    renderWithProviders(
+      <Routes>
+        <Route path="/login" element={<LoginForm />} />
+      </Routes>,
+      {
+        store: defaultStore,
+        initialEntries: ["/login?token=f00b4r"],
+      },
     );
+
     expect(authenticate).not.toBeCalled();
   });
 

@@ -1,12 +1,12 @@
-// Copyright 2020-2022 the Kubeapps contributors.
+// Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { OperatorAction } from "actions/operators";
-import { LocationChangeAction, LOCATION_CHANGE } from "connected-react-router";
 import { IClusterServiceVersion, IPackageManifest, IResource } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { NamespaceAction } from "../actions/namespace";
+import { LOCATION_CHANGE, PushAction } from "hooks/push";
 
 export interface IOperatorsStateError {
   fetch?: Error;
@@ -75,7 +75,7 @@ function isFetching(state: IOperatorsState, item: string, fetching: boolean) {
 
 const catalogReducer = (
   state: IOperatorsState = operatorsInitialState,
-  action: OperatorAction | LocationChangeAction | NamespaceAction,
+  action: OperatorAction | PushAction | NamespaceAction,
 ): IOperatorsState => {
   const { operators } = actions;
   switch (action.type) {

@@ -5,7 +5,9 @@ const { test, expect } = require("@playwright/test");
 const { KubeappsLogin } = require("../utils/kubeapps-login");
 const utils = require("../utils/util-functions");
 
-test("Deploys package in the only additional cluster while Kubeapps cluster is not available", async ({ page }) => {
+test("Deploys package in the only additional cluster while Kubeapps cluster is not available", async ({
+  page,
+}) => {
   test.setTimeout(120000);
 
   // Log in
@@ -16,8 +18,8 @@ test("Deploys package in the only additional cluster while Kubeapps cluster is n
   await page.click(".kubeapps-dropdown .kubeapps-nav-link");
   await page.selectOption('select[name="clusters"]', "second-cluster");
   // Check that there is only one cluster
-  const clustersLength = await page.locator('select[name="clusters"] option').count()
-  expect(clustersLength).toEqual(1)
+  const clustersLength = await page.locator('select[name="clusters"] option').count();
+  expect(clustersLength).toEqual(1);
   await page.click('cds-button:has-text("Change Context")');
 
   // Select package to deploy

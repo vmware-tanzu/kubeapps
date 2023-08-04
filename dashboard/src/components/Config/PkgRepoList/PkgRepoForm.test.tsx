@@ -1101,10 +1101,6 @@ describe("auth provider selector for Flux repositories", () => {
     const customDetail = new FluxPackageRepositoryCustomDetail({
       provider: "aws",
     });
-    // UPTOHERE: Is there a difference between google's Any and
-    // connect's Any? (Well, yes, one has a constructor etc.)
-    // Currently logging is showing the typeUrl appearing as the
-    // provider value :/
     const testRepo = new PackageRepositoryDetail({
       ...repo,
       type: "oci",

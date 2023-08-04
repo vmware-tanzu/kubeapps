@@ -3,7 +3,6 @@
 
 import type { PartialMessage } from "@bufbuild/protobuf";
 import { JSONSchemaType, ErrorObject } from "ajv";
-import { RouterState } from "connected-react-router";
 import {
   AvailablePackageDetail,
   AvailablePackageSummary,
@@ -345,7 +344,6 @@ export interface IInstalledPackageState {
 }
 
 export interface IStoreState {
-  router: RouterState;
   apps: IInstalledPackageState;
   auth: IAuthState;
   packages: IPackageState;

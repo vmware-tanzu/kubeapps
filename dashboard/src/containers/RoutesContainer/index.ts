@@ -1,6 +1,6 @@
-// Copyright 2018-2022 the Kubeapps contributors.
+// Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import RoutesContainer from "./RoutesContainer";
+import Routes from "./Routes";
 
-export default RoutesContainer;
+export default Routes;

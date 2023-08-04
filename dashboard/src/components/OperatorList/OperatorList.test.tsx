@@ -1,14 +1,21 @@
 // Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { act } from "@testing-library/react";
+import "@testing-library/jest-dom/extend-expect";
+import { act, screen } from "@testing-library/react";
 import actions from "actions";
 import AlertGroup from "components/AlertGroup";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import SearchFilter from "components/SearchFilter/SearchFilter";
 import * as ReactRedux from "react-redux";
-import { MemoryRouter, Route } from "react-router-dom";
-import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import { Route, Routes } from "react-router-dom";
+import {
+  defaultStore,
+  getStore,
+  initialState,
+  mountWrapper,
+  renderWithProviders,
+} from "shared/specs/mountWrapper";
 import { IPackageManifest, IStoreState } from "shared/types";
 import InfoCard from "../InfoCard/InfoCard";
 import { AUTO_PILOT, BASIC_INSTALL } from "../OperatorView/OperatorCapabilityLevel";
@@ -195,108 +202,93 @@ describe("filter operators", () => {
   });
 
   it("setting the filter in the query string", () => {
-    const wrapper = mountWrapper(
-      getStore({
-        operators: { isOLMInstalled: true, operators: [sampleOperator, sampleOperator2] },
-      } as Partial<IStoreState>),
-      <MemoryRouter
-        initialEntries={[
-          { pathname: "/c/default/ns/default/operators", search: `?${filterNames.SEARCH}=foo` },
-        ]}
-      >
-        <Route path={"/c/:cluster/ns/:namespace/operators"}>
-          <OperatorList />,
-        </Route>
-      </MemoryRouter>,
+    const store = getStore({
+      operators: { isOLMInstalled: true, operators: [sampleOperator, sampleOperator2] },
+    } as Partial<IStoreState>);
+    renderWithProviders(
+      <Routes>
+        <Route path={"/c/:cluster/ns/:namespace/operators"} element={<OperatorList />} />
+      </Routes>,
+      {
+        store,
+        initialEntries: [
+          `/c/default/ns/default/operators?${filterNames.SEARCH}=${sampleOperator.metadata.name}`,
+        ],
+      },
     );
-    const operator = wrapper.find(InfoCard);
-    expect(operator.length).toBe(1);
-    expect(operator.prop("title")).toBe(sampleOperator.metadata.name);
+
+    expect(screen.getByText(`Search: ${sampleOperator.metadata.name}`)).toBeInTheDocument();
   });
 
   it("transforms the received '__' in query params into a ','", () => {
-    const wrapper = mountWrapper(
-      getStore({
-        operators: { isOLMInstalled: true, operators: [sampleOperator, sampleOperator2] },
-      } as Partial<IStoreState>),
-      <MemoryRouter
-        initialEntries={[
-          {
-            pathname: "/c/default/ns/default/operators",
-            search: `?${filterNames.PROVIDER}=kubeapps__%20inc`,
-          },
-        ]}
-      >
-        <Route path={"/c/:cluster/ns/:namespace/operators"}>
-          <OperatorList />,
-        </Route>
-      </MemoryRouter>,
+    const store = getStore({
+      operators: { isOLMInstalled: true, operators: [sampleOperator, sampleOperator2] },
+    } as Partial<IStoreState>);
+    renderWithProviders(
+      <Routes>
+        <Route path={"/c/:cluster/ns/:namespace/operators"} element={<OperatorList />} />
+      </Routes>,
+      {
+        store,
+        initialEntries: [
+          `/c/default/ns/default/operators?${filterNames.PROVIDER}=kubeapps__%20inc`,
+        ],
+      },
     );
-    expect(wrapper.find(".label-info").text()).toBe("Provider: kubeapps, inc ");
+
+    expect(screen.getByText("Provider: kubeapps, inc")).toBeInTheDocument();
   });
 
   it("show a message if the filter doesn't match any operator", () => {
-    const wrapper = mountWrapper(
-      getStore({
-        operators: { isOLMInstalled: true, operators: [sampleOperator, sampleOperator2] },
-      } as Partial<IStoreState>),
-      <MemoryRouter
-        initialEntries={[
-          { pathname: "/c/default/ns/default/operators", search: `?${filterNames.SEARCH}=nope` },
-        ]}
-      >
-        <Route path={"/c/:cluster/ns/:namespace/operators"}>
-          <OperatorList />,
-        </Route>
-      </MemoryRouter>,
+    const store = getStore({
+      operators: { isOLMInstalled: true, operators: [sampleOperator, sampleOperator2] },
+    } as Partial<IStoreState>);
+    renderWithProviders(
+      <Routes>
+        <Route path={"/c/:cluster/ns/:namespace/operators"} element={<OperatorList />} />
+      </Routes>,
+      {
+        store,
+        initialEntries: [`/c/default/ns/default/operators?${filterNames.SEARCH}=nope`],
+      },
     );
-    expect(wrapper.find(InfoCard)).not.toExist();
-    expect(wrapper).toIncludeText("No operator matches the current filter");
+
+    expect(screen.getByText("No operator matches the current filter.")).toBeInTheDocument();
   });
 
   it("filters by category", () => {
-    const wrapper = mountWrapper(
-      getStore({
-        operators: { isOLMInstalled: true, operators: [sampleOperator, sampleOperator2] },
-      } as Partial<IStoreState>),
-      <MemoryRouter
-        initialEntries={[
-          {
-            pathname: "/c/default/ns/default/operators",
-            search: `?${filterNames.CATEGORY}=security`,
-          },
-        ]}
-      >
-        <Route path={"/c/:cluster/ns/:namespace/operators"}>
-          <OperatorList />,
-        </Route>
-      </MemoryRouter>,
+    const store = getStore({
+      operators: { isOLMInstalled: true, operators: [sampleOperator, sampleOperator2] },
+    } as Partial<IStoreState>);
+    renderWithProviders(
+      <Routes>
+        <Route path={"/c/:cluster/ns/:namespace/operators"} element={<OperatorList />} />
+      </Routes>,
+      {
+        store,
+        initialEntries: [`/c/default/ns/default/operators?${filterNames.CATEGORY}=security`],
+      },
     );
-    const operator = wrapper.find(InfoCard);
-    expect(operator.length).toBe(1);
-    expect(operator.prop("title")).toBe(sampleOperator.metadata.name);
+
+    expect(screen.getByText(sampleOperator.metadata.name)).toHaveAttribute("class", "card-title");
   });
 
   it("filters by capability", () => {
-    const wrapper = mountWrapper(
-      getStore({
-        operators: { isOLMInstalled: true, operators: [sampleOperator, sampleOperator2] },
-      } as Partial<IStoreState>),
-      <MemoryRouter
-        initialEntries={[
-          {
-            pathname: "/c/default/ns/default/operators",
-            search: `?${filterNames.CAPABILITY}=${BASIC_INSTALL}`,
-          },
-        ]}
-      >
-        <Route path={"/c/:cluster/ns/:namespace/operators"}>
-          <OperatorList />,
-        </Route>
-      </MemoryRouter>,
+    const store = getStore({
+      operators: { isOLMInstalled: true, operators: [sampleOperator, sampleOperator2] },
+    } as Partial<IStoreState>);
+    renderWithProviders(
+      <Routes>
+        <Route path={"/c/:cluster/ns/:namespace/operators"} element={<OperatorList />} />
+      </Routes>,
+      {
+        store,
+        initialEntries: [
+          `/c/default/ns/default/operators?${filterNames.CAPABILITY}=${BASIC_INSTALL}`,
+        ],
+      },
     );
-    const operator = wrapper.find(InfoCard);
-    expect(operator.length).toBe(1);
-    expect(operator.prop("title")).toBe(sampleOperator2.metadata.name);
+
+    expect(screen.getByText(sampleOperator2.metadata.name)).toHaveAttribute("class", "card-title");
   });
 });
