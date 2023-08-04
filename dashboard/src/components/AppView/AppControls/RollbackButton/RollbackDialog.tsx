@@ -1,14 +1,14 @@
-// Copyright 2019-2022 the Kubeapps contributors.
+// Copyright 2019-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
 import { CdsControlMessage } from "@cds/react/forms";
 import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import { CdsSelect } from "@cds/react/select";
+import LoadingWrapper from "components/LoadingWrapper";
 import Alert from "components/js/Alert";
 import { useEffect, useState } from "react";
 import { DeleteError, FetchWarning } from "shared/types";
-import LoadingWrapper from "../../../LoadingWrapper/LoadingWrapper";
 import "./RollbackDialog.css";
 
 interface IRollbackDialogProps {

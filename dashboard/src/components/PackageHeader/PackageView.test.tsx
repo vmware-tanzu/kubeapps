@@ -1,6 +1,8 @@
 // Copyright 2021-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import "@testing-library/jest-dom/extend-expect";
+import { screen } from "@testing-library/react";
 import actions from "actions";
 import {
   AvailablePackageDetail,
@@ -14,10 +16,8 @@ import * as ReactRedux from "react-redux";
 import { Route, Routes } from "react-router-dom";
 import { IConfigState } from "reducers/config";
 import { getStore, renderWithProviders } from "shared/specs/mountWrapper";
-import { IPackageState, IStoreState } from "../../shared/types";
+import { IPackageState, IStoreState } from "shared/types";
 import PackageView from "./PackageView";
-import { screen } from "@testing-library/react";
-import "@testing-library/jest-dom/extend-expect";
 
 const defaultProps = {
   packageID: "testrepo/test",

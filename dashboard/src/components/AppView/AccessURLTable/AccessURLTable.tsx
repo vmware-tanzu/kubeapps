@@ -2,15 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsIcon } from "@cds/react/icon";
+import LoadingWrapper from "components/LoadingWrapper";
 import Table from "components/js/Table";
 import { filterByResourceRefs } from "containers/helpers";
 import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
-import { get } from "lodash";
+import { get, some } from "lodash";
 import { useSelector } from "react-redux";
 import { Tooltip } from "react-tooltip";
 import { IK8sList, IKubeItem, IResource, IServiceSpec, IStoreState } from "shared/types";
-import LoadingWrapper from "../../../components/LoadingWrapper/LoadingWrapper";
-import isSomeResourceLoading from "../helpers";
 import { GetURLItemFromIngress, ShouldGenerateLink } from "./AccessURLItem/AccessURLIngressHelper";
 import { GetURLItemFromService } from "./AccessURLItem/AccessURLServiceHelper";
 import "./AccessURLTable.css";
@@ -129,7 +128,7 @@ export default function AccessURLTable({ ingressRefs, serviceRefs }: IAccessURLT
     filterByResourceRefs(serviceRefs, state.kube.items),
   ) as Array<IKubeItem<IResource>>;
 
-  if (isSomeResourceLoading(ingresses.concat(services))) {
+  if (some(ingresses.concat(services), r => r.isFetching)) {
     return (
       <section aria-labelledby="access-urls-title">
         <h5 className="section-title" id="access-urls-title">

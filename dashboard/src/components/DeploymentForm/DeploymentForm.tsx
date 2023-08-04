@@ -7,17 +7,17 @@ import { CdsSelect } from "@cds/react/select";
 import actions from "actions";
 import { handleErrorAction } from "actions/auth";
 import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
-import Alert from "components/js/Alert";
-import Column from "components/js/Column";
-import Row from "components/js/Row";
+import Column from "components/Column";
 import LoadingWrapper from "components/LoadingWrapper";
 import PackageHeader from "components/PackageHeader/PackageHeader";
-import { usePush } from "hooks/push";
+import Row from "components/Row";
+import Alert from "components/js/Alert";
 import {
   AvailablePackageReference,
   ReconciliationOptions,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
+import { usePush } from "hooks/push";
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router-dom";

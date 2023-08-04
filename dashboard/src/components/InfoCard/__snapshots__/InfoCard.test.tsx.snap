@@ -2,7 +2,6 @@
 
 exports[`should render a Card 1`] = `
 <Column
-  listItem={false}
   span={
     Array [
       12,
@@ -55,9 +54,7 @@ exports[`should render a Card 1`] = `
         </div>
       </CardBlock>
       <CardFooter>
-        <Row
-          list={false}
-        >
+        <Row>
           <div
             className="kubeapps-card-footer"
           >

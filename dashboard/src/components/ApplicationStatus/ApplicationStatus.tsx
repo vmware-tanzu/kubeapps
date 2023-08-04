@@ -1,23 +1,22 @@
 // Copyright 2019-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useSelector } from "react-redux";
 import { CdsIcon } from "@cds/react/icon";
-import isSomeResourceLoading from "components/AppView/helpers";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
+import { filterByResourceRefs } from "containers/helpers";
 import {
   InstalledPackageDetail,
   InstalledPackageStatus,
   InstalledPackageStatus_StatusReason,
   ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
-import { flatten, get } from "lodash";
+import { flatten, get, some } from "lodash";
 import { useEffect, useState } from "react";
 import { PieChart } from "react-minimal-pie-chart";
+import { useSelector } from "react-redux";
 import { Tooltip } from "react-tooltip";
-import { IK8sList, IKubeItem, IResource, IStoreState } from "../../shared/types";
+import { IK8sList, IKubeItem, IResource, IStoreState } from "shared/types";
 import "./ApplicationStatus.css";
-import { filterByResourceRefs } from "containers/helpers";
 
 interface IApplicationStatusProps {
   deployRefs: ResourceRef[];
@@ -143,7 +142,7 @@ export default function ApplicationStatus({
 
   const ready = totalPods === readyPods;
 
-  if (isSomeResourceLoading(deployments.concat(statefulsets).concat(daemonsets))) {
+  if (some(deployments.concat(statefulsets).concat(daemonsets), r => r.isFetching)) {
     return (
       <div className="status-loading-wrapper margin-t-xl">
         <LoadingWrapper loadingText="Loading..." size={"md"} />

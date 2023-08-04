@@ -1,12 +1,12 @@
-// Copyright 2018-2022 the Kubeapps contributors.
+// Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import Column from "components/Column";
 import Icon from "components/Icon/Icon";
-import { Link } from "react-router-dom";
+import Row from "components/Row";
 import placeholder from "icons/placeholder.svg";
+import { Link } from "react-router-dom";
 import Card, { CardBlock, CardFooter, CardHeader } from "../js/Card";
-import Column from "../js/Column";
-import Row from "../js/Row";
 import "./InfoCard.css";
 
 export interface IInfoCardProps {

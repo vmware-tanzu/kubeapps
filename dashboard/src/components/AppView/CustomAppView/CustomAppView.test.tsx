@@ -1,15 +1,15 @@
 // Copyright 2021-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { CustomComponent } from "RemoteComponent";
 import {
-  InstalledPackageDetail,
   AvailablePackageDetail,
+  InstalledPackageDetail,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import ResourceRef from "shared/ResourceRef";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { IStoreState } from "shared/types";
 import CustomAppView from ".";
-import { CustomComponent } from "../../../RemoteComponent";
 import { IAppViewResourceRefs } from "../AppView";
 
 const defaultState = {

@@ -1,15 +1,15 @@
-// Copyright 2019-2022 the Kubeapps contributors.
+// Copyright 2019-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
 import { CdsControlMessage } from "@cds/react/forms";
 import { CdsIcon } from "@cds/react/icon";
 import { CdsRadio, CdsRadioGroup } from "@cds/react/radio";
-import Column from "components/js/Column";
-import Row from "components/js/Row";
+import Column from "components/Column";
+import Row from "components/Row";
 import { isEmpty } from "lodash";
 import { useEffect, useState } from "react";
-import { monaco, MonacoDiffEditor } from "react-monaco-editor";
+import { MonacoDiffEditor, monaco } from "react-monaco-editor";
 import { useSelector } from "react-redux";
 import { schemaToObject, validateSchema } from "shared/schema";
 import { IAjvValidateResult, IStoreState } from "shared/types";

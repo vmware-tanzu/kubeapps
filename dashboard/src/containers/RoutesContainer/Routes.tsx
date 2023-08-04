@@ -1,30 +1,29 @@
 // Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import AlertGroup from "components/AlertGroup";
+import ApiDocs from "components/ApiDocs";
 import AppList from "components/AppList/AppList";
 import AppUpgrade from "components/AppUpgrade";
 import AppView from "components/AppView";
 import Catalog from "components/Catalog/Catalog";
+import PkgRepoList from "components/Config/PkgRepoList/PkgRepoList";
 import DeploymentForm from "components/DeploymentForm";
 import LoadingWrapper from "components/LoadingWrapper";
-import PackageView from "components/PackageHeader";
-import { Navigate, Route, Routes } from "react-router-dom";
-import { app } from "shared/url";
-import ApiDocs from "../../components/ApiDocs";
-import NotFound from "../../components/NotFound";
-import AlertGroup from "components/AlertGroup";
-import PkgRepoList from "components/Config/PkgRepoList/PkgRepoList";
-
-import OperatorNew from "components/OperatorNew";
-import OperatorInstanceForm from "components/OperatorInstanceForm";
-import OperatorList from "components/OperatorList";
-import OperatorView from "components/OperatorView";
-import OperatorInstance from "components/OperatorInstance";
-import OperatorInstanceUpdateForm from "components/OperatorInstanceUpdateForm";
 import LoginForm from "components/LoginForm";
+import NotFound from "components/NotFound";
+import OperatorInstance from "components/OperatorInstance";
+import OperatorInstanceForm from "components/OperatorInstanceForm";
+import OperatorInstanceUpdateForm from "components/OperatorInstanceUpdateForm";
+import OperatorList from "components/OperatorList";
+import OperatorNew from "components/OperatorNew";
+import OperatorView from "components/OperatorView";
+import PackageView from "components/PackageHeader";
 import RequireAuthentication from "components/RequireAuthentication";
 import { useSelector } from "react-redux";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { IStoreState } from "shared/types";
+import { app } from "shared/url";
 
 const privateRoutes = {
   "/c/:cluster/ns/:namespace/apps": AppList,

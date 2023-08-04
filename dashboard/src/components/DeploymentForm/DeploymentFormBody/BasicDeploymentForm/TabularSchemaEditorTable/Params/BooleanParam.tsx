@@ -1,10 +1,10 @@
-// Copyright 2019-2022 the Kubeapps contributors.
+// Copyright 2019-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsControlMessage } from "@cds/react/forms";
 import { CdsToggle, CdsToggleGroup } from "@cds/react/toggle";
-import Column from "components/js/Column";
-import Row from "components/js/Row";
+import Column from "components/Column";
+import Row from "components/Row";
 import { useState } from "react";
 import { IBasicFormParam } from "shared/types";
 import { getStringValue } from "shared/utils";

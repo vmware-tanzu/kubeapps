@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import actions from "actions";
+import LoadingWrapper from "components/LoadingWrapper";
 import Alert from "components/js/Alert";
 import { InstalledPackageReference } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
@@ -11,7 +12,6 @@ import * as ReactRouter from "react-router-dom";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { FetchError, IStoreState } from "shared/types";
-import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";
 import UpgradeForm from "../UpgradeForm/UpgradeForm";
 

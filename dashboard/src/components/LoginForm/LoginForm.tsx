@@ -2,19 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsIcon } from "@cds/react/icon";
+import actions from "actions";
+import LoadingWrapper from "components/LoadingWrapper";
 import qs from "qs";
 import { useEffect, useState } from "react";
 import { useIntl } from "react-intl";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router-dom";
+import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
-import LoadingWrapper from "../../components/LoadingWrapper";
+import { Action } from "typesafe-actions";
 import "./LoginForm.css";
 import OAuthLogin from "./OauthLogin";
 import TokenLogin from "./TokenLogin";
-import actions from "actions";
-import { ThunkDispatch } from "redux-thunk";
-import { Action } from "typesafe-actions";
 
 function LoginForm() {
   const intl = useIntl();

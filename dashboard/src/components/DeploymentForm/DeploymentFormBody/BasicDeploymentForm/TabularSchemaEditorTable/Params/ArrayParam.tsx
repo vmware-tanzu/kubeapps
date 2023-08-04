@@ -1,4 +1,4 @@
-// Copyright 2022 the Kubeapps contributors.
+// Copyright 2022-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
@@ -8,8 +8,8 @@ import { CdsInput } from "@cds/react/input";
 import { CdsRange } from "@cds/react/range";
 import { CdsSelect } from "@cds/react/select";
 import { CdsToggle } from "@cds/react/toggle";
-import Column from "components/js/Column";
-import Row from "components/js/Row";
+import Column from "components/Column";
+import Row from "components/Row";
 import { isEmpty } from "lodash";
 import { useState } from "react";
 import { validateValuesSchema } from "shared/schema";

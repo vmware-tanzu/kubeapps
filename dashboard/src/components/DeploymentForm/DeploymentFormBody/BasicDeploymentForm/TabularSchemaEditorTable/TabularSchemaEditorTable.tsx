@@ -1,4 +1,4 @@
-// Copyright 2022 the Kubeapps contributors.
+// Copyright 2022-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
@@ -17,9 +17,9 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import Column from "components/js/Column";
-import Row from "components/js/Row";
+import Column from "components/Column";
 import LoadingWrapper from "components/LoadingWrapper";
+import Row from "components/Row";
 import { useState } from "react";
 import { IBasicFormParam } from "shared/types";
 import DebouncedInput from "./DebouncedInput";

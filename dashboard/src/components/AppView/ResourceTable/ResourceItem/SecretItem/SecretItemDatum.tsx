@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsIcon } from "@cds/react/icon";
-import Column from "components/js/Column";
-import Row from "components/js/Row";
+import Column from "components/Column";
+import Row from "components/Row";
 import React, { useEffect, useRef } from "react";
 import CopyToClipboard from "react-copy-to-clipboard";
 import { Tooltip } from "react-tooltip";

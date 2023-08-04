@@ -27,12 +27,7 @@ import { IConfigState } from "reducers/config";
 import { IOperatorsState } from "reducers/operators";
 import { IPackageRepositoryState } from "reducers/repos";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import {
-  IClusterServiceVersion,
-  IPackageState,
-  IStoreState,
-  PluginNames,
-} from "../../shared/types";
+import { IClusterServiceVersion, IPackageState, IStoreState, PluginNames } from "shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
 import CatalogItems from "./CatalogItems";

@@ -7,29 +7,29 @@ import actions from "actions";
 import AppNotes from "components/AppView/AppNotes/AppNotes";
 import AppSecrets from "components/AppView/AppSecrets";
 import { IAppViewResourceRefs } from "components/AppView/AppView";
-import Alert from "components/js/Alert";
-import Column from "components/js/Column";
-import Row from "components/js/Row";
+import Column from "components/Column";
+import LoadingWrapper from "components/LoadingWrapper";
 import { parseCSV } from "components/OperatorInstanceForm/OperatorInstanceForm";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
+import Row from "components/Row";
+import Alert from "components/js/Alert";
 import { usePush } from "hooks/push";
 import placeholder from "icons/placeholder.svg";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { fromCRD } from "shared/ResourceRef";
 import { IClusterServiceVersionCRD, IKind, IResource, IStoreState } from "shared/types";
 import { app } from "shared/url";
 import { parseToString } from "shared/yamlUtils";
-import ApplicationStatus from "../ApplicationStatus/ApplicationStatus";
 import AccessURLTable from "../AppView/AccessURLTable/AccessURLTable";
 import AppValues from "../AppView/AppValues/AppValues";
 import ResourceTabs from "../AppView/ResourceTabs";
+import ApplicationStatus from "../ApplicationStatus/ApplicationStatus";
 import ConfirmDialog from "../ConfirmDialog/ConfirmDialog";
-import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
-import { useParams } from "react-router-dom";
 
 function parseResource(
   kind: IKind,

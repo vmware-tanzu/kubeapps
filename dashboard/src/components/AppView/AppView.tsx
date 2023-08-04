@@ -4,17 +4,18 @@
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import { handleErrorAction } from "actions/auth";
+import Column from "components/Column";
 import ErrorAlert from "components/ErrorAlert";
-import Alert from "components/js/Alert";
-import Column from "components/js/Column";
-import Row from "components/js/Row";
+import LoadingWrapper from "components/LoadingWrapper";
 import PageHeader from "components/PageHeader/PageHeader";
-import { usePush } from "hooks/push";
+import Row from "components/Row";
+import Alert from "components/js/Alert";
 import {
   InstalledPackageReference,
   ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
+import { usePush } from "hooks/push";
 import placeholder from "icons/placeholder.svg";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -31,11 +32,10 @@ import {
   IStoreState,
   NotFoundNetworkError,
 } from "shared/types";
+import * as url from "shared/url";
 import { getPluginsSupportingRollback } from "shared/utils";
-import { parseToString, parseToJS } from "shared/yamlUtils";
+import { parseToJS, parseToString } from "shared/yamlUtils";
 import ApplicationStatus from "../ApplicationStatus/ApplicationStatus";
-import * as url from "../../shared/url";
-import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
 import DeleteButton from "./AppControls/DeleteButton/DeleteButton";
 import RollbackButton from "./AppControls/RollbackButton/RollbackButton";

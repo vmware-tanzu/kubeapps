@@ -5,19 +5,20 @@ import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import actions from "actions";
 import { filtersToQuery } from "components/Catalog/Catalog";
+import Column from "components/Column";
 import FilterGroup from "components/FilterGroup/FilterGroup";
+import LoadingWrapper from "components/LoadingWrapper";
+import Row from "components/Row";
 import Alert from "components/js/Alert";
-import Column from "components/js/Column";
-import Row from "components/js/Row";
 import { usePush } from "hooks/push";
 import { flatten, get, intersection, uniq, without } from "lodash";
 import qs, { ParsedQs } from "qs";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useLocation } from "react-router-dom";
 import { IPackageManifest, IPackageManifestStatus, IStoreState } from "shared/types";
 import { app } from "shared/url";
 import { escapeRegExp } from "shared/utils";
-import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import {
   AUTO_PILOT,
   BASIC_INSTALL,
@@ -30,7 +31,6 @@ import SearchFilter from "../SearchFilter/SearchFilter";
 import OLMNotFound from "./OLMNotFound";
 import OperatorItems from "./OperatorItems";
 import "./OperatorList.css";
-import { useLocation } from "react-router-dom";
 
 export interface IOperatorListProps {
   filter: ParsedQs;

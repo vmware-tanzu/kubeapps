@@ -3,6 +3,7 @@
 
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
+import LoadingWrapper from "components/LoadingWrapper";
 import Alert from "components/js/Alert";
 import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { useEffect, useState } from "react";
@@ -10,7 +11,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { IStoreState } from "shared/types";
 import * as url from "shared/url";
-import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import "./SelectRepoForm.css";
 
 interface ISelectRepoFormProps {

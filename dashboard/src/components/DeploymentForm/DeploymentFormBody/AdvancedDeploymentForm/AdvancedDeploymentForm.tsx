@@ -1,9 +1,9 @@
-// Copyright 2019-2022 the Kubeapps contributors.
+// Copyright 2019-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsRadio, CdsRadioGroup } from "@cds/react/radio";
-import Column from "components/js/Column";
-import Row from "components/js/Row";
+import Column from "components/Column";
+import Row from "components/Row";
 import monaco from "monaco-editor/esm/vs/editor/editor.api"; // for types only
 import { useEffect, useState } from "react";
 import { MonacoDiffEditor } from "react-monaco-editor";

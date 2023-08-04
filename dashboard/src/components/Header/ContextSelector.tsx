@@ -7,8 +7,10 @@ import { CdsIcon } from "@cds/react/icon";
 import { CdsInput } from "@cds/react/input";
 import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import actions from "actions";
+import Column from "components/Column";
+import Row from "components/Row";
+import useOutsideClick from "components/hooks/useOutsideClick";
 import Alert from "components/js/Alert";
-import Column from "components/js/Column";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router-dom";
@@ -16,8 +18,6 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
 import { app } from "shared/url";
-import Row from "../js/Row";
-import useOutsideClick from "../js/hooks/useOutsideClick/useOutsideClick";
 import "./ContextSelector.css";
 
 function ContextSelector() {

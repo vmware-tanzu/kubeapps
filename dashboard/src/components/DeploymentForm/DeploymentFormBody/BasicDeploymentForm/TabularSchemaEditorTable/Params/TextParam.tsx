@@ -1,12 +1,12 @@
-// Copyright 2019-2022 the Kubeapps contributors.
+// Copyright 2019-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsControlMessage } from "@cds/react/forms";
 import { CdsInput } from "@cds/react/input";
 import { CdsSelect } from "@cds/react/select";
 import { CdsTextarea } from "@cds/react/textarea";
-import Column from "components/js/Column";
-import Row from "components/js/Row";
+import Column from "components/Column";
+import Row from "components/Row";
 import { isEmpty } from "lodash";
 import { useState } from "react";
 import { validateValuesSchema } from "shared/schema";
