@@ -175,7 +175,7 @@ type AddPackageRepositoryRequest struct {
 	// least a protocol and host
 	Url string `protobuf:"bytes,6,opt,name=url,proto3" json:"url,omitempty"`
 	// The interval at which to check the upstream for updates (in time+unit)
-	// Some plugins may, addionally, support other formats, for instance,
+	// Some plugins may, additionally, support other formats, for instance,
 	// a cron expression.
 	// e.g., "*/10 * * * *" will be equivalent to "10m"
 	// Optional. Defaults to 10m if not specified
@@ -1107,7 +1107,7 @@ type UpdatePackageRepositoryRequest struct {
 	// A user-provided description.
 	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
 	// The interval at which to check the upstream for updates (in time+unit)
-	// Some plugins may, addionally, support other formats, for instance,
+	// Some plugins may, additionally, support other formats, for instance,
 	// a cron expression.
 	// e.g., "*/10 * * * *" will be equivalent to "10m"
 	// Optional. Defaults to 10m if not specified
@@ -1486,7 +1486,7 @@ type PackageRepositoryDetail struct {
 	// A URL identifying the package repository location.
 	Url string `protobuf:"bytes,6,opt,name=url,proto3" json:"url,omitempty"`
 	// The interval at which to check the upstream for updates (in time+unit)
-	// Some plugins may, addionally, support other formats, for instance,
+	// Some plugins may, additionally, support other formats, for instance,
 	// a cron expression.
 	// e.g., "*/10 * * * *" will be equivalent to "10m"
 	Interval string `protobuf:"bytes,7,opt,name=interval,proto3" json:"interval,omitempty"`

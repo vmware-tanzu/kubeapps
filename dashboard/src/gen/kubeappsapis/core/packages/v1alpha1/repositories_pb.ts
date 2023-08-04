@@ -77,7 +77,7 @@ export class AddPackageRepositoryRequest extends Message<AddPackageRepositoryReq
 
   /**
    * The interval at which to check the upstream for updates (in time+unit)
-   * Some plugins may, addionally, support other formats, for instance,
+   * Some plugins may, additionally, support other formats, for instance,
    * a cron expression.
    * e.g., "*\/10 * * * *" will be equivalent to "10m"
    * Optional. Defaults to 10m if not specified
@@ -1054,7 +1054,7 @@ export class UpdatePackageRepositoryRequest extends Message<UpdatePackageReposit
 
   /**
    * The interval at which to check the upstream for updates (in time+unit)
-   * Some plugins may, addionally, support other formats, for instance,
+   * Some plugins may, additionally, support other formats, for instance,
    * a cron expression.
    * e.g., "*\/10 * * * *" will be equivalent to "10m"
    * Optional. Defaults to 10m if not specified
@@ -1503,7 +1503,7 @@ export class PackageRepositoryDetail extends Message<PackageRepositoryDetail> {
 
   /**
    * The interval at which to check the upstream for updates (in time+unit)
-   * Some plugins may, addionally, support other formats, for instance,
+   * Some plugins may, additionally, support other formats, for instance,
    * a cron expression.
    * e.g., "*\/10 * * * *" will be equivalent to "10m"
    *
