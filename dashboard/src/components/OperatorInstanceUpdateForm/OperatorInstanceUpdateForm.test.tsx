@@ -202,7 +202,7 @@ it("renders an error if the resource is not populated", () => {
     },
   );
 
-  expect(screen.getByRole("alert")).toHaveTextContent("Resource my-foo not found");
+  expect(screen.getAllByRole("region")[1]).toHaveTextContent("Resource my-foo not found");
 });
 
 it("renders only an error if the resource is not found", () => {
