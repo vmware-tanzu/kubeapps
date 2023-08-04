@@ -1,21 +1,31 @@
 // Copyright 2019-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import actions from "actions";
 import Alert from "components/js/Alert";
 import LoadingWrapper, { ILoadingWrapperProps } from "components/LoadingWrapper/LoadingWrapper";
 import React from "react";
 import { useIntl } from "react-intl";
+import { useDispatch, useSelector } from "react-redux";
+import { ThunkDispatch } from "redux-thunk";
+import { IStoreState } from "shared/types";
+import { Action } from "typesafe-actions";
 
 interface IConfigLoaderProps extends ILoadingWrapperProps {
   children?: JSX.Element;
-  getConfig: () => void;
-  error?: Error;
 }
 
-function ConfigLoader({ getConfig, error, ...otherProps }: IConfigLoaderProps) {
+function ConfigLoader({ ...otherProps }: IConfigLoaderProps) {
+  const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const intl = useIntl();
-  React.useEffect(() => getConfig(), [getConfig]);
+  React.useEffect(() => {
+    dispatch(actions.config.getConfig());
+  }, [dispatch]);
   const kubeappsTitle = intl.formatMessage({ id: "Kubeapps", defaultMessage: "Kubeapps" });
+
+  const {
+    config: { error, loaded },
+  } = useSelector((state: IStoreState) => state);
 
   return (
     <>
@@ -27,6 +37,7 @@ function ConfigLoader({ getConfig, error, ...otherProps }: IConfigLoaderProps) {
         <LoadingWrapper
           className="margin-t-xxl"
           loadingText={<h1>{kubeappsTitle}</h1>}
+          loaded={loaded}
           {...otherProps}
         />
       )}

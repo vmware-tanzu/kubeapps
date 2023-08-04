@@ -10,12 +10,12 @@ import LoadingWrapper from "components/LoadingWrapper";
 import PageHeader from "components/PageHeader/PageHeader";
 import Row from "components/Row";
 import Alert from "components/js/Alert";
-import { push } from "connected-react-router";
 import {
   InstalledPackageReference,
   ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
+import { usePush } from "hooks/push";
 import placeholder from "icons/placeholder.svg";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -150,8 +150,7 @@ export interface IRouteParams {
 
 export default function AppView() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
-  const { cluster, namespace, releaseName, pluginName, pluginVersion } =
-    ReactRouter.useParams() as IRouteParams;
+  const { cluster, namespace, releaseName, pluginName, pluginVersion } = ReactRouter.useParams();
   const [appViewResourceRefs, setAppViewResourceRefs] = useState({
     ingresses: [],
     deployments: [],
@@ -170,6 +169,7 @@ export default function AppView() {
     },
     config: { customAppViews },
   } = useSelector((state: IStoreState) => state);
+  const push = usePush();
 
   const [fetchError, setFetchError] = useState(error);
   const [pluginObj] = useState({ name: pluginName, version: pluginVersion } as Plugin);
@@ -267,7 +267,7 @@ export default function AppView() {
   };
 
   const goToAppsView = () => {
-    dispatch(push(url.app.apps.list(cluster, namespace)));
+    push(url.app.apps.list(cluster, namespace));
   };
 
   if (fetchError) {
@@ -325,7 +325,7 @@ export default function AppView() {
       ) : (
         <section>
           <PageHeader
-            title={releaseName}
+            title={releaseName || ""}
             titleSize="md"
             subtitle={
               selectedAvailablePkg?.availablePackageRef ? (
@@ -333,8 +333,8 @@ export default function AppView() {
                   from package{" "}
                   <Link
                     to={url.app.packages.get(
-                      cluster,
-                      namespace,
+                      cluster || "",
+                      namespace || "",
                       selectedAvailablePkg.availablePackageRef,
                     )}
                   >

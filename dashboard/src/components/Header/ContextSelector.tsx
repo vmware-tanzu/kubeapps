@@ -22,7 +22,7 @@ import "./ContextSelector.css";
 
 function ContextSelector() {
   const location = ReactRouter.useLocation();
-  const history = ReactRouter.useHistory();
+  const navigate = ReactRouter.useNavigate();
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const { clusters } = useSelector((state: IStoreState) => state);
   const currentCluster = clusters.clusters[clusters.currentCluster];
@@ -69,7 +69,7 @@ function ContextSelector() {
     const nsRegex = /^\/c\/([^/]*)\/ns\/[^/]*\//;
     if (nsRegex.test(location.pathname)) {
       // Change the namespace in the route
-      history.push(
+      navigate(
         location.pathname
           .replace(nsRegex, `/c/${cluster}/ns/${namespace}/`)
           .concat(location.search),
@@ -89,7 +89,7 @@ function ContextSelector() {
     if (created) {
       closeNewNSModal();
       dispatch(actions.namespace.setNamespace(cluster, newNS));
-      history.push(app.apps.list(cluster, newNS));
+      navigate(app.apps.list(cluster, newNS));
       setOpen(false);
     }
   };
@@ -145,6 +145,7 @@ function ContextSelector() {
                 className="clr-page-size-select"
                 onChange={selectCluster}
                 value={cluster}
+                data-testid="select-cluster"
               >
                 {Object.keys(clusters.clusters).map(c => {
                   return (
@@ -165,6 +166,7 @@ function ContextSelector() {
                 className="clr-page-size-select"
                 onChange={selectNamespace}
                 value={namespace}
+                data-testid="select-namespace"
               >
                 {clusters.clusters[cluster].namespaces.map(n => {
                   return (

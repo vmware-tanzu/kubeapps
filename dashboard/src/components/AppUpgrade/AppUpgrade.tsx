@@ -15,19 +15,10 @@ import { FetchError, IStoreState } from "shared/types";
 import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";
 import UpgradeForm from "../UpgradeForm/UpgradeForm";
 
-interface IRouteParams {
-  cluster: string;
-  namespace: string;
-  releaseName: string;
-  pluginName: string;
-  pluginVersion: string;
-  version?: string;
-}
-
 function AppUpgrade() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const { cluster, namespace, releaseName, pluginName, pluginVersion, version } =
-    ReactRouter.useParams() as IRouteParams;
+    ReactRouter.useParams();
 
   const {
     apps: {
@@ -81,8 +72,8 @@ function AppUpgrade() {
   }
   return (
     <SelectRepoForm
-      cluster={cluster}
-      namespace={namespace}
+      cluster={cluster || ""}
+      namespace={namespace || ""}
       app={installedAppInstalledPackageDetail}
     />
   );

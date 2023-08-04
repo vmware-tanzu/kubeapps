@@ -10,7 +10,7 @@ import LoadingWrapper from "components/LoadingWrapper";
 import PageHeader from "components/PageHeader/PageHeader";
 import Alert from "components/js/Alert";
 import Table from "components/js/Table";
-import { push } from "connected-react-router";
+import { usePush } from "hooks/push";
 import {
   PackageRepositoriesPermissions,
   PackageRepositoryReference,
@@ -82,11 +82,12 @@ function PkgRepoList() {
     fecthPermissions();
   }, [fecthPermissions]);
 
+  const push = usePush();
   const submitFilters = (allns: boolean) => {
     if (allns) {
-      dispatch(push("?allns=yes"));
+      push("?allns=yes");
     } else {
-      dispatch(push("?allns=no"));
+      push("?allns=no");
     }
   };
   const toggleListAllNS = () => {

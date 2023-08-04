@@ -19,11 +19,10 @@ import {
   PackageRepositorySummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
-import { createMemoryHistory } from "history";
 import React from "react";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
-import { MemoryRouter, Route, Router } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { IConfigState } from "reducers/config";
 import { IOperatorsState } from "reducers/operators";
 import { IPackageRepositoryState } from "reducers/repos";
@@ -144,25 +143,24 @@ const populatedState = {
 } as IStoreState;
 
 let spyOnUseDispatch: jest.SpyInstance;
-let spyOnUseHistory: jest.SpyInstance;
+let spyOnUseNavigate: jest.SpyInstance;
+let mockNavigate: jest.Func;
 
 beforeEach(() => {
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
-  spyOnUseHistory = jest
-    .spyOn(ReactRouter, "useHistory")
-    .mockReturnValue({ push: jest.fn() } as any);
+  mockNavigate = jest.fn();
+  spyOnUseNavigate = jest.spyOn(ReactRouter, "useNavigate").mockReturnValue(mockNavigate);
 });
 
 afterEach(() => {
   jest.restoreAllMocks();
   spyOnUseDispatch.mockRestore();
-  spyOnUseHistory.mockRestore();
+  spyOnUseNavigate.mockRestore();
 });
 
 const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/catalog`;
 const routePath = "/c/:cluster/ns/:namespace/catalog";
-const history = createMemoryHistory({ initialEntries: [routePathParam] });
 
 it("retrieves csvs in the namespace if operators enabled", () => {
   const getCSVs = jest.fn();
@@ -172,11 +170,12 @@ it("retrieves csvs in the namespace if operators enabled", () => {
 
   mountWrapper(
     getStore(state),
-    <Router history={history}>
-      <Route path={routePath}>
-        <Catalog />
-      </Route>
-    </Router>,
+    <MemoryRouter initialEntries={[routePathParam]}>
+      <Routes>
+        <Route path={routePath} element={<Catalog />} />
+      </Routes>
+    </MemoryRouter>,
+    false,
   );
 
   expect(getCSVs).toHaveBeenCalledWith(defaultProps.cluster, defaultProps.namespace);
@@ -190,11 +189,12 @@ it("not retrieveing csvs in the namespace if operators deactivated", () => {
 
   mountWrapper(
     getStore(state),
-    <Router history={history}>
-      <Route path={routePath}>
-        <Catalog />
-      </Route>
-    </Router>,
+    <MemoryRouter initialEntries={[routePathParam]}>
+      <Routes>
+        <Route path={routePath} element={<Catalog />} />
+      </Routes>
+    </MemoryRouter>,
+    false,
   );
 
   expect(getCSVs).not.toHaveBeenCalled();
@@ -260,10 +260,11 @@ it("should not render a message if only operators are selected", () => {
       packages: { hasFinishedFetching: true },
     } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam + "?Operators=bar"]}>
-      <Route path={routePath}>
-        <Catalog />
-      </Route>
+      <Routes>
+        <Route path={routePath} element={<Catalog />} />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
   expect(wrapper.find(LoadingWrapper)).not.toExist();
 });
@@ -287,10 +288,11 @@ it("should not render a message if there are no more elements but it's searching
       packages: { hasFinishedFetching: true },
     } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam + "?Search=bar"]}>
-      <Route path={routePath}>
-        <Catalog />
-      </Route>
+      <Routes>
+        <Route path={routePath} element={<Catalog />} />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
   const message = wrapper.find(".end-page-message");
   expect(message).not.toExist();
@@ -350,10 +352,11 @@ it("transforms the received '__' in query params into a ','", () => {
   const wrapper = mountWrapper(
     getStore(populatedState),
     <MemoryRouter initialEntries={[routePathParam + "?Provider=Lightbend__%20Inc."]}>
-      <Route path={routePath}>
-        <Catalog />
-      </Route>
+      <Routes>
+        <Route path={routePath} element={<Catalog />} />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
   expect(wrapper.find(".label-info").text()).toBe("Provider: Lightbend, Inc. ");
 });
@@ -379,22 +382,17 @@ describe("filters by the searched item", () => {
     const wrapper = mountWrapper(
       getStore(populatedState),
       <MemoryRouter initialEntries={[routePathParam + "?Search=bar"]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
     act(() => {
       (wrapper.find(SearchFilter).prop("onChange") as any)("bar");
     });
     wrapper.update();
-    expect(mockDispatch).toHaveBeenCalledWith({
-      payload: {
-        args: ["/c/default-cluster/ns/kubeapps/catalog?Search=bar"],
-        method: "push",
-      },
-      type: "@@router/CALL_HISTORY_METHOD",
-    });
+    expect(mockNavigate).toHaveBeenCalledWith("/c/default-cluster/ns/kubeapps/catalog?Search=bar");
   });
 });
 
@@ -422,10 +420,11 @@ describe("filters by application type", () => {
     const wrapper = mountWrapper(
       getStore(populatedState),
       <MemoryRouter initialEntries={[routePathParam + "?Type=Packages"]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
     expect(wrapper.find(InfoCard)).toHaveLength(2);
   });
@@ -434,33 +433,31 @@ describe("filters by application type", () => {
     const wrapper = mountWrapper(
       getStore(populatedState),
       <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "Packages");
     expect(input).toHaveLength(1);
     input.simulate("change", { target: { value: "Packages", checked: true } });
 
     // It should have pushed with the filter
-    expect(mockDispatch).toHaveBeenCalledWith({
-      payload: {
-        args: ["/c/default-cluster/ns/kubeapps/catalog?Type=Packages"],
-        method: "push",
-      },
-      type: "@@router/CALL_HISTORY_METHOD",
-    });
+    expect(mockNavigate).toHaveBeenCalledWith(
+      "/c/default-cluster/ns/kubeapps/catalog?Type=Packages",
+    );
   });
 
   it("filters only operators", () => {
     const wrapper = mountWrapper(
       getStore(populatedState),
       <MemoryRouter initialEntries={[routePathParam + "?Type=Operators"]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
     expect(wrapper.find(InfoCard)).toHaveLength(1);
   });
@@ -473,10 +470,11 @@ describe("filters by application type", () => {
     const wrapper = mountWrapper(
       getStore({ ...populatedState, packages: packages } as IStoreState),
       <MemoryRouter initialEntries={[routePathParam + "?Type=Packages&Plugin=Carvel%20Packages"]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
     expect(wrapper.find(InfoCard)).toHaveLength(1);
   });
@@ -485,54 +483,24 @@ describe("filters by application type", () => {
     const wrapper = mountWrapper(
       getStore(populatedState),
       <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "Operators");
     expect(input).toHaveLength(1);
     input.simulate("change", { target: { value: "Operators", checked: true } });
 
     // It should have pushed with the filter
-    expect(mockDispatch).toHaveBeenCalledWith({
-      payload: {
-        args: ["/c/default-cluster/ns/kubeapps/catalog?Type=Operators"],
-        method: "push",
-      },
-      type: "@@router/CALL_HISTORY_METHOD",
-    });
+    expect(mockNavigate).toHaveBeenCalledWith(
+      "/c/default-cluster/ns/kubeapps/catalog?Type=Operators",
+    );
   });
 });
 
 describe("pagination and package fetching", () => {
-  let spyOnUseRef: jest.SpyInstance;
-  const refFalse = { current: {} };
-  const refTrue = { current: {} };
-  Object.defineProperty(refFalse, "current", {
-    set(_current) {
-      // do nothing
-    },
-    get() {
-      return false;
-    },
-  });
-  Object.defineProperty(refTrue, "current", {
-    set(_current) {
-      // do nothing
-    },
-    get() {
-      return true;
-    },
-  });
-
-  beforeEach(() => {
-    spyOnUseRef = jest.spyOn(React, "useRef").mockReturnValue(refFalse);
-  });
-  afterEach(() => {
-    spyOnUseRef.mockRestore();
-  });
-
   it("sets the initial state page to 0 before fetching packages", () => {
     const fetchAvailablePackageSummaries = jest.fn();
     actions.availablepackages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
@@ -546,10 +514,11 @@ describe("pagination and package fetching", () => {
     const wrapper = mountWrapper(
       getStore({ ...populatedState, packages: packages } as IStoreState),
       <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
 
     expect(wrapper.find(CatalogItems).prop("isFirstPage")).toBe(false);
@@ -569,7 +538,6 @@ describe("pagination and package fetching", () => {
     jest.useFakeTimers();
     const fetchAvailablePackageSummaries = jest.fn();
     actions.availablepackages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
-    spyOnUseRef = jest.spyOn(React, "useRef").mockReturnValue(refTrue);
 
     const packages = {
       ...defaultPackageState,
@@ -580,10 +548,11 @@ describe("pagination and package fetching", () => {
     const wrapper = mountWrapper(
       getStore({ ...populatedState, packages: packages } as IStoreState),
       <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
     jest.advanceTimersByTime(2000);
 
@@ -601,10 +570,11 @@ describe("pagination and package fetching", () => {
     const wrapper = mountWrapper(
       getStore({ ...populatedState, packages: packages } as IStoreState),
       <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
 
     wrapper
@@ -627,10 +597,11 @@ describe("pagination and package fetching", () => {
     const wrapper = mountWrapper(
       getStore({ ...populatedState, packages: packages } as IStoreState),
       <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
 
     expect(wrapper.find(PackageCatalogItem).length).toBe(2);
@@ -649,10 +620,11 @@ describe("pagination and package fetching", () => {
     const wrapper = mountWrapper(
       getStore({ ...populatedState, packages: packages } as IStoreState),
       <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
 
     expect(wrapper.find(CatalogItems).prop("isFirstPage")).toBe(false);
@@ -685,10 +657,11 @@ describe("pagination and package fetching", () => {
       mountWrapper(
         getStore({ ...populatedState, packages: packages } as IStoreState),
         <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <Catalog />
-          </Route>
+          <Routes>
+            <Route path={routePath} element={<Catalog />} />
+          </Routes>
         </MemoryRouter>,
+        false,
       );
 
       expect(resetAvailablePackageSummaries).not.toHaveBeenCalledWith();
@@ -705,10 +678,11 @@ describe("pagination and package fetching", () => {
       const wrapper = mountWrapper(
         getStore({ ...populatedState, packages: packages } as IStoreState),
         <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <Catalog />
-          </Route>
+          <Routes>
+            <Route path={routePath} element={<Catalog />} />
+          </Routes>
         </MemoryRouter>,
+        false,
       );
       wrapper.unmount();
 
@@ -743,10 +717,11 @@ describe("filters by package repository", () => {
     const wrapper = mountWrapper(
       getStore(defaultState),
       <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
     expect(
       wrapper.find(FilterGroup).findWhere(g => g.prop("name") === filterNames.REPO),
@@ -757,10 +732,11 @@ describe("filters by package repository", () => {
     const wrapper = mountWrapper(
       getStore(populatedState),
       <MemoryRouter initialEntries={[routePathParam + "?Repository=foo"]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
     expect(wrapper.find(InfoCard)).toHaveLength(1);
   });
@@ -774,10 +750,11 @@ describe("filters by package repository", () => {
         },
       } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
 
     // The repo name is "foo"
@@ -786,13 +763,9 @@ describe("filters by package repository", () => {
     // It should have pushed with the filter and fetches global repos since
     // the "kubeapps" namespace isn't the global repos namespace.
     expect(fetchRepos).toHaveBeenCalledWith("kubeapps", true);
-    expect(mockDispatch).toHaveBeenCalledWith({
-      payload: {
-        args: ["/c/default-cluster/ns/kubeapps/catalog?Repository=foo"],
-        method: "push",
-      },
-      type: "@@router/CALL_HISTORY_METHOD",
-    });
+    expect(mockNavigate).toHaveBeenCalledWith(
+      "/c/default-cluster/ns/kubeapps/catalog?Repository=foo",
+    );
   });
 
   it("push filter for repo in other ns", () => {
@@ -804,10 +777,11 @@ describe("filters by package repository", () => {
         },
       } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[`/c/${defaultProps.cluster}/ns/my-ns/catalog`]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
 
     // The repo name is "foo", the ns name is "my-ns"
@@ -816,13 +790,7 @@ describe("filters by package repository", () => {
 
     // It should have pushed with the filter
     expect(fetchRepos).toHaveBeenCalledWith("my-ns", true);
-    expect(mockDispatch).toHaveBeenCalledWith({
-      payload: {
-        args: ["/c/default-cluster/ns/my-ns/catalog?Repository=foo"],
-        method: "push",
-      },
-      type: "@@router/CALL_HISTORY_METHOD",
-    });
+    expect(mockNavigate).toHaveBeenCalledWith("/c/default-cluster/ns/my-ns/catalog?Repository=foo");
   });
 
   it("does not additionally fetch global repos when the global repo (helm plugin) is selected", () => {
@@ -836,10 +804,11 @@ describe("filters by package repository", () => {
           `/c/${defaultProps.cluster}/ns/${initialState.config.helmGlobalNamespace}/catalog`,
         ]}
       >
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
 
     // Called without the boolean `true` option to additionally fetch global repos.
@@ -853,10 +822,11 @@ describe("filters by package repository", () => {
         repos: { ...populatedState.repos, repos: [{ name: "foo" } as PackageRepositorySummary] },
       } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[`/c/other-cluster/ns/my-ns/catalog`]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
 
     // Only the global repos should have been fetched.
@@ -901,21 +871,18 @@ describe("filters by operator provider", () => {
         operators: { csvs: [csv, csv2] },
       } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "you");
     input.simulate("change", { target: { value: "you" } });
     // It should have pushed with the filter
-    expect(mockDispatch).toHaveBeenCalledWith({
-      payload: {
-        args: ["/c/default-cluster/ns/kubeapps/catalog?Provider=you"],
-        method: "push",
-      },
-      type: "@@router/CALL_HISTORY_METHOD",
-    });
+    expect(mockNavigate).toHaveBeenCalledWith(
+      "/c/default-cluster/ns/kubeapps/catalog?Provider=you",
+    );
   });
 
   it("push filter for operator provider with comma", () => {
@@ -925,21 +892,18 @@ describe("filters by operator provider", () => {
         operators: { csvs: [csv, csv2] },
       } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "you");
     input.simulate("change", { target: { value: "you, inc" } });
     // It should have pushed with the filter
-    expect(mockDispatch).toHaveBeenCalledWith({
-      payload: {
-        args: ["/c/default-cluster/ns/kubeapps/catalog?Provider=you__%20inc"],
-        method: "push",
-      },
-      type: "@@router/CALL_HISTORY_METHOD",
-    });
+    expect(mockNavigate).toHaveBeenCalledWith(
+      "/c/default-cluster/ns/kubeapps/catalog?Provider=you__%20inc",
+    );
   });
 
   it("filters by operator provider", () => {
@@ -949,10 +913,11 @@ describe("filters by operator provider", () => {
         operators: { csvs: [csv, csv2] },
       } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam + "?Provider=you"]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
     expect(wrapper.find(InfoCard)).toHaveLength(1);
   });
@@ -977,10 +942,11 @@ describe("filters by category", () => {
     const wrapper = mountWrapper(
       getStore({ ...populatedState, packages: packages } as IStoreState),
       <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
     expect(wrapper.find("input").findWhere(i => i.prop("value") === "Unknown")).toExist();
   });
@@ -995,22 +961,19 @@ describe("filters by category", () => {
     const wrapper = mountWrapper(
       store,
       <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
     expect(wrapper.find(InfoCard)).toHaveLength(2);
     const input = wrapper.find("input").findWhere(i => i.prop("value") === "Database");
     input.simulate("change", { target: { value: "Database" } });
-    // It should have pushed with the filter
-    expect(mockDispatch).toHaveBeenCalledWith({
-      payload: {
-        args: ["/c/default-cluster/ns/kubeapps/catalog?Category=Database"],
-        method: "push",
-      },
-      type: "@@router/CALL_HISTORY_METHOD",
-    });
+
+    expect(mockNavigate).toHaveBeenCalledWith(
+      "/c/default-cluster/ns/kubeapps/catalog?Category=Database",
+    );
   });
 
   it("filters a category", () => {
@@ -1022,10 +985,11 @@ describe("filters by category", () => {
     const wrapper = mountWrapper(
       getStore({ ...populatedState, packages: packages } as IStoreState),
       <MemoryRouter initialEntries={[routePathParam + "?Category=Database"]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
     expect(wrapper.find(InfoCard)).toHaveLength(1);
   });
@@ -1046,10 +1010,11 @@ describe("filters by category", () => {
         operators: { csvs: [csv, csvWithCat] },
       } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam + "?Category=E-Learning"]}>
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
     expect(wrapper.find(InfoCard)).toHaveLength(1);
   });
@@ -1072,10 +1037,11 @@ describe("filters by category", () => {
       <MemoryRouter
         initialEntries={[routePathParam + "?Category=Developer%20Tools,Infrastructure"]}
       >
-        <Route path={routePath}>
-          <Catalog />
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<Catalog />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
     expect(wrapper.find(InfoCard)).toHaveLength(1);
   });
