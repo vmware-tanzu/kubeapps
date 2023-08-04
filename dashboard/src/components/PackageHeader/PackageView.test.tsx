@@ -400,7 +400,9 @@ describe("renders errors", () => {
       },
     );
 
-    expect(screen.getByRole("alert")).toBeInTheDocument();
-    expect(screen.getByRole("alert")).toHaveTextContent("Unable to fetch package: Boom!");
+    expect(screen.getAllByRole("region")[1]).toBeInTheDocument();
+    expect(screen.getAllByRole("region")[1]).toHaveTextContent(
+      "Unable to fetch the package: Boom!.",
+    );
   });
 });

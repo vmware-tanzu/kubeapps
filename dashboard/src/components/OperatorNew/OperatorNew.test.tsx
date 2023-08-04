@@ -190,7 +190,7 @@ it("disables the submit button if the operators ns is selected", () => {
     },
   );
 
-  expect(screen.getByRole("alert")).toHaveTextContent(
+  expect(screen.getAllByRole("region")[6]).toHaveTextContent(
     'It\'s not possible to install a namespaced operator in the "operators" namespace',
   );
   // Something with Clarity is stopping the button from having a disabled attribute.
