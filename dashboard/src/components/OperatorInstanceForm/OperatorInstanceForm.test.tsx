@@ -3,9 +3,9 @@
 
 import { act } from "@testing-library/react";
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import OperatorInstanceFormBody from "components/OperatorInstanceFormBody/OperatorInstanceFormBody";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
-import AlertGroup from "components/AlertGroup";
 import * as ReactRedux from "react-redux";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { IClustersState } from "reducers/cluster";
