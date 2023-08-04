@@ -1,4 +1,4 @@
-// Copyright 2018-2023 the Kubeapps contributors.
+// Copyright 2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { useEffect, useRef } from "react";
