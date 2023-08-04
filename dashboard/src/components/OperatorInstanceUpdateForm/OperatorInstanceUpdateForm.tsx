@@ -82,7 +82,7 @@ function OperatorInstanceUpdateForm() {
   }, [csv, crdName]);
 
   if (!fetchError && !isFetching && !resource) {
-    return <AlertGroup status="warning">Resource {resourceName} not found</AlertGroup>;
+    return <AlertGroup status="warning">Resource {resourceName} not found.</AlertGroup>;
   }
 
   const handleDeploy = async (updatedResource: IResource) => {
