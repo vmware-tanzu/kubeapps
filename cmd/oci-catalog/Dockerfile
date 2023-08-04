@@ -27,7 +27,7 @@ RUN --mount=type=cache,target=/oci-catalog/target \
     cp /oci-catalog/target/release/oci-catalog /oci-catalog/oci-catalog
 
 FROM bitnami/minideb:bookworm
-RUN apt-get update && apt-get install -y ca-certificates libssl1.1 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ca-certificates libssl3 && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /oci-catalog/oci-catalog /oci-catalog
 USER 1001
 EXPOSE 50051

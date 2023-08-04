@@ -18,7 +18,7 @@ RUN --mount=type=cache,target=/pinniped-proxy/target \
     cp /pinniped-proxy/target/release/pinniped-proxy /pinniped-proxy/pinniped-proxy
 
 FROM bitnami/minideb:bookworm
-RUN apt-get update && apt-get install -y ca-certificates libssl1.1 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ca-certificates libssl3 && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /pinniped-proxy/pinniped-proxy /pinniped-proxy
 ENV PATH="/:$PATH"
 
