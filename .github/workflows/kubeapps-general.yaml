@@ -35,10 +35,10 @@ env:
   BRANCH_KUBEAPPS_REPO: "main"
   README_GENERATOR_REPO: "bitnami-labs/readme-generator-for-helm"
   DOCKER_REGISTRY_VERSION: "2.8.2"
-  GOLANG_VERSION: "1.20.5"
+  GOLANG_VERSION: "1.20.7"
   HELM_VERSION_MIN: "v3.8.0"
-  HELM_VERSION_STABLE: "v3.12.1"
-  GITHUB_VERSION: "2.31.0"
+  HELM_VERSION_STABLE: "v3.12.2"
+  GITHUB_VERSION: "2.32.1"
   IMAGES_TO_PUSH: "apprepository-controller dashboard asset-syncer pinniped-proxy kubeapps-apis"
   # IMG_DEV_TAG is the tags used for the Kubeapps docker images. Ideally there should be an IMG_PROD_TAG
   # but its value is dynamic and GitHub actions doesn't support it in the `env` block, so it is generated
@@ -52,21 +52,21 @@ env:
   # Currently, we only build the images for linux/amd64 because building cross-platform images is extremely slow...
   IMG_PLATFORMS: "linux/amd64"
   KAPP_CONTROLLER_VERSION: "v0.46.1"
-  K8S_KIND_VERSION: "v1.24.12@sha256:1e12918b8bc3d4253bc08f640a231bb0d3b2c5a9b28aa3f2ca1aee93e1e8db16"
+  K8S_KIND_VERSION: "v1.26.6@sha256:6e2d8b28a5b601defe327b98bd1c2d1930b49e5d8c512e1895099e4504007adb"
   KIND_VERSION: "v0.20.0"
-  KUBECTL_VERSION: "v1.24.15"
+  KUBECTL_VERSION: "v1.26.7"
   MKCERT_VERSION: "v1.4.4"
-  NODE_VERSION: "16.20.1"
+  NODE_VERSION: "18.17.0"
   OLM_VERSION: "v0.25.0"
   POSTGRESQL_VERSION: "15.3.0-debian-11-r18"
-  RUST_VERSION: "1.70.0"
+  RUST_VERSION: "1.71.1"
   SEMVER_VERSION: "3.4.0"
   GKE_STABLE_VERSION: "1.25"
   GKE_REGULAR_VERSION: "1.26"
   GKE_ZONE: "us-east1-c"
   GKE_PROJECT: "vmware-kubeapps-ci"
   GKE_CLUSTER: "kubeapps-test"
-  SRP_CLI_VERSION: "0.7.39-20230628070210-5a5e0e4-156"
+  SRP_CLI_VERSION: "0.9.9-20230724044630-61ef470-169"
 
 jobs:
   setup:
