@@ -1,7 +1,7 @@
 # Copyright 2018-2023 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
-FROM bitnami/node:16.20.1 AS build
+FROM bitnami/node:18.17.0 AS build
 WORKDIR /app
 
 COPY package.json yarn.lock /app/
@@ -12,5 +12,5 @@ COPY . /app
 RUN yarn run prettier-check && yarn run ts-compile-check
 RUN yarn run build
 
-FROM bitnami/nginx:1.24.0-debian-11-r24
+FROM bitnami/nginx:1.25.1
 COPY --from=build /app/build /app

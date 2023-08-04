@@ -3,13 +3,13 @@
 
 # syntax = docker/dockerfile:1
 
-FROM bitnami/golang:1.20.5 as builder
+FROM bitnami/golang:1.20.7 as builder
 WORKDIR /go/src/github.com/vmware-tanzu/kubeapps
 COPY go.mod go.sum ./
 ARG VERSION="devel"
 
-ARG BUF_VERSION="1.13.1"
-ARG GOLANGCILINT_VERSION="1.50.1"
+ARG BUF_VERSION="1.25.1"
+ARG GOLANGCILINT_VERSION="1.53.3"
 
 # Install lint tools
 RUN curl -sSL "https://github.com/bufbuild/buf/releases/download/v$BUF_VERSION/buf-Linux-x86_64" -o "/tmp/buf" && chmod +x "/tmp/buf"
@@ -85,7 +85,7 @@ RUN GRPC_HEALTH_PROBE_VERSION=v0.4.18 && \
 
 # Note: unlike the other docker images for go, we cannot use scratch as the plugins
 # are loaded using the dynamic linker.
-FROM bitnami/minideb:bullseye
+FROM bitnami/minideb:bookworm
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /go/src/github.com/vmware-tanzu/kubeapps/kubeapps-apis /kubeapps-apis
 COPY --from=builder /kapp-controller-packages-v1alpha1-plugin.so /plugins/kapp-controller-packages/
