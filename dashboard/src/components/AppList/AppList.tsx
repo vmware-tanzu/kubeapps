@@ -103,7 +103,7 @@ function AppList() {
             />
             {canSetAllNS && (
               <CdsToggleGroup className="flex-v-center">
-                <CdsToggle data-testid="cds-all-ns">
+                <CdsToggle>
                   <label>Show apps in all namespaces</label>
                   <input
                     type="checkbox"
