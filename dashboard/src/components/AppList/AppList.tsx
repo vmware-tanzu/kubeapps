@@ -37,9 +37,8 @@ function AppList() {
   const { currentNamespace } = clusters[cluster];
 
   const [searchFilter, setSearchFilter] = useState("");
-  const [allNS, setAllNS] = useState(false);
+  const [allNS, setAllNS] = useState(allNSQuery === "yes");
   const [canSetAllNS, setCanSetAllNS] = useState(false);
-  const [namespace, setNamespace] = useState(currentNamespace);
   const toggleListAllNS = () => {
     submitFilters(!allNS);
     setAllNS(!allNS);
@@ -61,23 +60,24 @@ function AppList() {
   const submitSearchFilter = () => submitFilters(allNS);
 
   useEffect(() => {
-    setNamespace(currentNamespace);
-  }, [currentNamespace]);
+    setSearchFilter(searchQuery);
+  }, [searchQuery]);
 
   useEffect(() => {
-    if (allNS) {
-      setNamespace("");
-    } else {
-      setNamespace(currentNamespace);
-    }
-  }, [allNS, currentNamespace]);
+    setAllNS(allNSQuery === "yes" ? true : false);
+  }, [allNSQuery]);
 
   useEffect(() => {
-    dispatch(actions.installedpackages.fetchInstalledPackages(cluster, namespace));
-    if (featureFlags?.operators) {
-      dispatch(actions.operators.getResources(cluster, namespace));
+    // We wait until the namespace is set from the state.
+    if (currentNamespace !== "") {
+      dispatch(
+        actions.installedpackages.fetchInstalledPackages(cluster, allNS ? "" : currentNamespace),
+      );
+      if (featureFlags?.operators) {
+        dispatch(actions.operators.getResources(cluster, allNS ? "" : currentNamespace));
+      }
     }
-  }, [dispatch, cluster, namespace, featureFlags]);
+  }, [dispatch, cluster, currentNamespace, featureFlags, allNS]);
 
   useEffect(() => {
     // In order to be able to list applications in all namespaces, it's necessary to be able
@@ -86,14 +86,6 @@ function AppList() {
       .then(allowed => setCanSetAllNS(allowed))
       ?.catch(() => setCanSetAllNS(false));
   }, [cluster]);
-
-  useEffect(() => {
-    setSearchFilter(searchQuery);
-  }, [searchQuery]);
-
-  useEffect(() => {
-    setAllNS(allNSQuery === "yes" ? true : false);
-  }, [allNSQuery]);
 
   /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
@@ -111,7 +103,7 @@ function AppList() {
             />
             {canSetAllNS && (
               <CdsToggleGroup className="flex-v-center">
-                <CdsToggle>
+                <CdsToggle data-testid="cds-all-ns">
                   <label>Show apps in all namespaces</label>
                   <input
                     type="checkbox"
@@ -124,7 +116,7 @@ function AppList() {
           </>
         }
         buttons={[
-          <Link to={url.app.catalog(cluster, namespace)} key="deploy-button">
+          <Link to={url.app.catalog(cluster, currentNamespace)} key="deploy-button">
             <CdsButton status="primary">
               <CdsIcon shape="deploy" /> Deploy
             </CdsButton>
@@ -143,7 +135,7 @@ function AppList() {
             appList={listOverview}
             customResources={customResources}
             cluster={cluster}
-            namespace={namespace}
+            namespace={currentNamespace}
             appVersion={appVersion}
             filter={searchFilter}
             csvs={csvs}
