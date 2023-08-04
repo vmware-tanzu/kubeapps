@@ -11,7 +11,7 @@ import Row from "components/js/Row";
 import LoadingWrapper from "components/LoadingWrapper";
 import PackageHeader from "components/PackageHeader/PackageHeader";
 import PackageVersionSelector from "components/PackageHeader/PackageVersionSelector";
-import { push } from "connected-react-router";
+import { usePush } from "hooks/push";
 import * as jsonpatch from "fast-json-patch";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -165,6 +165,8 @@ function UpgradeForm(props: IUpgradeFormProps) {
     );
   };
 
+  const push = usePush();
+
   const handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsDeploying(true);
@@ -183,7 +185,7 @@ function UpgradeForm(props: IUpgradeFormProps) {
       );
       setIsDeploying(false);
       if (deployedSuccess) {
-        dispatch(push(url.app.apps.get(installedAppInstalledPackageDetail?.installedPackageRef)));
+        push(url.app.apps.get(installedAppInstalledPackageDetail?.installedPackageRef));
       }
     }
   };

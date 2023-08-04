@@ -1,12 +1,12 @@
 // Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { LocationChangeAction, LOCATION_CHANGE } from "connected-react-router";
 import { InstalledPackageDetailCustomDataHelm } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm_pb";
 import { CustomInstalledPackageDetail, IInstalledPackageState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { InstalledPackagesAction } from "../actions/installedpackages";
+import { LOCATION_CHANGE, PushAction } from "hooks/push";
 
 export const initialState: IInstalledPackageState = {
   isFetching: false,
@@ -15,7 +15,7 @@ export const initialState: IInstalledPackageState = {
 
 const installedPackagesReducer = (
   state: IInstalledPackageState = initialState,
-  action: InstalledPackagesAction | LocationChangeAction,
+  action: InstalledPackagesAction | PushAction,
 ): IInstalledPackageState => {
   switch (action.type) {
     case getType(actions.installedpackages.requestInstalledPackage):

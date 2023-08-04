@@ -80,11 +80,8 @@ function LoginForm() {
     );
   }
   if (authenticated) {
-    // TODO(minelson): I don't think this redirect has been working for a while. Nothing
-    // populates this location prop with the from attribute (from the history package) other
-    // than a test.
     const { from } = (location.state as any) || { from: { pathname: "/" } };
-    return <ReactRouter.Redirect to={from} />;
+    return <ReactRouter.Navigate to={from} />;
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
