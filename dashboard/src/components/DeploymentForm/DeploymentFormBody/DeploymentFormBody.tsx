@@ -9,6 +9,7 @@ import AlertGroup from "components/AlertGroup";
 import ConfirmDialog from "components/ConfirmDialog";
 import LoadingWrapper from "components/LoadingWrapper";
 import Tabs from "components/Tabs";
+import Alert from "components/js/Alert";
 import { isEmpty } from "lodash";
 import { FormEvent, RefObject, useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";

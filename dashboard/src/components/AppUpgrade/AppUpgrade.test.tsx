@@ -4,6 +4,7 @@
 import actions from "actions";
 import AlertGroup from "components/AlertGroup";
 import LoadingWrapper from "components/LoadingWrapper";
+import Alert from "components/js/Alert";
 import {
   AvailablePackageDetail,
   AvailablePackageReference,
