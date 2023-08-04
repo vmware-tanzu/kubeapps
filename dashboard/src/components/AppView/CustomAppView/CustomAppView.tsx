@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import actions from "actions";
-import { push } from "connected-react-router";
+import { usePush } from "hooks/push";
 import {
   AvailablePackageDetail,
   InstalledPackageDetail,
@@ -37,7 +37,8 @@ function CustomAppView({ resourceRefs, app, appDetails }: ICustomAppViewProps) {
     [dispatch, app.installedPackageRef],
   );
 
-  const handleRedirect = useCallback(url => dispatch(push(url)), [dispatch]);
+  const push = usePush();
+  const handleRedirect = useCallback(url => push(url), [push]);
 
   const url = remoteComponentsUrl
     ? remoteComponentsUrl

@@ -3,21 +3,26 @@
 
 import { CdsButton } from "@cds/react/button";
 import { CdsModal } from "@cds/react/modal";
-import { act } from "@testing-library/react";
+import { act, screen } from "@testing-library/react";
 import actions from "actions";
 import Alert from "components/js/Alert";
-import { createMemoryHistory } from "history";
 import { cloneDeep } from "lodash";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
-import { Router } from "react-router-dom";
-import { IClustersState } from "reducers/cluster";
-import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import { IClusterState, IClustersState } from "reducers/cluster";
+import {
+  defaultStore,
+  getStore,
+  initialState,
+  mountWrapper,
+  renderWithProviders,
+} from "shared/specs/mountWrapper";
 import { IStoreState } from "shared/types";
 import ContextSelector from "./ContextSelector";
+import userEvent from "@testing-library/user-event";
 
 let spyOnUseDispatch: jest.SpyInstance;
-let spyOnUseHistory: jest.SpyInstance;
+let spyOnUseNavigate: jest.SpyInstance;
 const kubeActions = { ...actions.operators };
 beforeEach(() => {
   actions.namespace = {
@@ -29,15 +34,13 @@ beforeEach(() => {
   };
   const mockDispatch = jest.fn(res => res);
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
-  spyOnUseHistory = jest
-    .spyOn(ReactRouter, "useHistory")
-    .mockReturnValue({ push: jest.fn() } as any);
+  spyOnUseNavigate = jest.spyOn(ReactRouter, "useNavigate").mockReturnValue(jest.fn() as any);
 });
 
 afterEach(() => {
   actions.operators = { ...kubeActions };
   spyOnUseDispatch.mockRestore();
-  spyOnUseHistory.mockRestore();
+  spyOnUseNavigate.mockRestore();
 });
 
 it("gets a namespace", () => {
@@ -212,77 +215,57 @@ it("disables the change context button if namespace is not loaded yet", () => {
   expect(wrapper.find(CdsButton).filterWhere(b => b.text() === "Change Context")).toBeDisabled();
 });
 
-it("changes the location with the new namespace", () => {
-  const push = jest.fn();
-  spyOnUseHistory = jest.spyOn(ReactRouter, "useHistory").mockReturnValue({ push } as any);
-  const history = createMemoryHistory({ initialEntries: ["/c/default-cluster/ns/ns-bar/catalog"] });
-  const wrapper = mountWrapper(
-    defaultStore,
-    <Router history={history}>
-      <ContextSelector />
-    </Router>,
-  );
-  wrapper
-    .find("select")
-    .findWhere(s => s.prop("name") === "namespaces")
-    .simulate("change", { target: { value: "other" } });
-  act(() => {
-    (
-      wrapper
-        .find(CdsButton)
-        .filterWhere(b => b.text() === "Change Context")
-        .prop("onClick") as any
-    )();
+it("changes the location with the new namespace", async () => {
+  const navigate = jest.fn();
+  spyOnUseNavigate = jest.spyOn(ReactRouter, "useNavigate").mockReturnValue(navigate as any);
+
+  renderWithProviders(<ContextSelector />, {
+    preloadedState: {
+      clusters: {
+        currentCluster: "default-cluster",
+        clusters: {
+          "default-cluster": {
+            currentNamespace: "default",
+            namespaces: ["default", "ns-bar", "other"],
+          } as Partial<IClusterState>,
+        },
+      } as Partial<IClustersState>,
+    },
+    initialEntries: ["/c/default-cluster/ns/ns-bar/catalog"],
   });
-  expect(history.location.pathname).toBe("/c/default-cluster/ns/other/catalog");
+
+  await userEvent.selectOptions(screen.getByTestId("select-namespace"), "other");
+  await userEvent.click(screen.getByText("Change Context"));
+
+  expect(navigate).toBeCalledWith("/c/default-cluster/ns/other/catalog");
 });
 
-it("changes the location with the new cluster and namespace", () => {
-  const history = createMemoryHistory({ initialEntries: ["/c/default-cluster/ns/ns-bar/catalog"] });
-  const wrapper = mountWrapper(
-    defaultStore,
-    <Router history={history}>
-      <ContextSelector />
-    </Router>,
-  );
-  wrapper
-    .find("select")
-    .findWhere(s => s.prop("name") === "clusters")
-    .simulate("change", { target: { value: "second-cluster" } });
-  wrapper
-    .find("select")
-    .findWhere(s => s.prop("name") === "namespaces")
-    .simulate("change", { target: { value: "other" } });
-  act(() => {
-    (
-      wrapper
-        .find(CdsButton)
-        .filterWhere(b => b.text() === "Change Context")
-        .prop("onClick") as any
-    )();
-  });
-  expect(history.location.pathname).toBe("/c/second-cluster/ns/other/catalog");
-});
+it("changes the location with the new cluster and namespace", async () => {
+  const navigate = jest.fn();
+  spyOnUseNavigate = jest.spyOn(ReactRouter, "useNavigate").mockReturnValue(navigate as any);
 
-it("don't call push if the pathname is not recognized", () => {
-  const history = createMemoryHistory({ initialEntries: ["/foo"] });
-  const wrapper = mountWrapper(
-    defaultStore,
-    <Router history={history}>
-      <ContextSelector />
-    </Router>,
-  );
-  wrapper
-    .find("select")
-    .findWhere(s => s.prop("name") === "namespaces")
-    .simulate("change", { target: { value: "other" } });
-  act(() => {
-    (
-      wrapper
-        .find(CdsButton)
-        .filterWhere(b => b.text() === "Change Context")
-        .prop("onClick") as any
-    )();
+  renderWithProviders(<ContextSelector />, {
+    preloadedState: {
+      clusters: {
+        currentCluster: "default-cluster",
+        clusters: {
+          "default-cluster": {
+            currentNamespace: "default",
+            namespaces: ["default", "ns-bar", "other"],
+          } as Partial<IClusterState>,
+          "other-cluster": {
+            currentNamespace: "default",
+            namespaces: ["default", "ns-bar", "other"],
+          } as Partial<IClusterState>,
+        },
+      } as Partial<IClustersState>,
+    },
+    initialEntries: ["/c/other-cluster/ns/other/catalog"],
   });
-  expect(history.location.pathname).toBe("/foo");
+
+  await userEvent.selectOptions(screen.getByTestId("select-cluster"), "other-cluster");
+  await userEvent.selectOptions(screen.getByTestId("select-namespace"), "other");
+  await userEvent.click(screen.getByText("Change Context"));
+
+  expect(navigate).toBeCalledWith("/c/other-cluster/ns/other/catalog");
 });
