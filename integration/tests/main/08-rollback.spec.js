@@ -66,12 +66,15 @@ test("Rolls back an application", async ({ page }) => {
   // so that it get loaded in the DOM when using the toContainText assert
   await page.locator(".values-editor div.modified").click({ button: "right" });
   await page.locator("text=Command Palette").click();
-  await page.locator('[aria-label="Type to narrow down results\\."]').click();
-  await page.locator('[aria-label="Type to narrow down results\\."]').fill(">find");
-  await page.locator('label:has-text("FindCtrl+F")').click();
-  await page.locator('[aria-label="Find"]').fill("replicaCount: ");
-  // Note the U+200C, which is a zero-width non-joiner, character instead of a space
-  await expect(page.locator(".values-editor div.modified")).toContainText("replicaCount:·‌2");
+  await page.getByLabel("input").click();
+  await page.getByLabel("input").fill(">find");
+  await page
+    .locator("div")
+    .filter({ hasText: /^Find$/ })
+    .nth(1)
+    .click();
+  await page.getByPlaceholder("Find").fill("replicaCount: ");
+  await expect(page.locator(".values-editor div.modified")).toContainText("replicaCount: 2");
 
   await page.locator('cds-button:has-text("Deploy")').click();
 

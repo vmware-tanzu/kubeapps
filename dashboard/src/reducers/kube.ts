@@ -1,12 +1,12 @@
 // Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { LocationChangeAction, LOCATION_CHANGE } from "connected-react-router";
 import { IKubeState } from "shared/types";
 import { Kube } from "shared/Kube";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { KubeAction } from "../actions/kube";
+import { LOCATION_CHANGE, PushAction } from "hooks/push";
 
 export const initialKinds = {
   // In case it's not possible to retrieve the api groups (e.g. with lacking permissions)
@@ -128,7 +128,7 @@ export const initialState: IKubeState = {
 
 const kubeReducer = (
   state: IKubeState = initialState,
-  action: KubeAction | LocationChangeAction,
+  action: KubeAction | PushAction,
 ): IKubeState => {
   switch (action.type) {
     case getType(actions.kube.receiveResource): {

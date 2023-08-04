@@ -23,7 +23,7 @@ import {
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
-import { MemoryRouter, Route } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { IConfigState } from "reducers/config";
 import { InstalledPackage } from "shared/InstalledPackage";
 import PackagesService from "shared/PackagesService";
@@ -201,10 +201,11 @@ describe("AppView", () => {
           } as IInstalledPackageState,
         } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <AppView />
-          </Route>
+          <Routes>
+            <Route path={routePath} element={<AppView />} />
+          </Routes>
         </MemoryRouter>,
+        false,
       );
     });
     expect(wrapper.find(LoadingWrapper).prop("loaded")).toBe(false);
@@ -222,10 +223,11 @@ describe("AppView", () => {
           } as IInstalledPackageState,
         } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <AppView />
-          </Route>
+          <Routes>
+            <Route path={routePath} element={<AppView />} />
+          </Routes>
         </MemoryRouter>,
+        false,
       );
     });
     expect(wrapper.find(LoadingWrapper).prop("loaded")).toBe(true);
@@ -242,10 +244,11 @@ describe("AppView", () => {
           apps: { error: new FetchError("boom!") } as IInstalledPackageState,
         } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <AppView />
-          </Route>
+          <Routes>
+            <Route path={routePath} element={<AppView />} />
+          </Routes>
         </MemoryRouter>,
+        false,
       );
     });
     expect(wrapper.find(AlertGroup)).toExist();
@@ -269,10 +272,11 @@ describe("AppView", () => {
           } as IConfigState,
         } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <AppView />
-          </Route>
+          <Routes>
+            <Route path={routePath} element={<AppView />} />
+          </Routes>
         </MemoryRouter>,
+        false,
       );
     });
     expect(wrapper.find(CustomAppView)).toExist();
@@ -295,10 +299,11 @@ describe("AppView", () => {
           } as IConfigState,
         } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <AppView />
-          </Route>
+          <Routes>
+            <Route path={routePath} element={<AppView />} />
+          </Routes>
         </MemoryRouter>,
+        false,
       );
     });
     expect(wrapper.find(CustomAppView)).not.toExist();
@@ -315,10 +320,11 @@ describe("AppView", () => {
           } as IInstalledPackageState,
         } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <AppView />
-          </Route>
+          <Routes>
+            <Route path={routePath} element={<AppView />} />
+          </Routes>
         </MemoryRouter>,
+        false,
       );
     });
     expect(wrapper.find(PageHeader).text()).toContain("from package my-cool-package-1");
@@ -340,10 +346,11 @@ describe("AppView", () => {
           } as IInstalledPackageState,
         } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <AppView />
-          </Route>
+          <Routes>
+            <Route path={routePath} element={<AppView />} />
+          </Routes>
         </MemoryRouter>,
+        false,
       );
     });
 
@@ -360,10 +367,11 @@ describe("AppView", () => {
           apps: { selected: { ...installedPackage } } as IInstalledPackageState,
         } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <AppView />
-          </Route>
+          <Routes>
+            <Route path={routePath} element={<AppView />} />
+          </Routes>
         </MemoryRouter>,
+        false,
       );
     });
     expect(wrapper.find(UpgradeButton)).toExist();
@@ -396,10 +404,11 @@ describe("AppView", () => {
             apps: { selected: installedPackage } as IInstalledPackageState,
           } as Partial<IStoreState>),
           <MemoryRouter initialEntries={[routePathParam]}>
-            <Route path={routePath}>
-              <AppView />
-            </Route>
+            <Routes>
+              <Route path={routePath} element={<AppView />} />
+            </Routes>
           </MemoryRouter>,
+          false,
         );
       });
       wrapper.update();
@@ -430,10 +439,11 @@ describe("AppView", () => {
             apps: { selected: installedPackage } as IInstalledPackageState,
           } as Partial<IStoreState>),
           <MemoryRouter initialEntries={[routePathParam]}>
-            <Route path={routePath}>
-              <AppView />
-            </Route>
+            <Routes>
+              <Route path={routePath} element={<AppView />} />
+            </Routes>
           </MemoryRouter>,
+          false,
         );
       });
       wrapper.update();
@@ -472,10 +482,11 @@ describe("AppView", () => {
             apps: { ...validState.apps, error: new Error("Boom!") } as IInstalledPackageState,
           } as Partial<IStoreState>),
           <MemoryRouter initialEntries={[routePathParam]}>
-            <Route path={routePath}>
-              <AppView />
-            </Route>
+            <Routes>
+              <Route path={routePath} element={<AppView />} />
+            </Routes>
           </MemoryRouter>,
+          false,
         );
       });
       const err = wrapper.find(AlertGroup);
@@ -492,10 +503,11 @@ describe("AppView", () => {
             apps: { ...validState.apps, error: new DeleteError("Boom!") } as IInstalledPackageState,
           } as Partial<IStoreState>),
           <MemoryRouter initialEntries={[routePathParam]}>
-            <Route path={routePath}>
-              <AppView />
-            </Route>
+            <Routes>
+              <Route path={routePath} element={<AppView />} />
+            </Routes>
           </MemoryRouter>,
+          false,
         );
       });
       const err = wrapper.find(AlertGroup);
@@ -518,10 +530,11 @@ describe("AppView", () => {
           apps: { selected: installedPackage } as IInstalledPackageState,
         } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <AppView />
-          </Route>
+          <Routes>
+            <Route path={routePath} element={<AppView />} />
+          </Routes>
         </MemoryRouter>,
+        false,
       );
     });
     wrapper.update();
@@ -554,10 +567,11 @@ describe("AppView actions", () => {
       mountWrapper(
         store,
         <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <AppView />
-          </Route>
+          <Routes>
+            <Route path={routePath} element={<AppView />} />
+          </Routes>
         </MemoryRouter>,
+        false,
       );
     });
 
@@ -610,10 +624,11 @@ describe("AppView actions", () => {
       wrapper = mountWrapper(
         store,
         <MemoryRouter initialEntries={[routePathParam]}>
-          <Route path={routePath}>
-            <AppView />
-          </Route>
+          <Routes>
+            <Route path={routePath} element={<AppView />} />
+          </Routes>
         </MemoryRouter>,
+        false,
       );
     });
     await act(async () => {

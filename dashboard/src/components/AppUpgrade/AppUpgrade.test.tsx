@@ -21,7 +21,7 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
-import { MemoryRouter, Route } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { IPackageRepositoryState } from "reducers/repos";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import {
@@ -106,14 +106,12 @@ const repo1Detail = {
 } as PackageRepositoryDetail;
 
 let spyOnUseDispatch: jest.SpyInstance;
-let spyOnUseHistory: jest.SpyInstance;
+let spyOnUseNavigate: jest.SpyInstance;
 
 beforeEach(() => {
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
-  spyOnUseHistory = jest
-    .spyOn(ReactRouter, "useHistory")
-    .mockReturnValue({ push: jest.fn() } as any);
+  spyOnUseNavigate = jest.spyOn(ReactRouter, "useNavigate").mockReturnValue(jest.fn());
   // mock the window.matchMedia for selecting the theme
   Object.defineProperty(window, "matchMedia", {
     writable: true,
@@ -154,7 +152,7 @@ beforeEach(() => {
 afterEach(() => {
   jest.restoreAllMocks();
   spyOnUseDispatch.mockRestore();
-  spyOnUseHistory.mockRestore();
+  spyOnUseNavigate.mockRestore();
 });
 
 const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.releaseName}/upgrade`;
@@ -169,10 +167,11 @@ it("renders the repo selection form if not introduced", () => {
   const wrapper = mountWrapper(
     getStore({ ...defaultStore, ...state } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam]}>
-      <Route path={routePath}>
-        <AppUpgrade />,
-      </Route>
+      <Routes>
+        <Route path={routePath} element={<AppUpgrade />} />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
   expect(wrapper.find(LoadingWrapper).prop("loaded")).toBe(false);
 });
@@ -194,10 +193,11 @@ it("renders the repo selection form if not introduced when the app is loaded", (
       ...state,
     } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam]}>
-      <Route path={routePath}>
-        <AppUpgrade />,
-      </Route>
+      <Routes>
+        <Route path={routePath} element={<AppUpgrade />} />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
   expect(wrapper.find(SelectRepoForm)).toExist();
   expect(wrapper.find(AlertGroup)).not.toExist();
@@ -217,10 +217,11 @@ describe("when an error exists", () => {
         ...state,
       } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <AppUpgrade />,
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<AppUpgrade />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
 
     expect(wrapper.find(AlertGroup)).toExist();
@@ -247,10 +248,11 @@ describe("when an error exists", () => {
         ...state,
       } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <AppUpgrade />,
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<AppUpgrade />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
     expect(wrapper.find(SelectRepoForm).find(AlertGroup)).toExist();
     expect(wrapper.find(UpgradeForm)).not.toExist();
@@ -275,10 +277,11 @@ describe("when an error exists", () => {
         ...state,
       } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam]}>
-        <Route path={routePath}>
-          <AppUpgrade />,
-        </Route>
+        <Routes>
+          <Route path={routePath} element={<AppUpgrade />} />
+        </Routes>
       </MemoryRouter>,
+      false,
     );
     expect(wrapper.find(UpgradeForm)).toExist();
     expect(wrapper.find(UpgradeForm).find(AlertGroup)).toIncludeText(upgradeError.message);
@@ -310,10 +313,11 @@ it("renders the upgrade form when the repo is available, clears state and fetche
       ...state,
     } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam]}>
-      <Route path={routePath}>
-        <AppUpgrade />,
-      </Route>
+      <Routes>
+        <Route path={routePath} element={<AppUpgrade />} />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
   expect(wrapper.find(UpgradeForm)).toExist();
   expect(wrapper.find(AlertGroup)).not.toExist();
@@ -346,10 +350,11 @@ it("renders the upgrade form with the version property", () => {
       ...state,
     } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam + "/0.0.1"]}>
-      <Route path={routePath + "/:version"}>
-        <AppUpgrade />,
-      </Route>
+      <Routes>
+        <Route path={routePath + "/:version"} element={<AppUpgrade />} />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
   expect(wrapper.find(UpgradeForm)).toExist();
   expect(wrapper.find(UpgradeForm)).toHaveProp("version", "0.0.1");
@@ -374,10 +379,11 @@ it("skips the repo selection form if the app contains upgrade info", () => {
       ...state,
     } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam]}>
-      <Route path={routePath}>
-        <AppUpgrade />,
-      </Route>
+      <Routes>
+        <Route path={routePath} element={<AppUpgrade />} />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
   expect(wrapper.find(UpgradeForm)).toExist();
   expect(wrapper.find(AlertGroup)).not.toExist();

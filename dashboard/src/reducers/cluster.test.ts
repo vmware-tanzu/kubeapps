@@ -1,8 +1,8 @@
-// Copyright 2020-2022 the Kubeapps contributors.
+// Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { LOCATION_CHANGE, RouterActionType, RouterLocation } from "connected-react-router";
-import { Location } from "history";
+import { LOCATION_CHANGE } from "hooks/push";
+import { Location } from "react-router";
 import context from "jest-plugin-context";
 import { Auth } from "shared/Auth";
 import { IConfig } from "shared/Config";
@@ -68,9 +68,7 @@ describe("clusterReducer", () => {
             clusterReducer(initialTestState, {
               type: LOCATION_CHANGE,
               payload: {
-                location: { ...location, pathname: tc.path } as RouterLocation<any>,
-                action: "PUSH" as RouterActionType,
-                isFirstRendering: true,
+                location: { ...location, pathname: tc.path },
               },
             }),
           ).toEqual({

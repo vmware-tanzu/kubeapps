@@ -1,7 +1,7 @@
-// Copyright 2020-2022 the Kubeapps contributors.
+// Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { LocationChangeAction, LOCATION_CHANGE } from "connected-react-router";
+import { LOCATION_CHANGE, PushAction } from "hooks/push";
 import { Auth } from "shared/Auth";
 import { IConfig } from "shared/Config";
 import { getCurrentNamespace } from "shared/Namespace";
@@ -44,7 +44,7 @@ export const initialState: IClustersState = getInitialState();
 
 const clusterReducer = (
   state: IClustersState = initialState,
-  action: ConfigAction | NamespaceAction | LocationChangeAction | AuthAction,
+  action: ConfigAction | NamespaceAction | AuthAction | PushAction,
 ): IClustersState => {
   switch (action.type) {
     case getType(actions.namespace.receiveNamespaceExists): {

@@ -4,19 +4,32 @@
 import AlertGroup from "components/AlertGroup";
 import LoadingWrapper from "components/LoadingWrapper";
 import context from "jest-plugin-context";
-import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
+import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import ConfigLoader from ".";
+import actions from "actions";
 
 it("renders a loading wrapper", () => {
-  const wrapper = mountWrapper(defaultStore, <ConfigLoader loaded={false} getConfig={jest.fn()} />);
+  const wrapper = mountWrapper(
+    getStore({
+      config: {
+        loaded: false,
+      },
+    }),
+    <ConfigLoader />,
+  );
+
   expect(wrapper.find(LoadingWrapper).prop("loaded")).toBe(false);
 });
 
 context("when there is an error", () => {
   it("renders the error details", () => {
     const wrapper = mountWrapper(
-      defaultStore,
-      <ConfigLoader error={new Error("Wrong config!")} getConfig={jest.fn()} />,
+      getStore({
+        config: {
+          error: new Error("Wrong config!"),
+        },
+      }),
+      <ConfigLoader />,
     );
     expect(wrapper.find(AlertGroup)).toExist();
     expect(wrapper.find(AlertGroup).text()).toContain("Wrong config!");
@@ -25,8 +38,11 @@ context("when there is an error", () => {
 
 describe("componentDidMount", () => {
   it("calls getConfig", () => {
-    const getConfig = jest.fn();
-    mountWrapper(defaultStore, <ConfigLoader getConfig={getConfig} />);
+    const getConfig = jest.fn().mockReturnValue({ type: "test" });
+    jest.spyOn(actions.config, "getConfig").mockImplementation(getConfig);
+
+    mountWrapper(defaultStore, <ConfigLoader />);
+
     expect(getConfig).toHaveBeenCalled();
   });
 });

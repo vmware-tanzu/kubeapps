@@ -1,8 +1,6 @@
 // Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { connectRouter } from "connected-react-router";
-import { History } from "history";
 import { combineReducers } from "redux";
 import { IStoreState } from "shared/types";
 import installedPackagesReducer from "./installedpackages";
@@ -25,9 +23,8 @@ export const reducers = {
   operators: operatorReducer,
 };
 
-const rootReducer = (history: History) =>
+const rootReducer = () =>
   combineReducers<IStoreState>({
-    router: connectRouter(history),
     ...reducers,
   });
 

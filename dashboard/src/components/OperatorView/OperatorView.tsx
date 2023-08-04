@@ -9,7 +9,7 @@ import Column from "components/Column";
 import LoadingWrapper from "components/LoadingWrapper";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import Row from "components/Row";
-import { push } from "connected-react-router";
+import { usePush } from "hooks/push";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
@@ -40,7 +40,7 @@ export default function OperatorView() {
   const { operator: operatorName } = useParams<IOperatorViewParams>();
 
   useEffect(() => {
-    dispatch(actions.operators.getOperator(cluster, namespace, operatorName));
+    dispatch(actions.operators.getOperator(cluster, namespace, operatorName || ""));
     dispatch(actions.operators.listSubscriptions(cluster, namespace));
   }, [dispatch, cluster, namespace, operatorName]);
 
@@ -53,7 +53,8 @@ export default function OperatorView() {
     }
   }, [dispatch, operator, cluster, namespace]);
 
-  const redirect = () => dispatch(push(app.operators.new(cluster, namespace, operatorName)));
+  const push = usePush();
+  const redirect = () => push(app.operators.new(cluster, namespace, operatorName || ""));
 
   if (error) {
     return (

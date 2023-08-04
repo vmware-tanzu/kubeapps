@@ -5,7 +5,7 @@ import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import AlertGroup from "components/AlertGroup";
 import * as ReactRedux from "react-redux";
-import { MemoryRouter, Route } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { IClusterState } from "reducers/cluster";
 import { IOperatorsState } from "reducers/operators";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
@@ -79,10 +79,11 @@ it("calls getOperator when mounting the component", () => {
   mountWrapper(
     store,
     <MemoryRouter initialEntries={["/c/default/ns/default/operators/foo"]}>
-      <Route path={"/c/:cluster/ns/:namespace/operators/:operator"}>
-        <OperatorView />
-      </Route>
+      <Routes>
+        <Route path={"/c/:cluster/ns/:namespace/operators/:operator"} element={<OperatorView />} />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
 
   expect(getOperator).toHaveBeenCalledWith("default-cluster", "kubeapps", "foo");
@@ -133,10 +134,11 @@ it("shows an error if the operator doesn't have any channel defined", () => {
   const wrapper = mountWrapper(
     store,
     <MemoryRouter initialEntries={["/c/default/ns/default/operators/foo"]}>
-      <Route path={"/c/:cluster/ns/:namespace/operators/:operator"}>
-        <OperatorView />
-      </Route>
+      <Routes>
+        <Route path={"/c/:cluster/ns/:namespace/operators/:operator"} element={<OperatorView />} />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
   expect(wrapper.find(AlertGroup)).toIncludeText(
     "Operator foo doesn't define a valid channel. This is needed to extract required info",

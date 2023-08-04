@@ -15,10 +15,9 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { GetServiceAccountNamesResponse } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources_pb";
-import { createMemoryHistory } from "history";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
-import { MemoryRouter, Route, Router } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { Kube } from "shared/Kube";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IStoreState, PluginNames } from "shared/types";
@@ -53,17 +52,16 @@ const defaultSelectedPkg = {
 const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.packageCluster}/${defaultProps.packageNamespace}/${defaultProps.pkgName}/versions/${defaultProps.version}`;
 const routePath =
   "/c/:cluster/ns/:namespace/apps/new/:pluginName/:pluginVersion/:packageCluster/:packageNamespace/:packageId/versions/:packageVersion";
-const history = createMemoryHistory({ initialEntries: [routePathParam] });
 
 let spyOnUseDispatch: jest.SpyInstance;
-let spyOnUseHistory: jest.SpyInstance;
+let spyOnUseNavigate: jest.SpyInstance;
+let mockNavigate: jest.Func;
 
 beforeEach(() => {
-  const mockDispatch = jest.fn();
+  const mockDispatch = jest.fn().mockReturnValue(true);
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
-  spyOnUseHistory = jest
-    .spyOn(ReactRouter, "useHistory")
-    .mockReturnValue({ push: jest.fn() } as any);
+  mockNavigate = jest.fn();
+  spyOnUseNavigate = jest.spyOn(ReactRouter, "useNavigate").mockReturnValue(mockNavigate);
   // mock the window.matchMedia for selecting the theme
   Object.defineProperty(window, "matchMedia", {
     writable: true,
@@ -103,7 +101,7 @@ beforeEach(() => {
 afterEach(() => {
   jest.restoreAllMocks();
   spyOnUseDispatch.mockRestore();
-  spyOnUseHistory.mockRestore();
+  spyOnUseNavigate.mockRestore();
 });
 
 it("fetches the available versions", () => {
@@ -113,10 +111,11 @@ it("fetches the available versions", () => {
   mountWrapper(
     getStore({} as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam]}>
-      <Route path={routePath}>
-        <DeploymentForm />
-      </Route>
+      <Routes>
+        <Route path={routePath} element={<DeploymentForm />} />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
 
   expect(fetchAvailablePackageVersions).toHaveBeenCalledWith(
@@ -133,11 +132,12 @@ describe("default values", () => {
   it("uses the selected package default values", () => {
     const wrapper = mountWrapper(
       getStore({ packages: { selected: defaultSelectedPkg } } as IStoreState),
-      <Router history={history}>
-        <Route path={routePath}>
-          <DeploymentForm />
-        </Route>
-      </Router>,
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Routes>
+          <Route path={routePath} element={<DeploymentForm />} />
+        </Routes>
+      </MemoryRouter>,
+      false,
     );
 
     expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("package: defaults");
@@ -162,11 +162,12 @@ describe("default values", () => {
 
     const wrapper = mountWrapper(
       getStore(state),
-      <Router history={history}>
-        <Route path={routePath}>
-          <DeploymentForm />
-        </Route>
-      </Router>,
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Routes>
+          <Route path={routePath} element={<DeploymentForm />} />
+        </Routes>
+      </MemoryRouter>,
+      false,
     );
 
     const saSelect = wrapper
@@ -197,11 +198,12 @@ describe("default values", () => {
 
     const wrapper = mountWrapper(
       getStore(state),
-      <Router history={history}>
-        <Route path={routePath}>
-          <DeploymentForm />
-        </Route>
-      </Router>,
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Routes>
+          <Route path={routePath} element={<DeploymentForm />} />
+        </Routes>
+      </MemoryRouter>,
+      false,
     );
 
     const saSelect = wrapper
@@ -221,11 +223,12 @@ describe("renders an error", () => {
         },
         apps: { error: new Error("wrong format!") },
       } as Partial<IStoreState>),
-      <Router history={history}>
-        <Route path={routePath}>
-          <DeploymentForm />
-        </Route>
-      </Router>,
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Routes>
+          <Route path={routePath} element={<DeploymentForm />} />
+        </Routes>
+      </MemoryRouter>,
+      false,
     );
     expect(wrapper.find(AlertGroup)).toExist();
     expect(
@@ -242,11 +245,12 @@ describe("renders an error", () => {
         packages: { selected: { ...defaultSelectedPkg, error: new FetchError("not found") } },
         apps: { error: undefined },
       } as Partial<IStoreState>),
-      <Router history={history}>
-        <Route path={routePath}>
-          <DeploymentForm />
-        </Route>
-      </Router>,
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Routes>
+          <Route path={routePath} element={<DeploymentForm />} />
+        </Routes>
+      </MemoryRouter>,
+      false,
     );
     expect(wrapper.find(AlertGroup)).toExist();
     expect(
@@ -260,11 +264,12 @@ describe("renders an error", () => {
   it("forwards the appValues when modified", () => {
     const wrapper = mountWrapper(
       getStore({ packages: { selected: defaultSelectedPkg } } as IStoreState),
-      <Router history={history}>
-        <Route path={routePath}>
-          <DeploymentForm />
-        </Route>
-      </Router>,
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Routes>
+          <Route path={routePath} element={<DeploymentForm />} />
+        </Routes>
+      </MemoryRouter>,
+      false,
     );
 
     const handleValuesChange: (v: string) => void = wrapper
@@ -281,21 +286,20 @@ describe("renders an error", () => {
   it("changes values if the version changes and it has not been modified", () => {
     const wrapper = mountWrapper(
       getStore({ packages: { selected: defaultSelectedPkg } } as IStoreState),
-      <Router history={history}>
-        <Route path={routePath}>
-          <DeploymentForm />
-        </Route>
-      </Router>,
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Routes>
+          <Route path={routePath} element={<DeploymentForm />} />
+        </Routes>
+      </MemoryRouter>,
+      false,
     );
     expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("package: defaults");
   });
 
   it("display the service account selector", () => {
-    const history = createMemoryHistory({
-      initialEntries: [
-        `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/${PluginNames.PACKAGES_KAPP}/${defaultProps.plugin.version}/${defaultProps.packageCluster}/${defaultProps.packageNamespace}/${defaultProps.pkgName}/versions/${defaultProps.version}`,
-      ],
-    });
+    const initialEntries = [
+      `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/${PluginNames.PACKAGES_KAPP}/${defaultProps.plugin.version}/${defaultProps.packageCluster}/${defaultProps.packageNamespace}/${defaultProps.pkgName}/versions/${defaultProps.version}`,
+    ];
     Kube.getServiceAccountNames = jest.fn().mockReturnValue({
       then: jest.fn((f: any) =>
         f({ serviceaccountNames: ["my-sa-1", "my-sa-2"] } as GetServiceAccountNamesResponse),
@@ -305,11 +309,12 @@ describe("renders an error", () => {
 
     const wrapper = mountWrapper(
       getStore({ packages: { selected: defaultSelectedPkg } } as IStoreState),
-      <Router history={history}>
-        <Route path={routePath}>
-          <DeploymentForm />
-        </Route>
-      </Router>,
+      <MemoryRouter initialEntries={initialEntries}>
+        <Routes>
+          <Route path={routePath} element={<DeploymentForm />} />
+        </Routes>
+      </MemoryRouter>,
+      false,
     );
     const saSelect = wrapper
       .find(CdsSelect)
@@ -324,11 +329,12 @@ describe("renders an error", () => {
   it("keep values if the version changes", () => {
     const wrapper = mountWrapper(
       getStore({ packages: { selected: defaultSelectedPkg } } as IStoreState),
-      <Router history={history}>
-        <Route path={routePath}>
-          <DeploymentForm />
-        </Route>
-      </Router>,
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Routes>
+          <Route path={routePath} element={<DeploymentForm />} />
+        </Routes>
+      </MemoryRouter>,
+      false,
     );
 
     const handleValuesChange: (v: string) => void = wrapper
@@ -352,9 +358,9 @@ describe("renders an error", () => {
 
   it("triggers a deployment when submitting the form", async () => {
     const installPackage = jest.fn().mockReturnValue(true);
-    const push = jest.fn();
+    const navigate = jest.fn();
     actions.installedpackages.installPackage = installPackage;
-    spyOnUseHistory = jest.spyOn(ReactRouter, "useHistory").mockReturnValue({ push } as any);
+    spyOnUseNavigate = jest.spyOn(ReactRouter, "useNavigate").mockReturnValue(navigate);
 
     const appValues = "foo: bar";
     const newAppValues = "foo: modified";
@@ -363,12 +369,12 @@ describe("renders an error", () => {
 
     const wrapper = mountWrapper(
       getStore({ packages: { selected: selected } } as IStoreState),
-
-      <Router history={history}>
-        <Route path={routePath}>
-          <DeploymentForm />
-        </Route>
-      </Router>,
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Routes>
+          <Route path={routePath} element={<DeploymentForm />} />
+        </Routes>
+      </MemoryRouter>,
+      false,
     );
 
     const handleValuesChange: (v: string) => void = wrapper
@@ -407,8 +413,8 @@ describe("renders an error", () => {
       {} as ReconciliationOptions,
     );
 
-    expect(history.location.pathname).toBe(
-      `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/my.plugin/0.0.1/${defaultProps.packageCluster}/${defaultProps.packageNamespace}/foo/versions/0.0.1`,
+    expect(navigate).toHaveBeenCalledWith(
+      `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/my.plugin/0.0.1/${defaultProps.releaseName}`,
     );
   });
 });

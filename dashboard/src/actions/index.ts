@@ -1,7 +1,6 @@
-// Copyright 2018-2022 the Kubeapps contributors.
+// Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { push } from "connected-react-router";
 import * as installedpackages from "./installedpackages";
 import * as auth from "./auth";
 import * as availablepackages from "./availablepackages";
@@ -20,8 +19,4 @@ export default {
   namespace,
   operators,
   repos,
-  shared: {
-    pushSearchFilter: (f: string) => push(`?q=${f}`),
-    pushAllNSFilter: (y: boolean) => push(`?allns=${y ? "yes" : "no"}`),
-  },
 };

@@ -10,7 +10,7 @@ import Column from "components/Column";
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import LoadingWrapper from "components/LoadingWrapper";
 import Row from "components/Row";
-import { push } from "connected-react-router";
+import { usePush } from "hooks/push";
 import { flatten, get, intersection, uniq, without } from "lodash";
 import qs, { ParsedQs } from "qs";
 import { useEffect, useMemo, useState } from "react";
@@ -108,8 +108,9 @@ export default function OperatorList() {
     });
   }, [propsFilter]);
 
+  const push = usePush();
   const pushFilters = (newFilters: any) => {
-    dispatch(push(app.operators.list(cluster, namespace) + filtersToQuery(newFilters)));
+    push(app.operators.list(cluster, namespace) + filtersToQuery(newFilters));
   };
   const addFilter = (type: string, value: string) => {
     pushFilters({

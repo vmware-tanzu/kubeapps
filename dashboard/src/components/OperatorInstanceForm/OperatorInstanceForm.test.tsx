@@ -7,7 +7,7 @@ import OperatorInstanceFormBody from "components/OperatorInstanceFormBody/Operat
 import OperatorHeader from "components/OperatorView/OperatorHeader";
 import AlertGroup from "components/AlertGroup";
 import * as ReactRedux from "react-redux";
-import { MemoryRouter, Route } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { IClustersState } from "reducers/cluster";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IClusterServiceVersion, IStoreState } from "shared/types";
@@ -112,10 +112,14 @@ it("renders a create error", () => {
     <MemoryRouter
       initialEntries={["/c/default/ns/default/operators-instances/new/foo/foo-cluster"]}
     >
-      <Route path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd"}>
-        <OperatorInstanceForm />
-      </Route>
+      <Routes>
+        <Route
+          path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd"}
+          element={<OperatorInstanceForm />}
+        />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
   expect(wrapper.find(AlertGroup)).toIncludeText("Boom!");
 });
@@ -138,10 +142,14 @@ it("retrieves CSV when mounted", () => {
     <MemoryRouter
       initialEntries={["/c/default/ns/default/operators-instances/new/foo/foo-cluster"]}
     >
-      <Route path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd"}>
-        <OperatorInstanceForm />
-      </Route>
+      <Routes>
+        <Route
+          path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd"}
+          element={<OperatorInstanceForm />}
+        />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
   expect(getCSV).toHaveBeenCalledWith("default-cluster", "kubeapps", "foo");
 });
@@ -152,10 +160,14 @@ it("retrieves the example values and the target CRD from the given CSV", () => {
     <MemoryRouter
       initialEntries={["/c/default/ns/default/operators-instances/new/foo/foo-cluster"]}
     >
-      <Route path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd"}>
-        <OperatorInstanceForm />
-      </Route>
+      <Routes>
+        <Route
+          path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd"}
+          element={<OperatorInstanceForm />}
+        />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
   expect(wrapper.find(OperatorInstanceFormBody).props()).toMatchObject({
     defaultValues: 'kind: "Foo"\napiVersion: "v1"\n',
@@ -172,10 +184,14 @@ it("defaults to empty defaultValues if the examples annotation is not found", ()
     <MemoryRouter
       initialEntries={["/c/default/ns/default/operators-instances/new/foo/foo-cluster"]}
     >
-      <Route path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd"}>
-        <OperatorInstanceForm />
-      </Route>
+      <Routes>
+        <Route
+          path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd"}
+          element={<OperatorInstanceForm />}
+        />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
   expect(wrapper.find(OperatorInstanceFormBody).props()).toMatchObject({
     defaultValues: "",
@@ -195,10 +211,14 @@ it("should submit the form", () => {
     <MemoryRouter
       initialEntries={["/c/default/ns/default/operators-instances/new/foo/foo-cluster"]}
     >
-      <Route path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd"}>
-        <OperatorInstanceForm />
-      </Route>
+      <Routes>
+        <Route
+          path={"/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd"}
+          element={<OperatorInstanceForm />}
+        />
+      </Routes>
     </MemoryRouter>,
+    false,
   );
 
   act(() => {
