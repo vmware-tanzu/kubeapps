@@ -7,7 +7,7 @@ import { CdsToggle, CdsToggleGroup } from "@cds/react/toggle";
 import actions from "actions";
 import ErrorAlert from "components/ErrorAlert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
-import { push } from "connected-react-router";
+import { usePush } from "hooks/push";
 import qs from "qs";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -44,6 +44,7 @@ function AppList() {
     submitFilters(!allNS);
     setAllNS(!allNS);
   };
+  const push = usePush();
 
   const submitFilters = (allns: boolean) => {
     const filters = [];
@@ -55,7 +56,7 @@ function AppList() {
     if (searchFilter) {
       filters.push(`q=${searchFilter}`);
     }
-    dispatch(push(`?${filters.join("&")}`));
+    push(`?${filters.join("&")}`);
   };
   const submitSearchFilter = () => submitFilters(allNS);
 
