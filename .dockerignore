@@ -5,3 +5,4 @@ dashboard/node_modules
 .git
 docs
 cmd/pinniped-proxy/target
+cmd/oci-catalog/target

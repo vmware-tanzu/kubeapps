@@ -42,3 +42,4 @@ dependency:
     - go.mod
     - dashboard/package.json
     - cmd/pinniped-proxy/Cargo.toml
+    - cmd/oci-catalog/Cargo.toml

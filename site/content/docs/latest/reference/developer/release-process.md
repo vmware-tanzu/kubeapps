@@ -18,9 +18,9 @@ For building the [development container images](https://hub.docker.com/u/kubeapp
   - [apprepository-controller/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/apprepository-controller/Dockerfile).
   - [asset-syncer/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/asset-syncer/Dockerfile).
   - [kubeapps-apis/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/kubeapps-apis/Dockerfile).
-- The [pinniped-proxy/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/pinniped-proxy/Dockerfile) uses:
-  - [\_/rust](https://hub.docker.com/_/rust) for building the binary.
-  - [bitnami/minideb](https://hub.docker.com/r/bitnami/minideb) for running it.
+- Those services written in Rust use the same [\_/rust](https://hub.docker.com/_/rust/tags) image for building the binary, but then a [bitnami/minideb](https://hub.docker.com/r/bitnami/minideb) image is used for actually running it. These Dockerfiles are:
+  - [pinniped-proxy/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/pinniped-proxy/Dockerfile)
+  - [oci-catalog/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/oci-catalog/Dockerfile)
 
 In some images, some build-time linters are used (e.g., `buf` linter, `gosec` or `golangci-lint` checkers, etc.). When updating the base container image, these linters (like `BUF_VERSION`, `GOLANGCILINT_VERSION`) _should_ be updated to the latest minor/patch version.
 
@@ -146,6 +146,13 @@ Upgrade the [rust dependencies](https://github.com/vmware-tanzu/kubeapps/blob/ma
 
 ```bash
 cd cmd/pinniped-proxy/
+cargo update
+```
+
+and
+
+```bash
+cd cmd/oci-catalog/
 cargo update
 ```
 
