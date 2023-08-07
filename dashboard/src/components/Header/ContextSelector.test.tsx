@@ -234,7 +234,8 @@ it("changes the location with the new namespace", async () => {
     initialEntries: ["/c/default-cluster/ns/ns-bar/catalog"],
   });
 
-  await userEvent.selectOptions(screen.getByTestId("select-namespace"), "other");
+  const select = screen.getByLabelText("Namespace");
+  await userEvent.selectOptions(select, "other");
   await userEvent.click(screen.getByText("Change Context"));
 
   expect(navigate).toBeCalledWith("/c/default-cluster/ns/other/catalog");
@@ -263,8 +264,10 @@ it("changes the location with the new cluster and namespace", async () => {
     initialEntries: ["/c/other-cluster/ns/other/catalog"],
   });
 
-  await userEvent.selectOptions(screen.getByTestId("select-cluster"), "other-cluster");
-  await userEvent.selectOptions(screen.getByTestId("select-namespace"), "other");
+  const selectNamespace = screen.getByLabelText("Namespace");
+  const selectCluster = screen.getByLabelText("Cluster");
+  await userEvent.selectOptions(selectCluster, "other-cluster");
+  await userEvent.selectOptions(selectNamespace, "other");
   await userEvent.click(screen.getByText("Change Context"));
 
   expect(navigate).toBeCalledWith("/c/other-cluster/ns/other/catalog");
