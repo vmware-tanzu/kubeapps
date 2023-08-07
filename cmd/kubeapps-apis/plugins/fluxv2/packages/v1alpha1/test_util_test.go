@@ -453,7 +453,7 @@ func comparePackageRepositorySummaries(t *testing.T, actual *corev1.GetPackageRe
 	// will compare this separately below
 	opts2 := cmpopts.IgnoreFields(corev1.PackageRepositoryStatus{}, "UserReason")
 
-	// cannot simply use cmpopts.SortSlices() due to doing a custom comparision of the UserReason field below.
+	// cannot simply use cmpopts.SortSlices() due to doing a custom comparison of the UserReason field below.
 	// Also, we don't want side effects from in-line sorting so we make a copies and use it for comparison
 	// (same thing that cmp.Equal() does when you use cmpopts.SortSlices() option)
 	copyA := make([]*corev1.PackageRepositorySummary, len(actual.PackageRepositorySummaries))

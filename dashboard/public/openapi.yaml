@@ -1385,7 +1385,7 @@ paths:
                     The interval at which to check the upstream for updates (in
                     time+unit)
 
-                    Some plugins may, addionally, support other formats, for instance,
+                    Some plugins may, additionally, support other formats, for instance,
 
                     a cron expression.
 
@@ -5699,7 +5699,7 @@ components:
                   The interval at which to check the upstream for updates (in
                   time+unit)
 
-                  Some plugins may, addionally, support other formats, for instance,
+                  Some plugins may, additionally, support other formats, for instance,
 
                   a cron expression.
 
@@ -6017,7 +6017,7 @@ components:
             The interval at which to check the upstream for updates (in
             time+unit)
 
-            Some plugins may, addionally, support other formats, for instance,
+            Some plugins may, additionally, support other formats, for instance,
 
             a cron expression.
 
@@ -6894,7 +6894,7 @@ components:
             The interval at which to check the upstream for updates (in
             time+unit)
 
-            Some plugins may, addionally, support other formats, for instance,
+            Some plugins may, additionally, support other formats, for instance,
 
             a cron expression.
 

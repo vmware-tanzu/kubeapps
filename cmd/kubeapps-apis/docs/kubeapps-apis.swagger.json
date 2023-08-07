@@ -1019,7 +1019,7 @@
                 },
                 "interval": {
                   "type": "string",
-                  "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, addionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\"\nOptional. Defaults to 10m if not specified"
+                  "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, additionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\"\nOptional. Defaults to 10m if not specified"
                 },
                 "tlsConfig": {
                   "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
@@ -2007,7 +2007,7 @@
                 },
                 "interval": {
                   "type": "string",
-                  "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, addionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\"\nOptional. Defaults to 10m if not specified"
+                  "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, additionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\"\nOptional. Defaults to 10m if not specified"
                 },
                 "tlsConfig": {
                   "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
@@ -3050,7 +3050,7 @@
                 },
                 "interval": {
                   "type": "string",
-                  "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, addionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\"\nOptional. Defaults to 10m if not specified"
+                  "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, additionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\"\nOptional. Defaults to 10m if not specified"
                 },
                 "tlsConfig": {
                   "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
@@ -4011,7 +4011,7 @@
                 },
                 "interval": {
                   "type": "string",
-                  "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, addionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\"\nOptional. Defaults to 10m if not specified"
+                  "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, additionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\"\nOptional. Defaults to 10m if not specified"
                 },
                 "tlsConfig": {
                   "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
@@ -4538,7 +4538,7 @@
         },
         "interval": {
           "type": "string",
-          "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, addionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\"\nOptional. Defaults to 10m if not specified"
+          "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, additionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\"\nOptional. Defaults to 10m if not specified"
         },
         "tlsConfig": {
           "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
@@ -5446,7 +5446,7 @@
         },
         "interval": {
           "type": "string",
-          "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, addionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\""
+          "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, additionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\""
         },
         "tlsConfig": {
           "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
