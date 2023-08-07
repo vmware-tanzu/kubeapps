@@ -263,7 +263,7 @@ export default function OperatorNew() {
                 </div>
               </div>
               <div className="clr-form-control">
-                <CdsButton type="submit" aria-disabled={disableInstall}>
+                <CdsButton type="submit" disabled={disableInstall}>
                   Deploy
                 </CdsButton>
               </div>
