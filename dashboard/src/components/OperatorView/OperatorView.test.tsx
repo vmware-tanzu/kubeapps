@@ -3,15 +3,15 @@
 
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
 import * as ReactRedux from "react-redux";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { IClusterState } from "reducers/cluster";
+import { IOperatorsState } from "reducers/operators";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { IStoreState } from "shared/types";
 import OperatorDescription from "./OperatorDescription";
 import OperatorView from "./OperatorView";
-import { IOperatorsState } from "reducers/operators";
-import { IClusterState } from "reducers/cluster";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 const defaultOperator = {
   metadata: {
@@ -116,7 +116,7 @@ it("shows an error if it exists", () => {
     } as Partial<IStoreState>),
     <OperatorView />,
   );
-  expect(wrapper.find(Alert)).toIncludeText("boom");
+  expect(wrapper.find(AlertGroup)).toIncludeText("boom");
 });
 
 it("shows an error if the operator doesn't have any channel defined", () => {
@@ -140,7 +140,7 @@ it("shows an error if the operator doesn't have any channel defined", () => {
     </MemoryRouter>,
     false,
   );
-  expect(wrapper.find(Alert)).toIncludeText(
+  expect(wrapper.find(AlertGroup)).toIncludeText(
     "Operator foo doesn't define a valid channel. This is needed to extract required info",
   );
 });

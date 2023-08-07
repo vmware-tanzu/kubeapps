@@ -1,4 +1,4 @@
-// Copyright 2022 the Kubeapps contributors.
+// Copyright 2022-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 const { test, expect } = require("@playwright/test");
@@ -74,7 +74,7 @@ test.describe("Limited user simple deployments", () => {
 
     // Delete deployment
     await page.locator('cds-button:has-text("Delete")').click();
-    await page.locator('cds-modal-actions button:has-text("Delete")').click();
+    await page.locator('cds-modal-actions cds-button:has-text("Delete")').click();
     await page.waitForTimeout(10000);
 
     // Search for package deployed

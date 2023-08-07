@@ -3,11 +3,11 @@
 
 import { act } from "@testing-library/react";
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import DeploymentFormBody from "components/DeploymentForm/DeploymentFormBody";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import PackageHeader from "components/PackageHeader/PackageHeader";
 import PackageVersionSelector from "components/PackageHeader/PackageVersionSelector";
-import Alert from "components/js/Alert";
 import {
   AvailablePackageDetail,
   AvailablePackageReference,
@@ -22,8 +22,8 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { cloneDeep } from "lodash";
 import * as ReactRedux from "react-redux";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
 import * as ReactRouter from "react-router";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import PackagesService from "shared/PackagesService";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import {
@@ -34,7 +34,7 @@ import {
   IStoreState,
 } from "shared/types";
 import * as url from "shared/url";
-import UpgradeForm from "./UpgradeForm";
+import UpgradeForm from ".";
 
 const testVersion = new PackageAppVersion({
   pkgVersion: "1.2.3",
@@ -365,8 +365,8 @@ describe("renders an error", () => {
       </MemoryRouter>,
       false,
     );
-    expect(wrapper.find(Alert).exists()).toBe(true);
-    expect(wrapper.find(Alert).first()).toIncludeText("wrong format!");
+    expect(wrapper.find(AlertGroup).exists()).toBe(true);
+    expect(wrapper.find(AlertGroup).first()).toIncludeText("wrong format!");
   });
 });
 

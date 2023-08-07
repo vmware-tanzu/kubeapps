@@ -3,10 +3,10 @@
 
 import { act } from "@testing-library/react";
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import ApplicationStatus from "components/ApplicationStatus/ApplicationStatus";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import PageHeader from "components/PageHeader";
-import Alert from "components/js/Alert";
 import {
   AvailablePackageDetail,
   AvailablePackageReference,
@@ -231,7 +231,7 @@ describe("AppView", () => {
       );
     });
     expect(wrapper.find(LoadingWrapper).prop("loaded")).toBe(true);
-    expect(wrapper.find(Alert).html()).toContain("foo not found");
+    expect(wrapper.find(AlertGroup).html()).toContain("foo not found");
     expect(wrapper.find(PageHeader)).not.toExist();
   });
 
@@ -251,7 +251,7 @@ describe("AppView", () => {
         false,
       );
     });
-    expect(wrapper.find(Alert)).toExist();
+    expect(wrapper.find(AlertGroup)).toExist();
     expect(wrapper.find(PageHeader)).not.toExist();
   });
 
@@ -489,7 +489,7 @@ describe("AppView", () => {
           false,
         );
       });
-      const err = wrapper.find(Alert);
+      const err = wrapper.find(AlertGroup);
       expect(err).toExist();
       expect(err.html()).toContain("Boom!");
     });
@@ -510,7 +510,7 @@ describe("AppView", () => {
           false,
         );
       });
-      const err = wrapper.find(Alert);
+      const err = wrapper.find(AlertGroup);
       expect(err).toExist();
       expect(err.html()).toContain("Unable to delete the application. Received: Boom!");
     });

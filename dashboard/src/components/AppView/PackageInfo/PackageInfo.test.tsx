@@ -1,7 +1,7 @@
 // Copyright 2021-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
 import {
   AvailablePackageDetail,
   AvailablePackageReference,
@@ -83,7 +83,7 @@ context("PackageUpdateInfo: when information about updates is available", () => 
       defaultStore,
       <PackageInfo {...defaultProps} installedPackageDetail={appWithUpdates} />,
     );
-    expect(wrapper.find(Alert).text()).toContain("A new package version is available: 1.0.1");
+    expect(wrapper.find(AlertGroup).text()).toContain("A new package version is available: 1.0.1");
   });
   it("renders an new version found message if the app latest version is different", () => {
     const appWithUpdates = {
@@ -97,7 +97,7 @@ context("PackageUpdateInfo: when information about updates is available", () => 
       defaultStore,
       <PackageInfo {...defaultProps} installedPackageDetail={appWithUpdates} />,
     );
-    expect(wrapper.find(Alert).text()).toContain("A new app version is available: 10.1.0");
+    expect(wrapper.find(AlertGroup).text()).toContain("A new app version is available: 10.1.0");
   });
   it("renders an new version found message if the app latest version is different without being semver", () => {
     const appWithUpdates = {
@@ -111,7 +111,7 @@ context("PackageUpdateInfo: when information about updates is available", () => 
       defaultStore,
       <PackageInfo {...defaultProps} installedPackageDetail={appWithUpdates} />,
     );
-    expect(wrapper.find(Alert).text()).toContain("A new app version is available: latest");
+    expect(wrapper.find(AlertGroup).text()).toContain("A new app version is available: latest");
   });
   it("renders an new version found message if the pkg latest version is different without being semver", () => {
     const appWithUpdates = {
@@ -125,7 +125,7 @@ context("PackageUpdateInfo: when information about updates is available", () => 
       defaultStore,
       <PackageInfo {...defaultProps} installedPackageDetail={appWithUpdates} />,
     );
-    expect(wrapper.find(Alert).text()).toContain("A new package version is available: latest");
+    expect(wrapper.find(AlertGroup).text()).toContain("A new package version is available: latest");
   });
   it("renders the reconcilliation options if any", () => {
     const appWithUpdates = {

@@ -1,8 +1,11 @@
 // Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import "@testing-library/jest-dom/extend-expect";
+import { act, screen } from "@testing-library/react";
 import actions from "actions";
 import LoadingWrapper from "components/LoadingWrapper";
+import * as ReactRedux from "react-redux";
 import { Route, Routes } from "react-router-dom";
 import { IConfigState } from "reducers/config";
 import {
@@ -14,9 +17,6 @@ import {
 import { IStoreState } from "shared/types";
 import LoginForm from "./LoginForm";
 import OAuthLogin from "./OauthLogin";
-import * as ReactRedux from "react-redux";
-import { act, screen } from "@testing-library/react";
-import "@testing-library/jest-dom/extend-expect";
 
 const defaultCluster = "default-cluster";
 

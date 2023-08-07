@@ -16,7 +16,7 @@ import { CdsSelect } from "@cds/react/select";
 import { CdsTextarea } from "@cds/react/textarea";
 import { CdsToggle, CdsToggleGroup } from "@cds/react/toggle";
 import actions from "actions";
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
 import {
   DockerCredentials,
   PackageRepositoryAuth_PackageRepositoryAuthType,
@@ -2246,24 +2246,24 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
             </p>
           )}
         {createError && (
-          <Alert theme="danger">
-            An error occurred while creating the repository: {createError.message}
-          </Alert>
+          <AlertGroup status="danger">
+            An error occurred while creating the repository: {createError.message}.
+          </AlertGroup>
         )}
         {updateError && (
-          <Alert theme="danger">
-            An error occurred while updating the repository: {updateError.message}
-          </Alert>
+          <AlertGroup status="danger">
+            An error occurred while updating the repository: {updateError.message}.
+          </AlertGroup>
         )}
         {deleteError && (
-          <Alert theme="danger">
-            An error occurred while deleting the repository: {deleteError.message}
-          </Alert>
+          <AlertGroup status="danger">
+            An error occurred while deleting the repository: {deleteError.message}.
+          </AlertGroup>
         )}
         {fetchError && (
-          <Alert theme="danger">
-            An error occurred while fetching the repository: {fetchError.message}
-          </Alert>
+          <AlertGroup status="danger">
+            An error occurred while fetching the repository: {fetchError.message}.
+          </AlertGroup>
         )}
         <div className="margin-t-xl">
           <CdsButton type="submit" disabled={isFetching}>

@@ -1,9 +1,10 @@
 // Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { CdsButton } from "@cds/react/button";
 import { CdsModal, CdsModalActions, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
+import AlertGroup from "components/AlertGroup";
 import LoadingWrapper from "components/LoadingWrapper";
-import Alert from "components/js/Alert";
 import { DeleteError, FetchWarning } from "shared/types";
 import "./ConfirmDialog.css";
 
@@ -39,15 +40,17 @@ function ConfirmDialog({
           {headerText && <CdsModalHeader>{headerText}</CdsModalHeader>}
           {error &&
             (error.constructor === FetchWarning ? (
-              <Alert theme="warning">
-                There is a problem with this package: {error["message"]}
-              </Alert>
+              <AlertGroup withMargin={false} status="warning">
+                There is a problem with this package: {error["message"]}.
+              </AlertGroup>
             ) : error.constructor === DeleteError ? (
-              <Alert theme="danger">
-                Unable to delete the application. Received: {error["message"]}
-              </Alert>
+              <AlertGroup withMargin={false} status="danger">
+                Unable to delete the application. Received: {error["message"]}.
+              </AlertGroup>
             ) : (
-              <Alert theme="danger">An error occurred: {error["message"]}</Alert>
+              <AlertGroup withMargin={false} status="danger">
+                An error occurred: {error["message"]}.
+              </AlertGroup>
             ))}
           {loading === true ? (
             <div className="center">
@@ -62,15 +65,13 @@ function ConfirmDialog({
                 {extraElem && <p>{extraElem}</p>}
               </CdsModalContent>
               <CdsModalActions>
-                {/* TODO(andresmgot): CdsButton "type" property doesn't work, so we need to use a normal <button>
-                  https://github.com/vmware/clarity/issues/5038
-                  */}
-                <button className="btn btn-info-outline" type="button" onClick={closeModal}>
+                <CdsButton type="button" onClick={closeModal} action="outline">
                   Cancel
-                </button>
-                <button className="btn btn-danger" type="submit" onClick={onConfirm}>
+                </CdsButton>
+
+                <CdsButton type="button" onClick={onConfirm} status="danger">
                   {confirmationButtonText || "Delete"}
-                </button>
+                </CdsButton>
               </CdsModalActions>
             </>
           )}

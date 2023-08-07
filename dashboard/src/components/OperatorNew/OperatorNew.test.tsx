@@ -1,23 +1,23 @@
 // Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import "@testing-library/jest-dom/extend-expect";
+import { screen } from "@testing-library/react";
 import actions from "actions";
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
+import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
+import { Route, Routes } from "react-router-dom";
+import { IClusterState } from "reducers/cluster";
+import { IOperatorsState } from "reducers/operators";
 import {
   getStore,
   initialState,
   mountWrapper,
   renderWithProviders,
 } from "shared/specs/mountWrapper";
-import "@testing-library/jest-dom/extend-expect";
 import { IStoreState } from "shared/types";
 import OperatorNew from "./OperatorNew";
-import { IOperatorsState } from "reducers/operators";
-import { IClusterState } from "reducers/cluster";
-import { Route, Routes } from "react-router-dom";
-import { screen } from "@testing-library/react";
-import { act } from "react-dom/test-utils";
 
 const defaultOperator = {
   metadata: {
@@ -118,7 +118,7 @@ it("renders a fetch error if present", () => {
     } as Partial<IStoreState>),
     <OperatorNew />,
   );
-  expect(wrapper.find(Alert)).toIncludeText("Boom");
+  expect(wrapper.find(AlertGroup)).toIncludeText("Boom");
 });
 
 it("renders a create error if present", () => {
@@ -128,7 +128,7 @@ it("renders a create error if present", () => {
     } as Partial<IStoreState>),
     <OperatorNew />,
   );
-  expect(wrapper.find(Alert)).toIncludeText("Boom");
+  expect(wrapper.find(AlertGroup)).toIncludeText("Boom");
 });
 
 it("shows an error if the operator doesn't have any channel defined", () => {
@@ -190,7 +190,7 @@ it("disables the submit button if the operators ns is selected", () => {
     },
   );
 
-  expect(screen.getByRole("alert")).toHaveTextContent(
+  expect(screen.getAllByRole("region")[6]).toHaveTextContent(
     'It\'s not possible to install a namespaced operator in the "operators" namespace',
   );
   // Something with Clarity is stopping the button from having a disabled attribute.

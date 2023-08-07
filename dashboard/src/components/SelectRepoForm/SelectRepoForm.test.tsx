@@ -3,7 +3,7 @@
 
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
 import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
@@ -75,12 +75,12 @@ it("render an error if failed to request repos", () => {
     getStore({ repos: { errors: { fetch: new Error("boom") } } } as Partial<IStoreState>),
     <SelectRepoForm {...defaultContext} />,
   );
-  expect(wrapper.find(Alert)).toIncludeText("boom");
+  expect(wrapper.find(AlertGroup)).toIncludeText("boom");
 });
 
 it("render a warning if there are no repos", () => {
   const wrapper = mountWrapper(defaultStore, <SelectRepoForm {...defaultContext} />);
-  expect(wrapper.find(Alert)).toIncludeText("Repositories not found");
+  expect(wrapper.find(AlertGroup)).toIncludeText("No repositories found");
 });
 
 it("should select a repo", () => {

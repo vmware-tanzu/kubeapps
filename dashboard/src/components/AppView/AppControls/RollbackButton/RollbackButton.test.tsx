@@ -5,7 +5,7 @@ import { CdsButton } from "@cds/react/button";
 import { CdsModal } from "@cds/react/modal";
 import { act, waitFor } from "@testing-library/react";
 import actions from "actions";
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
 import {
   InstalledPackageReference,
   InstalledPackageStatus,
@@ -80,7 +80,7 @@ it("renders an error", async () => {
   });
   wrapper.update();
 
-  expect(wrapper.find(Alert)).toIncludeText("Boom!");
+  expect(wrapper.find(AlertGroup)).toIncludeText("Boom!");
 });
 
 it("should render a deactivated button if when passing an in-progress status", async () => {

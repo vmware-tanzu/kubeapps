@@ -1,4 +1,4 @@
-// Copyright 2020-2022 the Kubeapps contributors.
+// Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 .angle {
@@ -71,7 +71,7 @@
   display: flex;
   justify-content: flex-end;
 
-  cds-button {
+  cds-button.flat-btn {
     --color: var(--cds-global-color-gray-50, #fafafa);
 
     margin-top: 1em;

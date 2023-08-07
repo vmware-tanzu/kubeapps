@@ -3,6 +3,7 @@
 
 import { CdsAlert, CdsAlertActions, CdsAlertGroup } from "@cds/react/alert";
 import React from "react";
+import "./AlertGroup.css";
 
 export interface IAlertGroupProps {
   children: React.ReactNode;
@@ -11,25 +12,33 @@ export interface IAlertGroupProps {
   status?: "neutral" | "info" | "success" | "warning" | "danger" | "alt" | "loading";
   type?: "default" | "banner" | "light";
   size?: "default" | "sm";
+  withMargin?: boolean;
 }
 
 // Opinionated wrapper of Clarity AlertGroup
-// https://clarity.design/storybook/core/?path=/story/components-alert-group-getting-started--page
+// https://storybook.core.clarity.design/?path=/story/components-alert--page
 export default function AlertGroup({
   alertActions,
-  closable,
+  closable = true,
   status = "danger",
   type = "default",
   size = "default",
+  withMargin = true,
   children,
 }: IAlertGroupProps) {
   const [closed, setClosed] = React.useState(false);
   const close = () => setClosed(true);
   return (
-    <CdsAlertGroup status={status} type={type} hidden={closed} size={size}>
+    <CdsAlertGroup
+      className={withMargin ? "alert-group-margin" : ""}
+      status={status}
+      type={type}
+      hidden={closed}
+      size={size}
+    >
       <CdsAlert closable={closable} onCloseChange={close}>
         {children}
-        {alertActions && <CdsAlertActions>{alertActions}</CdsAlertActions>}
+        <CdsAlertActions>{alertActions}</CdsAlertActions>
       </CdsAlert>
     </CdsAlertGroup>
   );

@@ -3,9 +3,9 @@
 
 import { CdsButton } from "@cds/react/button";
 import { act } from "@testing-library/react";
+import AlertGroup from "components/AlertGroup";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
 import LoadingWrapper from "components/LoadingWrapper";
-import Alert from "components/js/Alert";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import OperatorAdvancedDeploymentForm from "./OperatorAdvancedDeploymentForm/OperatorAdvancedDeploymentForm";
 import OperatorInstanceFormBody, { IOperatorInstanceFormProps } from "./OperatorInstanceFormBody";
@@ -137,7 +137,7 @@ it("should catch a syntax error in the form", () => {
   const form = wrapper.find("form");
   form.simulate("submit", { preventDefault: jest.fn() });
 
-  expect(wrapper.find(Alert)).toIncludeText(
+  expect(wrapper.find(AlertGroup)).toIncludeText(
     "Unable parse the resource. Make sure it contains a valid apiVersion",
   );
   expect(handleDeploy).not.toHaveBeenCalled();
@@ -157,7 +157,7 @@ it("should throw an error if the element doesn't contain an apiVersion", () => {
   const form = wrapper.find("form");
   form.simulate("submit", { preventDefault: jest.fn() });
 
-  expect(wrapper.find(Alert)).toIncludeText(
+  expect(wrapper.find(AlertGroup)).toIncludeText(
     "Unable parse the resource. Make sure it contains a valid apiVersion",
   );
   expect(handleDeploy).not.toHaveBeenCalled();

@@ -4,8 +4,9 @@
 import { CdsButton } from "@cds/react/button";
 import { CdsModal } from "@cds/react/modal";
 import { act, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import actions from "actions";
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
 import { cloneDeep } from "lodash";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
@@ -19,7 +20,6 @@ import {
 } from "shared/specs/mountWrapper";
 import { IStoreState } from "shared/types";
 import ContextSelector from "./ContextSelector";
-import userEvent from "@testing-library/user-event";
 
 let spyOnUseDispatch: jest.SpyInstance;
 let spyOnUseNavigate: jest.SpyInstance;
@@ -182,7 +182,7 @@ it("shows an error creating a namespace", () => {
   wrapper.update();
 
   // The error will be within the modal
-  expect(wrapper.find(CdsModal).find(Alert)).toExist();
+  expect(wrapper.find(CdsModal).find(AlertGroup)).toExist();
 });
 
 it("disables the create button if not allowed", () => {

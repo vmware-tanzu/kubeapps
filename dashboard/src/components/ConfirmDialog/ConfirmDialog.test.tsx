@@ -1,6 +1,7 @@
-// Copyright 2019-2022 the Kubeapps contributors.
+// Copyright 2019-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { CdsButton } from "@cds/react/button";
 import { CdsModalContent } from "@cds/react/modal";
 import LoadingWrapper from "components/LoadingWrapper";
 import { mount } from "enzyme";
@@ -24,5 +25,5 @@ it("should modify the default confirmation text", () => {
     <ConfirmDialog {...defaultProps} confirmationText="Sure?" confirmationButtonText="Sure!" />,
   );
   expect(wrapper.find(CdsModalContent)).toIncludeText("Sure?");
-  expect(wrapper.find(".btn").filterWhere(d => d.text() === "Sure!")).toExist();
+  expect(wrapper.find(CdsButton).filterWhere(d => d.text() === "Sure!")).toExist();
 });

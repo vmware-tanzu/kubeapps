@@ -1,4 +1,4 @@
-// Copyright 2022 the Kubeapps contributors.
+// Copyright 2022-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 const { test, expect } = require("@playwright/test");
@@ -49,7 +49,7 @@ test("Deploys an Operator", async ({ page }) => {
 
   // Delete
   await page.locator('cds-button:has-text("Delete")').click();
-  await page.locator('cds-modal-actions button:has-text("Delete")').click();
+  await page.locator('cds-modal-actions cds-button:has-text("Delete")').click();
 
   await page.waitForSelector('css=h1 >> text="Applications"');
 });
