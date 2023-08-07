@@ -212,7 +212,7 @@ jobs:
       - name: Run dashboard linter
         run: yarn --cwd=dashboard run lint
       - name: Run dashboard unit tests
-        run: yarn --cwd=dashboard run test --maxWorkers=4 --coverage --logHeapUsage --detectOpenHandles --forceExit
+        run: yarn --cwd=dashboard run test --maxWorkers=4 --coverage --logHeapUsage
 
   test_pinniped_proxy:
     needs:

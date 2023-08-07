@@ -54,7 +54,7 @@ test-all: test-apprepository-controller test-dashboard
 test-dashboard:
 	yarn --cwd dashboard/ install --frozen-lockfile
 	yarn --cwd=dashboard run lint
-	CI=true yarn --cwd dashboard/ run test --detectOpenHandles --forceExit
+	CI=true yarn --cwd dashboard/ run test
 
 test-%:
 	$(GO) test -v $(IMPORT_PATH)/cmd/$*
