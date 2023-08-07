@@ -234,7 +234,7 @@ it("changes the location with the new namespace", async () => {
     initialEntries: ["/c/default-cluster/ns/ns-bar/catalog"],
   });
 
-  const select = screen.getByLabelText("namespaces");
+  const select = screen.getByLabelText("Namespace");
   await userEvent.selectOptions(select, "other");
   await userEvent.click(screen.getByText("Change Context"));
 
@@ -264,8 +264,8 @@ it("changes the location with the new cluster and namespace", async () => {
     initialEntries: ["/c/other-cluster/ns/other/catalog"],
   });
 
-  const selectNamespace = screen.getByLabelText("namespaces");
-  const selectCluster = screen.getByLabelText("clusters");
+  const selectNamespace = screen.getByLabelText("Namespace");
+  const selectCluster = screen.getByLabelText("Cluster");
   await userEvent.selectOptions(selectCluster, "other-cluster");
   await userEvent.selectOptions(selectNamespace, "other");
   await userEvent.click(screen.getByText("Change Context"));

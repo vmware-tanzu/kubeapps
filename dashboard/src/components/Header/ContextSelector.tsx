@@ -138,14 +138,16 @@ function ContextSelector() {
           </span>
           <div className="dropdown-menu-padding" role="menuitem">
             <CdsIcon size="sm" shape="cluster" />
-            <span className="kubeapps-dropdown-text">Cluster</span>
+            <label htmlFor="clusters" className="kubeapps-dropdown-text">
+              Cluster
+            </label>
             <div className="clr-select-wrapper">
               <select
                 name="clusters"
+                id="clusters"
                 className="clr-page-size-select"
                 onChange={selectCluster}
                 value={cluster}
-                aria-label="clusters"
               >
                 {Object.keys(clusters.clusters).map(c => {
                   return (
@@ -159,11 +161,13 @@ function ContextSelector() {
           </div>
           <div className="dropdown-menu-padding" role="menuitem">
             <CdsIcon size="sm" shape="file-group" />
-            <span className="kubeapps-dropdown-text">Namespace</span>
+            <label htmlFor="namespaces" className="kubeapps-dropdown-text">
+              Namespace
+            </label>
             <div className="clr-select-wrapper">
               <select
                 name="namespaces"
-                aria-label="namespaces"
+                id="namespaces"
                 className="clr-page-size-select"
                 onChange={selectNamespace}
                 value={namespace}
