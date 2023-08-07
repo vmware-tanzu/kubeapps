@@ -145,7 +145,7 @@ function ContextSelector() {
                 className="clr-page-size-select"
                 onChange={selectCluster}
                 value={cluster}
-                data-testid="select-cluster"
+                aria-label="clusters"
               >
                 {Object.keys(clusters.clusters).map(c => {
                   return (
@@ -163,10 +163,10 @@ function ContextSelector() {
             <div className="clr-select-wrapper">
               <select
                 name="namespaces"
+                aria-label="namespaces"
                 className="clr-page-size-select"
                 onChange={selectNamespace}
                 value={namespace}
-                data-testid="select-namespace"
               >
                 {clusters.clusters[cluster].namespaces.map(n => {
                   return (
