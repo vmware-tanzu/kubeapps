@@ -1,7 +1,8 @@
-# Copyright 2018-2022 the Kubeapps contributors.
+# Copyright 2018-2023 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
 dashboard/node_modules
 .git
 docs
 cmd/pinniped-proxy/target
+cmd/oci-catalog/target

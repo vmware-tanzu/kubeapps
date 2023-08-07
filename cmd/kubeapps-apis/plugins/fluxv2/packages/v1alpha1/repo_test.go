@@ -2037,7 +2037,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedErrorCode: connect.CodeInvalidArgument,
 		},
 		{
-			name:          "issue5747 - update auth password: username was incorrectly overriden to redacted string",
+			name:          "issue5747 - update auth password: username was incorrectly overridden to redacted string",
 			repoIndex:     testYaml("valid-index.yaml"),
 			repoName:      "repo-1",
 			repoNamespace: "namespace-1",

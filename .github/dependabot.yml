@@ -28,6 +28,13 @@ updates:
       time: "02:00"
     open-pull-requests-limit: 10
 
+  - package-ecosystem: "cargo"
+    directory: "/cmd/oci-catalog"
+    schedule:
+      interval: "daily"
+      time: "02:30"
+    open-pull-requests-limit: 10
+
   - package-ecosystem: "npm"
     directory: "/integration"
     schedule:

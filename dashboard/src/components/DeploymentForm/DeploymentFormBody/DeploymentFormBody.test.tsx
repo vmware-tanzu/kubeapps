@@ -50,6 +50,7 @@ beforeEach(() => {
     configurable: true,
     value: jest.fn().mockImplementation(() => ({
       clearRect: jest.fn(),
+      fillRect: jest.fn(),
     })),
   });
 });
@@ -92,6 +93,7 @@ beforeEach(() => {
     configurable: true,
     value: jest.fn().mockImplementation(() => ({
       clearRect: jest.fn(),
+      fillRect: jest.fn(),
     })),
   });
 });
