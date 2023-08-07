@@ -12,11 +12,11 @@ import {
   KappControllerPackageRepositoryCustomDetail,
   PackageRepositoryFetch,
 } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller_pb";
+import { LOCATION_CHANGE, PushAction } from "hooks/push";
 import { PluginNames } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { PkgReposAction } from "../actions/repos";
-import { LOCATION_CHANGE, PushAction } from "hooks/push";
 
 export interface IPackageRepositoryState {
   errors: {

@@ -4,6 +4,7 @@
 import { CdsButton } from "@cds/react/button";
 import { act } from "@testing-library/react";
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import AccessURLTable from "components/AppView/AccessURLTable/AccessURLTable";
 import AppNotes from "components/AppView/AppNotes/AppNotes";
 import AppSecrets from "components/AppView/AppSecrets";
@@ -13,7 +14,6 @@ import ApplicationStatus from "components/ApplicationStatus/ApplicationStatus";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
-import Alert from "components/js/Alert";
 import * as ReactRedux from "react-redux";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { IClusterState } from "reducers/cluster";
@@ -111,7 +111,7 @@ it("renders a fetch error", () => {
     } as Partial<IStoreState>),
     <OperatorInstance />,
   );
-  expect(wrapper.find(Alert)).toIncludeText("Boom!");
+  expect(wrapper.find(AlertGroup)).toIncludeText("Boom!");
   expect(wrapper.find(OperatorHeader)).not.toExist();
 });
 
@@ -125,7 +125,7 @@ it("renders an update error", () => {
     } as Partial<IStoreState>),
     <OperatorInstance />,
   );
-  expect(wrapper.find(Alert)).toIncludeText("Boom!");
+  expect(wrapper.find(AlertGroup)).toIncludeText("Boom!");
 });
 
 it("renders an delete error", () => {
@@ -138,7 +138,7 @@ it("renders an delete error", () => {
     } as Partial<IStoreState>),
     <OperatorInstance />,
   );
-  expect(wrapper.find(Alert)).toIncludeText("Boom!");
+  expect(wrapper.find(AlertGroup)).toIncludeText("Boom!");
 });
 
 it("retrieves CSV and resource when mounted", () => {

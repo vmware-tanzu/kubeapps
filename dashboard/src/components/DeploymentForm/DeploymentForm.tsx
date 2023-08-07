@@ -6,12 +6,12 @@ import { CdsInput } from "@cds/react/input";
 import { CdsSelect } from "@cds/react/select";
 import actions from "actions";
 import { handleErrorAction } from "actions/auth";
+import AlertGroup from "components/AlertGroup";
 import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
 import Column from "components/Column";
 import LoadingWrapper from "components/LoadingWrapper";
 import PackageHeader from "components/PackageHeader/PackageHeader";
 import Row from "components/Row";
-import Alert from "components/js/Alert";
 import {
   AvailablePackageReference,
   ReconciliationOptions,
@@ -177,9 +177,9 @@ export default function DeploymentForm() {
   if (error?.constructor === FetchError) {
     return (
       error && (
-        <Alert theme="danger">
-          Unable to retrieve the current app: {(error as FetchError).message}
-        </Alert>
+        <AlertGroup status="danger">
+          Unable to retrieve the package: {(error as FetchError)?.message}.
+        </AlertGroup>
       )
     );
   }
@@ -212,7 +212,7 @@ export default function DeploymentForm() {
             <AvailablePackageDetailExcerpt pkg={selectedPackage.availablePackageDetail} />
           </Column>
           <Column span={9}>
-            {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
+            {error && <AlertGroup status="danger">An error occurred: {error.message}.</AlertGroup>}
             <form onSubmit={handleDeploy} ref={formRef}>
               <CdsFormGroup
                 validate={true}

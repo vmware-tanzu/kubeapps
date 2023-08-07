@@ -2,23 +2,23 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import actions from "actions";
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
 import Column from "components/Column";
-import Row from "components/Row";
 import { parseCSV } from "components/OperatorInstanceForm/OperatorInstanceForm";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
+import Row from "components/Row";
 import { usePush } from "hooks/push";
 import placeholder from "icons/placeholder.svg";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IClusterServiceVersionCRD, IResource, IStoreState } from "shared/types";
 import * as url from "shared/url";
 import { parseToString } from "shared/yamlUtils";
 import OperatorInstanceFormBody from "../OperatorInstanceFormBody/OperatorInstanceFormBody";
-import { useParams } from "react-router-dom";
 
 function OperatorInstanceUpdateForm() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
@@ -82,7 +82,7 @@ function OperatorInstanceUpdateForm() {
   }, [csv, crdName]);
 
   if (!fetchError && !isFetching && !resource) {
-    return <Alert>Resource {resourceName} not found</Alert>;
+    return <AlertGroup status="warning">Resource {resourceName} not found</AlertGroup>;
   }
 
   const handleDeploy = async (updatedResource: IResource) => {
@@ -111,9 +111,9 @@ function OperatorInstanceUpdateForm() {
 
   if (fetchError) {
     return (
-      <Alert theme="danger">
-        An error occurred while fetching the ClusterServiceVersion: {fetchError.message}
-      </Alert>
+      <AlertGroup status="danger">
+        An error occurred while fetching the ClusterServiceVersion: {fetchError.message}.
+      </AlertGroup>
     );
   }
   return (
@@ -121,7 +121,9 @@ function OperatorInstanceUpdateForm() {
       <OperatorHeader title={`Update ${resourceName}`} icon={icon} />
       <section>
         {updateError && (
-          <Alert theme="danger">Found an error updating the instance: {updateError.message}</Alert>
+          <AlertGroup status="danger">
+            Found an error updating the instance: {updateError.message}.
+          </AlertGroup>
         )}
         <Row>
           <Column span={3}>

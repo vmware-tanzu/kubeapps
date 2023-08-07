@@ -1,7 +1,7 @@
 // Copyright 2019-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
 import LoadingWrapper from "components/LoadingWrapper";
 import context from "jest-plugin-context";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
@@ -31,8 +31,8 @@ context("when there is an error", () => {
       }),
       <ConfigLoader />,
     );
-    expect(wrapper.find(Alert)).toExist();
-    expect(wrapper.find(Alert).text()).toContain("Wrong config!");
+    expect(wrapper.find(AlertGroup)).toExist();
+    expect(wrapper.find(AlertGroup).text()).toContain("Wrong config!");
   });
 });
 

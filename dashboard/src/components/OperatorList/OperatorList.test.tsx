@@ -1,12 +1,14 @@
 // Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import "@testing-library/jest-dom/extend-expect";
 import { act, screen } from "@testing-library/react";
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import SearchFilter from "components/SearchFilter/SearchFilter";
-import Alert from "components/js/Alert";
 import * as ReactRedux from "react-redux";
+import { Route, Routes } from "react-router-dom";
 import {
   defaultStore,
   getStore,
@@ -20,8 +22,6 @@ import { AUTO_PILOT, BASIC_INSTALL } from "../OperatorView/OperatorCapabilityLev
 import OLMNotFound from "./OLMNotFound";
 import OperatorItems from "./OperatorItems";
 import OperatorList, { filterNames } from "./OperatorList";
-import { Route, Routes } from "react-router-dom";
-import "@testing-library/jest-dom/extend-expect";
 
 let spyOnUseDispatch: jest.SpyInstance;
 const kubeActions = { ...actions.operators };
@@ -75,7 +75,7 @@ it("renders a LoadingWrapper if fetching", () => {
   const wrapper = mountWrapper(
     getStore({
       ...initialState,
-      operators: { ...initialState.operators, isFetcing: true },
+      operators: { ...initialState.operators, isFetching: true },
     } as Partial<IStoreState>),
     <OperatorList />,
   );
@@ -97,7 +97,7 @@ it("renders an error", () => {
     } as Partial<IStoreState>),
     <OperatorList />,
   );
-  const error = wrapper.find(Alert).filterWhere(a => a.prop("theme") === "danger");
+  const error = wrapper.find(AlertGroup).filterWhere(a => a.prop("status") === "danger");
   expect(error).toExist();
   expect(error).toIncludeText("Forbidden!");
 });

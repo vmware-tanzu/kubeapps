@@ -5,10 +5,10 @@ import { CdsButton } from "@cds/react/button";
 import { CdsControlMessage } from "@cds/react/forms";
 import { CdsIcon } from "@cds/react/icon";
 import { JSONSchemaType } from "ajv";
+import AlertGroup from "components/AlertGroup";
 import ConfirmDialog from "components/ConfirmDialog";
 import LoadingWrapper from "components/LoadingWrapper";
 import Tabs from "components/Tabs";
-import Alert from "components/js/Alert";
 import { isEmpty } from "lodash";
 import { FormEvent, RefObject, useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
@@ -272,9 +272,10 @@ function DeploymentFormBody({
   // early return if error
   if (error) {
     return (
-      <Alert theme="danger">
-        Unable to fetch package "{packageId}" ({packageVersion}): Got {error.message}
-      </Alert>
+      <AlertGroup status="danger">
+        Unable to fetch the package "{decodeURIComponent(packageId)} ({packageVersion})":{" "}
+        {error.message}.
+      </AlertGroup>
     );
   }
 

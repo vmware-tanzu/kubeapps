@@ -1,7 +1,7 @@
-// Copyright 2022 the Kubeapps contributors.
+// Copyright 2022-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
 import RpcErrorMessage from "components/RpcErrorMessage";
 import { ReactNode } from "react";
 import { RpcError } from "shared/RpcError";
@@ -45,9 +45,9 @@ export default function ErrorAlert({ error, children }: IErrorAlert) {
     messages = [error];
   }
   return (
-    <Alert theme="danger">
+    <AlertGroup status="danger">
       {messages}
       {children}
-    </Alert>
+    </AlertGroup>
   );
 }

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import LoadingWrapper from "components/LoadingWrapper";
-import Alert from "components/js/Alert";
 import {
   AvailablePackageDetail,
   AvailablePackageReference,
@@ -200,7 +200,7 @@ it("renders the repo selection form if not introduced when the app is loaded", (
     false,
   );
   expect(wrapper.find(SelectRepoForm)).toExist();
-  expect(wrapper.find(Alert)).not.toExist();
+  expect(wrapper.find(AlertGroup)).not.toExist();
   expect(wrapper.find(UpgradeForm)).not.toExist();
 });
 
@@ -224,7 +224,7 @@ describe("when an error exists", () => {
       false,
     );
 
-    expect(wrapper.find(Alert)).toExist();
+    expect(wrapper.find(AlertGroup)).toExist();
     expect(wrapper.find(SelectRepoForm)).not.toExist();
     expect(wrapper.find(UpgradeForm)).not.toExist();
 
@@ -254,10 +254,10 @@ describe("when an error exists", () => {
       </MemoryRouter>,
       false,
     );
-    expect(wrapper.find(SelectRepoForm).find(Alert)).toExist();
+    expect(wrapper.find(SelectRepoForm).find(AlertGroup)).toExist();
     expect(wrapper.find(UpgradeForm)).not.toExist();
 
-    expect(wrapper.find(Alert).children().text()).toContain("Repositories not found");
+    expect(wrapper.find(AlertGroup).children().text()).toContain("No repositories found");
   });
 
   it("still renders the upgrade form even if there is an upgrade error", () => {
@@ -284,7 +284,7 @@ describe("when an error exists", () => {
       false,
     );
     expect(wrapper.find(UpgradeForm)).toExist();
-    expect(wrapper.find(UpgradeForm).find(Alert)).toIncludeText(upgradeError.message);
+    expect(wrapper.find(UpgradeForm).find(AlertGroup)).toIncludeText(upgradeError.message);
   });
 });
 
@@ -320,7 +320,7 @@ it("renders the upgrade form when the repo is available, clears state and fetche
     false,
   );
   expect(wrapper.find(UpgradeForm)).toExist();
-  expect(wrapper.find(Alert)).not.toExist();
+  expect(wrapper.find(AlertGroup)).not.toExist();
   expect(wrapper.find(SelectRepoForm)).not.toExist();
 
   expect(resetSelectedAvailablePackageDetail).toHaveBeenCalled();
@@ -386,6 +386,6 @@ it("skips the repo selection form if the app contains upgrade info", () => {
     false,
   );
   expect(wrapper.find(UpgradeForm)).toExist();
-  expect(wrapper.find(Alert)).not.toExist();
+  expect(wrapper.find(AlertGroup)).not.toExist();
   expect(wrapper.find(SelectRepoForm)).not.toExist();
 });

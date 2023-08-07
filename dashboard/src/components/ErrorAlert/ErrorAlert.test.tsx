@@ -1,10 +1,10 @@
-// Copyright 2022 the Kubeapps contributors.
+// Copyright 2022-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
 import { mount } from "enzyme";
-import ErrorAlert from "./ErrorAlert";
 import { CustomError } from "shared/types";
+import ErrorAlert from "./ErrorAlert";
 
 describe("Error Alert", () => {
   it("should render string errors", () => {
@@ -28,7 +28,7 @@ describe("Error Alert", () => {
     const wrapper = mount(
       <ErrorAlert error={new Error("Error occurred: Another error message. Yet another msg.")} />,
     );
-    expect(wrapper.find(Alert)).toExist();
+    expect(wrapper.find(AlertGroup)).toExist();
     expect(wrapper.text()).toEqual("Error occurred: Another error message. Yet another msg.");
   });
 
@@ -37,7 +37,7 @@ describe("Error Alert", () => {
       "An error occurred for tests: cause of the error. Another cause.",
     );
     const wrapper = mount(<ErrorAlert error={error} />);
-    const alertTag = wrapper.find(Alert);
+    const alertTag = wrapper.find(AlertGroup);
     expect(alertTag).toExist();
     expect(alertTag.text()).toEqual(
       "An error occurred for tests: cause of the error. Another cause.",
@@ -50,7 +50,7 @@ describe("Error Alert", () => {
       new Error("Second cause"),
     ]);
     const wrapper = mount(<ErrorAlert error={error} />);
-    const alertTag = wrapper.find(Alert);
+    const alertTag = wrapper.find(AlertGroup);
     expect(alertTag).toExist();
     expect(alertTag.find("div.error-alert")).toHaveLength(1);
     expect(alertTag.find("div.error-alert").text()).toBe("An error occurred for tests");
@@ -68,7 +68,7 @@ describe("Error Alert", () => {
       new Error("Even a third cause"),
     ]);
     const wrapper = mount(<ErrorAlert error={error} />);
-    const alertTag = wrapper.find(Alert);
+    const alertTag = wrapper.find(AlertGroup);
     expect(alertTag).toExist();
     expect(alertTag.find("div.error-alert")).toHaveLength(1);
     expect(alertTag.find("div.error-alert").text()).toBe("An error occurred for tests");
@@ -87,7 +87,7 @@ describe("Error Alert", () => {
         <h1>Bang!</h1>
       </ErrorAlert>,
     );
-    expect(wrapper.find(Alert)).toExist();
+    expect(wrapper.find(AlertGroup)).toExist();
     expect(wrapper.text()).toEqual("Error messageBang!");
     expect(wrapper.find("h1")).toHaveLength(1);
     expect(wrapper.find("h1").text()).toBe("Bang!");

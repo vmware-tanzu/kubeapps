@@ -3,16 +3,16 @@
 
 import { CdsFormGroup } from "@cds/react/forms";
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
-import DeploymentFormBody from "components/DeploymentForm/DeploymentFormBody";
-import Alert from "components/js/Alert";
 import Column from "components/Column";
-import Row from "components/Row";
+import DeploymentFormBody from "components/DeploymentForm/DeploymentFormBody";
 import LoadingWrapper from "components/LoadingWrapper";
 import PackageHeader from "components/PackageHeader/PackageHeader";
 import PackageVersionSelector from "components/PackageHeader/PackageVersionSelector";
-import { usePush } from "hooks/push";
+import Row from "components/Row";
 import * as jsonpatch from "fast-json-patch";
+import { usePush } from "hooks/push";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
@@ -198,7 +198,9 @@ function UpgradeForm(props: IUpgradeFormProps) {
           The application is being upgraded, please wait...
         </h3>
       )}
-      {!isFetching && error && <Alert theme="danger">An error occurred: {error?.message}</Alert>}
+      {!isFetching && error && (
+        <AlertGroup status="danger">An error occurred: {error?.message}.</AlertGroup>
+      )}
       <LoadingWrapper
         loaded={!isDeploying && !isFetching && versions?.length > 0 && !!availablePackageDetail}
       >

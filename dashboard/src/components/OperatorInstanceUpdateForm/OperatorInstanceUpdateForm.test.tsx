@@ -1,10 +1,16 @@
 // Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import "@testing-library/jest-dom/extend-expect";
+import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import actions from "actions";
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
 import * as ReactRedux from "react-redux";
+import { Route, Routes } from "react-router-dom";
+import { IClusterState } from "reducers/cluster";
+import { IOperatorsState } from "reducers/operators";
 import {
   getStore,
   initialState,
@@ -13,12 +19,6 @@ import {
 } from "shared/specs/mountWrapper";
 import { FetchError, IStoreState } from "shared/types";
 import OperatorInstanceUpdateForm from "./OperatorInstanceUpdateForm";
-import { Route, Routes } from "react-router-dom";
-import { IOperatorsState } from "reducers/operators";
-import { IClusterState } from "reducers/cluster";
-import { screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import "@testing-library/jest-dom/extend-expect";
 
 // Ensure the monaco editor doesn't run any browser-only js.
 jest.mock("react-monaco-editor", () => {
@@ -202,7 +202,7 @@ it("renders an error if the resource is not populated", () => {
     },
   );
 
-  expect(screen.getByRole("alert")).toHaveTextContent("Resource my-foo not found");
+  expect(screen.getAllByRole("region")[1]).toHaveTextContent("Resource my-foo not found");
 });
 
 it("renders only an error if the resource is not found", () => {
@@ -219,7 +219,7 @@ it("renders only an error if the resource is not found", () => {
     } as Partial<IStoreState>),
     <OperatorInstanceUpdateForm />,
   );
-  expect(wrapper.find(Alert)).toIncludeText("not found");
+  expect(wrapper.find(AlertGroup)).toIncludeText("not found");
   expect(wrapper.find(OperatorHeader)).not.toExist();
 });
 

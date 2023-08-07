@@ -3,7 +3,7 @@
 
 import { act, waitFor } from "@testing-library/react";
 import actions from "actions";
-import Alert from "components/js/Alert";
+import AlertGroup from "components/AlertGroup";
 import Table from "components/js/Table";
 import TableRow from "components/js/Table/components/TableRow";
 import { ReactWrapper } from "enzyme";
@@ -121,7 +121,7 @@ it("shows a warning if the cluster is not the default one", () => {
     } as Partial<IStoreState>),
     <PkgRepoList />,
   );
-  expect(wrapper.find(Alert)).toIncludeText(
+  expect(wrapper.find(AlertGroup)).toIncludeText(
     "Package Repositories can't be managed from this cluster",
   );
 });
@@ -133,7 +133,7 @@ it("shows an error fetching a repo", () => {
     } as Partial<IStoreState>),
     <PkgRepoList />,
   );
-  expect(wrapper.find(Alert)).toIncludeText("boom!");
+  expect(wrapper.find(AlertGroup)).toIncludeText("boom!");
 });
 
 it("shows an error deleting a repo", () => {
@@ -143,7 +143,7 @@ it("shows an error deleting a repo", () => {
     } as Partial<IStoreState>),
     <PkgRepoList />,
   );
-  expect(wrapper.find(Alert)).toIncludeText("boom!");
+  expect(wrapper.find(AlertGroup)).toIncludeText("boom!");
 });
 
 // TODO(andresmgot): Re-enable when the repo list is refactored

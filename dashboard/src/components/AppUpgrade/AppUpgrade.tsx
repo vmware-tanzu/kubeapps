@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import LoadingWrapper from "components/LoadingWrapper";
-import Alert from "components/js/Alert";
 import { InstalledPackageReference } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import { useEffect, useState } from "react";
@@ -47,7 +47,9 @@ function AppUpgrade() {
   }, [dispatch, cluster, namespace, pluginObj, releaseName]);
 
   if (error && error.constructor === FetchError) {
-    return <Alert theme="danger">Unable to retrieve the current app: {error.message}</Alert>;
+    return (
+      <AlertGroup status="danger">Unable to retrieve the current app: {error.message}.</AlertGroup>
+    );
   }
 
   if (isFetching || !installedAppInstalledPackageDetail) {

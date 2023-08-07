@@ -3,8 +3,8 @@
 
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
+import AlertGroup from "components/AlertGroup";
 import LoadingWrapper from "components/LoadingWrapper";
-import Alert from "components/js/Alert";
 import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -93,20 +93,25 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
       loadingText="Fetching Package Repositories..."
       loaded={!isFetching}
     >
-      {fetchError && <Alert theme="danger">An error occurred: {fetchError.message}</Alert>}
+      {fetchError && (
+        <AlertGroup status="danger">An error occurred: {fetchError.message}.</AlertGroup>
+      )}
       {!fetchError && repos.length === 0 && (
-        <Alert theme="warning">
-          <h5>Repositories not found. </h5>
+        <AlertGroup status="warning">
+          No repositories found.
+          <br />
           Manage your repositories in Kubeapps by visiting the{" "}
           <Link to={url.app.config.pkgrepositories(cluster, namespace)}>
             Package Repositories configuration
           </Link>{" "}
           page.
-        </Alert>
+        </AlertGroup>
       )}
       {repos.length > 0 && (
         <div className="select-repo-form">
-          {packageError && <Alert theme="danger">An error occurred: {packageError.message}</Alert>}
+          {packageError && (
+            <AlertGroup status="danger">An error occurred: {packageError.message}.</AlertGroup>
+          )}
           <h2>
             Select the source repository of '{app?.availablePackageRef?.identifier ?? app?.name}'
           </h2>
