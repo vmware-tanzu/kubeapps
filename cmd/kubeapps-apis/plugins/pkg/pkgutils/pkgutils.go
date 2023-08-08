@@ -199,12 +199,17 @@ func AvailablePackageSummaryFromChart(chart *models.Chart, plugin *plugins.Plugi
 	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
 		sortedVersions, err := SortByPackageVersion(chart.ChartVersions)
 		if err != nil {
-			return nil, err
-		}
-
-		pkg.LatestVersion = &corev1.PackageAppVersion{
-			PkgVersion: sortedVersions[0].Version.String(),
-			AppVersion: sortedVersions[0].AppVersion,
+			// If there was an error parsing a version as semver, fall back to ChartVersions[0]
+			log.Errorf("error parsing versions as semver: %w", err)
+			pkg.LatestVersion = &corev1.PackageAppVersion{
+				PkgVersion: chart.ChartVersions[0].Version,
+				AppVersion: chart.ChartVersions[0].AppVersion,
+			}
+		} else {
+			pkg.LatestVersion = &corev1.PackageAppVersion{
+				PkgVersion: sortedVersions[0].Version.String(),
+				AppVersion: sortedVersions[0].AppVersion,
+			}
 		}
 	}
 

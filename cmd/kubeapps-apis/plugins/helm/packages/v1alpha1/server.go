@@ -331,9 +331,12 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect
 	if version == "" {
 		sortedVersions, err := pkgutils.SortByPackageVersion(chart.ChartVersions)
 		if err != nil {
-			return nil, err
+			// If there was an error parsing a version as semver, fall back to ChartVersions[0]
+			log.Errorf("error parsing versions as semver: %w", err)
+			version = chart.ChartVersions[0].Version
+		} else {
+			version = sortedVersions[0].Version.String()
 		}
-		version = sortedVersions[0].Version.String()
 	}
 	fileID := fileIDForChart(unescapedChartID, version)
 	chartFiles, err := s.manager.GetChartFiles(namespace, fileID)
@@ -427,11 +430,18 @@ func AvailablePackageDetailFromChart(chart *models.Chart, chartFiles *models.Cha
 	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
 		sortedVersions, err := pkgutils.SortByPackageVersion(chart.ChartVersions)
 		if err != nil {
-			return nil, err
-		}
-		pkg.Version = &corev1.PackageAppVersion{
-			PkgVersion: sortedVersions[0].Version.String(),
-			AppVersion: sortedVersions[0].AppVersion,
+			// If there was an error parsing a version as semver, fall back to ChartVersions[0]
+			log.Errorf("error parsing versions as semver: %w", err)
+			version = chart.ChartVersions[0].Version
+			pkg.Version = &corev1.PackageAppVersion{
+				PkgVersion: chart.ChartVersions[0].Version,
+				AppVersion: chart.ChartVersions[0].AppVersion,
+			}
+		} else {
+			pkg.Version = &corev1.PackageAppVersion{
+				PkgVersion: sortedVersions[0].Version.String(),
+				AppVersion: sortedVersions[0].AppVersion,
+			}
 		}
 		pkg.Readme = chartFiles.Readme
 		pkg.DefaultValues = chartFiles.DefaultValues
@@ -533,12 +543,19 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *conn
 		if len(charts) > 0 && len(charts[0].ChartVersions) > 0 {
 			sortedVersions, err := pkgutils.SortByPackageVersion(charts[0].ChartVersions)
 			if err != nil {
-				return nil, err
+				// If there was an error parsing a version as semver, fall back to ChartVersions[0]
+				log.Errorf("error parsing versions as semver: %w", err)
+				installedPkgSummaries[i].LatestVersion = &corev1.PackageAppVersion{
+					PkgVersion: charts[0].ChartVersions[0].Version,
+					AppVersion: charts[0].ChartVersions[0].AppVersion,
+				}
+			} else {
+				installedPkgSummaries[i].LatestVersion = &corev1.PackageAppVersion{
+					PkgVersion: sortedVersions[0].Version.String(),
+					AppVersion: sortedVersions[0].AppVersion,
+				}
 			}
-			installedPkgSummaries[i].LatestVersion = &corev1.PackageAppVersion{
-				PkgVersion: sortedVersions[0].Version.String(),
-				AppVersion: sortedVersions[0].AppVersion,
-			}
+
 		}
 		installedPkgSummaries[i].Status = &corev1.InstalledPackageStatus{
 			Ready:      rel.Info.Status == release.StatusDeployed,
@@ -664,12 +681,19 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *connect
 		if len(charts[0].ChartVersions) > 0 {
 			sortedVersions, err := pkgutils.SortByPackageVersion(charts[0].ChartVersions)
 			if err != nil {
-				return nil, err
+				// If there was an error parsing a version as semver, fall back to ChartVersions[0]
+				log.Errorf("error parsing versions as semver: %w", err)
+				installedPkgDetail.LatestVersion = &corev1.PackageAppVersion{
+					PkgVersion: charts[0].ChartVersions[0].Version,
+					AppVersion: charts[0].ChartVersions[0].AppVersion,
+				}
+			} else {
+				installedPkgDetail.LatestVersion = &corev1.PackageAppVersion{
+					PkgVersion: sortedVersions[0].Version.String(),
+					AppVersion: sortedVersions[0].AppVersion,
+				}
 			}
-			installedPkgDetail.LatestVersion = &corev1.PackageAppVersion{
-				PkgVersion: sortedVersions[0].Version.String(),
-				AppVersion: sortedVersions[0].AppVersion,
-			}
+
 		}
 	}
 
