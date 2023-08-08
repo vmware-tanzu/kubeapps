@@ -197,15 +197,21 @@ func AvailablePackageSummaryFromChart(chart *models.Chart, plugin *plugins.Plugi
 	pkg.AvailablePackageRef.Context = &corev1.Context{Namespace: chart.Repo.Namespace}
 
 	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
+		sortedVersions, err := SortByPackageVersion(chart.ChartVersions)
+		if err != nil {
+			return nil, err
+		}
+
 		pkg.LatestVersion = &corev1.PackageAppVersion{
-			PkgVersion: chart.ChartVersions[0].Version,
-			AppVersion: chart.ChartVersions[0].AppVersion,
+			PkgVersion: sortedVersions[0].Version.String(),
+			AppVersion: sortedVersions[0].AppVersion,
 		}
 	}
 
 	return pkg, nil
 }
 
+// TODO(agamez): I have replaced chart.ChartVersions[0] with SortByPackageVersion(...)[0]
 // TODO @gfichtenholt: I really wanted to put helm plugin's implementation of AvailablePackageDetailFromChart()
 // here, and use it in flux plugin as well. But I found out a couple of flaws in the implementation and decided
 // against it. Namely:

@@ -329,7 +329,11 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Chart returned without any versions: %+v", chart))
 	}
 	if version == "" {
-		version = chart.ChartVersions[0].Version
+		sortedVersions, err := pkgutils.SortByPackageVersion(chart.ChartVersions)
+		if err != nil {
+			return nil, err
+		}
+		version = sortedVersions[0].Version.String()
 	}
 	fileID := fileIDForChart(unescapedChartID, version)
 	chartFiles, err := s.manager.GetChartFiles(namespace, fileID)
@@ -419,11 +423,15 @@ func AvailablePackageDetailFromChart(chart *models.Chart, chartFiles *models.Cha
 		pkg.AvailablePackageRef.Context = &corev1.Context{Namespace: chart.Repo.Namespace}
 	}
 
-	// We assume that chart.ChartVersions[0] will always contain either: the latest version or the specified version
+	// We assume that sortedVersions[0] will always contain either: the latest version or the specified version
 	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
+		sortedVersions, err := pkgutils.SortByPackageVersion(chart.ChartVersions)
+		if err != nil {
+			return nil, err
+		}
 		pkg.Version = &corev1.PackageAppVersion{
-			PkgVersion: chart.ChartVersions[0].Version,
-			AppVersion: chart.ChartVersions[0].AppVersion,
+			PkgVersion: sortedVersions[0].Version.String(),
+			AppVersion: sortedVersions[0].AppVersion,
 		}
 		pkg.Readme = chartFiles.Readme
 		pkg.DefaultValues = chartFiles.DefaultValues
@@ -523,9 +531,13 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *conn
 		// TODO(agamez): deal with multiple matches, perhaps returning []AvailablePackageRef ?
 		// Example: global + namespaced repo including an overlapping subset of packages.
 		if len(charts) > 0 && len(charts[0].ChartVersions) > 0 {
+			sortedVersions, err := pkgutils.SortByPackageVersion(charts[0].ChartVersions)
+			if err != nil {
+				return nil, err
+			}
 			installedPkgSummaries[i].LatestVersion = &corev1.PackageAppVersion{
-				PkgVersion: charts[0].ChartVersions[0].Version,
-				AppVersion: charts[0].ChartVersions[0].AppVersion,
+				PkgVersion: sortedVersions[0].Version.String(),
+				AppVersion: sortedVersions[0].AppVersion,
 			}
 		}
 		installedPkgSummaries[i].Status = &corev1.InstalledPackageStatus{
@@ -650,10 +662,13 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *connect
 			}
 		}
 		if len(charts[0].ChartVersions) > 0 {
-			cv := charts[0].ChartVersions[0]
+			sortedVersions, err := pkgutils.SortByPackageVersion(charts[0].ChartVersions)
+			if err != nil {
+				return nil, err
+			}
 			installedPkgDetail.LatestVersion = &corev1.PackageAppVersion{
-				PkgVersion: cv.Version,
-				AppVersion: cv.AppVersion,
+				PkgVersion: sortedVersions[0].Version.String(),
+				AppVersion: sortedVersions[0].AppVersion,
 			}
 		}
 	}
