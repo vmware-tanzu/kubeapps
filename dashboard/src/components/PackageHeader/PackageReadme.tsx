@@ -10,12 +10,13 @@ import HeadingRenderer from "../MarkdownRenderer/HeadingRenderer";
 import LinkRenderer from "../MarkdownRenderer/LinkRenderer";
 import TableRenderer from "../MarkdownRenderer/TableRenderer";
 
-interface IPackageReadmeProps {
+export interface IPackageReadmeProps {
   error?: string;
   readme?: string;
+  isFetching?: boolean;
 }
 
-function PackageReadme({ error, readme }: IPackageReadmeProps) {
+function PackageReadme({ error, readme, isFetching }: IPackageReadmeProps) {
   if (error) {
     if (error.toLocaleLowerCase().includes("not found")) {
       return (
@@ -33,10 +34,10 @@ function PackageReadme({ error, readme }: IPackageReadmeProps) {
     <LoadingWrapper
       className="margin-t-xxl"
       loadingText="Fetching application README..."
-      loaded={!!readme}
+      loaded={!isFetching}
     >
-      {readme && (
-        <div className="application-readme">
+      <div className="application-readme">
+        {readme ? (
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
@@ -53,8 +54,10 @@ function PackageReadme({ error, readme }: IPackageReadmeProps) {
           >
             {readme}
           </ReactMarkdown>
-        </div>
-      )}
+        ) : (
+          <p> This package does not contain a README file.</p>
+        )}
+      </div>
     </LoadingWrapper>
   );
 }
