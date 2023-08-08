@@ -1204,7 +1204,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 		},
 		{
 			name:   "it returns the package version summary",
-			charts: []*models.Chart{makeChart("apache", "bitnami", "http://apache", "kubeapps", []string{"2.0.0", "3.0.0", "2.0.0", "1.0.0"}, DefaultChartCategory)},
+			charts: []*models.Chart{makeChart("apache", "bitnami", "http://apache", "kubeapps", []string{"2.0.0", "3.0.0", "1.0.0"}, DefaultChartCategory)},
 			request: &corev1.GetAvailablePackageVersionsRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context: &corev1.Context{
