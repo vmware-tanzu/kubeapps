@@ -901,10 +901,9 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, headers http
 		return nil, nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to fetch the chart %s (version %s) from the namespace %q: %w", chartID, chartDetails.Version, chartDetails.AppRepositoryResourceNamespace, err))
 	}
 	var tarballURL string
+	// If the chart is cached, we can use the tarball URL from the cache,
+	// we assume cachedChart.ChartVersions only contains 1 element
 	if cachedChart.ChartVersions != nil && len(cachedChart.ChartVersions) == 1 && cachedChart.ChartVersions[0].URLs != nil {
-		// The tarball URL will always be the first URL in the repo.chartVersions:
-		// https://helm.sh/docs/topics/chart_repository/#the-index-file
-		// https://github.com/helm/helm/blob/v3.7.1/cmd/helm/search/search_test.go#L63
 		tarballURL = chartTarballURL(cachedChart.Repo, cachedChart.ChartVersions[0])
 		log.InfoS("using chart tarball", "url", tarballURL)
 	}
@@ -935,6 +934,9 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, headers http
 }
 
 func chartTarballURL(r *models.Repo, cv models.ChartVersion) string {
+	// The tarball URL will always be the first URL, ie. URL[0], in the repo.chartVersions[i]:
+	// https://helm.sh/docs/topics/chart_repository/#the-index-file
+	// https://github.com/helm/helm/blob/v3.7.1/cmd/helm/search/search_test.go#L63
 	source := strings.TrimSpace(cv.URLs[0])
 	parsedUrl, err := url.ParseRequestURI(source)
 	if err != nil || parsedUrl.Scheme == "" {
