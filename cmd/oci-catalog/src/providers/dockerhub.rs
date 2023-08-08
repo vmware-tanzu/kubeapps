@@ -10,6 +10,7 @@ use tokio::sync::mpsc;
 use tonic::Status;
 
 /// The default page size with which requests are sent to docker hub.
+/// We fetch all results in batches of this page size.
 const DEFAULT_PAGE_SIZE: u8 = 100;
 pub const PROVIDER_NAME: &str = "DockerHubAPI";
 pub const DOCKERHUB_URI: &str = "https://hub.docker.com";
@@ -54,7 +55,6 @@ impl OCICatalogSender for DockerHubAPI {
         PROVIDER_NAME
     }
 
-    // Update to return a result so errors are handled properly.
     async fn send_repositories(
         &self,
         tx: mpsc::Sender<Result<Repository, Status>>,
@@ -64,6 +64,8 @@ impl OCICatalogSender for DockerHubAPI {
 
         let client = reqwest::Client::builder().build().unwrap();
 
+        // We continue making the request until there is no `next` url
+        // in the result.
         loop {
             log::debug!("requesting: {}", url);
             let response = match client.get(url.clone()).send().await {
@@ -132,6 +134,8 @@ impl OCICatalogSender for DockerHubAPI {
 
         let client = reqwest::Client::builder().build().unwrap();
 
+        // We continue making the request until there is no `next` url
+        // in the result.
         loop {
             log::debug!("requesting: {}", url);
             let response = match client.get(url.clone()).send().await {
