@@ -329,7 +329,14 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Chart returned without any versions: %+v", chart))
 	}
 	if version == "" {
-		version = chart.ChartVersions[0].Version
+		sortedVersions, err := pkgutils.SortByPackageVersion(chart.ChartVersions)
+		if err != nil {
+			// If there was an error parsing a version as semver, fall back to ChartVersions[0]
+			log.Errorf("error parsing versions as semver: %w", err)
+			version = chart.ChartVersions[0].Version
+		} else {
+			version = sortedVersions[0].Version.String()
+		}
 	}
 	fileID := fileIDForChart(unescapedChartID, version)
 	chartFiles, err := s.manager.GetChartFiles(namespace, fileID)
@@ -419,11 +426,22 @@ func AvailablePackageDetailFromChart(chart *models.Chart, chartFiles *models.Cha
 		pkg.AvailablePackageRef.Context = &corev1.Context{Namespace: chart.Repo.Namespace}
 	}
 
-	// We assume that chart.ChartVersions[0] will always contain either: the latest version or the specified version
+	// We assume that sortedVersions[0] will always contain either: the latest version or the specified version
 	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
-		pkg.Version = &corev1.PackageAppVersion{
-			PkgVersion: chart.ChartVersions[0].Version,
-			AppVersion: chart.ChartVersions[0].AppVersion,
+		sortedVersions, err := pkgutils.SortByPackageVersion(chart.ChartVersions)
+		if err != nil {
+			// If there was an error parsing a version as semver, fall back to ChartVersions[0]
+			log.Errorf("error parsing versions as semver: %w", err)
+			version = chart.ChartVersions[0].Version
+			pkg.Version = &corev1.PackageAppVersion{
+				PkgVersion: chart.ChartVersions[0].Version,
+				AppVersion: chart.ChartVersions[0].AppVersion,
+			}
+		} else {
+			pkg.Version = &corev1.PackageAppVersion{
+				PkgVersion: sortedVersions[0].Version.String(),
+				AppVersion: sortedVersions[0].AppVersion,
+			}
 		}
 		pkg.Readme = chartFiles.Readme
 		pkg.DefaultValues = chartFiles.DefaultValues
@@ -523,10 +541,21 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *conn
 		// TODO(agamez): deal with multiple matches, perhaps returning []AvailablePackageRef ?
 		// Example: global + namespaced repo including an overlapping subset of packages.
 		if len(charts) > 0 && len(charts[0].ChartVersions) > 0 {
-			installedPkgSummaries[i].LatestVersion = &corev1.PackageAppVersion{
-				PkgVersion: charts[0].ChartVersions[0].Version,
-				AppVersion: charts[0].ChartVersions[0].AppVersion,
+			sortedVersions, err := pkgutils.SortByPackageVersion(charts[0].ChartVersions)
+			if err != nil {
+				// If there was an error parsing a version as semver, fall back to ChartVersions[0]
+				log.Errorf("error parsing versions as semver: %w", err)
+				installedPkgSummaries[i].LatestVersion = &corev1.PackageAppVersion{
+					PkgVersion: charts[0].ChartVersions[0].Version,
+					AppVersion: charts[0].ChartVersions[0].AppVersion,
+				}
+			} else {
+				installedPkgSummaries[i].LatestVersion = &corev1.PackageAppVersion{
+					PkgVersion: sortedVersions[0].Version.String(),
+					AppVersion: sortedVersions[0].AppVersion,
+				}
 			}
+
 		}
 		installedPkgSummaries[i].Status = &corev1.InstalledPackageStatus{
 			Ready:      rel.Info.Status == release.StatusDeployed,
@@ -650,11 +679,21 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *connect
 			}
 		}
 		if len(charts[0].ChartVersions) > 0 {
-			cv := charts[0].ChartVersions[0]
-			installedPkgDetail.LatestVersion = &corev1.PackageAppVersion{
-				PkgVersion: cv.Version,
-				AppVersion: cv.AppVersion,
+			sortedVersions, err := pkgutils.SortByPackageVersion(charts[0].ChartVersions)
+			if err != nil {
+				// If there was an error parsing a version as semver, fall back to ChartVersions[0]
+				log.Errorf("error parsing versions as semver: %w", err)
+				installedPkgDetail.LatestVersion = &corev1.PackageAppVersion{
+					PkgVersion: charts[0].ChartVersions[0].Version,
+					AppVersion: charts[0].ChartVersions[0].AppVersion,
+				}
+			} else {
+				installedPkgDetail.LatestVersion = &corev1.PackageAppVersion{
+					PkgVersion: sortedVersions[0].Version.String(),
+					AppVersion: sortedVersions[0].AppVersion,
+				}
 			}
+
 		}
 	}
 
@@ -901,10 +940,9 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, headers http
 		return nil, nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to fetch the chart %s (version %s) from the namespace %q: %w", chartID, chartDetails.Version, chartDetails.AppRepositoryResourceNamespace, err))
 	}
 	var tarballURL string
+	// If the chart is cached, we can use the tarball URL from the cache,
+	// we assume cachedChart.ChartVersions only contains 1 element
 	if cachedChart.ChartVersions != nil && len(cachedChart.ChartVersions) == 1 && cachedChart.ChartVersions[0].URLs != nil {
-		// The tarball URL will always be the first URL in the repo.chartVersions:
-		// https://helm.sh/docs/topics/chart_repository/#the-index-file
-		// https://github.com/helm/helm/blob/v3.7.1/cmd/helm/search/search_test.go#L63
 		tarballURL = chartTarballURL(cachedChart.Repo, cachedChart.ChartVersions[0])
 		log.InfoS("using chart tarball", "url", tarballURL)
 	}
@@ -935,6 +973,9 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, headers http
 }
 
 func chartTarballURL(r *models.Repo, cv models.ChartVersion) string {
+	// The tarball URL will always be the first URL, ie. URL[0], in the repo.chartVersions[i]:
+	// https://helm.sh/docs/topics/chart_repository/#the-index-file
+	// https://github.com/helm/helm/blob/v3.7.1/cmd/helm/search/search_test.go#L63
 	source := strings.TrimSpace(cv.URLs[0])
 	parsedUrl, err := url.ParseRequestURI(source)
 	if err != nil || parsedUrl.Scheme == "" {

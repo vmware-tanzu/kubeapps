@@ -542,9 +542,9 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 				},
 				Maintainers: []chart.Maintainer{{Name: "me", Email: "me@me.me"}},
 				ChartVersions: []models.ChartVersion{
-					{Version: "3.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", DefaultValues: "chart values", Schema: "chart schema"},
-					{Version: "2.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", DefaultValues: "chart values", Schema: "chart schema"},
 					{Version: "1.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", DefaultValues: "chart values", Schema: "chart schema"},
+					{Version: "2.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", DefaultValues: "chart values", Schema: "chart schema"},
+					{Version: "3.0.0", AppVersion: DefaultAppVersion, Readme: "chart readme", DefaultValues: "chart values", Schema: "chart schema"},
 				},
 			},
 			expected: &corev1.AvailablePackageSummary{

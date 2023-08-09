@@ -9,17 +9,22 @@ use tonic::Status;
 
 pub mod dockerhub;
 
-// OCICatalogSender is a trait that can be implemented by different providers.
-//
-// Initially we'll provide a DockerHub implementation followed by Harbor and
-// others.
+/// OCICatalogSender is a trait that can be implemented by different providers.
+///
+/// Initially we'll provide a DockerHub implementation followed by Harbor and
+/// others.
 #[tonic::async_trait]
 pub trait OCICatalogSender {
+    /// send_repositories requests repositories from the provider and sends
+    /// them down a channel for our API to return.
     async fn send_repositories(
         &self,
         tx: mpsc::Sender<Result<Repository, Status>>,
         request: &ListRepositoriesRequest,
     );
+
+    /// send_tags requests tags for a repository of a provider and sends
+    /// them down a channel for our API to return.
     async fn send_tags(&self, tx: mpsc::Sender<Result<Tag, Status>>, request: &ListTagsRequest);
 
     // The id simply gives a way in tests to determine which provider
