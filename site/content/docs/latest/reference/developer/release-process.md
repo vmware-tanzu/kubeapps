@@ -22,7 +22,8 @@ For building the [development container images](https://hub.docker.com/u/kubeapp
   - [pinniped-proxy/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/pinniped-proxy/Dockerfile)
   - [oci-catalog/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/oci-catalog/Dockerfile)
 
-In some images, some build-time linters are used (e.g., `buf` linter, `gosec` or `golangci-lint` checkers, etc.). When updating the base container image, these linters (like `BUF_VERSION`, `GOLANGCILINT_VERSION`) _should_ be updated to the latest minor/patch version.
+In some images, some build-time linters or tools are used (e.g., `buf` linter, `gosec` or `golangci-lint` checkers,`grpc-health-probe`, etc.).
+When updating the base container image, these tools (like `BUF_VERSION`, `GOLANGCILINT_VERSION`, `GRPC_HEALTH_PROBE_VERSION`) _should_ be updated to the latest minor/patch version.
 
 > As part of this release process, these image tags _must_ be updated to the latest minor/patch version. In case of a major version, the change _should_ be tracked in a separate PR.
 > **Note**: as the official container images are those being created by Bitnami, we _should_ ensure that we are using the same major version as they are using.
