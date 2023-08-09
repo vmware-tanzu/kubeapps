@@ -54,13 +54,13 @@ func GetDefaultVersionsInSummary() VersionsInSummary {
 	return defaultVersionsInSummary
 }
 
-type packageSemVersion struct {
+type PackageSemVersion struct {
 	*semver.Version
-	appVersion string
+	AppVersion string
 }
 
-func sortByPackageVersion(versions []models.ChartVersion) ([]*packageSemVersion, error) {
-	var sortedVersions []*packageSemVersion
+func SortByPackageVersion(versions []models.ChartVersion) ([]*PackageSemVersion, error) {
+	var sortedVersions []*PackageSemVersion
 	for _, v := range versions {
 		version, err := semver.NewVersion(v.Version)
 		if err != nil {
@@ -70,9 +70,9 @@ func sortByPackageVersion(versions []models.ChartVersion) ([]*packageSemVersion,
 			return nil, fmt.Errorf("Chart version %q is not semver", v.Version)
 		}
 
-		sortedVersions = append(sortedVersions, &packageSemVersion{
+		sortedVersions = append(sortedVersions, &PackageSemVersion{
 			Version:    version,
-			appVersion: v.AppVersion,
+			AppVersion: v.AppVersion,
 		})
 	}
 	sort.Slice(sortedVersions, func(i, j int) bool {
@@ -87,7 +87,7 @@ func PackageAppVersionsSummary(versions []models.ChartVersion, versionInSummary 
 	var pav []*corev1.PackageAppVersion
 
 	// Sort versions
-	sortedVersions, err := sortByPackageVersion(versions)
+	sortedVersions, err := SortByPackageVersion(versions)
 	if err != nil {
 		// If there was an error parsing a version as semver, we log the error
 		// and simply return the versions, as Helm does.
@@ -127,7 +127,7 @@ func PackageAppVersionsSummary(versions []models.ChartVersion, versionInSummary 
 		// Include the version and update the version map.
 		pav = append(pav, &corev1.PackageAppVersion{
 			PkgVersion: version.Version.String(),
-			AppVersion: version.appVersion,
+			AppVersion: version.AppVersion,
 		})
 
 		if _, ok := versionMap[version.Major()]; !ok {
@@ -154,7 +154,7 @@ func IsValidChart(chart *models.Chart) (bool, error) {
 		return false, connect.NewError(connect.CodeInternal, fmt.Errorf("required field .Repo not found on helm chart: %v", chart))
 	}
 	if chart.ChartVersions == nil || len(chart.ChartVersions) == 0 {
-		return false, connect.NewError(connect.CodeInternal, fmt.Errorf("required field .chart.ChartVersions[0] not found on helm chart: %v", chart))
+		return false, connect.NewError(connect.CodeInternal, fmt.Errorf("required field .chart.ChartVersions not found on helm chart or is empty: %v", chart))
 	} else {
 		for _, chartVersion := range chart.ChartVersions {
 			if chartVersion.Version == "" {
@@ -197,15 +197,26 @@ func AvailablePackageSummaryFromChart(chart *models.Chart, plugin *plugins.Plugi
 	pkg.AvailablePackageRef.Context = &corev1.Context{Namespace: chart.Repo.Namespace}
 
 	if chart.ChartVersions != nil || len(chart.ChartVersions) != 0 {
-		pkg.LatestVersion = &corev1.PackageAppVersion{
-			PkgVersion: chart.ChartVersions[0].Version,
-			AppVersion: chart.ChartVersions[0].AppVersion,
+		sortedVersions, err := SortByPackageVersion(chart.ChartVersions)
+		if err != nil {
+			// If there was an error parsing a version as semver, fall back to ChartVersions[0]
+			log.Errorf("error parsing versions as semver: %w", err)
+			pkg.LatestVersion = &corev1.PackageAppVersion{
+				PkgVersion: chart.ChartVersions[0].Version,
+				AppVersion: chart.ChartVersions[0].AppVersion,
+			}
+		} else {
+			pkg.LatestVersion = &corev1.PackageAppVersion{
+				PkgVersion: sortedVersions[0].Version.String(),
+				AppVersion: sortedVersions[0].AppVersion,
+			}
 		}
 	}
 
 	return pkg, nil
 }
 
+// TODO(agamez): I have replaced chart.ChartVersions[0] with SortByPackageVersion(...)[0]
 // TODO @gfichtenholt: I really wanted to put helm plugin's implementation of AvailablePackageDetailFromChart()
 // here, and use it in flux plugin as well. But I found out a couple of flaws in the implementation and decided
 // against it. Namely:
