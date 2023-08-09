@@ -125,7 +125,7 @@
     "stylelint-config-idiomatic-order": "^9.0.0",
     "stylelint-config-prettier": "^9.0.5",
     "stylelint-config-standard-scss": "^10.0.0",
-    "stylelint-scss": "^5.0.1",
+    "stylelint-scss": "^5.1.0",
     "ts-jest": "^29.1.1",
     "ts-proto": "^1.156.2",
     "typescript": "^5.1.6"
