@@ -218,6 +218,7 @@ updateRepoWithLocalChanges() {
     replaceImage_latestToProduction asset-syncer "${targetChartPath}/values.yaml"
     replaceImage_latestToProduction pinniped-proxy "${targetChartPath}/values.yaml"
     replaceImage_latestToProduction kubeapps-apis "${targetChartPath}/values.yaml"
+    replaceImage_latestToProduction oci-catalog "${targetChartPath}/values.yaml"
 }
 
 ########################################################################################################################
@@ -275,6 +276,7 @@ updateRepoWithRemoteChanges() {
     replaceImage_productionToLatest asset-syncer "${KUBEAPPS_CHART_DIR}/values.yaml"
     replaceImage_productionToLatest pinniped-proxy "${KUBEAPPS_CHART_DIR}/values.yaml"
     replaceImage_productionToLatest kubeapps-apis "${KUBEAPPS_CHART_DIR}/values.yaml"
+    replaceImage_productionToLatest oci-catalog "${KUBEAPPS_CHART_DIR}/values.yaml"
 }
 
 ########################################################################################################################
