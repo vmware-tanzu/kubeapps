@@ -39,7 +39,7 @@ env:
   HELM_VERSION_MIN: "v3.8.0"
   HELM_VERSION_STABLE: "v3.12.2"
   GITHUB_VERSION: "2.32.1"
-  IMAGES_TO_PUSH: "apprepository-controller dashboard asset-syncer pinniped-proxy kubeapps-apis"
+  IMAGES_TO_PUSH: "apprepository-controller dashboard asset-syncer pinniped-proxy kubeapps-apis oci-catalog"
   # IMG_DEV_TAG is the tags used for the Kubeapps docker images. Ideally there should be an IMG_PROD_TAG
   # but its value is dynamic and GitHub actions doesn't support it in the `env` block, so it is generated
   # as an output of the `setup` job.
@@ -256,6 +256,7 @@ jobs:
           - asset-syncer
           - kubeapps-apis
           - pinniped-proxy
+          - oci-catalog
     steps:
       - id: setup
         run: |
