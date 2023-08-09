@@ -30,5 +30,5 @@ FROM bitnami/minideb:bookworm
 RUN apt-get update && apt-get install -y ca-certificates libssl3 && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /oci-catalog/oci-catalog /oci-catalog
 USER 1001
-EXPOSE 50051
+EXPOSE 50061
 CMD [ "/oci-catalog"]
