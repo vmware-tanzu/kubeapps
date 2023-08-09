@@ -144,7 +144,11 @@ export default function PackageView() {
             <AvailablePackageDetailExcerpt pkg={selectedPackage.availablePackageDetail} />
           </Column>
           <Column span={9}>
-            <PackageReadme readme={selectedPackage.readme} error={selectedPackage.readmeError} />
+            <PackageReadme
+              readme={selectedPackage.readme}
+              error={selectedPackage.readmeError}
+              isFetching={isFetching}
+            />
             <div className="after-readme-button">
               <Link
                 to={app.apps.new(
