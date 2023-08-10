@@ -7,6 +7,7 @@ FROM bitnami/golang:1.20.7 as builder
 WORKDIR /go/src/github.com/vmware-tanzu/kubeapps
 COPY go.mod go.sum ./
 ARG VERSION="devel"
+ARG TARGETARCH
 
 # If true, run golangci-lint to detect issues
 ARG lint
@@ -28,7 +29,7 @@ RUN if [ ! -z "$lint" ]; then \
 RUN curl -sSL "https://github.com/bufbuild/buf/releases/download/v$BUF_VERSION/buf-Linux-x86_64" -o "/tmp/buf" && chmod +x "/tmp/buf"
 
 # TODO: Remove and instead use built-in gRPC container probes once we're supporting >= 1.24 only. https://kubernetes.io/blog/2022/05/13/grpc-probes-now-in-beta/
-RUN curl -sSL "https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64" -o "/bin/grpc_health_probe" && chmod +x "/bin/grpc_health_probe"
+RUN curl -sSL "https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-${TARGETARCH}" -o "/bin/grpc_health_probe" && chmod +x "/bin/grpc_health_probe"
 
 
 # With the trick below, Go's build cache is kept between builds.
