@@ -16,11 +16,11 @@
 
     .card-title {
       max-width: calc(100% - 24px);
+      margin: 0;
       margin-bottom: 0;
+      line-height: 1.5rem;
       overflow-x: hidden;
       text-overflow: ellipsis;
-      margin: 0;
-      line-height: 1.5rem;
     }
 
     .card-tooltip {
