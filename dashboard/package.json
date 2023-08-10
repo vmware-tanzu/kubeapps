@@ -102,7 +102,7 @@
     "cross-env": "^7.0.3",
     "enzyme": "^3.11.0",
     "eslint-config-prettier": "^9.0.0",
-    "eslint-import-resolver-typescript": "^3.5.5",
+    "eslint-import-resolver-typescript": "^3.6.0",
     "eslint-plugin-prettier": "^5.0.0",
     "eslint-plugin-redos": "^4.4.5",
     "jest-enzyme": "^7.1.2",
