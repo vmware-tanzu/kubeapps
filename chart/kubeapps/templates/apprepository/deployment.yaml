@@ -121,6 +121,12 @@ spec:
             -  --custom-labels={{ (print $key "=" $value) | quote }}
               {{- end }}
             {{- end }}
+            {{- if.Values.apprepository.containerSecurityContext.enabled }}
+            - --default-container-security-context={{ toJson .Values.apprepository.containerSecurityContext | squote  }}
+            {{- end }}
+            {{- if.Values.apprepository.podSecurityContext.enabled }}
+            - --default-pod-security-context={{ toJson .Values.apprepository.podSecurityContext | squote  }}
+            {{- end }}
             {{- range .Values.apprepository.extraFlags }}
             - {{ . }}
             {{- end }}

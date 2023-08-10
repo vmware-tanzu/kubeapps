@@ -85,13 +85,12 @@ func setFlags(c *cobra.Command) {
 	c.Flags().StringVar(&serveOpts.DBSecretKey, "database-secret-key", "postgresql-root-password", "Kubernetes secret key used for database credentials")
 	c.Flags().StringVar(&serveOpts.UserAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
 	c.Flags().StringVar(&serveOpts.Crontab, "crontab", "*/10 * * * *", "CronTab to specify schedule")
-	// TTLSecondsAfterFinished specifies the number of seconds a sync job should live after finishing.
-	// The support for this is currently beta in K8s (v1.21), older versions require a feature gate being set to enable it.
-	// See https://kubernetes.io/docs/concepts/workloads/controllers/job/#clean-up-finished-jobs-automatically
-	c.Flags().StringVar(&serveOpts.TTLSecondsAfterFinished, "ttl-lifetime-afterfinished-job", "3600", "Lifetime limit after which the resource Jobs are deleted expressed in seconds by default is 3600 (1h) ")
+	c.Flags().StringVar(&serveOpts.TTLSecondsAfterFinished, "ttl-lifetime-afterfinished-job", "3600", "Lifetime limit after which the resource Jobs are deleted expressed in seconds by default is 3600 (1h)")
 	c.Flags().StringSliceVar(&serveOpts.CustomAnnotations, "custom-annotations", []string{""}, "optional annotations to be passed to the generated CronJobs, Jobs and Pods objects. For example: my/annotation=foo")
 	c.Flags().StringSliceVar(&serveOpts.CustomLabels, "custom-labels", []string{""}, "optional labels to be passed to the generated CronJobs, Jobs and Pods objects. For example: my/label=foo")
 	c.Flags().BoolVar(&serveOpts.V1Beta1CronJobs, "v1-beta1-cron-jobs", false, "Defaults to false and so using the v1 cronjobs.")
+	c.Flags().StringVar(&serveOpts.DefaultPodSecContext, "default-pod-security-context", "", "Default Pod Security Context to use for the cleanup jobs and sync jobs (unless overridden by the CRD)")
+	c.Flags().StringVar(&serveOpts.DefaultContainerSecContext, "default-container-security-context", "", "Default Container Security Context to use for the cleanup jobs and sync jobs (unless overridden by the CRD)")
 }
 
 // initConfig reads in config file and ENV variables if set.

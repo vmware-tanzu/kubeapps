@@ -16,28 +16,30 @@ import (
 )
 
 type Config struct {
-	APIServerURL             string
-	Kubeconfig               string
-	RepoSyncImage            string
-	RepoSyncImagePullSecrets []string
-	ImagePullSecretsRefs     []corev1.LocalObjectReference
-	RepoSyncCommand          string
-	KubeappsNamespace        string
-	GlobalPackagingNamespace string
-	DBURL                    string
-	DBUser                   string
-	DBName                   string
-	DBSecretName             string
-	DBSecretKey              string
-	UserAgentComment         string
-	Crontab                  string
-	TTLSecondsAfterFinished  string
-	ReposPerNamespace        bool
-	CustomAnnotations        []string
-	CustomLabels             []string
-	ParsedCustomAnnotations  map[string]string
-	ParsedCustomLabels       map[string]string
-	V1Beta1CronJobs          bool
+	APIServerURL               string
+	Kubeconfig                 string
+	RepoSyncImage              string
+	RepoSyncImagePullSecrets   []string
+	ImagePullSecretsRefs       []corev1.LocalObjectReference
+	RepoSyncCommand            string
+	KubeappsNamespace          string
+	GlobalPackagingNamespace   string
+	DBURL                      string
+	DBUser                     string
+	DBName                     string
+	DBSecretName               string
+	DBSecretKey                string
+	UserAgentComment           string
+	Crontab                    string
+	TTLSecondsAfterFinished    string
+	ReposPerNamespace          bool
+	CustomAnnotations          []string
+	CustomLabels               []string
+	ParsedCustomAnnotations    map[string]string
+	ParsedCustomLabels         map[string]string
+	V1Beta1CronJobs            bool
+	DefaultPodSecContext       string
+	DefaultContainerSecContext string
 }
 
 func Serve(serveOpts Config) error {
