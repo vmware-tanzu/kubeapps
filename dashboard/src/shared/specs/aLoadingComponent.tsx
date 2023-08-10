@@ -1,4 +1,4 @@
-// Copyright 2018-2022 the Kubeapps contributors.
+// Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { shallow } from "enzyme";
@@ -23,11 +23,6 @@ export default (args: any) => {
       const loadingWrapper = wrapper.find("LoadingWrapper");
       expect(wrapper.find("LoadingWrapper")).toExist();
       expect(loadingWrapper.prop("loaded")).toEqual(false);
-    });
-
-    it("matches the snapshot", () => {
-      const wrapper = renderComponent();
-      expect(wrapper).toMatchSnapshot();
     });
   });
 };

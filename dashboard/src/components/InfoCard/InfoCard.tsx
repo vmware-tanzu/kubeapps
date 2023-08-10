@@ -6,7 +6,10 @@ import Icon from "components/Icon/Icon";
 import Row from "components/Row";
 import placeholder from "icons/placeholder.svg";
 import { Link } from "react-router-dom";
-import Card, { CardBlock, CardFooter, CardHeader } from "../js/Card";
+import Card from "./Card";
+import CardBlock from "./Card/CardBlock/CardBlock";
+import CardFooter from "./Card/CardFooter";
+import CardHeader from "./Card/CardHeader";
 import "./InfoCard.css";
 
 export interface IInfoCardProps {

@@ -1,0 +1,18 @@
+// Copyright 2020-2023 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
+.table {
+  &-valign {
+    &-top tr td {
+      vertical-align: top;
+    }
+
+    &-center tr td {
+      vertical-align: middle;
+    }
+
+    &-bottom tr td {
+      vertical-align: bottom;
+    }
+  }
+}

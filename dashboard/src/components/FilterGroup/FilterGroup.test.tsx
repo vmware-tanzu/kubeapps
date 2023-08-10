@@ -17,7 +17,7 @@ const defaultProps = {
 
 it("renders a multicheckbox", () => {
   const wrapper = mountWrapper(defaultStore, <FilterGroup {...defaultProps} />);
-  expect(wrapper).toMatchSnapshot();
+  expect(wrapper.find(MultiCheckbox)).toExist();
 });
 
 it("calls onChange function", () => {

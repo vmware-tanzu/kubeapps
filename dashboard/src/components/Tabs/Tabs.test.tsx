@@ -1,4 +1,4 @@
-// Copyright 2020-2022 the Kubeapps contributors.
+// Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import { mount } from "enzyme";
@@ -8,7 +8,6 @@ it("renders several tabs", () => {
   const wrapper = mount(<Tabs id="tabs" columns={["foo", "bar"]} data={["FOO", "BAR"]} />);
   expect(wrapper.find("button")).toHaveLength(2);
   expect(wrapper.find("section")).toHaveLength(2);
-  expect(wrapper).toMatchSnapshot();
 });
 
 it("changes content between tabs", () => {

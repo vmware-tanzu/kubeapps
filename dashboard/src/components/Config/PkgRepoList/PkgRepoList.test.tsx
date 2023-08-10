@@ -4,8 +4,8 @@
 import { act, waitFor } from "@testing-library/react";
 import actions from "actions";
 import AlertGroup from "components/AlertGroup";
-import Table from "components/js/Table";
-import TableRow from "components/js/Table/components/TableRow";
+import Table from "components/Table";
+import TableRow from "components/Table/components/TableRow";
 import { ReactWrapper } from "enzyme";
 import {
   PackageRepositoriesPermissions,
