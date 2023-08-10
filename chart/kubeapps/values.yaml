@@ -291,7 +291,7 @@ frontend:
   ##
   podSecurityContext:
     enabled: true
-    fsGroup: 10001
+    fsGroup: 1001
   ## Configure Container Security Context for NGINX
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param frontend.containerSecurityContext.enabled Enabled NGINX containers' Security Context
@@ -648,7 +648,7 @@ dashboard:
   ##
   podSecurityContext:
     enabled: true
-    fsGroup: 10001
+    fsGroup: 1001
   ## Configure Container Security Context Dashboard
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param dashboard.containerSecurityContext.enabled Enabled Dashboard containers' Security Context
@@ -1001,7 +1001,7 @@ apprepository:
   ##
   podSecurityContext:
     enabled: true
-    fsGroup: 10001
+    fsGroup: 1001
   ## Configure Container Security Context for App Repository jobs
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param apprepository.containerSecurityContext.enabled Enabled AppRepository Controller containers' Security Context
