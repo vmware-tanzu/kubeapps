@@ -368,6 +368,7 @@ images=(
   "dashboard"
   "pinniped-proxy"
   "${kubeapps_apis_image}"
+  "oci-catalog"
 )
 images=("${images[@]/#/${IMG_PREFIX}}")
 images=("${images[@]/%/${IMG_MODIFIER}}")
@@ -382,6 +383,8 @@ img_flags=(
   "--set" "pinnipedProxy.image.repository=${images[3]}"
   "--set" "kubeappsapis.image.tag=${IMG_DEV_TAG}"
   "--set" "kubeappsapis.image.repository=${images[4]}"
+  "--set" "ociCatalog.image.tag=${IMG_DEV_TAG}"
+  "--set" "ociCatalog.image.repository=${images[5]}"
 )
 
 additional_flags_file=$(generateAdditionalValuesFile)
