@@ -233,6 +233,8 @@ jobs:
       image: rust:${{needs.setup.outputs.rust_version}}
     steps:
       - uses: actions/checkout@v3
+      - name: Install protoc dependency
+        run: sudo apt-get install -y protobuf-compiler
       - name: Run rust unit tests
         run: cargo test --manifest-path cmd/oci-catalog/Cargo.toml
 
