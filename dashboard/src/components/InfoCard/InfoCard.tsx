@@ -6,10 +6,6 @@ import Icon from "components/Icon/Icon";
 import Row from "components/Row";
 import placeholder from "icons/placeholder.svg";
 import { Link } from "react-router-dom";
-import Card from "./Card";
-import CardBlock from "./Card/CardBlock/CardBlock";
-import CardFooter from "./Card/CardFooter";
-import CardHeader from "./Card/CardHeader";
 import "./InfoCard.css";
 
 export interface IInfoCardProps {
@@ -40,17 +36,18 @@ function InfoCard(props: IInfoCardProps) {
     bgIcon,
   } = props;
   const icon = props.icon ? props.icon : placeholder;
+
   return (
     <Column span={[12, 6, 4, 3]}>
-      <Card clickable={true}>
+      <div className="card clickable">
         <Link to={link || "#"}>
-          <CardHeader>
+          <header className="card-header">
             <div className="info-card-header">
               <div className="card-title">{title}</div>
               {tooltip ? <div className="card-tooltip">{tooltip}</div> : <></>}
             </div>
-          </CardHeader>
-          <CardBlock>
+          </header>
+          <div className="card-block">
             <div className="info-card-block">
               <div className="card-icon">
                 <Icon icon={icon} />
@@ -68,8 +65,8 @@ function InfoCard(props: IInfoCardProps) {
                 <></>
               )}
             </div>
-          </CardBlock>
-          <CardFooter>
+          </div>
+          <footer className="card-footer">
             <Row>
               <div className="kubeapps-card-footer">
                 <div className="kubeapps-card-footer-col1">{info}</div>
@@ -85,9 +82,9 @@ function InfoCard(props: IInfoCardProps) {
                 </div>
               </div>
             </Row>
-          </CardFooter>
+          </footer>
         </Link>
-      </Card>
+      </div>
     </Column>
   );
 }

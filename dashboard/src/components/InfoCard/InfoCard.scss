@@ -1,7 +1,15 @@
-// Copyright 2018-2022 the Kubeapps contributors.
+// Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 .card-header {
+  display: block;
+  height: auto;
+  background-color: inherit;
+
+  &.no-border {
+    border-bottom: 0;
+  }
+
   .info-card-header {
     display: flex;
     justify-content: space-between;
@@ -11,6 +19,8 @@
       margin-bottom: 0;
       overflow-x: hidden;
       text-overflow: ellipsis;
+      margin: 0;
+      line-height: 1.5rem;
     }
 
     .card-tooltip {
@@ -65,20 +75,6 @@
   }
 }
 
-.kubeapps-card-footer {
-  display: flex;
-  width: 100%;
-  justify-content: space-between;
-  overflow-x: auto;
-
-  .kubeapps-card-footer-col1 {
-    margin: 0 0.6rem;
-  }
-
-  .kubeapps-card-footer-col2 {
-    margin: 0 0.5rem 0 0;
-  }
-}
 
 .card.clickable a {
   color: var(--cds-global-typography-color-400, #333);
@@ -92,4 +88,20 @@
 .label.label-info-secondary {
   border-color: var(--cds-alias-status-neutral-shade, #00567a);
   background: var(--cds-alias-status-neutral-tint, #e3f5fc);
+}
+
+
+.kubeapps-card-footer {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  overflow-x: auto;
+
+  &-col1 {
+    margin: 0 0.6rem;
+  }
+
+  &-col2 {
+    margin: 0 0.5rem 0 0;
+  }
 }

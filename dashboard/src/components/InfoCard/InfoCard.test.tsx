@@ -2,79 +2,144 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import Icon from "components/Icon/Icon";
-import { shallow } from "enzyme";
 import { Link } from "react-router-dom";
-import CardBlock from "./Card/CardBlock";
-import InfoCard from "./InfoCard";
+import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
+import InfoCard, { IInfoCardProps } from "./InfoCard";
 
-it("should generate a stub link if it's not provided", () => {
-  const wrapper = shallow(
-    <InfoCard
-      title="foo"
-      info="foobar"
-      icon="an-icon.png"
-      tag1Class="blue"
-      tag1Content="database"
-      tag2Class="red"
-      tag2Content="running"
-    />,
-  );
+const defaultProps: IInfoCardProps = {
+  title: "foo",
+  info: "foobar",
+  icon: "an-icon.png",
+  description: "a description",
+  tag1Class: "blue",
+  tag1Content: "database",
+  tag2Class: "red",
+  tag2Content: "running",
+};
 
-  expect(wrapper.find(Link).prop("to")).toBe("#");
-});
+describe(InfoCard, () => {
+  describe("Links", () => {
+    it("should generate a stub link if it's not provided", () => {
+      const wrapper = mountWrapper(defaultStore, <InfoCard {...defaultProps} />);
 
-it("should avoid tags if they are not defined", () => {
-  const wrapper = shallow(
-    <InfoCard title="foo" info="foobar" link="/a/link/somewhere" icon="an-icon.png" />,
-  );
-  expect(wrapper.find(".ListItem__content__info_tag")).not.toExist();
-});
+      expect(wrapper.find(Link).prop("to")).toBe("#");
+    });
 
-it("should parse JSX elements in the tags", () => {
-  const tag1 = <span className="tag1">tag1</span>;
-  const tag2 = <span className="tag2">tag2</span>;
-  const wrapper = shallow(
-    <InfoCard
-      title="foo"
-      info="foobar"
-      link="/a/link/somewhere"
-      icon="an-icon.png"
-      tag1Class="blue"
-      tag1Content={tag1}
-      tag2Class="red"
-      tag2Content={tag2}
-    />,
-  );
-  const tag1Elem = wrapper.find(".tag1");
-  expect(tag1Elem).toExist();
-  expect(tag1Elem.text()).toBe("tag1");
-  const tag2Elem = wrapper.find(".tag2");
-  expect(tag2Elem).toExist();
-  expect(tag2Elem.text()).toBe("tag2");
-});
+    it("should avoid tags if they are not defined", () => {
+      const props: IInfoCardProps = {
+        ...defaultProps,
+        link: "/a/link/somewhere",
+      };
+      const wrapper = mountWrapper(defaultStore, <InfoCard {...props} />);
 
-it("should parse a description as text", () => {
-  const wrapper = shallow(<InfoCard title="foo" info="foobar" description="a description" />);
-  expect(wrapper.find(CardBlock).html()).toContain("a description");
-});
+      expect(wrapper.find(".ListItem__content__info_tag")).not.toExist();
+    });
+  });
 
-it("should parse a description as JSX.Element", () => {
-  const desc = <div className="description">This is a description</div>;
-  const wrapper = shallow(<InfoCard title="foo" info="foobar" description={desc} />);
-  expect(wrapper.find(".description").text()).toBe("This is a description");
-});
+  describe("Card Header", () => {
+    it("includes the expected CSS class and renders the content correctly", () => {
+      const wrapper = mountWrapper(defaultStore, <InfoCard {...defaultProps} />);
 
-it("should parse an icon", () => {
-  const wrapper = shallow(<InfoCard title="foo" info="foobar" />);
-  expect(wrapper.find(Icon)).toExist();
-});
+      const headerTitle = wrapper.find(".card-title");
+      expect(headerTitle).toExist();
+      expect(headerTitle).toHaveText(defaultProps.title);
+    });
 
-it("should parse a background img", () => {
-  const wrapper = shallow(<InfoCard title="foo" info="foobar" bgIcon="img.png" />);
-  expect(wrapper.find(".bg-img").find("img")).toExist();
-});
+    it("should parse a tooltip component", () => {
+      const props: IInfoCardProps = {
+        ...defaultProps,
+        title: "foo",
+        info: "foobar",
+        tooltip: <div id="foo" />,
+      };
+      const wrapper = mountWrapper(defaultStore, <InfoCard {...props} />);
 
-it("should parse a tooltip component", () => {
-  const wrapper = shallow(<InfoCard title="foo" info="foobar" tooltip={<div id="foo" />} />);
-  expect(wrapper.find(".info-card-header").find("#foo")).toExist();
+      expect(wrapper.find(".info-card-header").find("#foo")).toExist();
+    });
+  });
+
+  describe("Card Block", () => {
+    it("renders the content correctly and renders the content correctly", () => {
+      const wrapper = mountWrapper(defaultStore, <InfoCard {...defaultProps} />);
+
+      const block = wrapper.find(".info-card-block");
+      expect(block).toExist();
+      expect(block.html()).toContain(defaultProps.description);
+    });
+
+    it("should parse a description as text", () => {
+      const props: IInfoCardProps = {
+        ...defaultProps,
+        title: "foo",
+        info: "foobar",
+        description: "a description",
+      };
+      const wrapper = mountWrapper(defaultStore, <InfoCard {...props} />);
+
+      expect(wrapper.find(".card-description").html()).toContain("a description");
+    });
+
+    it("should parse a description as JSX.Element", () => {
+      const props: IInfoCardProps = {
+        ...defaultProps,
+        title: "foo",
+        info: "foobar",
+        description: <div className="my-description">This is a description</div>,
+      };
+      const wrapper = mountWrapper(defaultStore, <InfoCard {...props} />);
+
+      expect(wrapper.find(".my-description").text()).toBe("This is a description");
+    });
+
+    it("should parse an icon", () => {
+      const props: IInfoCardProps = {
+        ...defaultProps,
+        title: "foo",
+        info: "foobar",
+      };
+      const wrapper = mountWrapper(defaultStore, <InfoCard {...props} />);
+
+      expect(wrapper.find(Icon)).toExist();
+    });
+
+    it("should parse a background img", () => {
+      const props: IInfoCardProps = {
+        ...defaultProps,
+        title: "foo",
+        info: "foobar",
+        bgIcon: "img.png",
+      };
+      const wrapper = mountWrapper(defaultStore, <InfoCard {...props} />);
+
+      expect(wrapper.find(".bg-img").find("img")).toExist();
+    });
+  });
+
+  describe("Card Footer", () => {
+    it("renders the content correctly and renders the content correctly", () => {
+      const wrapper = mountWrapper(defaultStore, <InfoCard {...defaultProps} />);
+
+      const footer = wrapper.find(".card-footer");
+      expect(footer).toExist();
+      expect(footer.html()).toContain(defaultProps.info.toString());
+    });
+
+    it("should parse JSX elements in the tags", () => {
+      const props: IInfoCardProps = {
+        ...defaultProps,
+        link: "/a/link/somewhere",
+        tag1Content: <span className="tag1">tag1</span>,
+        tag2Content: <span className="tag2">tag2</span>,
+      };
+      const wrapper = mountWrapper(defaultStore, <InfoCard {...props} />);
+
+      const tag1Elem = wrapper.find(".tag1");
+      expect(tag1Elem).toExist();
+      expect(tag1Elem.text()).toBe("tag1");
+
+      const tag2Elem = wrapper.find(".tag2");
+      expect(tag2Elem).toExist();
+      expect(tag2Elem.text()).toBe("tag2");
+    });
+  });
 });
