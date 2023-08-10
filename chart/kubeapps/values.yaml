@@ -291,17 +291,23 @@ frontend:
   ##
   podSecurityContext:
     enabled: true
-    fsGroup: 1001
-  ## Configure Container Security Context (only main container)
+    fsGroup: 10001
+  ## Configure Container Security Context for NGINX
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param frontend.containerSecurityContext.enabled Enabled NGINX containers' Security Context
   ## @param frontend.containerSecurityContext.runAsUser Set NGINX container's Security Context runAsUser
+  ## @param frontend.containerSecurityContext.runAsGroup Set NGINX container's Security Context runAsUser
   ## @param frontend.containerSecurityContext.runAsNonRoot Set NGINX container's Security Context runAsNonRoot
+  ## @param frontend.containerSecurityContext.allowPrivilegeEscalation Set NGINX container's Security Context runAsNonRoot
+  ## @param frontend.containerSecurityContext.readOnlyRootFilesystem Set NGINX container's Security Context runAsNonRoot
   ##
   containerSecurityContext:
     enabled: true
     runAsUser: 1001
+    runAsGroup: 10001
     runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
   ## Configure extra options for frontend containers' liveness and readiness probes
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
   ## @param frontend.livenessProbe.enabled Enable livenessProbe
@@ -642,17 +648,23 @@ dashboard:
   ##
   podSecurityContext:
     enabled: true
-    fsGroup: 1001
-  ## Configure Container Security Context (only main container)
+    fsGroup: 10001
+  ## Configure Container Security Context Dashboard
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param dashboard.containerSecurityContext.enabled Enabled Dashboard containers' Security Context
   ## @param dashboard.containerSecurityContext.runAsUser Set Dashboard container's Security Context runAsUser
+  ## @param dashboard.containerSecurityContext.runAsGroup Set Dashboard container's Security Context runAsUser
   ## @param dashboard.containerSecurityContext.runAsNonRoot Set Dashboard container's Security Context runAsNonRoot
+  ## @param dashboard.containerSecurityContext.allowPrivilegeEscalation Set Dashboard container's Security Context runAsNonRoot
+  ## @param dashboard.containerSecurityContext.readOnlyRootFilesystem Set Dashboard container's Security Context runAsNonRoot
   ##
   containerSecurityContext:
     enabled: true
     runAsUser: 1001
+    runAsGroup: 10001
     runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
   ## Configure extra options for Dashboard containers' liveness and readiness probes
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
   ## @param dashboard.livenessProbe.enabled Enable livenessProbe
@@ -989,17 +1001,23 @@ apprepository:
   ##
   podSecurityContext:
     enabled: true
-    fsGroup: 1001
-  ## Configure Container Security Context (only main container)
+    fsGroup: 10001
+  ## Configure Container Security Context for App Repository jobs
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param apprepository.containerSecurityContext.enabled Enabled AppRepository Controller containers' Security Context
   ## @param apprepository.containerSecurityContext.runAsUser Set AppRepository Controller container's Security Context runAsUser
+  ## @param apprepository.containerSecurityContext.runAsGroup Set AppRepository Controller container's Security Context runAsUser
   ## @param apprepository.containerSecurityContext.runAsNonRoot Set AppRepository Controller container's Security Context runAsNonRoot
+  ## @param apprepository.containerSecurityContext.allowPrivilegeEscalation Set AppRepository Controller container's Security Context runAsNonRoot
+  ## @param apprepository.containerSecurityContext.readOnlyRootFilesystem Set AppRepository Controller container's Security Context runAsNonRoot
   ##
   containerSecurityContext:
     enabled: true
     runAsUser: 1001
+    runAsGroup: 10001
     runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
   ## @param apprepository.lifecycleHooks Custom lifecycle hooks for AppRepository Controller containers
   ##
   lifecycleHooks: {}
@@ -1242,12 +1260,18 @@ authProxy:
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param authProxy.containerSecurityContext.enabled Enabled Auth Proxy containers' Security Context
   ## @param authProxy.containerSecurityContext.runAsUser Set Auth Proxy container's Security Context runAsUser
+  ## @param authProxy.containerSecurityContext.runAsGroup Set Auth Proxy container's Security Context runAsUser
   ## @param authProxy.containerSecurityContext.runAsNonRoot Set Auth Proxy container's Security Context runAsNonRoot
+  ## @param authProxy.containerSecurityContext.allowPrivilegeEscalation Set Auth Proxy container's Security Context runAsNonRoot
+  ## @param authProxy.containerSecurityContext.readOnlyRootFilesystem Set Auth Proxy container's Security Context runAsNonRoot
   ##
   containerSecurityContext:
     enabled: true
     runAsUser: 1001
+    runAsGroup: 10001
     runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
   ## OAuth2 Proxy containers' resource requests and limits
   ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
   ## @param authProxy.resources.limits.cpu The CPU limits for the OAuth2 Proxy container
@@ -1354,12 +1378,18 @@ pinnipedProxy:
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param pinnipedProxy.containerSecurityContext.enabled Enabled Pinniped Proxy containers' Security Context
   ## @param pinnipedProxy.containerSecurityContext.runAsUser Set Pinniped Proxy container's Security Context runAsUser
+  ## @param pinnipedProxy.containerSecurityContext.runAsGroup Set Pinniped Proxy container's Security Context runAsUser
   ## @param pinnipedProxy.containerSecurityContext.runAsNonRoot Set Pinniped Proxy container's Security Context runAsNonRoot
+  ## @param pinnipedProxy.containerSecurityContext.allowPrivilegeEscalation Set Pinniped Proxy container's Security Context runAsNonRoot
+  ## @param pinnipedProxy.containerSecurityContext.readOnlyRootFilesystem Set Pinniped Proxy container's Security Context runAsNonRoot
   ##
   containerSecurityContext:
     enabled: true
     runAsUser: 1001
+    runAsGroup: 10001
     runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
   ## Pinniped Proxy containers' resource requests and limits
   ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
   ## @param pinnipedProxy.resources.limits.cpu The CPU limits for the Pinniped Proxy container
@@ -1657,16 +1687,22 @@ kubeappsapis:
   podSecurityContext:
     enabled: true
     fsGroup: 1001
-  ## Configure Container Security Context (only main container)
+  ## Configure Container Security Context for Kubeapps APIs
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param kubeappsapis.containerSecurityContext.enabled Enabled KubeappsAPIs containers' Security Context
   ## @param kubeappsapis.containerSecurityContext.runAsUser Set KubeappsAPIs container's Security Context runAsUser
+  ## @param kubeappsapis.containerSecurityContext.runAsGroup Set KubeappsAPIs container's Security Context runAsGroup
   ## @param kubeappsapis.containerSecurityContext.runAsNonRoot Set KubeappsAPIs container's Security Context runAsNonRoot
+  ## @param kubeappsapis.containerSecurityContext.allowPrivilegeEscalation Set KubeappsAPIs container's Security Context allowPrivilegeEscalation
+  ## @param kubeappsapis.containerSecurityContext.readOnlyRootFilesystem Set KubeappsAPIs container's Security Context readOnlyRootFilesystem
   ##
   containerSecurityContext:
     enabled: true
     runAsUser: 1001
+    runAsGroup: 10001
     runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
   ## Configure extra options for KubeappsAPIs containers' liveness and readiness probes
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
   ## @param kubeappsapis.livenessProbe.enabled Enable livenessProbe
