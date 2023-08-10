@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"dario.cat/mergo"
 	"github.com/adhocore/gronx"
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	clientset "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
@@ -629,6 +630,18 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config) batchv1.
 			MountPath: "/usr/local/share/ca-certificates",
 		})
 	}
+
+	// Fetch the global pod and container security context
+	podSecContext, err := unmarshallPodSecurityContext(config.DefaultPodSecContext)
+	if err != nil {
+		log.Errorf("Unable to unmarshall pod security context configuration %q: %v", config.DefaultPodSecContext, err)
+	}
+
+	containerSecContext, err := unmarshallContainerSecurityContext(config.DefaultContainerSecContext)
+	if err != nil {
+		log.Errorf("Unable to unmarshall container security context configuration %q: %v", config.DefaultContainerSecContext, err)
+	}
+
 	// Get the predefined pod spec for the apprepo definition if exists
 	podTemplateSpec := apprepo.Spec.SyncJobPodTemplate
 	// Add labels
@@ -660,6 +673,35 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config) batchv1.
 	// Add volumes
 	podTemplateSpec.Spec.Volumes = append(podTemplateSpec.Spec.Volumes, volumes...)
 
+	// if there is a default security context, try to use it
+	if podSecContext != nil {
+		// if the ApRepo CRD does not define any, just use the default,
+		if podTemplateSpec.Spec.SecurityContext == nil {
+			podTemplateSpec.Spec.SecurityContext = podSecContext
+		} else {
+			// otherwise, try to merge it, allowing the override by the AppRepo CRD's ones.
+			err = mergo.Merge(podTemplateSpec.Spec.SecurityContext, podSecContext)
+			if err != nil {
+				log.Errorf("Unable to merge pod security context %v: %v", podSecContext, err)
+			}
+		}
+	}
+
+	if containerSecContext != nil {
+		for i := range podTemplateSpec.Spec.Containers {
+			// if the ApRepo CRD does not define any, just use the default,
+			if podTemplateSpec.Spec.Containers[i].SecurityContext == nil {
+				podTemplateSpec.Spec.Containers[i].SecurityContext = containerSecContext
+			} else {
+				//  otherwise, try to merge it, allowing the override by the AppRepo CRD's ones.
+				err = mergo.Merge(podTemplateSpec.Spec.Containers[i].SecurityContext, containerSecContext)
+				if err != nil {
+					log.Errorf("Unable to merge container security context %v: %v", containerSecContext, err)
+				}
+			}
+		}
+	}
+
 	return batchv1.JobSpec{
 		TTLSecondsAfterFinished: ttlLifetimeJobs(config),
 		Template:                podTemplateSpec,
@@ -682,7 +724,7 @@ func newCleanupJob(kubeappsNamespace, repoNamespace, name string, config Config)
 
 // cleanupJobSpec returns a batchv1.JobSpec for running the chart-repo delete job
 func cleanupJobSpec(namespace, name string, config Config) batchv1.JobSpec {
-	return batchv1.JobSpec{
+	cleanupJobSpec := batchv1.JobSpec{
 		TTLSecondsAfterFinished: ttlLifetimeJobs(config),
 		Template: corev1.PodTemplateSpec{
 			Spec: corev1.PodSpec{
@@ -712,6 +754,17 @@ func cleanupJobSpec(namespace, name string, config Config) batchv1.JobSpec {
 			},
 		},
 	}
+
+	// Add the global pod and container security context as we don't have any AppRepo CR from which we can read
+	if podSecContext, err := unmarshallPodSecurityContext(config.DefaultPodSecContext); err == nil && podSecContext != nil {
+		cleanupJobSpec.Template.Spec.SecurityContext = podSecContext
+	}
+
+	if containerSecContext, err := unmarshallContainerSecurityContext(config.DefaultContainerSecContext); err == nil && containerSecContext != nil {
+		cleanupJobSpec.Template.Spec.Containers[0].SecurityContext = containerSecContext
+	}
+
+	return cleanupJobSpec
 }
 
 // jobLabels returns the labels for the job and cronjob resources
@@ -891,4 +944,32 @@ func dbFlags(config Config) []string {
 		"--database-user=" + config.DBUser,
 		"--database-name=" + config.DBName,
 	}
+}
+
+func unmarshallPodSecurityContext(str string) (*corev1.PodSecurityContext, error) {
+	if str == "" {
+		return nil, nil
+	}
+
+	var secContext *corev1.PodSecurityContext
+	err := json.Unmarshal([]byte(str), &secContext)
+	if err != nil {
+		return nil, err
+	}
+
+	return secContext, err
+}
+
+func unmarshallContainerSecurityContext(str string) (*corev1.SecurityContext, error) {
+	if str == "" {
+		return nil, nil
+	}
+
+	var secContext *corev1.SecurityContext
+	err := json.Unmarshal([]byte(str), &secContext)
+	if err != nil {
+		return nil, err
+	}
+
+	return secContext, err
 }

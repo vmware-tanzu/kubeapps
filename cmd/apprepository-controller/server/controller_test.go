@@ -21,16 +21,18 @@ var defaultTTL = int32(3600)
 
 func Test_newCronJob(t *testing.T) {
 	tests := []struct {
-		name             string
-		crontab          string
-		userAgentComment string
-		apprepo          *apprepov1alpha1.AppRepository
-		expected         batchv1.CronJob
+		name              string
+		crontab           string
+		userAgentComment  string
+		defaultSecContext []string
+		apprepo           *apprepov1alpha1.AppRepository
+		expected          batchv1.CronJob
 	}{
 		{
 			"my-charts",
 			"*/10 * * * *",
 			"",
+			[]string{"", ""},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -122,6 +124,7 @@ func Test_newCronJob(t *testing.T) {
 			"my-charts with long names",
 			"*/10 * * * *",
 			"",
+			[]string{"", ""},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -204,6 +207,7 @@ func Test_newCronJob(t *testing.T) {
 			"my-charts with auth, userAgent and crontab configuration",
 			"*/20 * * * *",
 			"kubeapps/v2.3",
+			[]string{"", ""},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -305,6 +309,7 @@ func Test_newCronJob(t *testing.T) {
 			"a cronjob for an app repo in another namespace references the repo secret in kubeapps",
 			"*/20 * * * *",
 			"kubeapps/v2.3",
+			[]string{"", ""},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -397,6 +402,7 @@ func Test_newCronJob(t *testing.T) {
 			"my-charts with custom (good) interval",
 			"*/10 * * * *",
 			"",
+			[]string{"", ""},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -489,6 +495,7 @@ func Test_newCronJob(t *testing.T) {
 			"my-charts with custom (good) crontab",
 			"*/10 * * * *",
 			"",
+			[]string{"", ""},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -584,9 +591,11 @@ func Test_newCronJob(t *testing.T) {
 			config := makeDefaultConfig()
 			config.Crontab = tt.crontab
 			config.UserAgentComment = tt.userAgentComment
+			config.DefaultPodSecContext = tt.defaultSecContext[0]
+			config.DefaultContainerSecContext = tt.defaultSecContext[1]
 
 			result := newCronJob(tt.apprepo, config)
-			if got, want := tt.expected, *result; !cmp.Equal(want, got) {
+			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
@@ -599,9 +608,11 @@ func Test_newCronJob(t *testing.T) {
 			config.V1Beta1CronJobs = true
 			config.Crontab = tt.crontab
 			config.UserAgentComment = tt.userAgentComment
+			config.DefaultPodSecContext = tt.defaultSecContext[0]
+			config.DefaultContainerSecContext = tt.defaultSecContext[1]
 
 			result := newCronJob(tt.apprepo, config)
-			if got, want := tt.expected, *result; !cmp.Equal(want, got) {
+			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
@@ -610,14 +621,16 @@ func Test_newCronJob(t *testing.T) {
 
 func Test_newSyncJob(t *testing.T) {
 	tests := []struct {
-		name             string
-		userAgentComment string
-		apprepo          *apprepov1alpha1.AppRepository
-		expected         batchv1.Job
+		name              string
+		userAgentComment  string
+		defaultSecContext []string
+		apprepo           *apprepov1alpha1.AppRepository
+		expected          batchv1.Job
 	}{
 		{
 			"my-charts",
 			"",
+			[]string{"", ""},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -698,8 +711,210 @@ func Test_newSyncJob(t *testing.T) {
 			},
 		},
 		{
+			"my-charts with default sec policy",
+			"",
+			[]string{`{"enabled":true,"fsGroup":10001}`, `{"allowPrivilegeEscalation":false,"enabled":true,"readOnlyRootFilesystem":true,"runAsGroup":10001,"runAsNonRoot":true,"runAsUser":1001}`},
+			&apprepov1alpha1.AppRepository{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "AppRepository",
+					APIVersion: "kubeapps.com/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-charts",
+					Namespace: "kubeapps",
+					Labels: map[string]string{
+						"name":       "my-charts",
+						"created-by": "kubeapps",
+					},
+				},
+				Spec: apprepov1alpha1.AppRepositorySpec{
+					Type: "helm",
+					URL:  "https://charts.acme.com/my-charts",
+				},
+			},
+			batchv1.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					GenerateName: "apprepo-kubeapps-sync-my-charts-",
+					OwnerReferences: []metav1.OwnerReference{
+						*metav1.NewControllerRef(
+							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
+							schema.GroupVersionKind{
+								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
+								Version: apprepov1alpha1.SchemeGroupVersion.Version,
+								Kind:    "AppRepository",
+							},
+						),
+					},
+					Annotations: map[string]string{},
+					Labels:      map[string]string{},
+				},
+				Spec: batchv1.JobSpec{
+					TTLSecondsAfterFinished: &defaultTTL,
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								LabelRepoName:      "my-charts",
+								LabelRepoNamespace: "kubeapps",
+							},
+							Annotations: map[string]string{},
+						},
+						Spec: corev1.PodSpec{
+							RestartPolicy: corev1.RestartPolicyOnFailure,
+							SecurityContext: &corev1.PodSecurityContext{
+								FSGroup: func(i int64) *int64 { return &i }(10001),
+							},
+
+							Containers: []corev1.Container{
+								{
+									Name:            "sync",
+									Image:           repoSyncImage,
+									ImagePullPolicy: corev1.PullIfNotPresent,
+									Command:         []string{"/chart-repo"},
+									SecurityContext: &corev1.SecurityContext{
+										AllowPrivilegeEscalation: func(i bool) *bool { return &i }(false),
+										ReadOnlyRootFilesystem:   func(i bool) *bool { return &i }(true),
+										RunAsGroup:               func(i int64) *int64 { return &i }(10001),
+										RunAsNonRoot:             func(i bool) *bool { return &i }(true),
+										RunAsUser:                func(i int64) *int64 { return &i }(1001),
+									},
+									Args: []string{
+										"sync",
+										"--database-url=postgresql.kubeapps",
+										"--database-user=admin",
+										"--database-name=assets",
+										"--global-repos-namespace=kubeapps-global",
+										"--namespace=kubeapps",
+										"my-charts",
+										"https://charts.acme.com/my-charts",
+										"helm",
+									},
+									Env: []corev1.EnvVar{
+										{
+											Name: "DB_PASSWORD",
+											ValueFrom: &corev1.EnvVarSource{
+												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+										},
+									},
+									VolumeMounts: nil,
+								},
+							},
+							Volumes: nil,
+						},
+					},
+				},
+			},
+		},
+		{
+			"my-charts with default + crd sec policy",
+			"",
+			[]string{`{"enabled":true,"fsGroup":10001}`, `{"allowPrivilegeEscalation":false,"enabled":true,"readOnlyRootFilesystem":true,"runAsGroup":10001,"runAsNonRoot":true,"runAsUser":1001}`},
+			&apprepov1alpha1.AppRepository{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "AppRepository",
+					APIVersion: "kubeapps.com/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-charts",
+					Namespace: "kubeapps",
+					Labels: map[string]string{
+						"name":       "my-charts",
+						"created-by": "kubeapps",
+					},
+				},
+				Spec: apprepov1alpha1.AppRepositorySpec{
+					Type: "helm",
+					URL:  "https://charts.acme.com/my-charts",
+					SyncJobPodTemplate: corev1.PodTemplateSpec{
+						Spec: corev1.PodSpec{
+							SecurityContext: &corev1.PodSecurityContext{
+								FSGroup: func(i int64) *int64 { return &i }(1234),
+							},
+							Containers: []corev1.Container{
+								{SecurityContext: &corev1.SecurityContext{
+									Privileged: func(i bool) *bool { return &i }(true),
+								}},
+							},
+						},
+					},
+				},
+			},
+			batchv1.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					GenerateName: "apprepo-kubeapps-sync-my-charts-",
+					OwnerReferences: []metav1.OwnerReference{
+						*metav1.NewControllerRef(
+							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
+							schema.GroupVersionKind{
+								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
+								Version: apprepov1alpha1.SchemeGroupVersion.Version,
+								Kind:    "AppRepository",
+							},
+						),
+					},
+					Annotations: map[string]string{},
+					Labels:      map[string]string{},
+				},
+				Spec: batchv1.JobSpec{
+					TTLSecondsAfterFinished: &defaultTTL,
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								LabelRepoName:      "my-charts",
+								LabelRepoNamespace: "kubeapps",
+							},
+							Annotations: map[string]string{},
+						},
+						Spec: corev1.PodSpec{
+							RestartPolicy: corev1.RestartPolicyOnFailure,
+							SecurityContext: &corev1.PodSecurityContext{
+								FSGroup: func(i int64) *int64 { return &i }(1234),
+							},
+
+							Containers: []corev1.Container{
+								{
+									Name:            "sync",
+									Image:           repoSyncImage,
+									ImagePullPolicy: corev1.PullIfNotPresent,
+									Command:         []string{"/chart-repo"},
+									SecurityContext: &corev1.SecurityContext{
+										AllowPrivilegeEscalation: func(i bool) *bool { return &i }(false),
+										ReadOnlyRootFilesystem:   func(i bool) *bool { return &i }(true),
+										RunAsGroup:               func(i int64) *int64 { return &i }(10001),
+										RunAsNonRoot:             func(i bool) *bool { return &i }(true),
+										RunAsUser:                func(i int64) *int64 { return &i }(1001),
+										Privileged:               func(i bool) *bool { return &i }(true),
+									},
+									Args: []string{
+										"sync",
+										"--database-url=postgresql.kubeapps",
+										"--database-user=admin",
+										"--database-name=assets",
+										"--global-repos-namespace=kubeapps-global",
+										"--namespace=kubeapps",
+										"my-charts",
+										"https://charts.acme.com/my-charts",
+										"helm",
+									},
+									Env: []corev1.EnvVar{
+										{
+											Name: "DB_PASSWORD",
+											ValueFrom: &corev1.EnvVarSource{
+												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+										},
+									},
+									VolumeMounts: nil,
+								},
+							},
+							Volumes: nil,
+						},
+					},
+				},
+			},
+		},
+		{
 			"my-charts with long names",
 			"",
+			[]string{"", ""},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -772,6 +987,7 @@ func Test_newSyncJob(t *testing.T) {
 		{
 			"an app repository in another namespace results in jobs without owner references",
 			"",
+			[]string{"", ""},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -844,6 +1060,7 @@ func Test_newSyncJob(t *testing.T) {
 		{
 			"my-charts with auth and userAgent comment",
 			"kubeapps/v2.3",
+			[]string{"", ""},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -936,6 +1153,7 @@ func Test_newSyncJob(t *testing.T) {
 		{
 			"my-charts with a customCA",
 			"",
+			[]string{"", ""},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -1037,6 +1255,7 @@ func Test_newSyncJob(t *testing.T) {
 		{
 			"my-charts with a customCA and auth header",
 			"",
+			[]string{"", ""},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -1146,6 +1365,7 @@ func Test_newSyncJob(t *testing.T) {
 		{
 			"my-charts linked to docker registry creds",
 			"",
+			[]string{"", ""},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -1236,6 +1456,7 @@ func Test_newSyncJob(t *testing.T) {
 		{
 			"my-charts with a custom pod template",
 			"",
+			[]string{"", ""},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -1341,6 +1562,7 @@ func Test_newSyncJob(t *testing.T) {
 		{
 			"OCI registry with repositories",
 			"",
+			[]string{"", ""},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -1426,6 +1648,7 @@ func Test_newSyncJob(t *testing.T) {
 		{
 			"Skip TLS verification",
 			"",
+			[]string{"", ""},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -1513,6 +1736,7 @@ func Test_newSyncJob(t *testing.T) {
 		{
 			"Paas credentials",
 			"",
+			[]string{"", ""},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -1600,6 +1824,7 @@ func Test_newSyncJob(t *testing.T) {
 		{
 			"Repository with filters",
 			"",
+			[]string{"", ""},
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -1690,9 +1915,11 @@ func Test_newSyncJob(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			config := makeDefaultConfig()
 			config.UserAgentComment = tt.userAgentComment
+			config.DefaultPodSecContext = tt.defaultSecContext[0]
+			config.DefaultContainerSecContext = tt.defaultSecContext[1]
 
 			result := newSyncJob(tt.apprepo, config)
-			if got, want := tt.expected, *result; !cmp.Equal(want, got) {
+			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
@@ -1701,17 +1928,21 @@ func Test_newSyncJob(t *testing.T) {
 
 func Test_newCleanupJob(t *testing.T) {
 	tests := []struct {
-		name              string
-		kubeappsNamespace string
-		repoName          string
-		repoNamespace     string
-		expected          batchv1.Job
+		name                string
+		kubeappsNamespace   string
+		repoName            string
+		repoNamespace       string
+		podSecContext       string
+		containerSecContext string
+		expected            batchv1.Job
 	}{
 		{
 			"my-charts with",
 			"kubeapps",
 			"my-charts",
 			"kubeapps",
+			"",
+			"",
 			batchv1.Job{
 				ObjectMeta: metav1.ObjectMeta{
 					GenerateName: "apprepo-kubeapps-cleanup-my-charts-",
@@ -1753,10 +1984,69 @@ func Test_newCleanupJob(t *testing.T) {
 			},
 		},
 		{
+			"my-charts with security context",
+			"kubeapps",
+			"my-charts",
+			"kubeapps",
+			`{"enabled":true,"fsGroup":10001}`,
+			`{"allowPrivilegeEscalation":false,"enabled":true,"readOnlyRootFilesystem":true,"runAsGroup":10001,"runAsNonRoot":true,"runAsUser":1001}`,
+			batchv1.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					GenerateName: "apprepo-kubeapps-cleanup-my-charts-",
+					Namespace:    "kubeapps",
+					Annotations:  map[string]string{},
+					Labels:       map[string]string{},
+				},
+				Spec: batchv1.JobSpec{
+					TTLSecondsAfterFinished: &defaultTTL,
+					Template: corev1.PodTemplateSpec{
+						Spec: corev1.PodSpec{
+							RestartPolicy: corev1.RestartPolicyNever,
+							SecurityContext: &corev1.PodSecurityContext{
+								FSGroup: func(i int64) *int64 { return &i }(10001),
+							},
+							Containers: []corev1.Container{
+								{
+									Name:            "delete",
+									Image:           repoSyncImage,
+									ImagePullPolicy: corev1.PullIfNotPresent,
+									Command:         []string{"/chart-repo"},
+									SecurityContext: &corev1.SecurityContext{
+										AllowPrivilegeEscalation: func(i bool) *bool { return &i }(false),
+										ReadOnlyRootFilesystem:   func(i bool) *bool { return &i }(true),
+										RunAsGroup:               func(i int64) *int64 { return &i }(10001),
+										RunAsNonRoot:             func(i bool) *bool { return &i }(true),
+										RunAsUser:                func(i int64) *int64 { return &i }(1001),
+									},
+									Args: []string{
+										"delete",
+										"my-charts",
+										"--namespace=kubeapps",
+										"--database-url=postgresql.kubeapps",
+										"--database-user=admin",
+										"--database-name=assets",
+									},
+									Env: []corev1.EnvVar{
+										{
+											Name: "DB_PASSWORD",
+											ValueFrom: &corev1.EnvVarSource{
+												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			"my-charts with long names",
 			"kubeapps",
 			"a-really-long-long-long-long-but-valid-name-under-63-characters",
 			"a-really-long-long-long-but-valid-namespace-under-63-characters",
+			"",
+			"",
 			batchv1.Job{
 				ObjectMeta: metav1.ObjectMeta{
 					GenerateName: "apprepo-a-real-1762006330-cleanup-a-real-1687295243-",
@@ -1801,8 +2091,12 @@ func Test_newCleanupJob(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := newCleanupJob(tt.kubeappsNamespace, tt.repoNamespace, tt.repoName, makeDefaultConfig())
-			if got, want := tt.expected, *result; !cmp.Equal(want, got) {
+			config := makeDefaultConfig()
+			config.DefaultContainerSecContext = tt.containerSecContext
+			config.DefaultPodSecContext = tt.podSecContext
+
+			result := newCleanupJob(tt.kubeappsNamespace, tt.repoNamespace, tt.repoName, config)
+			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
@@ -2160,25 +2454,29 @@ func TestIntervalToCron(t *testing.T) {
 
 func makeDefaultConfig() Config {
 	return Config{
-		Kubeconfig:               "",
-		APIServerURL:             "",
-		RepoSyncImage:            repoSyncImage,
-		RepoSyncImagePullSecrets: []string{},
-		RepoSyncCommand:          "/chart-repo",
-		KubeappsNamespace:        "kubeapps",
-		GlobalPackagingNamespace: "kubeapps-global",
-		ReposPerNamespace:        true,
-		DBURL:                    "postgresql.kubeapps",
-		DBUser:                   "admin",
-		DBName:                   "assets",
-		DBSecretName:             "postgresql",
-		DBSecretKey:              "postgresql-root-password",
-		UserAgentComment:         "",
-		TTLSecondsAfterFinished:  "3600",
-		Crontab:                  "*/10 * * * *",
-		CustomAnnotations:        []string{},
-		CustomLabels:             []string{},
-		ParsedCustomLabels:       map[string]string{},
-		ParsedCustomAnnotations:  map[string]string{},
+		Kubeconfig:                 "",
+		APIServerURL:               "",
+		RepoSyncImage:              repoSyncImage,
+		RepoSyncImagePullSecrets:   []string{"", ""},
+		RepoSyncCommand:            "/chart-repo",
+		KubeappsNamespace:          "kubeapps",
+		GlobalPackagingNamespace:   "kubeapps-global",
+		ReposPerNamespace:          true,
+		DBURL:                      "postgresql.kubeapps",
+		DBUser:                     "admin",
+		DBName:                     "assets",
+		DBSecretName:               "postgresql",
+		DBSecretKey:                "postgresql-root-password",
+		UserAgentComment:           "",
+		TTLSecondsAfterFinished:    "3600",
+		Crontab:                    "*/10 * * * *",
+		CustomAnnotations:          []string{"", ""},
+		CustomLabels:               []string{"", ""},
+		ParsedCustomLabels:         map[string]string{},
+		ParsedCustomAnnotations:    map[string]string{},
+		ImagePullSecretsRefs:       nil,
+		V1Beta1CronJobs:            false,
+		DefaultPodSecContext:       "",
+		DefaultContainerSecContext: "",
 	}
 }

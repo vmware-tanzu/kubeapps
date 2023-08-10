@@ -6,6 +6,7 @@ module github.com/vmware-tanzu/kubeapps
 go 1.20
 
 require (
+	dario.cat/mergo v1.0.0
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/adhocore/gronx v1.6.5
