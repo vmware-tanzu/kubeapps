@@ -1680,7 +1680,7 @@ kubeappsapis:
   ##
   livenessProbe:
     enabled: true
-    initialDelaySeconds: 60
+    initialDelaySeconds: 10
     periodSeconds: 10
     timeoutSeconds: 5
     failureThreshold: 6
@@ -1694,7 +1694,7 @@ kubeappsapis:
   ##
   readinessProbe:
     enabled: true
-    initialDelaySeconds: 0
+    initialDelaySeconds: 5
     periodSeconds: 10
     timeoutSeconds: 5
     failureThreshold: 6
