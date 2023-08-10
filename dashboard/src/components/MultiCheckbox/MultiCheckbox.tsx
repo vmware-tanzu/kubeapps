@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsCheckbox } from "@cds/react/checkbox/";
-import "./MultiCheckbox.scss";
+import "./MultiCheckbox.css";
 
 export interface IMultiCheckboxProps {
   name: string;
