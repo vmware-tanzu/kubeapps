@@ -1,7 +1,7 @@
 // Copyright 2020-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import "./Table.scss";
+import "./Table.css";
 import TableRow from "./components/TableRow/TableRow";
 
 export interface ITableProps {
