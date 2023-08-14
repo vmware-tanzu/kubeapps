@@ -2,13 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import LoadingWrapper from "components/LoadingWrapper";
+import { filterByResourceRefs } from "containers/helpers";
+import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { isEmpty } from "lodash";
 import { useSelector } from "react-redux";
-import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { ISecret, IStoreState } from "shared/types";
 import SecretItemDatum from "../ResourceTable/ResourceItem/SecretItem/SecretItemDatum";
-import "./AppSecrets.css";
-import { filterByResourceRefs } from "containers/helpers";
 
 interface IResourceTableProps {
   secretRefs: ResourceRef[];
