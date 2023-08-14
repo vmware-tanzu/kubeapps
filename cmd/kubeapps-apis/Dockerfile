@@ -12,7 +12,7 @@ ARG VERSION="devel"
 ARG lint
 
 # https://github.com/bufbuild/buf/releases/
-ARG BUF_VERSION="1.25.1"
+ARG BUF_VERSION="1.26.0"
 
 # https://github.com/golangci/golangci-lint/releases
 ARG GOLANGCILINT_VERSION="1.53.3"
@@ -22,7 +22,7 @@ ARG GRPC_HEALTH_PROBE_VERSION="0.4.19"
 
 # Install lint tools
 RUN if [ ! -z "$lint" ]; then \
-        go install github.com/golangci/golangci-lint/cmd/golangci-lint@v$GOLANGCILINT_VERSION; \
+    go install github.com/golangci/golangci-lint/cmd/golangci-lint@v$GOLANGCILINT_VERSION; \
     fi
 
 RUN curl -sSL "https://github.com/bufbuild/buf/releases/download/v$BUF_VERSION/buf-Linux-x86_64" -o "/tmp/buf" && chmod +x "/tmp/buf"
@@ -44,8 +44,8 @@ COPY cmd cmd
 
 RUN if [ ! -z "$lint" ]; then \
     # Run golangci-lint to detect issues
-        golangci-lint run --timeout=10m ./cmd/kubeapps-apis/... && \
-        golangci-lint run --timeout=10m ./pkg/...; \
+    golangci-lint run --timeout=10m ./cmd/kubeapps-apis/... && \
+    golangci-lint run --timeout=10m ./pkg/...; \
     fi
 
 # Lint the proto files to detect errors at build time

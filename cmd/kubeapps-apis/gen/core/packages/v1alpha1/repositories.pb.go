@@ -167,9 +167,9 @@ type AddPackageRepositoryRequest struct {
 	NamespaceScoped bool `protobuf:"varint,4,opt,name=namespace_scoped,json=namespaceScoped,proto3" json:"namespace_scoped,omitempty"`
 	// Package storage type
 	// In general, each plug-in will define an acceptable set of valid types
-	// - for direct helm plug-in valid values are: "helm" and "oci"
-	// - for flux plug-in valid values are: "helm" and "oci". In the
-	//   future, we may add support for git and/or AWS s3-style buckets
+	//   - for direct helm plug-in valid values are: "helm" and "oci"
+	//   - for flux plug-in valid values are: "helm" and "oci". In the
+	//     future, we may add support for git and/or AWS s3-style buckets
 	Type string `protobuf:"bytes,5,opt,name=type,proto3" json:"type,omitempty"`
 	// A URL identifying the package repository location. Must contain at
 	// least a protocol and host
@@ -197,11 +197,12 @@ type AddPackageRepositoryRequest struct {
 	// See https://developers.google.com/protocol-buffers/docs/proto3#any
 	// Just for reference, some of the examples that have been chosen not to
 	// be part of the core API but rather plugin-specific details are:
-	//   direct-helm:
-	//      - image pull secrets
-	//      - list of oci repositories
-	//      - filter rules
-	//      - sync job pod template
+	//
+	//	direct-helm:
+	//	   - image pull secrets
+	//	   - list of oci repositories
+	//	   - filter rules
+	//	   - sync job pod template
 	CustomDetail *anypb.Any `protobuf:"bytes,11,opt,name=custom_detail,json=customDetail,proto3" json:"custom_detail,omitempty"`
 }
 
@@ -315,7 +316,6 @@ func (x *AddPackageRepositoryRequest) GetCustomDetail() *anypb.Any {
 }
 
 // PackageRepositoryTlsConfig
-//
 type PackageRepositoryTlsConfig struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -427,11 +427,13 @@ func (*PackageRepositoryTlsConfig_SecretRef) isPackageRepositoryTlsConfig_Packag
 // Note that (1)-(4) may be done over HTTP or HTTPs without any custom
 // certificates or certificate authority
 // (1) is handled by not not having PackageRepositoryAuth field on
-//     the parent object
+//
+//	the parent object
+//
 // a given plug-in may or may not support a given authentication type.
 // For example
-//  - direct-helm plug-in does not currently support (6), while flux does
-//  - flux plug-in does not support (3) or (4) while direct-helm does
+//   - direct-helm plug-in does not currently support (6), while flux does
+//   - flux plug-in does not support (3) or (4) while direct-helm does
 type PackageRepositoryAuth struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -614,7 +616,6 @@ func (*PackageRepositoryAuth_SshCreds) isPackageRepositoryAuth_PackageRepoAuthOn
 func (*PackageRepositoryAuth_OpaqueCreds) isPackageRepositoryAuth_PackageRepoAuthOneOf() {}
 
 // UsernamePassword
-//
 type UsernamePassword struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -673,7 +674,6 @@ func (x *UsernamePassword) GetPassword() string {
 }
 
 // TlsCertKey
-//
 type TlsCertKey struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -732,7 +732,6 @@ func (x *TlsCertKey) GetKey() string {
 }
 
 // DockerCredentials
-//
 type DockerCredentials struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -809,7 +808,6 @@ func (x *DockerCredentials) GetEmail() string {
 }
 
 // SshCredentials
-//
 type SshCredentials struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -868,7 +866,6 @@ func (x *SshCredentials) GetKnownHosts() string {
 }
 
 // OpaqueCredentials
-//
 type OpaqueCredentials struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -918,7 +915,6 @@ func (x *OpaqueCredentials) GetData() map[string]string {
 }
 
 // SecretKeyReference
-//
 type SecretKeyReference struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -927,16 +923,17 @@ type SecretKeyReference struct {
 	// The name of an existing secret in the same namespace as the object
 	// that refers to it (e.g. PackageRepository), containing authentication
 	// credentials for the said package repository.
-	// - For HTTP/S basic auth the secret must be of type
-	//   "kubernetes.io/basic-auth" or opaque and contain username and
-	//   password fields
-	// - For TLS the secret must be of type "kubernetes.io/tls" or opaque
-	//   and contain a certFile and keyFile, and/or
-	//   caCert fields.
-	// - For Bearer or Custom Auth, the secret must be opaque, and
-	//   the key must be provided
-	// - For Docker Registry Credentials (OCI registries) the secret
-	//   must of of type "kubernetes.io/dockerconfigjson"
+	//   - For HTTP/S basic auth the secret must be of type
+	//     "kubernetes.io/basic-auth" or opaque and contain username and
+	//     password fields
+	//   - For TLS the secret must be of type "kubernetes.io/tls" or opaque
+	//     and contain a certFile and keyFile, and/or
+	//     caCert fields.
+	//   - For Bearer or Custom Auth, the secret must be opaque, and
+	//     the key must be provided
+	//   - For Docker Registry Credentials (OCI registries) the secret
+	//     must of of type "kubernetes.io/dockerconfigjson"
+	//
 	// For more details, refer to
 	// https://kubernetes.io/docs/concepts/configuration/secret/
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -1125,11 +1122,12 @@ type UpdatePackageRepositoryRequest struct {
 	// See https://developers.google.com/protocol-buffers/docs/proto3#any
 	// Just for reference, some of the examples that have been chosen not to
 	// be part of the core API but rather plugin-specific details are:
-	//   direct-helm:
-	//      - image pull secrets
-	//      - list of oci repositories
-	//      - filter rules
-	//      - sync job pod template
+	//
+	//	direct-helm:
+	//	   - image pull secrets
+	//	   - list of oci repositories
+	//	   - filter rules
+	//	   - sync job pod template
 	CustomDetail *anypb.Any `protobuf:"bytes,11,opt,name=custom_detail,json=customDetail,proto3" json:"custom_detail,omitempty"`
 }
 
@@ -1346,9 +1344,10 @@ type AddPackageRepositoryResponse struct {
 	unknownFields protoimpl.UnknownFields
 
 	// TODO: add example for API docs
-	// option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-	//   example: '{"package_repo_ref": {}}'
-	// };
+	//
+	//	option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+	//	  example: '{"package_repo_ref": {}}'
+	//	};
 	PackageRepoRef *PackageRepositoryReference `protobuf:"bytes,1,opt,name=package_repo_ref,json=packageRepoRef,proto3" json:"package_repo_ref,omitempty"`
 }
 
@@ -1467,7 +1466,6 @@ func (x *PackageRepositoryStatus) GetUserReason() string {
 }
 
 // PackageRepositoryDetail
-//
 type PackageRepositoryDetail struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1670,7 +1668,6 @@ func (x *GetPackageRepositoryDetailResponse) GetDetail() *PackageRepositoryDetai
 }
 
 // PackageRepositorySummary
-//
 type PackageRepositorySummary struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
