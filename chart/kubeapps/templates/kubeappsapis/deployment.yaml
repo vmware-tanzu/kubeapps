@@ -259,6 +259,9 @@ spec:
           env:
             - name: OCI_CATALOG_PORT
               value: {{ .Values.ociCatalog.containerPorts.http | quote }}
+            - name: RUST_LOG
+              # Use info,pinniped_proxy::pinniped=debug for module control.
+              value: info
             {{- if .Values.ociCatalog.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.ociCatalog.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
