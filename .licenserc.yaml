@@ -16,7 +16,9 @@ header:
     - LICENSE
     - NOTICE
     - open_source_licenses.txt
+    - dashboard/build/**
     - dashboard/src/setupProxy.js
+    - dashboard/yarn-error.log
     - "**/*.css"
     - "**/*.dccache"
     - "**/*.html"
