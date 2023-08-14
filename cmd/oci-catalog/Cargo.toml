@@ -24,4 +24,4 @@ url = "2.4"
 tonic-build = "0.9"
 
 [dev-dependencies]
-rstest = "0.18.1"
+rstest = "0.18.2"
