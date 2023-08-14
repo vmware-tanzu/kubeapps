@@ -4,7 +4,7 @@
 use std::env;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    tonic_build::compile_protos("proto/ocicatalog.proto")?;
+    tonic_build::compile_protos("proto/ocicatalog/v1alpha1/ocicatalog.proto")?;
 
     // If the binary is built with the ENV var "OCI_CATALOG_VERSION",
     // the value will be available at buildime. Otherwise, it becomes "devel"

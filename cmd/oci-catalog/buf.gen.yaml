@@ -1,0 +1,14 @@
+# Copyright 2021-2023 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+version: v1beta1
+plugins:
+  - name: go
+    out: gen
+    opt:
+      - module=github.com/vmware-tanzu/kubeapps/cmd/oci-catalog/gen
+  - name: go-grpc
+    out: gen
+    opt:
+      - module=github.com/vmware-tanzu/kubeapps/cmd/oci-catalog/gen

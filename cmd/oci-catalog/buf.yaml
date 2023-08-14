@@ -1,0 +1,15 @@
+# Copyright 2023 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+version: v1beta1
+name: "buf.build/kubeapps/oci-catalog"
+build:
+  roots:
+    - proto
+lint:
+  use:
+    - DEFAULT
+  ignore_only:
+    RPC_RESPONSE_STANDARD_NAME:
+      - ocicatalog/v1alpha1/ocicatalog.proto
