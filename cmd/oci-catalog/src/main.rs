@@ -80,8 +80,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = ([0, 0, 0, 0], opt.port).into();
     let kubeapps_oci_catalog = KubeappsOCICatalog::default();
 
+    let (mut _health_reporter, health_service) = tonic_health::server::health_reporter();
+    // TODO(absoludity): Need to implement a decent check for the actual service
+    // that won't kill us with request quotas.  See
+    // https://github.com/hyperium/tonic/blob/master/examples/src/health/server.rs
+    // for an example setup.
+
     let server = Server::builder()
         .add_service(OciCatalogServer::new(kubeapps_oci_catalog))
+        .add_service(health_service)
         .serve(addr);
     log::info!("listening for gRPC requests at {}", addr);
     server.await.expect("unexpected error while serving");
