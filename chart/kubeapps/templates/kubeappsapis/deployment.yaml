@@ -284,7 +284,6 @@ spec:
           livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.kubeappsapis.livenessProbe "enabled") "context" $) | nindent 12 }}
             exec:
               command: ["grpc_health_probe", "-addr=:{{ .Values.ociCatalog.containerPorts.http }}"]
-            initialDelaySeconds: 10
           {{- end }}
           {{- if .Values.ociCatalog.customReadinessProbe }}
           readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.ociCatalog.customReadinessProbe "context" $) | nindent 12 }}
@@ -292,7 +291,6 @@ spec:
           readinessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.ociCatalog.readinessProbe "enabled") "context" $) | nindent 12 }}
             exec:
               command: ["grpc_health_probe", "-addr=:{{ .Values.ociCatalog.containerPorts.http }}"]
-            initialDelaySeconds: 5
           {{- end }}
           {{- if .Values.ociCatalog.customStartupProbe }}
           startupProbe: {{- include "common.tplvalues.render" (dict "value" .Values.ociCatalog.customStartupProbe "context" $) | nindent 12 }}
