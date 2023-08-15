@@ -248,7 +248,7 @@ func TestAddPackageRepository(t *testing.T) {
 		expectedAuthCreatedSecret   *apiv1.Secret
 		expectedDockerCreatedSecret *apiv1.Secret
 		userManagedSecrets          bool
-		repoClientGetter            newRepoClient
+		repoClientGetter            repositoryClientGetter
 		expectedGlobalSecret        *apiv1.Secret
 	}{
 		{

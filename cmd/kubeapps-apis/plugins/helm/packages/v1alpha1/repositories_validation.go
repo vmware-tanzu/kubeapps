@@ -37,15 +37,11 @@ func (s *Server) ValidateRepository(appRepo *apprepov1alpha1.AppRepository, secr
 		return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("docker registry secrets cannot be set for app repositories available in all namespaces"))
 	}
 
-	client, err := s.repoClientGetter(appRepo, secret)
+	validator, err := getValidator(appRepo, secret, s.repoClientGetter)
 	if err != nil {
 		return err
 	}
-	httpValidator, err := getValidator(appRepo)
-	if err != nil {
-		return err
-	}
-	resp, err := httpValidator.Validate(client)
+	resp, err := validator.Validate()
 	if err != nil {
 		return err
 	} else if resp.Code >= 400 {
@@ -56,26 +52,21 @@ func (s *Server) ValidateRepository(appRepo *apprepov1alpha1.AppRepository, secr
 	}
 }
 
-// getValidator return appropriate HttpValidator interface for OCI and non-OCI Repos
-func getValidator(appRepo *apprepov1alpha1.AppRepository) (HttpValidator, error) {
+// getValidator return appropriate RepositoryValidator interface for OCI and
+// non-OCI Repos
+func getValidator(appRepo *apprepov1alpha1.AppRepository, secret *corev1.Secret, clientGetter repositoryClientGetter) (RepositoryValidator, error) {
 	if appRepo.Spec.Type == "oci" {
 		// For the OCI case, we want to validate that all the given repositories are valid
 		return HelmOCIValidator{
-			AppRepo: appRepo,
+			AppRepo:      appRepo,
+			Secret:       secret,
+			ClientGetter: clientGetter,
 		}, nil
 	} else {
-		repoURL := strings.TrimSuffix(strings.TrimSpace(appRepo.Spec.URL), "/")
-		parsedURL, err := url.ParseRequestURI(repoURL)
-		if err != nil {
-			return nil, err
-		}
-		parsedURL.Path = path.Join(parsedURL.Path, "index.yaml")
-		req, err := http.NewRequest("GET", parsedURL.String(), nil)
-		if err != nil {
-			return nil, err
-		}
 		return HelmNonOCIValidator{
-			Req: req,
+			AppRepo:      appRepo,
+			Secret:       secret,
+			ClientGetter: clientGetter,
 		}, nil
 	}
 }
@@ -256,20 +247,36 @@ func ValidateOCIAppRepository(appRepo *apprepov1alpha1.AppRepository, cli httpcl
 	return true, nil
 }
 
-// HttpValidator is an interface for checking the validity of an AppRepo via Http requests.
-type HttpValidator interface {
+// RepositoryValidator is an interface for checking the validity of an AppRepository
+type RepositoryValidator interface {
 	// Validate returns a validation response.
-	Validate(cli httpclient.Client) (*ValidationResponse, error)
+	Validate() (*ValidationResponse, error)
 }
 
 // HelmNonOCIValidator is an HttpValidator for non-OCI Helm repositories.
 type HelmNonOCIValidator struct {
-	Req *http.Request
+	AppRepo      *apprepov1alpha1.AppRepository
+	Secret       *corev1.Secret
+	ClientGetter repositoryClientGetter
 }
 
-func (r HelmNonOCIValidator) Validate(cli httpclient.Client) (*ValidationResponse, error) {
+func (r HelmNonOCIValidator) Validate() (*ValidationResponse, error) {
+	repoURL := strings.TrimSuffix(strings.TrimSpace(r.AppRepo.Spec.URL), "/")
+	parsedURL, err := url.ParseRequestURI(repoURL)
+	if err != nil {
+		return nil, err
+	}
+	parsedURL.Path = path.Join(parsedURL.Path, "index.yaml")
+	req, err := http.NewRequest("GET", parsedURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	cli, err := r.ClientGetter(r.AppRepo, r.Secret)
+	if err != nil {
+		return nil, err
+	}
 
-	res, err := cli.Do(r.Req)
+	res, err := cli.Do(req)
 	if err != nil {
 		// If the request fail, it's not an internal error
 		return &ValidationResponse{Code: 400, Message: err.Error()}, nil
@@ -287,16 +294,22 @@ func (r HelmNonOCIValidator) Validate(cli httpclient.Client) (*ValidationRespons
 }
 
 type HelmOCIValidator struct {
-	AppRepo *apprepov1alpha1.AppRepository
+	AppRepo      *apprepov1alpha1.AppRepository
+	Secret       *corev1.Secret
+	ClientGetter repositoryClientGetter
 }
 
-func (r HelmOCIValidator) Validate(cli httpclient.Client) (*ValidationResponse, error) {
+func (v HelmOCIValidator) Validate() (*ValidationResponse, error) {
 
 	var response *ValidationResponse
 	response = &ValidationResponse{Code: 200, Message: "OK"}
 
+	cli, err := v.ClientGetter(v.AppRepo, v.Secret)
+	if err != nil {
+		return nil, err
+	}
 	// If there was an error validating the OCI repository, it's not an internal error.
-	isValidRepo, err := ValidateOCIAppRepository(r.AppRepo, cli)
+	isValidRepo, err := ValidateOCIAppRepository(v.AppRepo, cli)
 	if err != nil || !isValidRepo {
 		response = &ValidationResponse{Code: 400, Message: err.Error()}
 	}

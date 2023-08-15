@@ -59,7 +59,7 @@ const (
 )
 
 type createRelease func(*action.Configuration, string, string, string, *chart.Chart, map[string]string, int32) (*release.Release, error)
-type newRepoClient func(appRepo *appRepov1.AppRepository, secret *corek8sv1.Secret) (httpclient.Client, error)
+type repositoryClientGetter func(appRepo *appRepov1.AppRepository, secret *corek8sv1.Secret) (httpclient.Client, error)
 
 // Server implements the helm packages v1alpha1 interface.
 type Server struct {
@@ -80,7 +80,7 @@ type Server struct {
 	kubeappsCluster                 string // Specifies the cluster on which Kubeapps is installed.
 	kubeappsNamespace               string // Namespace in which Kubeapps is installed
 	pluginConfig                    *common.HelmPluginConfig
-	repoClientGetter                newRepoClient
+	repoClientGetter                repositoryClientGetter
 	clientQPS                       float32
 }
 
