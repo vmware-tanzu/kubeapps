@@ -70,4 +70,13 @@ lint:
 	./script/linters/yaml-linter.sh
 	./script/linters/golang-linter.sh
 
-.PHONY: default all test-all test test-dashboard fmt vet lint install-tools
+buf-generate:
+	cd cmd/kubeapps-apis && buf generate
+	cd cmd/oci-catalog && buf generate
+	cd dashboard && yarn prettier
+
+buf-mod-update:
+	buf mod update cmd/kubeapps-apis
+	buf mod update cmd/oci-catalog
+
+.PHONY: default all buf-generate buf-mod-update test-all test test-dashboard fmt vet lint install-tools
