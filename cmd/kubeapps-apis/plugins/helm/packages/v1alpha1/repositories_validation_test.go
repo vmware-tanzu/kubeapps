@@ -5,6 +5,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,7 +18,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	ocicatalog "github.com/vmware-tanzu/kubeapps/cmd/oci-catalog/gen/catalog/v1alpha1"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
+	"github.com/vmware-tanzu/kubeapps/pkg/ocicatalogtest"
 	corev1 "k8s.io/api/core/v1"
 	log "k8s.io/klog/v2"
 )
@@ -89,7 +92,7 @@ func TestNonOCIValidate(t *testing.T) {
 				},
 			}
 
-			response, err := httpValidator.Validate()
+			response, err := httpValidator.Validate(context.TODO())
 			if err != nil {
 				t.Errorf("Unexpected error %v", err)
 			}
@@ -322,7 +325,35 @@ func TestOCIValidate(t *testing.T) {
 			},
 		},
 		{
-			name: "it returns a valid response if no repos listed but catalog is available",
+			name: "it returns a valid response if no repos listed but VAC catalog index is available",
+			validator: HelmOCIValidator{
+				AppRepo: &v1alpha1.AppRepository{
+					Spec: v1alpha1.AppRepositorySpec{
+						Type:            "oci",
+						OCIRepositories: []string{},
+					},
+				},
+				OCICatalogAddr: "localhost:9876",
+			},
+			repos: map[string]fakeOCIRepo{
+				"charts-index": {
+					tags: repoTagsList{
+						Tags: []string{"latest"},
+					},
+					manifest: repoManifest{
+						Config: repoConfig{
+							MediaType: "application/vnd.vmware.charts.index.config.v1+json",
+						},
+					},
+				},
+			},
+			expectedResponse: &ValidationResponse{
+				Code:    200,
+				Message: "OK",
+			},
+		},
+		{
+			name: "it returns a valid response if no repos listed but VAC catalog index is available, even if oci catalog address is set",
 			validator: HelmOCIValidator{
 				AppRepo: &v1alpha1.AppRepository{
 					Spec: v1alpha1.AppRepositorySpec{
@@ -361,7 +392,97 @@ func TestOCIValidate(t *testing.T) {
 			// Use the actual client getter since we're using a test double.
 			tc.validator.ClientGetter = newRepositoryClient
 
-			response, err := tc.validator.Validate()
+			response, err := tc.validator.Validate(context.TODO())
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+			}
+		})
+	}
+}
+
+func TestOCIValidateWithCatalogServer(t *testing.T) {
+	ociCatalogAddr, ociCatalogDouble, cleanup := ocicatalogtest.SetupTestDouble(t)
+	defer cleanup()
+
+	testCases := []struct {
+		name             string
+		repos            []ocicatalog.Repository
+		validator        HelmOCIValidator
+		expectedResponse *ValidationResponse
+		expectError      bool
+	}{
+		{
+			name: "it returns valid if the oci catalog service finds repositories",
+			validator: HelmOCIValidator{
+				AppRepo: &v1alpha1.AppRepository{
+					Spec: v1alpha1.AppRepositorySpec{
+						Type: "oci",
+					},
+				},
+				OCICatalogAddr: ociCatalogAddr,
+			},
+			repos: []ocicatalog.Repository{
+				{
+					Name: "apache",
+				},
+				{
+					Name: "kubeapps",
+				},
+			},
+			expectedResponse: &ValidationResponse{
+				Code:    200,
+				Message: "OK",
+			},
+		},
+		{
+			name: "it returns valid if the oci catalog service finds just a single repository",
+			validator: HelmOCIValidator{
+				AppRepo: &v1alpha1.AppRepository{
+					Spec: v1alpha1.AppRepositorySpec{
+						Type: "oci",
+					},
+				},
+				OCICatalogAddr: ociCatalogAddr,
+			},
+			repos: []ocicatalog.Repository{
+				{
+					Name: "apache",
+				},
+			},
+			expectedResponse: &ValidationResponse{
+				Code:    200,
+				Message: "OK",
+			},
+		},
+		{
+			name: "it returns an error if the oci catalog service is unavailable or does not find any repos",
+			validator: HelmOCIValidator{
+				AppRepo: &v1alpha1.AppRepository{
+					Spec: v1alpha1.AppRepositorySpec{
+						Type: "oci",
+					},
+				},
+				OCICatalogAddr: ociCatalogAddr,
+			},
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ociCatalogDouble.Repositories = tc.repos
+
+			response, err := tc.validator.Validate(context.TODO())
+			if tc.expectError {
+				if err == nil {
+					t.Fatalf("expected err, got nil")
+				}
+				return
+			}
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}

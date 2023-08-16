@@ -82,6 +82,7 @@ type Server struct {
 	pluginConfig                    *common.HelmPluginConfig
 	repoClientGetter                repositoryClientGetter
 	clientQPS                       float32
+	OCICatalogAddr                  string
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
