@@ -92,6 +92,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 	var ASSET_SYNCER_DB_NAME = os.Getenv("ASSET_SYNCER_DB_NAME")
 	var ASSET_SYNCER_DB_USERNAME = os.Getenv("ASSET_SYNCER_DB_USERNAME")
 	var ASSET_SYNCER_DB_USERPASSWORD = os.Getenv("ASSET_SYNCER_DB_USERPASSWORD")
+	var OCI_CATALOG_URL = os.Getenv("OCI_CATALOG_URL")
 
 	// Namespace where Kubeapps is installed to be in line with the asset syncer
 	kubeappsNamespace := os.Getenv("POD_NAMESPACE")
@@ -171,6 +172,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 		createReleaseFunc:        agent.CreateRelease,
 		repoClientGetter:         newRepositoryClient,
 		clientQPS:                clientQPS,
+		OCICatalogAddr:           OCI_CATALOG_URL,
 	}
 }
 
