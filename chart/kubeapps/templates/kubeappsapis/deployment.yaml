@@ -167,7 +167,7 @@ spec:
                   key: postgres-password
                   name: {{ include "kubeapps.postgresql.secretName" . }}
             - name: OCI_CATALOG_URL
-              value: {{ printf ":%d" .Values.ociCatalog.containerPorts.http . }}
+              value: {{ printf ":%d" (int .Values.ociCatalog.containerPorts.http) | quote }}
             {{- end }}
             {{- if .Values.kubeappsapis.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.kubeappsapis.extraEnvVars "context" $) | nindent 12 }}
