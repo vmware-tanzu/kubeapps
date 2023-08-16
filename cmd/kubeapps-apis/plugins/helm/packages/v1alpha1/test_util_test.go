@@ -160,7 +160,7 @@ func addTlsToSecret(secret *apiv1.Secret, pub, priv, ca []byte) *apiv1.Secret {
 	return secret
 }
 
-func newRepoHttpClient(responses map[string]*http.Response) newRepoClient {
+func newRepoHttpClient(responses map[string]*http.Response) repositoryClientGetter {
 	return func(appRepo *appRepov1.AppRepository, secret *apiv1.Secret) (httpclient.Client, error) {
 		return &fakeHTTPClient{
 			responses: responses,

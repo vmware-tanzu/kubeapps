@@ -18,6 +18,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
+	corev1 "k8s.io/api/core/v1"
 	log "k8s.io/klog/v2"
 )
 
@@ -33,27 +34,24 @@ func (f *fakeHTTPCli) Do(r *http.Request) (*http.Response, error) {
 }
 
 func TestNonOCIValidate(t *testing.T) {
-	validRequest, err := http.NewRequest("GET", "http://example.com/index.yaml", strings.NewReader(""))
+	validRequest, err := http.NewRequest("GET", "https://example.com/index.yaml", nil)
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
 
 	testCases := []struct {
 		name             string
-		httpValidator    HelmNonOCIValidator
 		fakeHttpError    error
 		fakeRepoResponse *http.Response
 		expectedResponse *ValidationResponse
 	}{
 		{
 			name:             "it returns 200 OK validation response if there is no error and the external response is 200",
-			httpValidator:    HelmNonOCIValidator{Req: validRequest},
 			fakeRepoResponse: &http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte("OK")))},
 			expectedResponse: &ValidationResponse{Code: 200, Message: "OK"},
 		},
 		{
 			name:             "it does not include the body of the upstream response when validation succeeds",
-			httpValidator:    HelmNonOCIValidator{Req: validRequest},
 			fakeRepoResponse: &http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte("10 Mb of data")))},
 			expectedResponse: &ValidationResponse{Code: 200, Message: "OK"},
 		},
@@ -61,13 +59,11 @@ func TestNonOCIValidate(t *testing.T) {
 			name:             "it returns an error from the response with the body text if validation fails",
 			fakeRepoResponse: &http.Response{StatusCode: 401, Body: io.NopCloser(bytes.NewReader([]byte("It failed because of X and Y")))},
 			expectedResponse: &ValidationResponse{Code: 401, Message: "It failed because of X and Y"},
-			httpValidator:    HelmNonOCIValidator{Req: validRequest},
 		},
 		{
 			name:             "it returns a 400 error if the validation cannot be run",
 			fakeHttpError:    fmt.Errorf("client.Do returns an error"),
 			expectedResponse: &ValidationResponse{Code: 400, Message: "client.Do returns an error"},
-			httpValidator:    HelmNonOCIValidator{Req: validRequest},
 		},
 	}
 
@@ -81,12 +77,24 @@ func TestNonOCIValidate(t *testing.T) {
 				err:      tc.fakeHttpError,
 			}
 
-			response, err := tc.httpValidator.Validate(fakeClient)
+			httpValidator := HelmNonOCIValidator{
+				ClientGetter: func(*v1alpha1.AppRepository, *corev1.Secret) (httpclient.Client, error) {
+					return fakeClient, nil
+				},
+				AppRepo: &v1alpha1.AppRepository{
+					Spec: v1alpha1.AppRepositorySpec{
+						Type: "oci",
+						URL:  "https://example.com",
+					},
+				},
+			}
+
+			response, err := httpValidator.Validate()
 			if err != nil {
 				t.Errorf("Unexpected error %v", err)
 			}
 
-			if got, want := fakeClient.request, tc.httpValidator.Req; !cmp.Equal(want, got, cmpOpts...) {
+			if got, want := fakeClient.request, validRequest; !cmp.Equal(want, got, cmpOpts...) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpOpts...))
 			}
 
@@ -346,10 +354,14 @@ func TestOCIValidate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ts := makeTestOCIServer(t, registryName, tc.repos, "")
 			defer ts.Close()
+
 			// Use the test servers host/port as repo url.
 			tc.validator.AppRepo.Spec.URL = fmt.Sprintf("%s/%s", ts.URL, registryName)
 
-			response, err := tc.validator.Validate(httpclient.New())
+			// Use the actual client getter since we're using a test double.
+			tc.validator.ClientGetter = newRepositoryClient
+
+			response, err := tc.validator.Validate()
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
