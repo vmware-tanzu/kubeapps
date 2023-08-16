@@ -1,7 +1,7 @@
 // Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import "@testing-library/jest-dom/extend-expect";
+import "@testing-library/jest-dom";
 import { act, screen } from "@testing-library/react";
 import actions from "actions";
 import LoadingWrapper from "components/LoadingWrapper";

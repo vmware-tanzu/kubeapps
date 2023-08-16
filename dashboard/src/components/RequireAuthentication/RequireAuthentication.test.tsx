@@ -1,11 +1,11 @@
 // Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import "@testing-library/jest-dom";
+import { screen } from "@testing-library/react";
 import { Route, Routes } from "react-router-dom";
 import { renderWithProviders } from "shared/specs/mountWrapper";
 import { RequireAuthentication } from "./RequireAuthentication";
-import { screen } from "@testing-library/react";
-import "@testing-library/jest-dom/extend-expect";
 
 it("redirects to the /login route if not authenticated", () => {
   renderWithProviders(

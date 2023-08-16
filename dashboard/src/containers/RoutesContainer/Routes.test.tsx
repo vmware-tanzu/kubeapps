@@ -1,14 +1,14 @@
 // Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { renderWithProviders } from "shared/specs/mountWrapper";
-import { app } from "shared/url";
-import AppRoutes from "./Routes";
+import "@testing-library/jest-dom";
 import { screen } from "@testing-library/react";
-import "@testing-library/jest-dom/extend-expect";
-import { IStoreState } from "shared/types";
 import { IAuthState } from "reducers/auth";
 import { IClusterState } from "reducers/cluster";
+import { renderWithProviders } from "shared/specs/mountWrapper";
+import { IStoreState } from "shared/types";
+import { app } from "shared/url";
+import AppRoutes from "./Routes";
 
 // Mocking SwaggerUI to a simple empty <div> to prevent issues with Jest
 jest.mock("swagger-ui-react", () => {
