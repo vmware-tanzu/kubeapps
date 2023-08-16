@@ -753,8 +753,8 @@ github.com/vmware-tanzu/carvel-kapp v0.56.0 h1:NgQA3bjrcxWmR6Z1pOzGR2wkh5d8nRpXX
 github.com/vmware-tanzu/carvel-kapp v0.56.0/go.mod h1:I/yQqj44zhi7oln9Hyh00RwvFU+SFviEwtTxUTniIsw=
 github.com/vmware-tanzu/carvel-kapp-controller v0.46.1 h1:mH3uQJqJnFbUwOPYng1xdJEsYxaOS7G1es39SOPOXd8=
 github.com/vmware-tanzu/carvel-kapp-controller v0.46.1/go.mod h1:LJf4oaNfKW8kk6ddD8uRaayaUecGiqrz278oe4AEBSc=
-github.com/vmware-tanzu/carvel-vendir v0.34.3 h1:l3w1fq1txvk4PIaoyNlS5oxHMzWXdiSiJHMUJ/w1S9A=
-github.com/vmware-tanzu/carvel-vendir v0.34.3/go.mod h1:n3mFqV6UrLCwDy1S5Wr73XIbolTYfY+NOBqxC1ihjRk=
+github.com/vmware-tanzu/carvel-vendir v0.34.4 h1:K7Dt9t+LE5p+AVlrrHcjZzCSBUY/69nd+fxjr62/qhI=
+github.com/vmware-tanzu/carvel-vendir v0.34.4/go.mod h1:n3mFqV6UrLCwDy1S5Wr73XIbolTYfY+NOBqxC1ihjRk=
 github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f/go.mod h1:N2zxlSyiKSe5eX1tZViRH5QA0qijqEDrYZiPEAiq3wU=
 github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb h1:zGWFAtiMcyryUHoUjUJX0/lt1H2+i2Ka2n+D3DImSNo=
 github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb/go.mod h1:N2zxlSyiKSe5eX1tZViRH5QA0qijqEDrYZiPEAiq3wU=
