@@ -297,6 +297,45 @@ it("should call the install method with OCI information", async () => {
   } as unknown as IPkgRepoFormData);
 });
 
+it("should call the install method with an OCI protocol if specified", async () => {
+  const install = jest.fn().mockReturnValue(true);
+  actions.repos = {
+    ...actions.repos,
+  };
+  let wrapper: any;
+  await act(async () => {
+    wrapper = mountWrapper(defaultStore, <PkgRepoForm {...defaultProps} onSubmit={install} />);
+  });
+  wrapper.find("#kubeapps-plugin-helm").simulate("change");
+  wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "oci-repo" } });
+  wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "oci://oci.repo" } });
+  wrapper.find("#kubeapps-repo-type-oci").simulate("change");
+  wrapper
+    .find("#kubeapps-oci-repositories")
+    .simulate("change", { target: { value: "apache, jenkins" } });
+  const form = wrapper.find("form");
+  await act(async () => {
+    await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
+  });
+  wrapper.update();
+  expect(install).toHaveBeenCalledWith({
+    ...pkgRepoFormData,
+    name: "oci-repo",
+    type: "oci",
+    url: "oci://oci.repo",
+    plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
+    customDetail: {
+      ociRepositories: ["apache", "jenkins"],
+      filterRule: undefined,
+      performValidation: true,
+      nodeSelector: {},
+      tolerations: [],
+    },
+    interval: "10m",
+    description: undefined,
+  } as unknown as IPkgRepoFormData);
+});
+
 it("should call the install skipping TLS verification", async () => {
   const install = jest.fn().mockReturnValue(true);
   actions.repos = {
