@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::OCICatalogSender;
-use super::{ListRepositoriesRequest, ListTagsRequest, Repository, Tag};
+use super::{ListRepositoriesForRegistryRequest, ListTagsForRepositoryRequest, Repository, Tag};
 use log;
 use reqwest::{StatusCode, Url};
 use serde::{Deserialize, Serialize};
@@ -58,7 +58,7 @@ impl OCICatalogSender for DockerHubAPI {
     async fn send_repositories(
         &self,
         tx: mpsc::Sender<Result<Repository, Status>>,
-        request: &ListRepositoriesRequest,
+        request: &ListRepositoriesForRegistryRequest,
     ) {
         let mut url = url_for_request_repositories(request);
 
@@ -123,7 +123,11 @@ impl OCICatalogSender for DockerHubAPI {
         }
     }
 
-    async fn send_tags(&self, tx: mpsc::Sender<Result<Tag, Status>>, request: &ListTagsRequest) {
+    async fn send_tags(
+        &self,
+        tx: mpsc::Sender<Result<Tag, Status>>,
+        request: &ListTagsForRepositoryRequest,
+    ) {
         let mut url = match url_for_request_tags(request) {
             Ok(u) => u,
             Err(e) => {
@@ -188,7 +192,7 @@ impl OCICatalogSender for DockerHubAPI {
     }
 }
 
-fn url_for_request_repositories(request: &ListRepositoriesRequest) -> Url {
+fn url_for_request_repositories(request: &ListRepositoriesForRegistryRequest) -> Url {
     let mut url = reqwest::Url::parse(DOCKERHUB_URI).unwrap();
 
     if !request.namespace.is_empty() {
@@ -211,7 +215,7 @@ fn url_for_request_repositories(request: &ListRepositoriesRequest) -> Url {
     url
 }
 
-fn url_for_request_tags(request: &ListTagsRequest) -> Result<Url, Status> {
+fn url_for_request_tags(request: &ListTagsForRepositoryRequest) -> Result<Url, Status> {
     let mut url = reqwest::Url::parse(DOCKERHUB_URI).unwrap();
 
     let repo = match request.repository.clone() {
@@ -241,36 +245,39 @@ mod tests {
     use rstest::rstest;
 
     #[rstest]
-    #[case::without_namespace(ListRepositoriesRequest{
+    #[case::without_namespace(ListRepositoriesForRegistryRequest{
         registry: "registry-1.dockerhub.io".to_string(),
         ..Default::default()
     }, "https://hub.docker.com/v2/repositories/?page_size=100&ordering=name")]
-    #[case::with_namespace(ListRepositoriesRequest{
+    #[case::with_namespace(ListRepositoriesForRegistryRequest{
         registry: "registry-1.dockerhub.io".to_string(),
         namespace: "bitnamicharts".to_string(),
         ..Default::default()
     }, "https://hub.docker.com/v2/namespaces/bitnamicharts/repositories/?page_size=100&ordering=name")]
-    #[case::with_content_type(ListRepositoriesRequest{
+    #[case::with_content_type(ListRepositoriesForRegistryRequest{
         registry: "registry-1.dockerhub.io".to_string(),
         namespace: "bitnamicharts".to_string(),
         content_types: vec!["helm".to_string()],
         ..Default::default()
     }, "https://hub.docker.com/v2/namespaces/bitnamicharts/repositories/?page_size=100&ordering=name&content_types=helm")]
-    #[case::with_multiple_content_types(ListRepositoriesRequest{
+    #[case::with_multiple_content_types(ListRepositoriesForRegistryRequest{
         registry: "registry-1.dockerhub.io".to_string(),
         namespace: "bitnamicharts".to_string(),
         content_types: vec!["helm".to_string(), "image".to_string()],
         ..Default::default()
     }, "https://hub.docker.com/v2/namespaces/bitnamicharts/repositories/?page_size=100&ordering=name&content_types=helm&content_types=image")]
-    fn test_url_for_request(#[case] request: ListRepositoriesRequest, #[case] expected_url: Url) {
+    fn test_url_for_request(
+        #[case] request: ListRepositoriesForRegistryRequest,
+        #[case] expected_url: Url,
+    ) {
         assert_eq!(url_for_request_repositories(&request), expected_url);
     }
 
     #[rstest]
-    #[case::without_repository(ListTagsRequest{
+    #[case::without_repository(ListTagsForRepositoryRequest{
         ..Default::default()
     }, Err(Status::invalid_argument("bang")))]
-    #[case::with_repository(ListTagsRequest{
+    #[case::with_repository(ListTagsForRepositoryRequest{
         repository: Some(Repository{
             namespace: "bitnamicharts".to_string(),
             name: "apache".to_string(),
@@ -279,7 +286,7 @@ mod tests {
         ..Default::default()
     }, Ok(reqwest::Url::parse("https://hub.docker.com/v2/repositories/bitnamicharts/apache/tags?page_size=100").unwrap()))]
     fn test_url_for_request_tags(
-        #[case] request: ListTagsRequest,
+        #[case] request: ListTagsForRepositoryRequest,
         #[case] expected_result: Result<Url, Status>,
     ) {
         match expected_result {

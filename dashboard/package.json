@@ -60,7 +60,7 @@
     "react-redux": "^7.2.9",
     "react-router-dom": "^6.15.0",
     "react-router-hash-link": "^2.4.3",
-    "react-tooltip": "^5.20.0",
+    "react-tooltip": "^5.21.1",
     "react-transition-group": "^4.4.5",
     "redux": "^4.2.1",
     "redux-devtools-extension": "^2.13.9",
@@ -68,7 +68,7 @@
     "remark-breaks": "^3.0.3",
     "remark-gfm": "^3.0.1",
     "rxjs": "^7.8.1",
-    "swagger-ui-react": "^5.3.1",
+    "swagger-ui-react": "^5.3.2",
     "typesafe-actions": "^5.1.0",
     "yaml": "^2.3.1"
   },
@@ -111,9 +111,9 @@
     "monaco-editor-webpack-plugin": "^7.1.0",
     "node-polyfill-webpack-plugin": "^2.0.1",
     "npm-run-all": "^4.1.5",
-    "postcss": "^8.4.27",
+    "postcss": "^8.4.28",
     "postcss-scss": "^4.0.6",
-    "prettier": "^3.0.1",
+    "prettier": "^3.0.2",
     "react-dom": "^17.0.2",
     "react-scripts": "^5.0.1",
     "react-test-renderer": "^17.0.2",
@@ -127,7 +127,7 @@
     "stylelint-config-standard-scss": "^10.0.0",
     "stylelint-scss": "^5.1.0",
     "ts-jest": "^29.1.1",
-    "ts-proto": "^1.156.2",
+    "ts-proto": "^1.156.5",
     "typescript": "^5.1.6"
   },
   "resolutions": {

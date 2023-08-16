@@ -16,30 +16,37 @@ header:
     - LICENSE
     - NOTICE
     - open_source_licenses.txt
-    - dashboard/src/setupProxy.js
     - "**/*.css"
     - "**/*.dccache"
     - "**/*.html"
     - "**/*.htpasswd"
     - "**/*.json"
     - "**/*.lock"
+    - "**/*.log"
     - "**/*.md"
     - "**/*.pem"
     - "**/*.snap"
     - "**/*.sum"
     - "**/*.svg"
     - "**/*.webmanifest"
+    - "**/.notempty"
     - "**/chart/**"
     - "**/devel/**"
     - "**/gen/**"
     - "**/node_modules/**"
     - "**/site/**"
     - "**/target/**"
-    - "**/.notempty"
+    - "cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common/transport/transport.go"
+    - "cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common/transport/transport_test.go"
+    - "dashboard/build/**"
+    - "dashboard/src/setupProxy.js"
+    - "integration/charts/**/_helpers.tpl"
+    - "pkg/kube/dockerconfig.go"
 
 dependency:
   files:
-    - go.mod
-    - dashboard/package.json
-    - cmd/pinniped-proxy/Cargo.toml
     - cmd/oci-catalog/Cargo.toml
+    - cmd/pinniped-proxy/Cargo.toml
+    - dashboard/package.json
+    - go.mod
+    - integration/package.json

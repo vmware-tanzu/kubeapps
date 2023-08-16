@@ -114,9 +114,8 @@ export function getInstalledPackage(
     dispatch(requestInstalledPackage());
     try {
       // Get the details of an installed package
-      const { installedPackageDetail } = await InstalledPackage.GetInstalledPackageDetail(
-        installedPackageRef,
-      );
+      const { installedPackageDetail } =
+        await InstalledPackage.GetInstalledPackageDetail(installedPackageRef);
 
       // For local packages with no references to any available packages (eg.a local package for development)
       // we aren't able to get the details, but still want to display the available data so far
@@ -159,9 +158,8 @@ export function getInstalledPkgStatus(
     dispatch(requestInstalledPackageStatus());
     try {
       // Get the details of an installed package for the status.
-      const { installedPackageDetail } = await InstalledPackage.GetInstalledPackageDetail(
-        installedPackageRef,
-      );
+      const { installedPackageDetail } =
+        await InstalledPackage.GetInstalledPackageDetail(installedPackageRef);
       dispatch(receiveInstalledPackageStatus(installedPackageDetail!.status!));
     } catch (e: any) {
       dispatch(

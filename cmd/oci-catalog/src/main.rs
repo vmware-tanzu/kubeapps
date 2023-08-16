@@ -10,10 +10,12 @@ use tonic::{transport::Server, Request, Response, Status};
 // Ensure that the compiled proto API is available within a module
 // before importing the required items.
 pub mod oci_catalog {
-    tonic::include_proto!("ocicatalog");
+    tonic::include_proto!("ocicatalog.v1alpha1");
 }
-use oci_catalog::oci_catalog_server::{OciCatalog, OciCatalogServer};
-use oci_catalog::{ListRepositoriesRequest, ListTagsRequest, Repository, Tag};
+use oci_catalog::oci_catalog_service_server::{OciCatalogService, OciCatalogServiceServer};
+use oci_catalog::{
+    ListRepositoriesForRegistryRequest, ListTagsForRepositoryRequest, Repository, Tag,
+};
 
 mod cli;
 mod providers;
@@ -22,13 +24,13 @@ mod providers;
 pub struct KubeappsOCICatalog {}
 
 #[tonic::async_trait]
-impl OciCatalog for KubeappsOCICatalog {
+impl OciCatalogService for KubeappsOCICatalog {
     type ListRepositoriesForRegistryStream = ReceiverStream<Result<Repository, Status>>;
     type ListTagsForRepositoryStream = ReceiverStream<Result<Tag, Status>>;
 
     async fn list_repositories_for_registry(
         &self,
-        request: Request<ListRepositoriesRequest>,
+        request: Request<ListRepositoriesForRegistryRequest>,
     ) -> Result<Response<Self::ListRepositoriesForRegistryStream>, Status> {
         // The provider for request strategy provides the registry-specific
         // implementation.
@@ -53,7 +55,7 @@ impl OciCatalog for KubeappsOCICatalog {
 
     async fn list_tags_for_repository(
         &self,
-        request: Request<ListTagsRequest>,
+        request: Request<ListTagsForRepositoryRequest>,
     ) -> Result<Response<Self::ListTagsForRepositoryStream>, Status> {
         // The provider for request strategy provides the registry-specific
         // implementation.
@@ -80,8 +82,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = ([0, 0, 0, 0], opt.port).into();
     let kubeapps_oci_catalog = KubeappsOCICatalog::default();
 
+    let (mut _health_reporter, health_service) = tonic_health::server::health_reporter();
+    // TODO(absoludity): Need to implement a decent check for the actual service
+    // that won't kill us with request quotas.  See
+    // https://github.com/hyperium/tonic/blob/master/examples/src/health/server.rs
+    // for an example setup.
+
     let server = Server::builder()
-        .add_service(OciCatalogServer::new(kubeapps_oci_catalog))
+        .add_service(OciCatalogServiceServer::new(kubeapps_oci_catalog))
+        .add_service(health_service)
         .serve(addr);
     log::info!("listening for gRPC requests at {}", addr);
     server.await.expect("unexpected error while serving");

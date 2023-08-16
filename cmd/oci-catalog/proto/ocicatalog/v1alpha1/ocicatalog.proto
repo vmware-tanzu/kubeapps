@@ -2,28 +2,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
 syntax = "proto3";
-package ocicatalog;
+package ocicatalog.v1alpha1;
+option go_package = "github.com/vmware-tanzu/kubeapps/cmd/oci-catalog/gen/catalog/v1alpha1";
 
-// The OCICatalog service defines the two RPCs for listing repositories and listing tags
+// The OCICatalogService defines the two RPCs for listing repositories and listing tags
 // for a repository.
-service OCICatalog {
-    rpc ListRepositoriesForRegistry(ListRepositoriesRequest) returns (stream Repository);
-    rpc ListTagsForRepository(ListTagsRequest) returns (stream Tag);
+service OCICatalogService {
+    rpc ListRepositoriesForRegistry(ListRepositoriesForRegistryRequest) returns (stream Repository);
+    rpc ListTagsForRepository(ListTagsForRepositoryRequest) returns (stream Tag);
 }
 
 // RegistryProvider
 //
 // Optionally specify the registry provider when known.
 enum RegistryProvider {
-    UNKNOWN = 0;
-    DOCKER_HUB = 1;
-    HARBOR = 2;
+    REGISTRY_PROVIDER_UNSPECIFIED = 0;
+    REGISTRY_PROVIDER_DOCKER_HUB = 1;
+    REGISTRY_PROVIDER_HARBOR = 2;
 }
 
-// ListRepositoriesRequest
+// ListRepositoriesForRegistryRequest
 //
 // Request for listing repositories of a registry or a namespaced registry.
-message ListRepositoriesRequest {
+message ListRepositoriesForRegistryRequest {
     // The OCI registry for which the repositories should be listed.
     string registry = 1;
 
@@ -53,11 +54,11 @@ message Repository {
     string name = 3;
 }
 
-// ListTagsRequest
+// ListTagsForRepositoryRequest
 //
 // Identifies the repository for which tags are to be listed. Can be
 // extended in the future with other options.
-message ListTagsRequest {
+message ListTagsForRepositoryRequest {
     Repository repository = 1;
 
     RegistryProvider registry_provider = 2;

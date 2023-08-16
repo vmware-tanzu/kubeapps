@@ -3,7 +3,7 @@
 
 use crate::oci_catalog::RegistryProvider;
 
-use super::{ListRepositoriesRequest, ListTagsRequest, Repository, Tag};
+use super::{ListRepositoriesForRegistryRequest, ListTagsForRepositoryRequest, Repository, Tag};
 use tokio::sync::mpsc;
 use tonic::Status;
 
@@ -20,12 +20,16 @@ pub trait OCICatalogSender {
     async fn send_repositories(
         &self,
         tx: mpsc::Sender<Result<Repository, Status>>,
-        request: &ListRepositoriesRequest,
+        request: &ListRepositoriesForRegistryRequest,
     );
 
     /// send_tags requests tags for a repository of a provider and sends
     /// them down a channel for our API to return.
-    async fn send_tags(&self, tx: mpsc::Sender<Result<Tag, Status>>, request: &ListTagsRequest);
+    async fn send_tags(
+        &self,
+        tx: mpsc::Sender<Result<Tag, Status>>,
+        request: &ListTagsForRepositoryRequest,
+    );
 
     // The id simply gives a way in tests to determine which provider
     // has been selected.
@@ -61,12 +65,12 @@ mod tests {
     )]
     #[case::without_provider_but_matching_url(
         "https://registry-x.docker.io",
-        RegistryProvider::Unknown,
+        RegistryProvider::Unspecified,
         dockerhub::PROVIDER_NAME
     )]
     #[case::without_provider_or_matching_registry(
         "https://registry-x.dockers.io",
-        RegistryProvider::Unknown,
+        RegistryProvider::Unspecified,
         ""
     )]
     fn test_provider_for_request(
