@@ -41,6 +41,7 @@ header:
     - "dashboard/build/**"
     - "dashboard/src/setupProxy.js"
     - "integration/charts/**/_helpers.tpl"
+    - "pkg/kube/dockerconfig.go"
 
 dependency:
   files:
