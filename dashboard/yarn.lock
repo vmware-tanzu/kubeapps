@@ -11525,10 +11525,10 @@ postcss-safe-parser@^6.0.0:
   resolved "https://registry.yarnpkg.com/postcss-safe-parser/-/postcss-safe-parser-6.0.0.tgz#bb4c29894171a94bc5c996b9a30317ef402adaa1"
   integrity sha512-FARHN8pwH+WiS2OPCxJI8FuRJpTVnn6ZNFiqAM2aeW2LwTHWWmWgIyKC6cUo0L8aeKiF/14MNvnpls6R2PBeMQ==
 
-postcss-scss@^4.0.6:
-  version "4.0.6"
-  resolved "https://registry.yarnpkg.com/postcss-scss/-/postcss-scss-4.0.6.tgz#5d62a574b950a6ae12f2aa89b60d63d9e4432bfd"
-  integrity sha512-rLDPhJY4z/i4nVFZ27j9GqLxj1pwxE80eAzUNRMXtcpipFYIeowerzBgG3yJhMtObGEXidtIgbUpQ3eLDsf5OQ==
+postcss-scss@^4.0.6, postcss-scss@^4.0.7:
+  version "4.0.7"
+  resolved "https://registry.yarnpkg.com/postcss-scss/-/postcss-scss-4.0.7.tgz#cfe5507aaff81b3d8992039ad015da4bd3dccd2f"
+  integrity sha512-xPv2GseoyXPa58Nro7M73ZntttusuCmZdeOojUFR5PZDz2BR62vfYx1w9TyOnp1+nYFowgOMipsCBhxzVkAEPw==
 
 postcss-selector-not@^6.0.1:
   version "6.0.1"
@@ -14326,10 +14326,10 @@ ts-proto-descriptors@1.15.0:
     long "^5.2.3"
     protobufjs "^7.2.4"
 
-ts-proto@^1.156.5:
-  version "1.156.5"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.156.5.tgz#1fb22e8302559e51a53eaabebd80e6f92f4e35c7"
-  integrity sha512-3op38GJa70VphCAO8jWOn01NP4n0dK0/X1KvPnkFOjYd4tq7RJJqYp1deH0YWhRByBIifaaXaAPSPdSzIxeSCA==
+ts-proto@^1.156.6:
+  version "1.156.6"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.156.6.tgz#40c83391605c82db7be7a3f36298f69e3277c244"
+  integrity sha512-sr3FAxB6OAzaj/noSWpBadjTnOpD0f2W0WHBAcYbpMjOSwrNxrVuIR8c+lheGAuozhnDRWkvzMC4cqC+P+uhqA==
   dependencies:
     case-anything "^2.1.13"
     protobufjs "^7.2.4"

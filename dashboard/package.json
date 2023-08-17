@@ -112,7 +112,7 @@
     "node-polyfill-webpack-plugin": "^2.0.1",
     "npm-run-all": "^4.1.5",
     "postcss": "^8.4.28",
-    "postcss-scss": "^4.0.6",
+    "postcss-scss": "^4.0.7",
     "prettier": "^3.0.2",
     "react-dom": "^17.0.2",
     "react-scripts": "^5.0.1",
@@ -127,7 +127,7 @@
     "stylelint-config-standard-scss": "^10.0.0",
     "stylelint-scss": "^5.1.0",
     "ts-jest": "^29.1.1",
-    "ts-proto": "^1.156.5",
+    "ts-proto": "^1.156.6",
     "typescript": "^5.1.6"
   },
   "resolutions": {

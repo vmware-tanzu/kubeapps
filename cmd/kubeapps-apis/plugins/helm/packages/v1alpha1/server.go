@@ -59,7 +59,7 @@ const (
 )
 
 type createRelease func(*action.Configuration, string, string, string, *chart.Chart, map[string]string, int32) (*release.Release, error)
-type newRepoClient func(appRepo *appRepov1.AppRepository, secret *corek8sv1.Secret) (httpclient.Client, error)
+type repositoryClientGetter func(appRepo *appRepov1.AppRepository, secret *corek8sv1.Secret) (httpclient.Client, error)
 
 // Server implements the helm packages v1alpha1 interface.
 type Server struct {
@@ -80,8 +80,9 @@ type Server struct {
 	kubeappsCluster                 string // Specifies the cluster on which Kubeapps is installed.
 	kubeappsNamespace               string // Namespace in which Kubeapps is installed
 	pluginConfig                    *common.HelmPluginConfig
-	repoClientGetter                newRepoClient
+	repoClientGetter                repositoryClientGetter
 	clientQPS                       float32
+	OCICatalogAddr                  string
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
@@ -91,6 +92,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 	var ASSET_SYNCER_DB_NAME = os.Getenv("ASSET_SYNCER_DB_NAME")
 	var ASSET_SYNCER_DB_USERNAME = os.Getenv("ASSET_SYNCER_DB_USERNAME")
 	var ASSET_SYNCER_DB_USERPASSWORD = os.Getenv("ASSET_SYNCER_DB_USERPASSWORD")
+	var OCI_CATALOG_URL = os.Getenv("OCI_CATALOG_URL")
 
 	// Namespace where Kubeapps is installed to be in line with the asset syncer
 	kubeappsNamespace := os.Getenv("POD_NAMESPACE")
@@ -170,6 +172,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 		createReleaseFunc:        agent.CreateRelease,
 		repoClientGetter:         newRepositoryClient,
 		clientQPS:                clientQPS,
+		OCICatalogAddr:           OCI_CATALOG_URL,
 	}
 }
 
