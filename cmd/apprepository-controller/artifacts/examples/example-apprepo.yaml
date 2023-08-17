@@ -5,7 +5,7 @@
 apiVersion: kubeapps.com/v1alpha1
 kind: AppRepository
 metadata:
-  name: stable
+  name: bitnami-application-catalog
 spec:
   url: https://charts.bitnami.com/bitnami
   type: helm

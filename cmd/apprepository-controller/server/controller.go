@@ -5,28 +5,18 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"hash/adler32"
-	"math"
 	"reflect"
-	"strconv"
-	"strings"
 	"time"
 
-	"github.com/adhocore/gronx"
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	clientset "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	appreposcheme "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
 	informers "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
 	listers "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/listers/apprepository/v1alpha1"
-	"github.com/vmware-tanzu/kubeapps/pkg/helm"
-	batchv1 "k8s.io/api/batch/v1"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	kubeinformers "k8s.io/client-go/informers"
@@ -42,35 +32,29 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const controllerAgentName = "apprepository-controller"
-
-// Although a k8s typical length is 63, some characters are appended from the cronjob
-// to its spawned jobs therefore restricting this limit up to 52
-// https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/
-const MAX_CRONJOB_CHARS = 52
-
 const (
-	// SuccessSynced is used as part of the Event 'reason' when an AppRepository
-	// is synced
-	SuccessSynced = "Synced"
-	// ErrResourceExists is used as part of the Event 'reason' when an
-	// AppRepository fails to sync due to a CronJob of the same name already
-	// existing.
-	ErrResourceExists = "ErrResourceExists"
+	// controllerAgentName is the name of the AppRepository controller
+	controllerAgentName = "apprepository-controller"
 
-	// LabelRepoName is the label used to identify the repository name.
-	LabelRepoName = "apprepositories.kubeapps.com/repo-name"
-	// LabelRepoNamespace is the label used to identify the repository namespace.
-	LabelRepoNamespace = "apprepositories.kubeapps.com/repo-namespace"
+	// finalizerName is the name of the finalizer added to each AppRepository to prevent deletions without clean-up
+	finalizerName = "apprepositories.kubeapps.com/apprepo-cleanup-finalizer"
 
-	FinalizerName = "apprepositories.kubeapps.com/apprepo-cleanup-finalizer"
+	// errResourceExists is used as part of the Event 'reason' when an AppRepository fails
+	//  to sync due to a CronJob of the same name already existing.
+	errResourceExists = "ErrResourceExists"
 
-	// MessageResourceExists is the message used for Events when a resource
-	// fails to sync due to a CronJob already existing
-	MessageResourceExists = "Resource %q already exists and is not managed by AppRepository"
-	// MessageResourceSynced is the message used for an Event fired when an
-	// AppRepsitory is synced successfully
-	MessageResourceSynced = "AppRepository synced successfully"
+	// messageResourceExists is the message used for Events when a resourcefails to sync due to a CronJob already existing
+	messageResourceExists = "Resource %q already exists and is not managed by AppRepository"
+
+	// messageResourceSynced is the message used for an Event fired when an AppRepository is synced successfully
+	messageResourceSynced = "AppRepository synced successfully"
+
+	// messageSuccessSynced is used as part of the Event 'reason' when an AppRepository is synced
+	messageSuccessSynced = "Synced"
+
+	// Name of the the custom resource
+	AppRepository   = "AppRepository"
+	AppRepositories = "AppRepositories"
 )
 
 // Controller is the controller implementation for AppRepository resources
@@ -92,6 +76,7 @@ type Controller struct {
 	// time, and makes it easy to ensure we are never processing the same item
 	// simultaneously in two different workers.
 	workqueue workqueue.RateLimitingInterface
+
 	// recorder is an event recorder for recording Event resources to the
 	// Kubernetes API.
 	recorder record.EventRecorder
@@ -130,7 +115,7 @@ func NewController(
 		apprepoclientset: apprepoclientset,
 		appreposLister:   apprepoInformer.Lister(),
 		appreposSynced:   apprepoInformer.Informer().HasSynced,
-		workqueue:        workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "AppRepositories"),
+		workqueue:        workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), AppRepositories),
 		recorder:         recorder,
 		conf:             *conf,
 	}
@@ -160,40 +145,6 @@ func NewController(
 	controller.setBatchLister(conf.V1Beta1CronJobs, kubeInformerFactory)
 
 	return controller
-}
-
-// setBatchListener sets the specific batch listener based on the config, ie. either
-// a v1 batch listener or a v1beta1 batch listener.
-//
-// This allows users on 1.20 to continue to use the latest release.
-func (c *Controller) setBatchLister(useV1Beta1 bool, kubeInformerFactory kubeinformers.SharedInformerFactory) {
-	// Set up an event handler for when CronJob resources get deleted. This
-	// handler will lookup the owner of the given CronJob, and if it is owned by a
-	// AppRepository resource will enqueue that AppRepository resource for
-	// processing so the CronJob gets correctly recreated. This way, we don't need
-	// to implement custom logic for handling CronJob resources. More info on this
-	// pattern:
-	// https://github.com/kubernetes/community/blob/8cafef897a22026d42f5e5bb3f104febe7e29830/contributors/devel/controllers.md
-	var err error
-	if useV1Beta1 {
-		cronjobInformer := kubeInformerFactory.Batch().V1beta1().CronJobs()
-		c.cronjobsListerv1beta1 = cronjobInformer.Lister()
-		c.cronjobsSynced = cronjobInformer.Informer().HasSynced
-		_, err = cronjobInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-			DeleteFunc: c.handleObject,
-		})
-	} else {
-		cronjobInformer := kubeInformerFactory.Batch().V1().CronJobs()
-		c.cronjobsLister = cronjobInformer.Lister()
-		c.cronjobsSynced = cronjobInformer.Informer().HasSynced
-		_, err = cronjobInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-			DeleteFunc: c.handleObject,
-		})
-	}
-
-	if err != nil {
-		log.Fatalf("Error adding CronJob event handler: %v", err)
-	}
 }
 
 // Run will set up the event handlers for types we are interested in, as well
@@ -231,6 +182,53 @@ func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 // workqueue.
 func (c *Controller) runWorker() {
 	for c.processNextWorkItem() {
+	}
+}
+
+// enqueueAppRepo takes a AppRepository resource and converts it into a namespace/name
+// string which is then put onto the work queue. This method should *not* be
+// passed resources of any type other than AppRepository.
+func (c *Controller) enqueueAppRepo(obj interface{}) {
+	var key string
+	var err error
+	if key, err = cache.MetaNamespaceKeyFunc(obj); err != nil {
+		runtime.HandleError(err)
+		return
+	}
+	c.workqueue.AddRateLimited(key)
+}
+
+// setBatchListener sets the specific batch listener based on the config, ie. either
+// a v1 batch listener or a v1beta1 batch listener.
+//
+// This allows users on 1.20 to continue to use the latest release.
+func (c *Controller) setBatchLister(useV1Beta1 bool, kubeInformerFactory kubeinformers.SharedInformerFactory) {
+	// Set up an event handler for when CronJob resources get deleted. This
+	// handler will lookup the owner of the given CronJob, and if it is owned by a
+	// AppRepository resource will enqueue that AppRepository resource for
+	// processing so the CronJob gets correctly recreated. This way, we don't need
+	// to implement custom logic for handling CronJob resources. More info on this
+	// pattern:
+	// https://github.com/kubernetes/community/blob/8cafef897a22026d42f5e5bb3f104febe7e29830/contributors/devel/controllers.md
+	var err error
+	if useV1Beta1 {
+		cronjobInformer := kubeInformerFactory.Batch().V1beta1().CronJobs()
+		c.cronjobsListerv1beta1 = cronjobInformer.Lister()
+		c.cronjobsSynced = cronjobInformer.Informer().HasSynced
+		_, err = cronjobInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+			DeleteFunc: c.handleAppRepoOwnedObject,
+		})
+	} else {
+		cronjobInformer := kubeInformerFactory.Batch().V1().CronJobs()
+		c.cronjobsLister = cronjobInformer.Lister()
+		c.cronjobsSynced = cronjobInformer.Informer().HasSynced
+		_, err = cronjobInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+			DeleteFunc: c.handleAppRepoOwnedObject,
+		})
+	}
+
+	if err != nil {
+		log.Fatalf("Error adding CronJob event handler: %v", err)
 	}
 }
 
@@ -287,6 +285,51 @@ func (c *Controller) processNextWorkItem() bool {
 	return true
 }
 
+// handleAppRepoOwnedObject will take any resource implementing metav1.Object and attempt to
+// find the AppRepository resource that 'owns' it. It does this by looking at
+// the objects metadata.ownerReferences field for an appropriate OwnerReference.
+// It then enqueues that AppRepository resource to be processed. If the object
+// does not have an appropriate OwnerReference, it will simply be skipped.
+func (c *Controller) handleAppRepoOwnedObject(obj interface{}) {
+	var object metav1.Object
+	var ok bool
+	if object, ok = obj.(metav1.Object); !ok {
+		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
+		if !ok {
+			runtime.HandleError(fmt.Errorf("error decoding object, invalid type"))
+			return
+		}
+		object, ok = tombstone.Obj.(metav1.Object)
+		if !ok {
+			runtime.HandleError(fmt.Errorf("error decoding object tombstone, invalid type"))
+			return
+		}
+		log.Infof("Recovered deleted object '%s' from tombstone", object.GetName())
+	}
+	log.Infof("Processing object: %s", object.GetName())
+	if ownerRef := metav1.GetControllerOf(object); ownerRef != nil {
+		// If this object is not owned by an AppRepository, we should not do
+		// anything more with it.
+		if ownerRef.Kind != AppRepository {
+			return
+		}
+
+		apprepo, err := c.appreposLister.AppRepositories(object.GetNamespace()).Get(ownerRef.Name)
+		if err != nil {
+			log.Infof("ignoring orphaned object '%s' of AppRepository '%s'", object.GetSelfLink(), ownerRef.Name)
+			return
+		}
+
+		if apprepo.ObjectMeta.DeletionTimestamp != nil {
+			log.Infof("ignoring object %q of AppRepository %q with deletion timestamp %q", object.GetSelfLink(), ownerRef.Name, apprepo.ObjectMeta.DeletionTimestamp)
+			return
+		}
+
+		c.enqueueAppRepo(apprepo)
+		return
+	}
+}
+
 // syncHandler compares the actual state with the desired, and attempts to
 // converge the two. It then updates the Status block of the AppRepository
 // resource with the current status of the resource.
@@ -317,10 +360,10 @@ func (c *Controller) syncHandler(key string) error {
 	// if the object is not being deleted, check the finalizers
 	if apprepo.GetDeletionTimestamp().IsZero() {
 		// check if it contains the finalizer, if not, add it and update the object
-		if !containsFinalizer(apprepo, FinalizerName) {
+		if !containsFinalizer(apprepo, finalizerName) {
 			log.Infof("the AppRepository %q doesn't have a finalizer yet, adding one...", apprepo.GetName())
 
-			ok := addFinalizer(apprepo, FinalizerName)
+			ok := addFinalizer(apprepo, finalizerName)
 			if !ok {
 				return fmt.Errorf("error adding finalizer to the AppRepository %q", apprepo.GetName())
 			}
@@ -337,13 +380,13 @@ func (c *Controller) syncHandler(key string) error {
 	// cronjob for an app repo in another namespace, then we should
 	// log a warning to the event recorder and return it.
 	if !metav1.IsControlledBy(cronjob, apprepo) && !objectBelongsTo(cronjob, apprepo) {
-		msg := fmt.Sprintf(MessageResourceExists, cronjob.GetName())
-		c.recorder.Event(apprepo, corev1.EventTypeWarning, ErrResourceExists, msg)
+		msg := fmt.Sprintf(messageResourceExists, cronjob.GetName())
+		c.recorder.Event(apprepo, corev1.EventTypeWarning, errResourceExists, msg)
 		return fmt.Errorf(msg)
 	}
 
 	if apprepo.GetNamespace() == c.conf.KubeappsNamespace {
-		c.recorder.Event(apprepo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
+		c.recorder.Event(apprepo, corev1.EventTypeNormal, messageSuccessSynced, messageResourceSynced)
 	}
 	return nil
 }
@@ -357,24 +400,26 @@ func (c *Controller) ensureCronJob(apprepo *apprepov1alpha1.AppRepository) (meta
 	cronjobName := cronJobName(apprepo.GetObjectMeta().GetNamespace(), apprepo.GetObjectMeta().GetName(), false)
 
 	var cronjob metav1.Object
-	var err error
+	var getCronJobErr error
 
 	if c.conf.V1Beta1CronJobs {
-		cronjob, err = c.cronjobsListerv1beta1.CronJobs(c.conf.KubeappsNamespace).Get(cronjobName)
+		cronjob, getCronJobErr = c.cronjobsListerv1beta1.CronJobs(c.conf.KubeappsNamespace).Get(cronjobName)
 	} else {
-		cronjob, err = c.cronjobsLister.CronJobs(c.conf.KubeappsNamespace).Get(cronjobName)
+		cronjob, getCronJobErr = c.cronjobsLister.CronJobs(c.conf.KubeappsNamespace).Get(cronjobName)
+	}
+
+	cronJobSpec, err := newCronJob(apprepo, c.conf)
+	if err != nil {
+		return nil, err
 	}
 
 	// If the resource doesn't exist, we'll create it
-	if errors.IsNotFound(err) {
+	if errors.IsNotFound(getCronJobErr) {
 		log.Infof("Creating CronJob %q for AppRepository %q", cronjobName, apprepo.GetName())
 		if c.conf.V1Beta1CronJobs {
-			cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.KubeappsNamespace).Create(context.TODO(), v1CronJobToV1Beta1CronJob(newCronJob(apprepo, c.conf)), metav1.CreateOptions{})
-			if err != nil {
-				return nil, err
-			}
+			cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.KubeappsNamespace).Create(context.TODO(), v1CronJobToV1Beta1CronJob(cronJobSpec), metav1.CreateOptions{})
 		} else {
-			cronjob, err = c.kubeclientset.BatchV1().CronJobs(c.conf.KubeappsNamespace).Create(context.TODO(), newCronJob(apprepo, c.conf), metav1.CreateOptions{})
+			cronjob, err = c.kubeclientset.BatchV1().CronJobs(c.conf.KubeappsNamespace).Create(context.TODO(), cronJobSpec, metav1.CreateOptions{})
 		}
 		if err != nil {
 			return nil, err
@@ -389,18 +434,18 @@ func (c *Controller) ensureCronJob(apprepo *apprepov1alpha1.AppRepository) (meta
 		// If the resource already exists, we'll update it
 		log.Infof("Updating CronJob %q in namespace %q for AppRepository %q in namespace %q", cronjobName, c.conf.KubeappsNamespace, apprepo.GetName(), apprepo.GetNamespace())
 		if c.conf.V1Beta1CronJobs {
-			cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.KubeappsNamespace).Update(context.TODO(), v1CronJobToV1Beta1CronJob(newCronJob(apprepo, c.conf)), metav1.UpdateOptions{})
+			cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.KubeappsNamespace).Update(context.TODO(), v1CronJobToV1Beta1CronJob(cronJobSpec), metav1.UpdateOptions{})
 		} else {
-			cronjob, err = c.kubeclientset.BatchV1().CronJobs(c.conf.KubeappsNamespace).Update(context.TODO(), newCronJob(apprepo, c.conf), metav1.UpdateOptions{})
+			cronjob, err = c.kubeclientset.BatchV1().CronJobs(c.conf.KubeappsNamespace).Update(context.TODO(), cronJobSpec, metav1.UpdateOptions{})
 		}
 		if err != nil {
 			return nil, err
 		}
 
 		// The AppRepository has changed, launch a manual Job
-		_, err = c.kubeclientset.BatchV1().Jobs(c.conf.KubeappsNamespace).Create(context.TODO(), newSyncJob(apprepo, c.conf), metav1.CreateOptions{})
-		if err != nil {
-			return nil, err
+		_, getCronJobErr = c.kubeclientset.BatchV1().Jobs(c.conf.KubeappsNamespace).Create(context.TODO(), newSyncJob(apprepo, c.conf), metav1.CreateOptions{})
+		if getCronJobErr != nil {
+			return nil, getCronJobErr
 		}
 	}
 	return cronjob, nil
@@ -414,7 +459,7 @@ func (c *Controller) cleanUpAppRepo(apprepo *apprepov1alpha1.AppRepository, name
 	}
 
 	// Trigger a Job to perform the cleanup of the charts in the DB corresponding to deleted AppRepository
-	_, err := c.kubeclientset.BatchV1().Jobs(c.conf.KubeappsNamespace).Create(context.TODO(), newCleanupJob(c.conf.KubeappsNamespace, namespace, name, c.conf, apprepo), metav1.CreateOptions{})
+	_, err := c.kubeclientset.BatchV1().Jobs(c.conf.KubeappsNamespace).Create(context.TODO(), newCleanupJob(apprepo, c.conf), metav1.CreateOptions{})
 	if err != nil {
 		log.Errorf("Unable to create cleanup job for AppRepository %q: %v", name, err)
 		return err
@@ -430,71 +475,6 @@ func (c *Controller) cleanUpAppRepo(apprepo *apprepov1alpha1.AppRepository, name
 	log.Infof("The clean-up tasks on AppRepository %q succeeded", name)
 
 	return nil
-}
-
-// belongsTo is similar to IsControlledBy, but enables us to establish a relationship
-// between cronjobs and app repositories in different namespaces.
-func objectBelongsTo(object, parent metav1.Object) bool {
-	labels := object.GetLabels()
-	return labels[LabelRepoName] == parent.GetName() && labels[LabelRepoNamespace] == parent.GetNamespace()
-}
-
-// enqueueAppRepo takes a AppRepository resource and converts it into a namespace/name
-// string which is then put onto the work queue. This method should *not* be
-// passed resources of any type other than AppRepository.
-func (c *Controller) enqueueAppRepo(obj interface{}) {
-	var key string
-	var err error
-	if key, err = cache.MetaNamespaceKeyFunc(obj); err != nil {
-		runtime.HandleError(err)
-		return
-	}
-	c.workqueue.AddRateLimited(key)
-}
-
-// handleObject will take any resource implementing metav1.Object and attempt to
-// find the AppRepository resource that 'owns' it. It does this by looking at
-// the objects metadata.ownerReferences field for an appropriate OwnerReference.
-// It then enqueues that AppRepository resource to be processed. If the object
-// does not have an appropriate OwnerReference, it will simply be skipped.
-func (c *Controller) handleObject(obj interface{}) {
-	var object metav1.Object
-	var ok bool
-	if object, ok = obj.(metav1.Object); !ok {
-		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
-		if !ok {
-			runtime.HandleError(fmt.Errorf("error decoding object, invalid type"))
-			return
-		}
-		object, ok = tombstone.Obj.(metav1.Object)
-		if !ok {
-			runtime.HandleError(fmt.Errorf("error decoding object tombstone, invalid type"))
-			return
-		}
-		log.Infof("Recovered deleted object '%s' from tombstone", object.GetName())
-	}
-	log.Infof("Processing object: %s", object.GetName())
-	if ownerRef := metav1.GetControllerOf(object); ownerRef != nil {
-		// If this object is not owned by an AppRepository, we should not do
-		// anything more with it.
-		if ownerRef.Kind != "AppRepository" {
-			return
-		}
-
-		apprepo, err := c.appreposLister.AppRepositories(object.GetNamespace()).Get(ownerRef.Name)
-		if err != nil {
-			log.Infof("ignoring orphaned object '%s' of AppRepository '%s'", object.GetSelfLink(), ownerRef.Name)
-			return
-		}
-
-		if apprepo.ObjectMeta.DeletionTimestamp != nil {
-			log.Infof("ignoring object %q of AppRepository %q with deletion timestamp %q", object.GetSelfLink(), ownerRef.Name, apprepo.ObjectMeta.DeletionTimestamp)
-			return
-		}
-
-		c.enqueueAppRepo(apprepo)
-		return
-	}
 }
 
 func (c Controller) handleAppRepoMetaChangeOrDelete(obj interface{}, shouldDelete bool) {
@@ -525,13 +505,13 @@ func (c Controller) handleAppRepoMetaChangeOrDelete(obj interface{}, shouldDelet
 	}
 
 	// if the object is not being deleted (ie, deletionTimestamp==0)
-	if apprepo.GetDeletionTimestamp().IsZero() && !containsFinalizer(apprepo, FinalizerName) {
+	if apprepo.GetDeletionTimestamp().IsZero() && !containsFinalizer(apprepo, finalizerName) {
 		// check if it contains the finalizer, if not, add it and update the object
 		log.Errorf("The AppRepository %q should be deleted, but doesn't have any finalizers. You might want to perform a manual clean-up", apprepo.GetName())
 	}
 
 	// if the object is being deleted and contains a finalizer
-	if !apprepo.GetDeletionTimestamp().IsZero() && containsFinalizer(apprepo, FinalizerName) {
+	if !apprepo.GetDeletionTimestamp().IsZero() && containsFinalizer(apprepo, finalizerName) {
 		// if the object is being deleted and contains a finalizer and the event is not a deletion event,
 		// then handle the finalizer-derived clean-up tasks and remove the finalizer
 		if !shouldDelete {
@@ -544,7 +524,7 @@ func (c Controller) handleAppRepoMetaChangeOrDelete(obj interface{}, shouldDelet
 			}
 
 			// once everything is done, remove the finalizer from the list
-			ok := removeFinalizer(apprepo, FinalizerName)
+			ok := removeFinalizer(apprepo, finalizerName)
 			if !ok {
 				log.Errorf("Error removing finalizer from the AppRepository %q: %v", apprepo.GetName(), err)
 				return
@@ -565,509 +545,5 @@ func (c Controller) handleAppRepoMetaChangeOrDelete(obj interface{}, shouldDelet
 			}
 		}
 	}
-	return
-}
-
-// ownerReferencesForAppRepo returns populated owner references for app repos in the same namespace
-// as the cronjob and nil otherwise.
-func ownerReferencesForAppRepo(apprepo *apprepov1alpha1.AppRepository, childNamespace string) []metav1.OwnerReference {
-	if apprepo.GetNamespace() == childNamespace {
-		return []metav1.OwnerReference{
-			*metav1.NewControllerRef(apprepo, schema.GroupVersionKind{
-				Group:   apprepov1alpha1.SchemeGroupVersion.Group,
-				Version: apprepov1alpha1.SchemeGroupVersion.Version,
-				Kind:    "AppRepository",
-			}),
-		}
-	}
-	return nil
-}
-
-// intervalToCron transforms string durations like "1m" or "1h" to cron expressions
-// Even if valid time units are "ns", "us", "ms", "s", "m", "h",
-// the result will get rounded up to minutes.
-// for durations over 24h, only durations below 1 year are supported
-func intervalToCron(duration string) (string, error) {
-	if duration == "" {
-		return "", fmt.Errorf("duration cannot be empty")
-	}
-
-	d, err := time.ParseDuration(duration)
-	if err != nil {
-		return "", fmt.Errorf("error while parsing the duration: %s", err)
-	}
-	cronMins := math.Ceil(d.Minutes()) // round up to nearest minute
-
-	if cronMins < 60 {
-		// https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-schedule-syntax
-		// minute(0-59) hour(0-23) dayOfMonth(1-31) month(1-12) dayOfWeek(0-6)
-		return fmt.Sprintf("*/%v * * * *", cronMins), nil // every cronMins minutes
-	}
-
-	cronHours := math.Ceil(d.Hours()) // round up to nearest hour
-	if cronHours < 24 {
-		return fmt.Sprintf("0 */%v * * *", cronHours), nil // every cronHours hours
-	}
-
-	cronDays := math.Ceil(cronHours / 24) // get the days in cronHours, round up to nearest day
-	if cronDays < 32 {
-		return fmt.Sprintf("0 0 */%v * *", cronDays), nil // every cronDays days
-	}
-
-	cronMonths := math.Ceil(cronDays / 31) // get the months in cronDays, round up to nearest month
-	if cronMonths < 13 {
-		return fmt.Sprintf("0 0 1 */%v *", cronMonths), nil // every cronMonths months
-	}
-
-	return "", fmt.Errorf("not supported duration: %s", duration)
-
-}
-
-// newCronJob creates a new CronJob for a AppRepository resource. It also sets
-// the appropriate OwnerReferences on the resource so handleObject can discover
-// the AppRepository resource that 'owns' it.
-func newCronJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1.CronJob {
-	var err error
-	gron := gronx.New()
-	cronTime := config.Crontab
-
-	defaultValid := gron.IsValid(cronTime)
-	if !defaultValid {
-		// TODO(agamez): handle this situation
-		log.Errorf("Invalid crontab for apprepo %q: %s", apprepo.Name, cronTime)
-	}
-
-	// If the apprepo has its own interval,
-	// use that instead of the default global crontab.
-	if apprepo.Spec.Interval != "" {
-		// if the passed interval is indeed a cron expression, use it straight
-		if gron.IsValid(apprepo.Spec.Interval) {
-			cronTime = apprepo.Spec.Interval
-		} else {
-			// otherwise, convert it
-			cronTime, err = intervalToCron(apprepo.Spec.Interval)
-		}
-	}
-	// If the interval is invalid, use the default global crontab
-	if err != nil {
-		log.Errorf("Invalid interval for apprepo %q: %v", apprepo.Name, err)
-		cronTime = config.Crontab
-	}
-
-	return &batchv1.CronJob{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            cronJobName(apprepo.Namespace, apprepo.Name, false),
-			OwnerReferences: ownerReferencesForAppRepo(apprepo, config.KubeappsNamespace),
-			Labels:          jobLabels(apprepo, config),
-			Annotations:     config.ParsedCustomAnnotations,
-		},
-		Spec: batchv1.CronJobSpec{
-			Schedule: cronTime,
-			// Set to replace as short-circuit in k8s <1.12
-			// TODO re-evaluate ConcurrentPolicy when 1.12+ is mainstream (i.e 1.14)
-			// https://github.com/kubernetes/kubernetes/issues/54870
-			ConcurrencyPolicy: batchv1.ReplaceConcurrent,
-			JobTemplate: batchv1.JobTemplateSpec{
-				Spec: syncJobSpec(apprepo, config),
-			},
-		},
-	}
-}
-
-// v1CronJobToV1Beta1CronJob does exactly what it says: converts a v1 cronjob to a v1beta1 cronjob.
-func v1CronJobToV1Beta1CronJob(cj *batchv1.CronJob) *batchv1beta1.CronJob {
-	return &batchv1beta1.CronJob{
-		ObjectMeta: cj.ObjectMeta,
-		Spec: batchv1beta1.CronJobSpec{
-			Schedule:          cj.Spec.Schedule,
-			ConcurrencyPolicy: batchv1beta1.ConcurrencyPolicy(cj.Spec.ConcurrencyPolicy),
-			JobTemplate: batchv1beta1.JobTemplateSpec{
-				Spec: cj.Spec.JobTemplate.Spec,
-			},
-		},
-	}
-}
-
-// newSyncJob triggers a job for the AppRepository resource. It also sets the
-// appropriate OwnerReferences on the resource
-func newSyncJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1.Job {
-	return &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName:    cronJobName(apprepo.Namespace, apprepo.Name, true),
-			OwnerReferences: ownerReferencesForAppRepo(apprepo, config.KubeappsNamespace),
-			Annotations:     config.ParsedCustomLabels,
-			Labels:          config.ParsedCustomAnnotations,
-		},
-		Spec: syncJobSpec(apprepo, config),
-	}
-}
-
-// jobSpec returns a batchv1.JobSpec for running the chart-repo sync job
-func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config) batchv1.JobSpec {
-	volumes := []corev1.Volume{}
-	volumeMounts := []corev1.VolumeMount{}
-	if apprepo.Spec.Auth.CustomCA != nil {
-		volumes = append(volumes, corev1.Volume{
-			Name: apprepo.Spec.Auth.CustomCA.SecretKeyRef.Name,
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: secretKeyRefForRepo(apprepo.Spec.Auth.CustomCA.SecretKeyRef, apprepo, config).Name,
-					Items: []corev1.KeyToPath{
-						{Key: apprepo.Spec.Auth.CustomCA.SecretKeyRef.Key, Path: "ca.crt"},
-					},
-				},
-			},
-		})
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      apprepo.Spec.Auth.CustomCA.SecretKeyRef.Name,
-			ReadOnly:  true,
-			MountPath: "/usr/local/share/ca-certificates",
-		})
-	}
-	// Get the predefined pod spec for the apprepo definition if exists
-	podTemplateSpec := apprepo.Spec.SyncJobPodTemplate
-	// Add labels
-	if len(podTemplateSpec.ObjectMeta.Labels) == 0 {
-		podTemplateSpec.ObjectMeta.Labels = map[string]string{}
-	}
-	for k, v := range jobLabels(apprepo, config) {
-		podTemplateSpec.ObjectMeta.Labels[k] = v
-	}
-	podTemplateSpec.ObjectMeta.Annotations = config.ParsedCustomAnnotations
-	// If there's an issue, will restart pod until successful or replaced
-	// by another instance of the job scheduled by the cronjob
-	// see: cronJobSpec.concurrencyPolicy
-	podTemplateSpec.Spec.RestartPolicy = corev1.RestartPolicyOnFailure
-	// Populate container spec
-	if len(podTemplateSpec.Spec.Containers) == 0 {
-		podTemplateSpec.Spec.Containers = []corev1.Container{{}}
-	}
-	// Populate ImagePullSecrets spec
-	podTemplateSpec.Spec.ImagePullSecrets = append(podTemplateSpec.Spec.ImagePullSecrets, config.ImagePullSecretsRefs...)
-
-	podTemplateSpec.Spec.Containers[0].Name = "sync"
-	podTemplateSpec.Spec.Containers[0].Image = config.RepoSyncImage
-	podTemplateSpec.Spec.Containers[0].ImagePullPolicy = corev1.PullIfNotPresent
-	podTemplateSpec.Spec.Containers[0].Command = []string{config.RepoSyncCommand}
-	podTemplateSpec.Spec.Containers[0].Args = apprepoSyncJobArgs(apprepo, config)
-	podTemplateSpec.Spec.Containers[0].Env = append(podTemplateSpec.Spec.Containers[0].Env, apprepoSyncJobEnvVars(apprepo, config)...)
-	podTemplateSpec.Spec.Containers[0].VolumeMounts = append(podTemplateSpec.Spec.Containers[0].VolumeMounts, volumeMounts...)
-	// Add volumes
-	podTemplateSpec.Spec.Volumes = append(podTemplateSpec.Spec.Volumes, volumes...)
-
-	return batchv1.JobSpec{
-		TTLSecondsAfterFinished: ttlLifetimeJobs(config),
-		Template:                podTemplateSpec,
-	}
-}
-
-// newCleanupJob triggers a job for the AppRepository resource. It also sets the
-// appropriate OwnerReferences on the resource
-func newCleanupJob(kubeappsNamespace, repoNamespace, name string, config Config, apprepo *apprepov1alpha1.AppRepository) *batchv1.Job {
-	return &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: deleteJobName(repoNamespace, name),
-			Namespace:    kubeappsNamespace,
-			Annotations:  config.ParsedCustomAnnotations,
-			Labels:       config.ParsedCustomLabels,
-		},
-		Spec: cleanupJobSpec(repoNamespace, name, config, apprepo),
-	}
-}
-
-// cleanupJobSpec returns a batchv1.JobSpec for running the chart-repo delete job
-func cleanupJobSpec(namespace, name string, config Config, apprepo *apprepov1alpha1.AppRepository) batchv1.JobSpec {
-	volumes := []corev1.Volume{}
-	volumeMounts := []corev1.VolumeMount{}
-	if apprepo.Spec.Auth.CustomCA != nil {
-		volumes = append(volumes, corev1.Volume{
-			Name: apprepo.Spec.Auth.CustomCA.SecretKeyRef.Name,
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: secretKeyRefForRepo(apprepo.Spec.Auth.CustomCA.SecretKeyRef, apprepo, config).Name,
-					Items: []corev1.KeyToPath{
-						{Key: apprepo.Spec.Auth.CustomCA.SecretKeyRef.Key, Path: "ca.crt"},
-					},
-				},
-			},
-		})
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      apprepo.Spec.Auth.CustomCA.SecretKeyRef.Name,
-			ReadOnly:  true,
-			MountPath: "/usr/local/share/ca-certificates",
-		})
-	}
-
-	// Get the predefined pod spec for the apprepo definition if exists
-	podTemplateSpec := apprepo.Spec.SyncJobPodTemplate
-	// Add labels
-	if len(podTemplateSpec.ObjectMeta.Labels) == 0 {
-		podTemplateSpec.ObjectMeta.Labels = map[string]string{}
-	}
-	for k, v := range jobLabels(apprepo, config) {
-		podTemplateSpec.ObjectMeta.Labels[k] = v
-	}
-	podTemplateSpec.ObjectMeta.Annotations = config.ParsedCustomAnnotations
-	// If there's an issue, won't restart
-	podTemplateSpec.Spec.RestartPolicy = corev1.RestartPolicyNever
-	// Populate container spec
-	if len(podTemplateSpec.Spec.Containers) == 0 {
-		podTemplateSpec.Spec.Containers = []corev1.Container{{}}
-	}
-	// Populate ImagePullSecrets spec
-	podTemplateSpec.Spec.ImagePullSecrets = append(podTemplateSpec.Spec.ImagePullSecrets, config.ImagePullSecretsRefs...)
-
-	podTemplateSpec.Spec.Containers[0].Name = "delete"
-	podTemplateSpec.Spec.Containers[0].Image = config.RepoSyncImage
-	podTemplateSpec.Spec.Containers[0].ImagePullPolicy = corev1.PullIfNotPresent
-	podTemplateSpec.Spec.Containers[0].Command = []string{config.RepoSyncCommand}
-	podTemplateSpec.Spec.Containers[0].Args = apprepoCleanupJobArgs(namespace, name, config)
-	podTemplateSpec.Spec.Containers[0].Env = append(podTemplateSpec.Spec.Containers[0].Env, apprepoSyncJobEnvVars(apprepo, config)...)
-	podTemplateSpec.Spec.Containers[0].VolumeMounts = append(podTemplateSpec.Spec.Containers[0].VolumeMounts, volumeMounts...)
-	// Add volumes
-	podTemplateSpec.Spec.Volumes = append(podTemplateSpec.Spec.Volumes, volumes...)
-
-	return batchv1.JobSpec{
-		TTLSecondsAfterFinished: ttlLifetimeJobs(config),
-		Template:                podTemplateSpec,
-	}
-}
-
-// jobLabels returns the labels for the job and cronjob resources
-func jobLabels(apprepo *apprepov1alpha1.AppRepository, config Config) map[string]string {
-	// Adding the default labels
-	labels := map[string]string{
-		LabelRepoName:      apprepo.GetName(),
-		LabelRepoNamespace: apprepo.GetNamespace(),
-	}
-	// Add the custom labels from the config
-	for k, v := range config.ParsedCustomLabels {
-		labels[k] = v
-	}
-	return labels
-}
-
-// ttlLifetimeJobs return time to live set by user otherwise return nil
-func ttlLifetimeJobs(config Config) *int32 {
-	if config.TTLSecondsAfterFinished != "" {
-		configTTL, err := strconv.ParseInt(config.TTLSecondsAfterFinished, 10, 32)
-		if err == nil {
-			result := int32(configTTL)
-			return &result
-		}
-	}
-	return nil
-}
-
-// cronJobName returns a unique name for the CronJob managed by an AppRepository
-func cronJobName(namespace, name string, addDash bool) string {
-	// the "apprepo--sync-" string has 14 chars, which leaves us 52-14=38 chars for the final name
-	return generateJobName(namespace, name, "apprepo-%s-sync-%s", addDash)
-
-}
-
-// deleteJobName returns a unique name for the Job to cleanup AppRepository
-func deleteJobName(namespace, name string) string {
-	// the "apprepo--cleanup--" string has 18 chars, which leaves us 52-18=34 chars for the final name
-	return generateJobName(namespace, name, "apprepo-%s-cleanup-%s-", false)
-}
-
-// generateJobName returns a unique name for the Job managed by an AppRepository
-func generateJobName(namespace, name, pattern string, addDash bool) string {
-	// ensure there are enough placeholders to be replaces later
-	if strings.Count(pattern, "%s") != 2 {
-		return ""
-	}
-
-	// calculate the length used by the name pattern
-	patternLen := len(strings.ReplaceAll(pattern, "%s", ""))
-
-	// for example: the "apprepo--cleanup--" string has 18 chars, which leaves us 52-18=34 chars for the final name
-	maxNamespaceLength, rem := (MAX_CRONJOB_CHARS-patternLen)/2, (MAX_CRONJOB_CHARS-patternLen)%2
-	maxNameLength := maxNamespaceLength
-	if rem > 0 && !addDash {
-		maxNameLength++
-	}
-
-	if addDash {
-		pattern = fmt.Sprintf("%s-", pattern)
-	}
-
-	truncatedName := fmt.Sprintf(pattern, truncateAndHashString(namespace, maxNamespaceLength), truncateAndHashString(name, maxNameLength))
-
-	return truncatedName
-}
-
-// truncateAndHashString truncates the string to a max length and hashes the rest of it
-// Ex: truncateAndHashString(aaaaaaaaaaaaaaaaaaaaaaaaaa,12) becomes "a-2067663226"
-func truncateAndHashString(name string, length int) string {
-	if len(name) > length {
-		if length < 11 {
-			return name[:length]
-		}
-		log.Warningf("Name %q exceeds %d characters (got %d)", name, length, len(name))
-		// max length chars, minus 10 chars (the adler32 hash returns up to 10 digits), minus 1 for the '-'
-		splitPoint := length - 11
-		part1 := name[:splitPoint]
-		part2 := name[splitPoint:]
-		hashedPart2 := fmt.Sprint(adler32.Checksum([]byte(part2)))
-		name = fmt.Sprintf("%s-%s", part1, hashedPart2)
-	}
-	return name
-}
-
-// apprepoSyncJobArgs returns a list of args for the sync container
-func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository, config Config) []string {
-	args := append([]string{"sync"}, dbFlags(config)...)
-
-	if config.UserAgentComment != "" {
-		args = append(args, "--user-agent-comment="+config.UserAgentComment)
-	}
-
-	args = append(args, "--global-repos-namespace="+config.GlobalPackagingNamespace)
-	args = append(args, "--namespace="+apprepo.GetNamespace(), apprepo.GetName(), apprepo.Spec.URL, apprepo.Spec.Type)
-
-	if len(apprepo.Spec.OCIRepositories) > 0 {
-		args = append(args, "--oci-repositories", strings.Join(apprepo.Spec.OCIRepositories, ","))
-	}
-
-	if apprepo.Spec.TLSInsecureSkipVerify {
-		args = append(args, "--tls-insecure-skip-verify")
-	}
-
-	if apprepo.Spec.PassCredentials {
-		args = append(args, "--pass-credentials")
-	}
-
-	if apprepo.Spec.FilterRule.JQ != "" {
-		rulesJSON, err := json.Marshal(apprepo.Spec.FilterRule)
-		if err != nil {
-			log.Errorf("Unable to parse filter rules for %s: %v", apprepo.Name, err)
-		} else {
-			args = append(args, "--filter-rules", string(rulesJSON))
-		}
-	}
-
-	return args
-}
-
-// apprepoSyncJobEnvVars returns a list of env variables for the sync container
-func apprepoSyncJobEnvVars(apprepo *apprepov1alpha1.AppRepository, config Config) []corev1.EnvVar {
-	var envVars []corev1.EnvVar
-	envVars = append(envVars, corev1.EnvVar{
-		Name: "DB_PASSWORD",
-		ValueFrom: &corev1.EnvVarSource{
-			SecretKeyRef: &corev1.SecretKeySelector{
-				LocalObjectReference: corev1.LocalObjectReference{Name: config.DBSecretName},
-				Key:                  config.DBSecretKey,
-			},
-		},
-	})
-	if apprepo.Spec.Auth.Header != nil {
-		if apprepo.Spec.Auth.Header.SecretKeyRef.Key == ".dockerconfigjson" {
-			envVars = append(envVars, corev1.EnvVar{
-				Name: "DOCKER_CONFIG_JSON",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: secretKeyRefForRepo(apprepo.Spec.Auth.Header.SecretKeyRef, apprepo, config),
-				},
-			})
-		} else {
-			envVars = append(envVars, corev1.EnvVar{
-				Name: "AUTHORIZATION_HEADER",
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: secretKeyRefForRepo(apprepo.Spec.Auth.Header.SecretKeyRef, apprepo, config),
-				},
-			})
-		}
-	}
-	return envVars
-}
-
-// secretKeyRefForRepo returns a secret key ref with a name depending on whether
-// this repo is in the kubeapps namespace or not. If the repo is not in the
-// kubeapps namespace, then the secret will have been copied from another namespace
-// into the kubeapps namespace and have a slightly different name.
-func secretKeyRefForRepo(keyRef corev1.SecretKeySelector, apprepo *apprepov1alpha1.AppRepository, config Config) *corev1.SecretKeySelector {
-	if apprepo.ObjectMeta.Namespace == config.KubeappsNamespace {
-		return &keyRef
-	}
-	keyRef.LocalObjectReference.Name = helm.SecretNameForNamespacedRepo(apprepo.ObjectMeta.Name, apprepo.ObjectMeta.Namespace)
-	return &keyRef
-}
-
-// apprepoCleanupJobArgs returns a list of args for the repo cleanup container
-func apprepoCleanupJobArgs(namespace, name string, config Config) []string {
-	return append([]string{
-		"delete",
-		name,
-		"--namespace=" + namespace,
-	}, dbFlags(config)...)
-}
-
-func dbFlags(config Config) []string {
-	return []string{
-		"--database-url=" + config.DBURL,
-		"--database-user=" + config.DBUser,
-		"--database-name=" + config.DBName,
-	}
-}
-
-// the following pieces of code have been extracted from
-// https://github.com/kubernetes-sigs/controller-runtime/blob/main/pkg/controller/controllerutil/controllerutil.go
-// and modified to use the apimachinery object instead of the the controller-runtime object
-// they are subject to the undermentioned license terms.
-
-/*
-Copyright 2018 The Kubernetes Authors.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
-// ContainsFinalizer checks an Object that the provided finalizer is present.
-func containsFinalizer(o metav1.Object, finalizer string) bool {
-	f := o.GetFinalizers()
-	for _, e := range f {
-		if e == finalizer {
-			return true
-		}
-	}
-	return false
-}
-
-// AddFinalizer accepts an Object and adds the provided finalizer if not present.
-// It returns an indication of whether it updated the object's list of finalizers.
-func addFinalizer(o metav1.Object, finalizer string) (finalizersUpdated bool) {
-	f := o.GetFinalizers()
-	for _, e := range f {
-		if e == finalizer {
-			return false
-		}
-	}
-	o.SetFinalizers(append(f, finalizer))
-	return true
-}
-
-// RemoveFinalizer accepts an Object and removes the provided finalizer if present.
-// It returns an indication of whether it updated the object's list of finalizers.
-func removeFinalizer(o metav1.Object, finalizer string) (finalizersUpdated bool) {
-	f := o.GetFinalizers()
-	for i := 0; i < len(f); i++ {
-		if f[i] == finalizer {
-			f = append(f[:i], f[i+1:]...)
-			i--
-			finalizersUpdated = true
-		}
-	}
-	o.SetFinalizers(f)
 	return
 }
