@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,12 +15,15 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/vmware-tanzu/kubeapps/pkg/helm"
+	"google.golang.org/grpc"
 	log "k8s.io/klog/v2"
 
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	// TODO(minelson): refactor these utils into shareable lib.
 	utils "github.com/vmware-tanzu/kubeapps/cmd/asset-syncer/server"
+	ocicatalog "github.com/vmware-tanzu/kubeapps/cmd/oci-catalog/gen/catalog/v1alpha1"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
+	"google.golang.org/grpc/credentials/insecure"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -30,18 +34,18 @@ import (
 const OCIImageManifestMediaType = "application/vnd.oci.image.manifest.v1+json"
 
 // ValidateRepository Checks that successful connection can be made to repository
-func (s *Server) ValidateRepository(appRepo *apprepov1alpha1.AppRepository, secret *corev1.Secret) error {
+func (s *Server) ValidateRepository(ctx context.Context, appRepo *apprepov1alpha1.AppRepository, secret *corev1.Secret) error {
 	if len(appRepo.Spec.DockerRegistrySecrets) > 0 && appRepo.Namespace == s.GetGlobalPackagingNamespace() {
 		// TODO(mnelson): we may also want to validate that any docker registry secrets listed
 		// already exist in the namespace.
 		return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("docker registry secrets cannot be set for app repositories available in all namespaces"))
 	}
 
-	validator, err := getValidator(appRepo, secret, s.repoClientGetter)
+	validator, err := s.getValidator(appRepo, secret)
 	if err != nil {
 		return err
 	}
-	resp, err := validator.Validate()
+	resp, err := validator.Validate(ctx)
 	if err != nil {
 		return err
 	} else if resp.Code >= 400 {
@@ -54,19 +58,20 @@ func (s *Server) ValidateRepository(appRepo *apprepov1alpha1.AppRepository, secr
 
 // getValidator return appropriate RepositoryValidator interface for OCI and
 // non-OCI Repos
-func getValidator(appRepo *apprepov1alpha1.AppRepository, secret *corev1.Secret, clientGetter repositoryClientGetter) (RepositoryValidator, error) {
+func (s *Server) getValidator(appRepo *apprepov1alpha1.AppRepository, secret *corev1.Secret) (RepositoryValidator, error) {
 	if appRepo.Spec.Type == "oci" {
 		// For the OCI case, we want to validate that all the given repositories are valid
 		return HelmOCIValidator{
-			AppRepo:      appRepo,
-			Secret:       secret,
-			ClientGetter: clientGetter,
+			AppRepo:        appRepo,
+			Secret:         secret,
+			ClientGetter:   s.repoClientGetter,
+			OCICatalogAddr: s.OCICatalogAddr,
 		}, nil
 	} else {
 		return HelmNonOCIValidator{
 			AppRepo:      appRepo,
 			Secret:       secret,
-			ClientGetter: clientGetter,
+			ClientGetter: s.repoClientGetter,
 		}, nil
 	}
 }
@@ -247,10 +252,11 @@ func ValidateOCIAppRepository(appRepo *apprepov1alpha1.AppRepository, cli httpcl
 	return true, nil
 }
 
-// RepositoryValidator is an interface for checking the validity of an AppRepository
+// RepositoryValidator is an interface for checking the validity of an
+// AppRepository
 type RepositoryValidator interface {
 	// Validate returns a validation response.
-	Validate() (*ValidationResponse, error)
+	Validate(context.Context) (*ValidationResponse, error)
 }
 
 // HelmNonOCIValidator is an HttpValidator for non-OCI Helm repositories.
@@ -260,14 +266,14 @@ type HelmNonOCIValidator struct {
 	ClientGetter repositoryClientGetter
 }
 
-func (r HelmNonOCIValidator) Validate() (*ValidationResponse, error) {
+func (r HelmNonOCIValidator) Validate(ctx context.Context) (*ValidationResponse, error) {
 	repoURL := strings.TrimSuffix(strings.TrimSpace(r.AppRepo.Spec.URL), "/")
 	parsedURL, err := url.ParseRequestURI(repoURL)
 	if err != nil {
 		return nil, err
 	}
 	parsedURL.Path = path.Join(parsedURL.Path, "index.yaml")
-	req, err := http.NewRequest("GET", parsedURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", parsedURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -294,13 +300,63 @@ func (r HelmNonOCIValidator) Validate() (*ValidationResponse, error) {
 }
 
 type HelmOCIValidator struct {
-	AppRepo      *apprepov1alpha1.AppRepository
-	Secret       *corev1.Secret
-	ClientGetter repositoryClientGetter
+	AppRepo        *apprepov1alpha1.AppRepository
+	Secret         *corev1.Secret
+	ClientGetter   repositoryClientGetter
+	OCICatalogAddr string
 }
 
-func (v HelmOCIValidator) Validate() (*ValidationResponse, error) {
+func queryOCICatalog(ctx context.Context, ociCatalogAddr string, appRepoURL string) (*ValidationResponse, error) {
+	u, err := url.Parse(appRepoURL)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse URL for OCI Catalog %q: %+v", appRepoURL, err)
+	}
 
+	conn, err := grpc.Dial(ociCatalogAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, fmt.Errorf("unable to contact OCI Catalog at %q: %+v", ociCatalogAddr, err)
+	}
+	defer conn.Close()
+
+	client := ocicatalog.NewOCICatalogServiceClient(conn)
+
+	repos_stream, err := client.ListRepositoriesForRegistry(ctx, &ocicatalog.ListRepositoriesForRegistryRequest{
+		Registry:     u.Host,
+		Namespace:    u.Path,
+		ContentTypes: []string{"helm"},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error querying OCI Catalog for repos: %+v", err)
+	}
+
+	// It's enough to receive a single repo to be valid.
+	_, err = repos_stream.Recv()
+	if err != nil {
+		return nil, fmt.Errorf("error receiving OCI Repositories: %+v", err)
+	}
+	return &ValidationResponse{Code: 200, Message: "OK"}, nil
+}
+
+func (v HelmOCIValidator) Validate(ctx context.Context) (*ValidationResponse, error) {
+	// We need to either have an http client getter or access
+	// to the OCI Catalog service.
+	if v.OCICatalogAddr == "" && v.ClientGetter == nil {
+		return nil, fmt.Errorf("unable to validate without either http client or OCI Catalog address")
+	}
+
+	// Prefer the OCI Catalog service, but we just log and ignore errors
+	// for now so that behaviour does not change for VAC index support.
+	if v.OCICatalogAddr != "" {
+		resp, err := queryOCICatalog(ctx, v.OCICatalogAddr, v.AppRepo.Spec.URL)
+		if err == nil {
+			return resp, nil
+		}
+		log.Errorf("unable to query OCI Catalog service at %q: %+v", v.OCICatalogAddr, err)
+	}
+
+	if v.ClientGetter == nil {
+		return nil, fmt.Errorf("unable to validate without http client")
+	}
 	var response *ValidationResponse
 	response = &ValidationResponse{Code: 200, Message: "OK"}
 
