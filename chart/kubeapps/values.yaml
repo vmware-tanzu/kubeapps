@@ -1898,7 +1898,7 @@ ociCatalog:
   ## @param ocicatalog.containerPorts.http OCI Catalog HTTP container port
   ##
   containerPorts:
-    http: 50061
+    grpc: 50061
   ## OCI Catalog containers' resource requests and limits
   ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
   ## @param ocicatalog.resources.limits.cpu The CPU limits for the OCI Catalog container
