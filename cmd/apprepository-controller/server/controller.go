@@ -479,25 +479,10 @@ func (c *Controller) cleanUpAppRepo(apprepo *apprepov1alpha1.AppRepository, name
 
 func (c Controller) handleAppRepoMetaChangeOrDelete(obj interface{}, shouldDelete bool) {
 	var (
-		object  metav1.Object
 		apprepo *apprepov1alpha1.AppRepository
 		ok      bool
 		err     error
 	)
-
-	if object, ok = obj.(metav1.Object); !ok {
-		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
-		if !ok {
-			runtime.HandleError(fmt.Errorf("error decoding object, invalid type"))
-			return
-		}
-		object, ok = tombstone.Obj.(metav1.Object)
-		if !ok {
-			runtime.HandleError(fmt.Errorf("error decoding object tombstone, invalid type"))
-			return
-		}
-		log.Infof("Recovered deleted object '%s' from tombstone", object.GetName())
-	}
 
 	if apprepo, ok = obj.(*apprepov1alpha1.AppRepository); !ok {
 		runtime.HandleError(fmt.Errorf("Error decoding object, invalid type"))
@@ -545,5 +530,4 @@ func (c Controller) handleAppRepoMetaChangeOrDelete(obj interface{}, shouldDelet
 			}
 		}
 	}
-	return
 }

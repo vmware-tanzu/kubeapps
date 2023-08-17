@@ -67,8 +67,10 @@ func Test_newCronJob(t *testing.T) {
 					Annotations: map[string]string{},
 				},
 				Spec: batchv1.CronJobSpec{
-					Schedule:          "*/10 * * * *",
-					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
+					Schedule:                   "*/10 * * * *",
+					ConcurrencyPolicy:          batchv1.ReplaceConcurrent,
+					SuccessfulJobsHistoryLimit: func(val int32) *int32 { return &val }(3),
+					FailedJobsHistoryLimit:     func(val int32) *int32 { return &val }(1),
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
@@ -149,8 +151,10 @@ func Test_newCronJob(t *testing.T) {
 					Annotations: map[string]string{},
 				},
 				Spec: batchv1.CronJobSpec{
-					Schedule:          "*/10 * * * *",
-					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
+					Schedule:                   "*/10 * * * *",
+					ConcurrencyPolicy:          batchv1.ReplaceConcurrent,
+					SuccessfulJobsHistoryLimit: func(val int32) *int32 { return &val }(3),
+					FailedJobsHistoryLimit:     func(val int32) *int32 { return &val }(1),
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
@@ -244,8 +248,10 @@ func Test_newCronJob(t *testing.T) {
 					Annotations: map[string]string{},
 				},
 				Spec: batchv1.CronJobSpec{
-					Schedule:          "*/20 * * * *",
-					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
+					Schedule:                   "*/20 * * * *",
+					ConcurrencyPolicy:          batchv1.ReplaceConcurrent,
+					SuccessfulJobsHistoryLimit: func(val int32) *int32 { return &val }(3),
+					FailedJobsHistoryLimit:     func(val int32) *int32 { return &val }(1),
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
@@ -336,8 +342,10 @@ func Test_newCronJob(t *testing.T) {
 					Annotations: map[string]string{},
 				},
 				Spec: batchv1.CronJobSpec{
-					Schedule:          "*/20 * * * *",
-					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
+					Schedule:                   "*/20 * * * *",
+					ConcurrencyPolicy:          batchv1.ReplaceConcurrent,
+					SuccessfulJobsHistoryLimit: func(val int32) *int32 { return &val }(3),
+					FailedJobsHistoryLimit:     func(val int32) *int32 { return &val }(1),
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
@@ -434,8 +442,10 @@ func Test_newCronJob(t *testing.T) {
 					Annotations: map[string]string{},
 				},
 				Spec: batchv1.CronJobSpec{
-					Schedule:          "*/15 * * * *",
-					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
+					Schedule:                   "*/15 * * * *",
+					ConcurrencyPolicy:          batchv1.ReplaceConcurrent,
+					SuccessfulJobsHistoryLimit: func(val int32) *int32 { return &val }(3),
+					FailedJobsHistoryLimit:     func(val int32) *int32 { return &val }(1),
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
@@ -526,8 +536,10 @@ func Test_newCronJob(t *testing.T) {
 					Annotations: map[string]string{},
 				},
 				Spec: batchv1.CronJobSpec{
-					Schedule:          "*/2 */2 */2 */2 1-5",
-					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
+					Schedule:                   "*/2 */2 */2 */2 1-5",
+					ConcurrencyPolicy:          batchv1.ReplaceConcurrent,
+					SuccessfulJobsHistoryLimit: func(val int32) *int32 { return &val }(3),
+					FailedJobsHistoryLimit:     func(val int32) *int32 { return &val }(1),
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
@@ -586,6 +598,7 @@ func Test_newCronJob(t *testing.T) {
 
 			result, _ := newCronJob(tt.apprepo, config)
 			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
+
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})

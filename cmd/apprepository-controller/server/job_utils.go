@@ -66,14 +66,12 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository, config Config) (*batchv1
 
 	var concurrencyPolicy batchv1.ConcurrencyPolicy
 	switch config.ConcurrencyPolicy {
-	case "Allow":
-	case "allow":
+	case "Allow", "allow":
 		concurrencyPolicy = batchv1.AllowConcurrent
-	case "Forbid":
-	case "forbid":
+	case "Forbid", "forbid":
 		concurrencyPolicy = batchv1.ForbidConcurrent
-	case "Replace":
-	case "replace":
+	case "Replace", "replace":
+		concurrencyPolicy = batchv1.ReplaceConcurrent
 	default:
 		concurrencyPolicy = batchv1.ReplaceConcurrent
 	}
