@@ -751,8 +751,8 @@ github.com/vito/go-interact v1.0.1 h1:O8xi8c93bRUv2Tb/v6HdiuGc+WnWt+AQzF74MOOdlB
 github.com/vito/go-interact v1.0.1/go.mod h1:HrdHSJXD2yn1MhlTwSIMeFgQ5WftiIorszVGd3S/DAA=
 github.com/vmware-tanzu/carvel-kapp v0.56.0 h1:NgQA3bjrcxWmR6Z1pOzGR2wkh5d8nRpXX55Ol4Jthws=
 github.com/vmware-tanzu/carvel-kapp v0.56.0/go.mod h1:I/yQqj44zhi7oln9Hyh00RwvFU+SFviEwtTxUTniIsw=
-github.com/vmware-tanzu/carvel-kapp-controller v0.46.1 h1:mH3uQJqJnFbUwOPYng1xdJEsYxaOS7G1es39SOPOXd8=
-github.com/vmware-tanzu/carvel-kapp-controller v0.46.1/go.mod h1:LJf4oaNfKW8kk6ddD8uRaayaUecGiqrz278oe4AEBSc=
+github.com/vmware-tanzu/carvel-kapp-controller v0.46.2 h1:TQRXFnZ6PryhQxx+4X1w2NSpEXyT6qg1/r3/4RkR6UE=
+github.com/vmware-tanzu/carvel-kapp-controller v0.46.2/go.mod h1:LJf4oaNfKW8kk6ddD8uRaayaUecGiqrz278oe4AEBSc=
 github.com/vmware-tanzu/carvel-vendir v0.34.4 h1:K7Dt9t+LE5p+AVlrrHcjZzCSBUY/69nd+fxjr62/qhI=
 github.com/vmware-tanzu/carvel-vendir v0.34.4/go.mod h1:n3mFqV6UrLCwDy1S5Wr73XIbolTYfY+NOBqxC1ihjRk=
 github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f/go.mod h1:N2zxlSyiKSe5eX1tZViRH5QA0qijqEDrYZiPEAiq3wU=
