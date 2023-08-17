@@ -32,8 +32,8 @@ type Config struct {
 	UserAgentComment           string
 	Crontab                    string
 	TTLSecondsAfterFinished    string
-	SuccessfulJobsHistoryLimit *int32
-	FailedJobsHistoryLimit     *int32
+	SuccessfulJobsHistoryLimit int32
+	FailedJobsHistoryLimit     int32
 	ConcurrencyPolicy          string
 	ReposPerNamespace          bool
 	CustomAnnotations          []string

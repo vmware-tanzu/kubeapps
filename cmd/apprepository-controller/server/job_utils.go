@@ -87,8 +87,8 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository, config Config) (*batchv1
 		},
 		Spec: batchv1.CronJobSpec{
 			Schedule:                   cronTime,
-			SuccessfulJobsHistoryLimit: config.SuccessfulJobsHistoryLimit,
-			FailedJobsHistoryLimit:     config.FailedJobsHistoryLimit,
+			SuccessfulJobsHistoryLimit: func(val int32) *int32 { return &val }(config.SuccessfulJobsHistoryLimit),
+			FailedJobsHistoryLimit:     func(val int32) *int32 { return &val }(config.FailedJobsHistoryLimit),
 			ConcurrencyPolicy:          concurrencyPolicy,
 			JobTemplate: batchv1.JobTemplateSpec{
 				Spec: syncJobSpec(apprepo, config),
