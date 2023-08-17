@@ -10,13 +10,14 @@ COPY pkg pkg
 COPY cmd cmd
 ARG VERSION
 
-ARG GOLANGCILINT_VERSION="1.53.3"
-RUN go install github.com/golangci/golangci-lint/cmd/golangci-lint@v$GOLANGCILINT_VERSION
-
 # If true, run golangci-lint to detect issues
 ARG lint
 
+# https://github.com/golangci/golangci-lint/releases
+ARG GOLANGCILINT_VERSION="1.53.3"
+
 RUN if [ ! -z "$lint" ]; then \
+  go install github.com/golangci/golangci-lint/cmd/golangci-lint@v$GOLANGCILINT_VERSION; \
   # Run golangci-lint to detect issues
   golangci-lint run --timeout=10m ./cmd/asset-syncer/... && \
   golangci-lint run --timeout=10m ./pkg/... ; \
