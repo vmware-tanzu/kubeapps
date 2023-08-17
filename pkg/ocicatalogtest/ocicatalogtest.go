@@ -12,22 +12,28 @@ import (
 )
 
 type OCICatalogDouble struct {
-	Repositories []ocicatalog.Repository
-	Tags         []ocicatalog.Tag
+	Repositories []*ocicatalog.Repository
+	Tags         []*ocicatalog.Tag
 	ocicatalog.UnimplementedOCICatalogServiceServer
 }
 
 // Dummy implementation that just sends the canned repositories.
 func (c OCICatalogDouble) ListRepositoriesForRegistry(r *ocicatalog.ListRepositoriesForRegistryRequest, stream ocicatalog.OCICatalogService_ListRepositoriesForRegistryServer) error {
 	for _, repo := range c.Repositories {
-		stream.Send(&repo)
+		err := stream.Send(repo)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 func (c OCICatalogDouble) ListTagsForRepository(r *ocicatalog.ListTagsForRepositoryRequest, stream ocicatalog.OCICatalogService_ListTagsForRepositoryServer) error {
 	for _, tag := range c.Tags {
-		stream.Send(&tag)
+		err := stream.Send(tag)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -45,7 +51,11 @@ func SetupTestDouble(t *testing.T) (string, *OCICatalogDouble, func()) {
 	ocicatalog.RegisterOCICatalogServiceServer(grpcServer, catalogDouble)
 
 	go func() {
-		grpcServer.Serve(lis)
+		err := grpcServer.Serve(lis)
+		if err != nil {
+			t.Errorf("%+v", err)
+			return
+		}
 	}()
 
 	return lis.Addr().String(), catalogDouble, func() {

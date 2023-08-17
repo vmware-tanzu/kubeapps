@@ -410,7 +410,7 @@ func TestOCIValidateWithCatalogServer(t *testing.T) {
 
 	testCases := []struct {
 		name             string
-		repos            []ocicatalog.Repository
+		repos            []*ocicatalog.Repository
 		validator        HelmOCIValidator
 		expectedResponse *ValidationResponse
 		expectError      bool
@@ -425,7 +425,7 @@ func TestOCIValidateWithCatalogServer(t *testing.T) {
 				},
 				OCICatalogAddr: ociCatalogAddr,
 			},
-			repos: []ocicatalog.Repository{
+			repos: []*ocicatalog.Repository{
 				{
 					Name: "apache",
 				},
@@ -448,7 +448,7 @@ func TestOCIValidateWithCatalogServer(t *testing.T) {
 				},
 				OCICatalogAddr: ociCatalogAddr,
 			},
-			repos: []ocicatalog.Repository{
+			repos: []*ocicatalog.Repository{
 				{
 					Name: "apache",
 				},
