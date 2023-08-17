@@ -32,6 +32,7 @@ import (
 */
 
 const OCIImageManifestMediaType = "application/vnd.oci.image.manifest.v1+json"
+const OCIDistributionAPIProto = "https"
 
 // ValidateRepository Checks that successful connection can be made to repository
 func (s *Server) ValidateRepository(ctx context.Context, appRepo *apprepov1alpha1.AppRepository, secret *corev1.Secret) error {
@@ -62,10 +63,11 @@ func (s *Server) getValidator(appRepo *apprepov1alpha1.AppRepository, secret *co
 	if appRepo.Spec.Type == "oci" {
 		// For the OCI case, we want to validate that all the given repositories are valid
 		return HelmOCIValidator{
-			AppRepo:        appRepo,
-			Secret:         secret,
-			ClientGetter:   s.repoClientGetter,
-			OCICatalogAddr: s.OCICatalogAddr,
+			AppRepo:             appRepo,
+			Secret:              secret,
+			ClientGetter:        s.repoClientGetter,
+			OCICatalogAddr:      s.OCICatalogAddr,
+			OCIReplacementProto: OCIDistributionAPIProto,
 		}, nil
 	} else {
 		return HelmNonOCIValidator{
@@ -213,11 +215,15 @@ func getOCIAppRepositoryMediaType(client httpclient.Client, repoURL string, repo
 	return mediaType, nil
 }
 
-// ValidateOCIAppRepository validates OCI Repos only
+// validateOCIAppRepository validates OCI Repos only
 // return true if mediaType == "application/vnd.cncf.helm.config" otherwise false
-func ValidateOCIAppRepository(appRepo *apprepov1alpha1.AppRepository, cli httpclient.Client) (bool, error) {
+func (v *HelmOCIValidator) validateOCIAppRepository(appRepo *apprepov1alpha1.AppRepository, cli httpclient.Client) (bool, error) {
 
 	repoURL := strings.TrimSuffix(strings.TrimSpace(appRepo.Spec.URL), "/")
+	// If the app repo url was specified using the oci protocol - "oci://" -
+	// then we need to replace it to interact with the http(s) distribution
+	// spec API.
+	repoURL = strings.Replace(repoURL, "oci://", fmt.Sprintf("%s://", v.OCIReplacementProto), 1)
 	// For the OCI case, if no repositories are listed then we validate that a
 	// catalog is available for the registry, otherwise we want to validate that
 	// all the listed repositories are valid
@@ -304,6 +310,10 @@ type HelmOCIValidator struct {
 	Secret         *corev1.Secret
 	ClientGetter   repositoryClientGetter
 	OCICatalogAddr string
+	// OCIReplacementProto is only a field on the struct so that in tests we
+	// can use `http` rather than `https`. When a HelmOCIValidator is created
+	// here in non-test code, we use `https`.
+	OCIReplacementProto string
 }
 
 func queryOCICatalog(ctx context.Context, ociCatalogAddr string, appRepoURL string) (*ValidationResponse, error) {
@@ -365,7 +375,7 @@ func (v HelmOCIValidator) Validate(ctx context.Context) (*ValidationResponse, er
 		return nil, err
 	}
 	// If there was an error validating the OCI repository, it's not an internal error.
-	isValidRepo, err := ValidateOCIAppRepository(v.AppRepo, cli)
+	isValidRepo, err := v.validateOCIAppRepository(v.AppRepo, cli)
 	if err != nil || !isValidRepo {
 		response = &ValidationResponse{Code: 400, Message: err.Error()}
 	}
