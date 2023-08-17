@@ -2181,5 +2181,7 @@ func makeDefaultConfig() Config {
 		CustomLabels:             []string{},
 		ParsedCustomLabels:       map[string]string{},
 		ParsedCustomAnnotations:  map[string]string{},
+		ImagePullSecretsRefs:     nil,
+		V1Beta1CronJobs:          false,
 	}
 }
