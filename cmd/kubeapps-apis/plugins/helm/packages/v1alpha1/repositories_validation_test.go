@@ -168,6 +168,7 @@ func TestOCIValidate(t *testing.T) {
 		repos            map[string]fakeOCIRepo
 		validator        HelmOCIValidator
 		expectedResponse *ValidationResponse
+		ociProto         bool
 	}{
 		{
 			name: "it returns a valid response if all the OCI repos are of the helm type",
@@ -379,6 +380,35 @@ func TestOCIValidate(t *testing.T) {
 				Message: "OK",
 			},
 		},
+		{
+			name: "it uses https when oci is specified as the protocol",
+			validator: HelmOCIValidator{
+				AppRepo: &v1alpha1.AppRepository{
+					Spec: v1alpha1.AppRepositorySpec{
+						Type:            "oci",
+						OCIRepositories: []string{},
+					},
+				},
+				OCIReplacementProto: "http",
+			},
+			repos: map[string]fakeOCIRepo{
+				"charts-index": {
+					tags: repoTagsList{
+						Tags: []string{"latest"},
+					},
+					manifest: repoManifest{
+						Config: repoConfig{
+							MediaType: "application/vnd.vmware.charts.index.config.v1+json",
+						},
+					},
+				},
+			},
+			expectedResponse: &ValidationResponse{
+				Code:    200,
+				Message: "OK",
+			},
+			ociProto: true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -387,7 +417,11 @@ func TestOCIValidate(t *testing.T) {
 			defer ts.Close()
 
 			// Use the test servers host/port as repo url.
-			tc.validator.AppRepo.Spec.URL = fmt.Sprintf("%s/%s", ts.URL, registryName)
+			registryURL := ts.URL
+			if tc.ociProto {
+				registryURL = strings.Replace(registryURL, "http://", "oci://", 1)
+			}
+			tc.validator.AppRepo.Spec.URL = fmt.Sprintf("%s/%s", registryURL, registryName)
 
 			// Use the actual client getter since we're using a test double.
 			tc.validator.ClientGetter = newRepositoryClient

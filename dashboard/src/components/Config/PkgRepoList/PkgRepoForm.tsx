@@ -430,7 +430,10 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     // In the Helm plugin, if the scheme is not specified, assume HTTPS (also for OCI registries)
     // Other plugins don't allow passing a scheme (eg. carvel) and others require a different one (eg. flux: oci://)
     let finalURL = url;
-    if (plugin?.name === PluginNames.PACKAGES_HELM && !url?.startsWith("http")) {
+    if (
+      plugin?.name === PluginNames.PACKAGES_HELM &&
+      !(url?.startsWith("http") || url?.startsWith("oci://"))
+    ) {
       finalURL = `https://${url}`;
     }
 
