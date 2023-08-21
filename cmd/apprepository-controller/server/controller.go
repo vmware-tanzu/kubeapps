@@ -262,18 +262,18 @@ func (c *Controller) processNextWorkItem() bool {
 			// Forget here else we'd go into a loop of attempting to
 			// process a work item that is invalid.
 			c.workqueue.Forget(obj)
-			runtime.HandleError(fmt.Errorf("expected string in workqueue but got %#v", obj))
+			runtime.HandleError(fmt.Errorf("Expected string in workqueue but got %#v", obj))
 			return nil
 		}
 		// Run the syncHandler, passing it the namespace/name string of the
 		// AppRepository resource to be synced.
 		if err := c.syncHandler(key); err != nil {
-			return fmt.Errorf("error syncing '%s': %s", key, err.Error())
+			return fmt.Errorf("Error syncing %q: %s", key, err.Error())
 		}
 		// Finally, if no error occurs we Forget this item so it does not
 		// get queued again until another change happens.
 		c.workqueue.Forget(obj)
-		log.Infof("Successfully synced '%s'", key)
+		log.Infof("Successfully synced %q", key)
 		return nil
 	}(obj)
 
@@ -296,15 +296,15 @@ func (c *Controller) handleAppRepoOwnedObject(obj interface{}) {
 	if object, ok = obj.(metav1.Object); !ok {
 		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
 		if !ok {
-			runtime.HandleError(fmt.Errorf("error decoding object, invalid type"))
+			runtime.HandleError(fmt.Errorf("Error decoding object, invalid type"))
 			return
 		}
 		object, ok = tombstone.Obj.(metav1.Object)
 		if !ok {
-			runtime.HandleError(fmt.Errorf("error decoding object tombstone, invalid type"))
+			runtime.HandleError(fmt.Errorf("Error decoding object tombstone, invalid type"))
 			return
 		}
-		log.Infof("Recovered deleted object '%s' from tombstone", object.GetName())
+		log.Infof("Recovered deleted object %q from tombstone", object.GetName())
 	}
 	log.Infof("Processing object: %s", object.GetName())
 	if ownerRef := metav1.GetControllerOf(object); ownerRef != nil {
@@ -316,12 +316,13 @@ func (c *Controller) handleAppRepoOwnedObject(obj interface{}) {
 
 		apprepo, err := c.appreposLister.AppRepositories(object.GetNamespace()).Get(ownerRef.Name)
 		if err != nil {
-			log.Infof("ignoring orphaned object '%s' of AppRepository '%s'", object.GetSelfLink(), ownerRef.Name)
+			log.Infof("Ignoring orphaned object %q of AppRepository %q", object.GetSelfLink(), ownerRef.Name)
 			return
 		}
 
 		if apprepo.ObjectMeta.DeletionTimestamp != nil {
-			log.Infof("ignoring object %q of AppRepository %q with deletion timestamp %q", object.GetSelfLink(), ownerRef.Name, apprepo.ObjectMeta.DeletionTimestamp)
+			apprepoKey := fmt.Sprintf("%s/%s", apprepo.GetNamespace(), apprepo.GetName())
+			log.Infof("Ignoring AppRepository %q, it was already marked for deletion at timestamp %q", apprepoKey, apprepo.ObjectMeta.DeletionTimestamp)
 			return
 		}
 
@@ -334,10 +335,12 @@ func (c *Controller) handleAppRepoOwnedObject(obj interface{}) {
 // converge the two. It then updates the Status block of the AppRepository
 // resource with the current status of the resource.
 func (c *Controller) syncHandler(key string) error {
+	ctx := context.Background()
+
 	// Convert the namespace/name string into a distinct namespace and name
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
-		runtime.HandleError(fmt.Errorf("invalid resource key: %s", key))
+		runtime.HandleError(fmt.Errorf("Invalid resource key: %s", key))
 		return nil
 	}
 
@@ -348,8 +351,7 @@ func (c *Controller) syncHandler(key string) error {
 		return ctrlclient.IgnoreNotFound(err)
 	}
 
-	cronjob, err := c.ensureCronJob(apprepo)
-
+	cronjob, err := c.ensureCronJob(ctx, apprepo)
 	// If an error occurs during Get/Create, we'll requeue the item so we can
 	// attempt processing again later. This could have been caused by a
 	// temporary network failure, or any other transient reason.
@@ -361,19 +363,25 @@ func (c *Controller) syncHandler(key string) error {
 	if apprepo.GetDeletionTimestamp().IsZero() {
 		// check if it contains the finalizer, if not, add it and update the object
 		if !containsFinalizer(apprepo, finalizerName) {
-			log.Infof("the AppRepository %q doesn't have a finalizer yet, adding one...", apprepo.GetName())
+			log.Infof("The AppRepository %q doesn't have a finalizer yet, adding one...", key)
 
 			ok := addFinalizer(apprepo, finalizerName)
 			if !ok {
-				return fmt.Errorf("error adding finalizer to the AppRepository %q", apprepo.GetName())
+				return fmt.Errorf("Error adding finalizer %q to the AppRepository %q", finalizerName, key)
 			}
-			_, err = c.apprepoclientset.KubeappsV1alpha1().AppRepositories(namespace).Update(context.TODO(), apprepo, metav1.UpdateOptions{})
+			_, err = c.apprepoclientset.KubeappsV1alpha1().AppRepositories(namespace).Update(ctx, apprepo, metav1.UpdateOptions{})
 			if err != nil {
-				return fmt.Errorf("error updating the AppRepository %q: %v", apprepo.GetName(), err)
+				return fmt.Errorf("Error updating the AppRepository %q: %v", key, err)
 			}
 		}
-	} else {
-		return fmt.Errorf("got an update event on a deletion-pending object")
+		// if the object is being deleted and already contains a finalizer
+		// it gets handled by this func instead of handleAppRepoMetaChangeOrDelete
+	} else if containsFinalizer(apprepo, finalizerName) {
+		err = c.handleCleanupFinalizer(ctx, apprepo)
+		if err != nil {
+			log.Errorf("Error handling the finalizer %q of the AppRepository %q: %v", finalizerName, key, err)
+			return err
+		}
 	}
 
 	// If the CronJob is not controlled by this AppRepository resource and it is not a
@@ -395,9 +403,11 @@ func (c *Controller) syncHandler(key string) error {
 //
 // It looks after creating either a v1 cronjob or v1beta1 cronjob depending on
 // configuration.
-func (c *Controller) ensureCronJob(apprepo *apprepov1alpha1.AppRepository) (metav1.Object, error) {
+func (c *Controller) ensureCronJob(ctx context.Context, apprepo *apprepov1alpha1.AppRepository) (metav1.Object, error) {
+	apprepoKey := fmt.Sprintf("%s/%s", apprepo.GetNamespace(), apprepo.GetName())
+
 	// Get the cronjob with the same name as AppRepository
-	cronjobName := cronJobName(apprepo.GetObjectMeta().GetNamespace(), apprepo.GetObjectMeta().GetName(), false)
+	cronjobName := cronJobName(apprepo.GetNamespace(), apprepo.GetName(), false)
 
 	var cronjob metav1.Object
 	var getCronJobErr error
@@ -410,89 +420,136 @@ func (c *Controller) ensureCronJob(apprepo *apprepov1alpha1.AppRepository) (meta
 
 	cronJobSpec, err := newCronJob(apprepo, c.conf)
 	if err != nil {
+		log.Errorf("Unable to create CronJob spec for AppRepository %q: %v", apprepoKey, err)
 		return nil, err
 	}
 
 	// If the resource doesn't exist, we'll create it
 	if errors.IsNotFound(getCronJobErr) {
-		log.Infof("Creating CronJob %q for AppRepository %q", cronjobName, apprepo.GetName())
+		log.Infof("Creating CronJob %q in namespace %q for AppRepository %q", cronJobSpec.GetName(), c.conf.KubeappsNamespace, apprepoKey)
 		if c.conf.V1Beta1CronJobs {
-			cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.KubeappsNamespace).Create(context.TODO(), v1CronJobToV1Beta1CronJob(cronJobSpec), metav1.CreateOptions{})
+			cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.KubeappsNamespace).Create(ctx, v1CronJobToV1Beta1CronJob(cronJobSpec), metav1.CreateOptions{})
 		} else {
-			cronjob, err = c.kubeclientset.BatchV1().CronJobs(c.conf.KubeappsNamespace).Create(context.TODO(), cronJobSpec, metav1.CreateOptions{})
+			cronjob, err = c.kubeclientset.BatchV1().CronJobs(c.conf.KubeappsNamespace).Create(ctx, cronJobSpec, metav1.CreateOptions{})
 		}
 		if err != nil {
+			log.Errorf("Unable to create CronJob %q for AppRepository %q: %v", cronJobSpec.GetName(), apprepoKey, err)
 			return nil, err
 		}
 
 		// Trigger a manual Job for the initial sync
-		_, err = c.kubeclientset.BatchV1().Jobs(c.conf.KubeappsNamespace).Create(context.TODO(), newSyncJob(apprepo, c.conf), metav1.CreateOptions{})
+		job := newSyncJob(apprepo, c.conf)
+		log.Infof("Creating Job %q in namespace %q for starting syncing AppRepository %q", job.GetGenerateName(), c.conf.KubeappsNamespace, apprepoKey)
+		_, err = c.kubeclientset.BatchV1().Jobs(c.conf.KubeappsNamespace).Create(ctx, job, metav1.CreateOptions{})
 		if err != nil {
+			log.Errorf("Unable to create Job %q for AppRepository %q: %v", job.GetGenerateName(), apprepoKey, err)
 			return nil, err
 		}
 	} else if err == nil {
 		// If the resource already exists, we'll update it
-		log.Infof("Updating CronJob %q in namespace %q for AppRepository %q in namespace %q", cronjobName, c.conf.KubeappsNamespace, apprepo.GetName(), apprepo.GetNamespace())
+		log.Infof("Updating CronJob %q in namespace %q for AppRepository %q", cronJobSpec.GetName(), c.conf.KubeappsNamespace, apprepoKey)
 		if c.conf.V1Beta1CronJobs {
-			cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.KubeappsNamespace).Update(context.TODO(), v1CronJobToV1Beta1CronJob(cronJobSpec), metav1.UpdateOptions{})
+			cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.KubeappsNamespace).Update(ctx, v1CronJobToV1Beta1CronJob(cronJobSpec), metav1.UpdateOptions{})
 		} else {
-			cronjob, err = c.kubeclientset.BatchV1().CronJobs(c.conf.KubeappsNamespace).Update(context.TODO(), cronJobSpec, metav1.UpdateOptions{})
+			cronjob, err = c.kubeclientset.BatchV1().CronJobs(c.conf.KubeappsNamespace).Update(ctx, cronJobSpec, metav1.UpdateOptions{})
 		}
 		if err != nil {
+			log.Errorf("Unable to update CronJob %q for AppRepository %q: %v", cronJobSpec.GetName(), apprepoKey, err)
 			return nil, err
 		}
 
 		// The AppRepository has changed, launch a manual Job
-		_, getCronJobErr = c.kubeclientset.BatchV1().Jobs(c.conf.KubeappsNamespace).Create(context.TODO(), newSyncJob(apprepo, c.conf), metav1.CreateOptions{})
-		if getCronJobErr != nil {
-			return nil, getCronJobErr
+		job := newSyncJob(apprepo, c.conf)
+		log.Infof("Creating Job %q in namespace %q for starting syncing AppRepository %q", job.GetGenerateName(), c.conf.KubeappsNamespace, apprepoKey)
+		_, err = c.kubeclientset.BatchV1().Jobs(c.conf.KubeappsNamespace).Create(ctx, job, metav1.CreateOptions{})
+		if err != nil {
+			log.Errorf("Unable to create Job %q for AppRepository %q: %v", job.GetGenerateName(), apprepoKey, err)
+			return nil, err
 		}
 	}
 	return cronjob, nil
 }
 
-func (c *Controller) cleanUpAppRepo(apprepo *apprepov1alpha1.AppRepository, namespace, name string) error {
-	log.Infof("Trying to perform clean-up tasks on AppRepository %q", name)
+// handleCleanupFinalizer starts the clean-up tasks derived from the finalizer of the AppRepository
+// and removes the finalizer from the object, updating the object afterwards
+func (c *Controller) handleCleanupFinalizer(ctx context.Context, apprepo *apprepov1alpha1.AppRepository) error {
+	apprepoKey := fmt.Sprintf("%s/%s", apprepo.GetNamespace(), apprepo.GetName())
+
+	log.Infof("Starting the clean-up tasks derived from the finalizer of the AppRepository %q", apprepoKey)
+
+	// start the clean-up
+	err := c.cleanUpAppRepo(ctx, apprepo)
+	if err != nil {
+		log.Errorf("Error performing clean-up tasks derived from the finalizer of the AppRepository %q. The finalizer will be removed anyways. You might want to perform a manual clean-up. Error: %v", apprepoKey, err)
+	}
+
+	// once everything is done, remove the finalizer from the list
+	ok := removeFinalizer(apprepo, finalizerName)
+	if !ok {
+		return fmt.Errorf("Error removing finalizer from the AppRepository %q: %v", apprepoKey, err)
+	}
+
+	// update the CR removing the finalizer
+	log.Infof("Removing finalizer from the AppRepository %q", apprepoKey)
+	_, err = c.apprepoclientset.KubeappsV1alpha1().AppRepositories(apprepo.GetNamespace()).Update(ctx, apprepo, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("Error updating the AppRepository %q: %v", apprepoKey, err)
+	}
+
+	return nil
+}
+
+func (c *Controller) cleanUpAppRepo(ctx context.Context, apprepo *apprepov1alpha1.AppRepository) error {
+	apprepoKey := fmt.Sprintf("%s/%s", apprepo.GetNamespace(), apprepo.GetName())
+
 	if apprepo == nil {
-		log.Errorf("AppRepository %q no longer exists. No clean-up operations can be performed automatically", name)
+		log.Errorf("AppRepository %q no longer exists. No clean-up operations can be performed automatically", apprepoKey)
 		return nil
 	}
 
 	// Trigger a Job to perform the cleanup of the charts in the DB corresponding to deleted AppRepository
-	_, err := c.kubeclientset.BatchV1().Jobs(c.conf.KubeappsNamespace).Create(context.TODO(), newCleanupJob(apprepo, c.conf), metav1.CreateOptions{})
+	job := newCleanupJob(apprepo, c.conf)
+	log.Infof("Creating clean-up Job %q in namespace %q for deleting AppRepository %q", job.GetGenerateName(), c.conf.KubeappsNamespace, apprepoKey)
+	_, err := c.kubeclientset.BatchV1().Jobs(c.conf.KubeappsNamespace).Create(ctx, job, metav1.CreateOptions{})
 	if err != nil {
-		log.Errorf("Unable to create cleanup job for AppRepository %q: %v", name, err)
+		log.Errorf("Unable to create clean-up Job %q for AppRepository %q: %v", job.GetGenerateName(), apprepoKey, err)
 		return err
 	}
 
 	// TODO: Workaround until the sync jobs are moved to the repoNamespace (#1647)
 	// Delete the cronjob in the Kubeapps namespace to avoid re-syncing the repository
-	err = c.kubeclientset.BatchV1().CronJobs(c.conf.KubeappsNamespace).Delete(context.TODO(), cronJobName(namespace, name, false), metav1.DeleteOptions{})
+	cronJobName := cronJobName(apprepo.GetNamespace(), apprepo.GetName(), false)
+	log.Infof("Deleting the CronJob %q in namespace %q for deleting AppRepository %q", cronJobName, c.conf.KubeappsNamespace, apprepoKey)
+	err = c.kubeclientset.BatchV1().CronJobs(c.conf.KubeappsNamespace).Delete(ctx, cronJobName, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
-		log.Errorf("Unable to delete sync cronjob for AppRepository %q: %v", name, err)
+		log.Errorf("Unable to delete CronJob %q for AppRepository %q: %v", cronJobName, apprepoKey, err)
 		return err
 	}
-	log.Infof("The clean-up tasks on AppRepository %q succeeded", name)
+	log.Infof("The clean-up tasks on AppRepository %q succeeded", apprepoKey)
 
 	return nil
 }
 
-func (c Controller) handleAppRepoMetaChangeOrDelete(obj interface{}, shouldDelete bool) {
+func (c *Controller) handleAppRepoMetaChangeOrDelete(obj interface{}, shouldDelete bool) {
 	var (
 		apprepo *apprepov1alpha1.AppRepository
 		ok      bool
 		err     error
 	)
 
+	ctx := context.Background()
+
 	if apprepo, ok = obj.(*apprepov1alpha1.AppRepository); !ok {
 		runtime.HandleError(fmt.Errorf("Error decoding object, invalid type"))
 		return
 	}
 
+	apprepoKey := fmt.Sprintf("%s/%s", apprepo.GetNamespace(), apprepo.GetName())
+
 	// if the object is not being deleted (ie, deletionTimestamp==0)
 	if apprepo.GetDeletionTimestamp().IsZero() && !containsFinalizer(apprepo, finalizerName) {
 		// check if it contains the finalizer, if not, add it and update the object
-		log.Errorf("The AppRepository %q should be deleted, but doesn't have any finalizers. You might want to perform a manual clean-up", apprepo.GetName())
+		log.Errorf("The AppRepository %q should be deleted, but doesn't have any finalizers. You might want to perform a manual clean-up", apprepoKey)
 	}
 
 	// if the object is being deleted and contains a finalizer
@@ -500,30 +557,14 @@ func (c Controller) handleAppRepoMetaChangeOrDelete(obj interface{}, shouldDelet
 		// if the object is being deleted and contains a finalizer and the event is not a deletion event,
 		// then handle the finalizer-derived clean-up tasks and remove the finalizer
 		if !shouldDelete {
-			log.Infof("Starting the clean-up tasks derived from the finalizer of the AppRepository %q", apprepo.GetName())
-
-			// start the clean-up
-			err = c.cleanUpAppRepo(apprepo, apprepo.GetNamespace(), apprepo.GetName())
+			err = c.handleCleanupFinalizer(ctx, apprepo)
 			if err != nil {
-				log.Errorf("Error performing clean-up tasks derived from the finalizer of the AppRepository %q. The finalizer will be removed anyways. You might want to perform a manual clean-up. Error: %v", apprepo.GetName(), err)
-			}
-
-			// once everything is done, remove the finalizer from the list
-			ok := removeFinalizer(apprepo, finalizerName)
-			if !ok {
-				log.Errorf("Error removing finalizer from the AppRepository %q: %v", apprepo.GetName(), err)
-				return
-			}
-
-			// update the CR removing the finalizer
-			_, err = c.apprepoclientset.KubeappsV1alpha1().AppRepositories(apprepo.GetNamespace()).Update(context.TODO(), apprepo, metav1.UpdateOptions{})
-			if err != nil {
-				log.Errorf("Error updating the AppRepository %q: %v", apprepo.GetName(), err)
+				log.Errorf("Error handling the finalizer of the AppRepository %q: %v", apprepoKey, err)
 				return
 			}
 		} else {
 			// if the object is being deleted and it is a deletion event, then do nothing else
-			log.Infof("The AppRepository %q is now being deleted", apprepo.GetName())
+			log.Infof("The AppRepository %q is now being deleted", apprepoKey)
 			key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 			if err == nil {
 				c.workqueue.AddRateLimited(key)

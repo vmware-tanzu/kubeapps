@@ -49,13 +49,13 @@ func NewFilteredAppRepositoryInformer(client versioned.Interface, namespace stri
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.KubeappsV1alpha1().AppRepositories(namespace).List(context.TODO(), options)
+				return client.KubeappsV1alpha1().AppRepositories(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.KubeappsV1alpha1().AppRepositories(namespace).Watch(context.TODO(), options)
+				return client.KubeappsV1alpha1().AppRepositories(namespace).Watch(context.Background(), options)
 			},
 		},
 		&apprepositoryv1alpha1.AppRepository{},
