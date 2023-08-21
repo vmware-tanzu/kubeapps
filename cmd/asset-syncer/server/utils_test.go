@@ -312,6 +312,16 @@ func Test_getOCIRepo(t *testing.T) {
 		assert.NoError(t, err)
 		helmtest.CheckHeader(t, repo.(*OCIRegistry).puller, "Authorization", "Basic auth")
 	})
+
+	t.Run("it should use https for distribution spec API calls if protocol is oci", func(t *testing.T) {
+		repo, err := getOCIRepo("namespace", "test", "oci://test", "Basic auth", nil, []string{}, &http.Client{})
+		assert.NoError(t, err)
+
+		client := repo.(*OCIRegistry).ociCli
+		if got, want := client.(*OciAPIClient).Url.String(), "https://test"; got != want {
+			t.Errorf("got: %q, want: %q", got, want)
+		}
+	})
 }
 
 func Test_parseFilters(t *testing.T) {

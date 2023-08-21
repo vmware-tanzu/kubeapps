@@ -763,6 +763,13 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filter *ap
 		log.Errorf("failed to parse URL, url=%s: %v", repoURL, err)
 		return nil, err
 	}
+
+	// If the AppRepo has the URL specified as `oci://` then replace it with
+	// https for talking with the API. If people are using non-https OCI
+	// registries (?!) then they can specify the URL with http.
+	if url.Scheme == "oci" {
+		url.Scheme = "https"
+	}
 	headers := http.Header{}
 	if authorizationHeader != "" {
 		headers["Authorization"] = []string{authorizationHeader}
