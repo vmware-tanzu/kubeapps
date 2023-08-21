@@ -586,7 +586,7 @@ func Test_newCronJob(t *testing.T) {
 			config.UserAgentComment = tt.userAgentComment
 
 			result := newCronJob(tt.apprepo, config)
-			if got, want := tt.expected, *result; !cmp.Equal(want, got) {
+			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
@@ -601,7 +601,7 @@ func Test_newCronJob(t *testing.T) {
 			config.UserAgentComment = tt.userAgentComment
 
 			result := newCronJob(tt.apprepo, config)
-			if got, want := tt.expected, *result; !cmp.Equal(want, got) {
+			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
@@ -1692,7 +1692,7 @@ func Test_newSyncJob(t *testing.T) {
 			config.UserAgentComment = tt.userAgentComment
 
 			result := newSyncJob(tt.apprepo, config)
-			if got, want := tt.expected, *result; !cmp.Equal(want, got) {
+			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
@@ -1801,8 +1801,9 @@ func Test_newCleanupJob(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := newCleanupJob(tt.kubeappsNamespace, tt.repoNamespace, tt.repoName, makeDefaultConfig())
-			if got, want := tt.expected, *result; !cmp.Equal(want, got) {
+			config := makeDefaultConfig()
+			result := newCleanupJob(tt.kubeappsNamespace, tt.repoNamespace, tt.repoName, config)
+			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
@@ -2180,5 +2181,7 @@ func makeDefaultConfig() Config {
 		CustomLabels:             []string{},
 		ParsedCustomLabels:       map[string]string{},
 		ParsedCustomAnnotations:  map[string]string{},
+		ImagePullSecretsRefs:     nil,
+		V1Beta1CronJobs:          false,
 	}
 }

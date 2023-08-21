@@ -208,7 +208,7 @@ frontend:
   image:
     registry: docker.io
     repository: bitnami/nginx
-    tag: 1.25.1-debian-11-r37
+    tag: 1.25.2-debian-11-r0
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -292,7 +292,7 @@ frontend:
   podSecurityContext:
     enabled: true
     fsGroup: 1001
-  ## Configure Container Security Context (only main container)
+  ## Configure Container Security Context for NGINX
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param frontend.containerSecurityContext.enabled Enabled NGINX containers' Security Context
   ## @param frontend.containerSecurityContext.runAsUser Set NGINX container's Security Context runAsUser
@@ -643,7 +643,7 @@ dashboard:
   podSecurityContext:
     enabled: true
     fsGroup: 1001
-  ## Configure Container Security Context (only main container)
+  ## Configure Container Security Context for Dashboard
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param dashboard.containerSecurityContext.enabled Enabled Dashboard containers' Security Context
   ## @param dashboard.containerSecurityContext.runAsUser Set Dashboard container's Security Context runAsUser
@@ -990,7 +990,7 @@ apprepository:
   podSecurityContext:
     enabled: true
     fsGroup: 1001
-  ## Configure Container Security Context (only main container)
+  ## Configure Container Security Context for App Repository jobs
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param apprepository.containerSecurityContext.enabled Enabled AppRepository Controller containers' Security Context
   ## @param apprepository.containerSecurityContext.runAsUser Set AppRepository Controller container's Security Context runAsUser
@@ -1145,7 +1145,7 @@ authProxy:
   image:
     registry: docker.io
     repository: bitnami/oauth2-proxy
-    tag: 7.4.0-debian-11-r250
+    tag: 7.4.0-debian-11-r272
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -1657,7 +1657,7 @@ kubeappsapis:
   podSecurityContext:
     enabled: true
     fsGroup: 1001
-  ## Configure Container Security Context (only main container)
+  ## Configure Container Security Context for Kubeapps APIs
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param kubeappsapis.containerSecurityContext.enabled Enabled KubeappsAPIs containers' Security Context
   ## @param kubeappsapis.containerSecurityContext.runAsUser Set KubeappsAPIs container's Security Context runAsUser
@@ -1680,7 +1680,7 @@ kubeappsapis:
   ##
   livenessProbe:
     enabled: true
-    initialDelaySeconds: 60
+    initialDelaySeconds: 10
     periodSeconds: 10
     timeoutSeconds: 5
     failureThreshold: 6
@@ -1694,7 +1694,7 @@ kubeappsapis:
   ##
   readinessProbe:
     enabled: true
-    initialDelaySeconds: 0
+    initialDelaySeconds: 5
     periodSeconds: 10
     timeoutSeconds: 5
     failureThreshold: 6
@@ -1845,18 +1845,18 @@ kubeappsapis:
 
 ## @section OCI Catalog chart configuration
 ociCatalog:
-  ## @param ociCatalog.enabled Enable the OCI catolog gRPC service for cataloging
+  ## @param ociCatalog.enabled Enable the OCI catalog gRPC service for cataloging
   ## OCI repositories
   enabled: false
   ## Bitnami Kubeapps OCI Catalog image
   ## ref: https://hub.docker.com/r/bitnami/kubeapps-ocicatalog/
-  ## @param dashboard.image.registry Dashboard image registry
-  ## @param dashboard.image.repository Dashboard image repository
-  ## @param dashboard.image.tag Dashboard image tag (immutable tags are recommended)
-  ## @param dashboard.image.digest Dashboard image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
-  ## @param dashboard.image.pullPolicy Dashboard image pull policy
-  ## @param dashboard.image.pullSecrets Dashboard image pull secrets
-  ## @param dashboard.image.debug Enable image debug mode
+  ## @param ociCatalog.image.registry OCI Catalog image registry
+  ## @param ociCatalog.image.repository OCI Catalog image repository
+  ## @param ociCatalog.image.tag OCI Catalog image tag (immutable tags are recommended)
+  ## @param ociCatalog.image.digest OCI Catalog image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
+  ## @param ociCatalog.image.pullPolicy OCI Catalog image pull policy
+  ## @param ociCatalog.image.pullSecrets Dashboard image pull secrets
+  ## @param ociCatalog.image.debug Enable image debug mode
   ##
   image:
     registry: docker.io
@@ -1889,22 +1889,22 @@ ociCatalog:
   ##     value: "bar"
   ##
   extraEnvVars: []
-  ## @param ocicatalog.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for the OCI Catalog container
+  ## @param ociCatalog.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for the OCI Catalog container
   ##
   extraEnvVarsCM: ""
-  ## @param ocicatalog.extraEnvVarsSecret Name of existing Secret containing extra env vars for the OCI Catalog container
+  ## @param ociCatalog.extraEnvVarsSecret Name of existing Secret containing extra env vars for the OCI Catalog container
   ##
   extraEnvVarsSecret: ""
-  ## @param ocicatalog.containerPorts.http OCI Catalog HTTP container port
+  ## @param ociCatalog.containerPorts.grpc OCI Catalog gRPC container port
   ##
   containerPorts:
     grpc: 50061
   ## OCI Catalog containers' resource requests and limits
   ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
-  ## @param ocicatalog.resources.limits.cpu The CPU limits for the OCI Catalog container
-  ## @param ocicatalog.resources.limits.memory The memory limits for the OCI Catalog container
-  ## @param ocicatalog.resources.requests.cpu The requested CPU for the OCI Catalog container
-  ## @param ocicatalog.resources.requests.memory The requested memory for the OCI Catalog container
+  ## @param ociCatalog.resources.limits.cpu The CPU limits for the OCI Catalog container
+  ## @param ociCatalog.resources.limits.memory The memory limits for the OCI Catalog container
+  ## @param ociCatalog.resources.requests.cpu The requested CPU for the OCI Catalog container
+  ## @param ociCatalog.resources.requests.memory The requested memory for the OCI Catalog container
   ##
   resources:
     limits:
@@ -1925,12 +1925,12 @@ ociCatalog:
     runAsNonRoot: true
   ## Configure extra options for OCI Catalog containers' liveness and readiness probes
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
-  ## @param ocicatalog.livenessProbe.enabled Enable livenessProbe
-  ## @param ocicatalog.livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
-  ## @param ocicatalog.livenessProbe.periodSeconds Period seconds for livenessProbe
-  ## @param ocicatalog.livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
-  ## @param ocicatalog.livenessProbe.failureThreshold Failure threshold for livenessProbe
-  ## @param ocicatalog.livenessProbe.successThreshold Success threshold for livenessProbe
+  ## @param ociCatalog.livenessProbe.enabled Enable livenessProbe
+  ## @param ociCatalog.livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param ociCatalog.livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param ociCatalog.livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param ociCatalog.livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param ociCatalog.livenessProbe.successThreshold Success threshold for livenessProbe
   ## OCI Catalog containers' liveness and readiness probes
   ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
   ##
@@ -1941,12 +1941,12 @@ ociCatalog:
     timeoutSeconds: 5
     failureThreshold: 6
     successThreshold: 1
-  ## @param ocicatalog.readinessProbe.enabled Enable readinessProbe
-  ## @param ocicatalog.readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
-  ## @param ocicatalog.readinessProbe.periodSeconds Period seconds for readinessProbe
-  ## @param ocicatalog.readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
-  ## @param ocicatalog.readinessProbe.failureThreshold Failure threshold for readinessProbe
-  ## @param ocicatalog.readinessProbe.successThreshold Success threshold for readinessProbe
+  ## @param ociCatalog.readinessProbe.enabled Enable readinessProbe
+  ## @param ociCatalog.readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param ociCatalog.readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param ociCatalog.readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param ociCatalog.readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param ociCatalog.readinessProbe.successThreshold Success threshold for readinessProbe
   ##
   readinessProbe:
     enabled: true
@@ -1955,12 +1955,12 @@ ociCatalog:
     timeoutSeconds: 5
     failureThreshold: 6
     successThreshold: 1
-  ## @param ocicatalog.startupProbe.enabled Enable startupProbe
-  ## @param ocicatalog.startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
-  ## @param ocicatalog.startupProbe.periodSeconds Period seconds for startupProbe
-  ## @param ocicatalog.startupProbe.timeoutSeconds Timeout seconds for startupProbe
-  ## @param ocicatalog.startupProbe.failureThreshold Failure threshold for startupProbe
-  ## @param ocicatalog.startupProbe.successThreshold Success threshold for startupProbe
+  ## @param ociCatalog.startupProbe.enabled Enable startupProbe
+  ## @param ociCatalog.startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
+  ## @param ociCatalog.startupProbe.periodSeconds Period seconds for startupProbe
+  ## @param ociCatalog.startupProbe.timeoutSeconds Timeout seconds for startupProbe
+  ## @param ociCatalog.startupProbe.failureThreshold Failure threshold for startupProbe
+  ## @param ociCatalog.startupProbe.successThreshold Success threshold for startupProbe
   ##
   startupProbe:
     enabled: false
@@ -1969,13 +1969,13 @@ ociCatalog:
     timeoutSeconds: 5
     failureThreshold: 6
     successThreshold: 1
-  ## @param ocicatalog.customLivenessProbe Custom livenessProbe that overrides the default one
+  ## @param ociCatalog.customLivenessProbe Custom livenessProbe that overrides the default one
   ##
   customLivenessProbe: {}
-  ## @param ocicatalog.customReadinessProbe Custom readinessProbe that overrides the default one
+  ## @param ociCatalog.customReadinessProbe Custom readinessProbe that overrides the default one
   ##
   customReadinessProbe: {}
-  ## @param ocicatalog.customStartupProbe Custom startupProbe that overrides the default one
+  ## @param ociCatalog.customStartupProbe Custom startupProbe that overrides the default one
   ##
   customStartupProbe: {}
   ## @param ociCatalog.lifecycleHooks Custom lifecycle hooks for OCI Catalog containers
@@ -1984,13 +1984,13 @@ ociCatalog:
   ## @param ociCatalog.command Override default container command (useful when using custom images)
   ##
   command: []
-  ## @param ocicatalog.args Override default container args (useful when using custom images)
+  ## @param ociCatalog.args Override default container args (useful when using custom images)
   ##
   args: []
-  ## @param ocicatalog.extraVolumes Optionally specify extra list of additional volumes for the OCI Catalog pod(s)
+  ## @param ociCatalog.extraVolumes Optionally specify extra list of additional volumes for the OCI Catalog pod(s)
   ##
   extraVolumes: []
-  ## @param ocicatalog.extraVolumeMounts Optionally specify extra list of additional volumeMounts for the OCI Catalog container(s)
+  ## @param ociCatalog.extraVolumeMounts Optionally specify extra list of additional volumeMounts for the OCI Catalog container(s)
   ##
   extraVolumeMounts: []
 
