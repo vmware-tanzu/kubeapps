@@ -58,9 +58,9 @@ test("Rolls back an application", async ({ page }) => {
   await page.locator('input[id^="replicaCount_text"]').fill("2");
 
   // Wait until changes are applied (due to the debounce in the input)
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(2000);
   await page.locator('li:has-text("YAML editor")').click();
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(2000);
 
   // Use the built-in search function in monaco to find the text we are looking for
   // so that it get loaded in the DOM when using the toContainText assert
