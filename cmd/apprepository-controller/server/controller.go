@@ -502,11 +502,6 @@ func (c *Controller) handleCleanupFinalizer(ctx context.Context, apprepo *apprep
 func (c *Controller) cleanUpAppRepo(ctx context.Context, apprepo *apprepov1alpha1.AppRepository) error {
 	apprepoKey := fmt.Sprintf("%s/%s", apprepo.GetNamespace(), apprepo.GetName())
 
-	if apprepo == nil {
-		log.Errorf("AppRepository %q no longer exists. No clean-up operations can be performed automatically", apprepoKey)
-		return nil
-	}
-
 	// Trigger a Job to perform the cleanup of the charts in the DB corresponding to deleted AppRepository
 	job := newCleanupJob(apprepo, c.conf)
 	log.Infof("Creating clean-up Job %q in namespace %q for deleting AppRepository %q", job.GetGenerateName(), c.conf.KubeappsNamespace, apprepoKey)
