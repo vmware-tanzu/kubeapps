@@ -292,7 +292,7 @@ frontend:
   podSecurityContext:
     enabled: true
     fsGroup: 1001
-  ## Configure Container Security Context (only main container)
+  ## Configure Container Security Context for NGINX
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param frontend.containerSecurityContext.enabled Enabled NGINX containers' Security Context
   ## @param frontend.containerSecurityContext.runAsUser Set NGINX container's Security Context runAsUser
@@ -643,7 +643,7 @@ dashboard:
   podSecurityContext:
     enabled: true
     fsGroup: 1001
-  ## Configure Container Security Context (only main container)
+  ## Configure Container Security Context for Dashboard
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param dashboard.containerSecurityContext.enabled Enabled Dashboard containers' Security Context
   ## @param dashboard.containerSecurityContext.runAsUser Set Dashboard container's Security Context runAsUser
@@ -990,7 +990,7 @@ apprepository:
   podSecurityContext:
     enabled: true
     fsGroup: 1001
-  ## Configure Container Security Context (only main container)
+  ## Configure Container Security Context for App Repository jobs
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param apprepository.containerSecurityContext.enabled Enabled AppRepository Controller containers' Security Context
   ## @param apprepository.containerSecurityContext.runAsUser Set AppRepository Controller container's Security Context runAsUser
@@ -1657,7 +1657,7 @@ kubeappsapis:
   podSecurityContext:
     enabled: true
     fsGroup: 1001
-  ## Configure Container Security Context (only main container)
+  ## Configure Container Security Context for Kubeapps APIs
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param kubeappsapis.containerSecurityContext.enabled Enabled KubeappsAPIs containers' Security Context
   ## @param kubeappsapis.containerSecurityContext.runAsUser Set KubeappsAPIs container's Security Context runAsUser
@@ -1680,7 +1680,7 @@ kubeappsapis:
   ##
   livenessProbe:
     enabled: true
-    initialDelaySeconds: 60
+    initialDelaySeconds: 10
     periodSeconds: 10
     timeoutSeconds: 5
     failureThreshold: 6
@@ -1694,7 +1694,7 @@ kubeappsapis:
   ##
   readinessProbe:
     enabled: true
-    initialDelaySeconds: 0
+    initialDelaySeconds: 5
     periodSeconds: 10
     timeoutSeconds: 5
     failureThreshold: 6
