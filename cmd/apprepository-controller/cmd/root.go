@@ -64,7 +64,7 @@ func init() {
 	//set initial value of verbosity
 	err := flag.Set("v", "3")
 	if err != nil {
-		log.Errorf("Error parsing verbosity: %v", viper.ConfigFileUsed())
+		log.Errorf("error parsing verbosity: %v", viper.ConfigFileUsed())
 	}
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 }
@@ -100,7 +100,7 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		log.Errorf("Using config file: %v", viper.ConfigFileUsed())
+		log.Errorf("using config file: %v", viper.ConfigFileUsed())
 	}
 }
 
@@ -123,7 +123,7 @@ func parseLabelsAnnotations(textArr []string) map[string]string {
 		if text != "" {
 			parts := strings.Split(text, "=")
 			if len(parts) != 2 {
-				log.Errorf("Cannot parse '%s'", text)
+				log.Errorf("cannot parse '%s'", text)
 			}
 			textMap[parts[0]] = parts[1]
 		}

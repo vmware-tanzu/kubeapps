@@ -46,17 +46,17 @@ type Config struct {
 func Serve(serveOpts Config) error {
 	cfg, err := clientcmd.BuildConfigFromFlags(serveOpts.APIServerURL, serveOpts.Kubeconfig)
 	if err != nil {
-		return fmt.Errorf("Error building kubeconfig: %s", err.Error())
+		return fmt.Errorf("error building kubeconfig: %s", err.Error())
 	}
 
 	kubeClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
-		return fmt.Errorf("Error building kubernetes clientset: %s", err.Error())
+		return fmt.Errorf("error building kubernetes clientset: %s", err.Error())
 	}
 
 	apprepoClient, err := clientset.NewForConfig(cfg)
 	if err != nil {
-		return fmt.Errorf("Error building apprepo clientset: %s", err.Error())
+		return fmt.Errorf("error building apprepo clientset: %s", err.Error())
 	}
 
 	// set up signals so we handle the first shutdown signal gracefully
@@ -78,7 +78,7 @@ func Serve(serveOpts Config) error {
 	go apprepoInformerFactory.Start(stopCh)
 
 	if err = controller.Run(2, stopCh); err != nil {
-		return fmt.Errorf("Error running controller: %s", err.Error())
+		return fmt.Errorf("error running controller: %s", err.Error())
 	}
 	return nil
 }
