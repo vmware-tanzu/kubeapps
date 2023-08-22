@@ -51,18 +51,18 @@ require (
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.11.3
-	k8s.io/api v0.26.7
-	k8s.io/apiextensions-apiserver v0.26.3
-	k8s.io/apimachinery v0.26.7
-	k8s.io/apiserver v0.26.7
+	k8s.io/api v0.28.0
+	k8s.io/apiextensions-apiserver v0.28.0
+	k8s.io/apimachinery v0.28.0
+	k8s.io/apiserver v0.28.0
 	k8s.io/cli-runtime v0.26.7
-	k8s.io/client-go v0.26.7
+	k8s.io/client-go v0.28.0
 	k8s.io/klog/v2 v2.100.1
 	k8s.io/kubectl v0.26.7
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
 	oras.land/oras-go v1.2.3
 	oras.land/oras-go/v2 v2.2.1
-	sigs.k8s.io/controller-runtime v0.14.6
+	sigs.k8s.io/controller-runtime v0.16.0
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -134,6 +134,7 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/gnostic v0.6.9 // indirect
+	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.3.0 // indirect
@@ -208,21 +209,22 @@ require (
 	go.opentelemetry.io/otel/trace v1.16.0 // indirect
 	go.starlark.net v0.0.0-20230726094710-7dadff395006 // indirect
 	golang.org/x/crypto v0.12.0 // indirect
+	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
 	golang.org/x/image v0.9.0 // indirect
 	golang.org/x/oauth2 v0.10.0 // indirect
 	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/term v0.11.0 // indirect
 	golang.org/x/text v0.12.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
-	gomodules.xyz/jsonpatch/v2 v2.3.0 // indirect
+	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230726155614-23370e0ffb3e // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230726155614-23370e0ffb3e // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/component-base v0.26.7 // indirect
-	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
+	k8s.io/component-base v0.28.0 // indirect
+	k8s.io/kube-openapi v0.0.0-20230717233707-2695361300d9 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/kustomize/api v0.12.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.13.9 // indirect
