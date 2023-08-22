@@ -24,7 +24,7 @@ func (s *Server) CreateSecret(ctx context.Context, r *connect.Request[v1alpha1.C
 
 	typedClient, err := s.clientGetter.Typed(r.Header(), cluster)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the k8s client: '%w'", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the k8s client: '%w'", err))
 	}
 
 	_, err = typedClient.CoreV1().Secrets(namespace).Create(ctx, &core.Secret{
@@ -99,7 +99,7 @@ func (s *Server) GetSecretNames(ctx context.Context, r *connect.Request[v1alpha1
 
 	typedClient, err := s.clientGetter.Typed(r.Header(), cluster)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the k8s client: '%w'", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the k8s client: '%w'", err))
 	}
 
 	secretList, err := typedClient.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{})

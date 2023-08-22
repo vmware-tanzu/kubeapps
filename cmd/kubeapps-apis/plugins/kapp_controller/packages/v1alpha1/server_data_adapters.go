@@ -179,7 +179,7 @@ func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.Pack
 
 	latestMatchingVersion, err := latestMatchingVersion(versions, pkgInstall.Spec.PackageRef.VersionSelection.Constraints)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot get the latest matching version for the pkg %q: %s", pkgMetadata.Name, err.Error())
+		return nil, fmt.Errorf("cannot get the latest matching version for the pkg %q: %s", pkgMetadata.Name, err.Error())
 	}
 
 	installedPackageSummary := &corev1.InstalledPackageSummary{
@@ -253,7 +253,7 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 
 	latestMatchingVersion, err := latestMatchingVersion(versions, pkgInstall.Spec.PackageRef.VersionSelection.Constraints)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot get the latest matching version for the pkg %q: %s", pkgMetadata.Name, err.Error())
+		return nil, fmt.Errorf("cannot get the latest matching version for the pkg %q: %s", pkgMetadata.Name, err.Error())
 	}
 
 	// build package availablePackageIdentifier based on the metadata
@@ -772,7 +772,7 @@ func (s *Server) validatePackageRepositoryCreate(ctx context.Context, cluster st
 	}
 
 	if request.Msg.Name == "" {
-		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request Name provided"))
+		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No request Name provided"))
 	}
 	if request.Msg.NamespaceScoped != (namespace != s.pluginConfig.globalPackagingNamespace) {
 		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Namespace Scope is inconsistent with the provided Namespace"))
@@ -782,18 +782,18 @@ func (s *Server) validatePackageRepositoryCreate(ctx context.Context, cluster st
 	case typeImgPkgBundle, typeImage, typeGIT, typeHTTP:
 		// valid types
 	case typeInline:
-		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("inline repositories are not supported"))
+		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Inline repositories are not supported"))
 	case "":
-		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no repository Type provided"))
+		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No repository Type provided"))
 	default:
-		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid repository Type"))
+		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Invalid repository Type"))
 	}
 
 	if _, err := pkgutils.ToDuration(request.Msg.Interval); err != nil {
-		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid interval: %w", err))
+		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Invalid interval: %w", err))
 	}
 	if request.Msg.Url == "" {
-		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request Url provided"))
+		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No request Url provided"))
 	}
 	if request.Msg.Auth != nil {
 		if err := s.validatePackageRepositoryAuth(ctx, request.Header(), cluster, namespace, request.Msg.Type, request.Msg.Auth, nil, nil); err != nil {
@@ -821,9 +821,9 @@ func (s *Server) validatePackageRepositoryUpdate(ctx context.Context, cluster st
 	case pkgRepository.Spec.Fetch.HTTP != nil:
 		rptype = typeHTTP
 	case pkgRepository.Spec.Fetch.Inline != nil:
-		return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("inline repositories are not supported"))
+		return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Inline repositories are not supported"))
 	default:
-		return connect.NewError(connect.CodeInternal, fmt.Errorf("the package repository has a fetch directive that is not supported"))
+		return connect.NewError(connect.CodeInternal, fmt.Errorf("The package repository has a fetch directive that is not supported"))
 	}
 
 	if request.Msg.TlsConfig != nil {
@@ -831,10 +831,10 @@ func (s *Server) validatePackageRepositoryUpdate(ctx context.Context, cluster st
 	}
 
 	if _, err := pkgutils.ToDuration(request.Msg.Interval); err != nil {
-		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid interval: %w", err))
+		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Invalid interval: %w", err))
 	}
 	if request.Msg.Url == "" {
-		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request Url provided"))
+		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No request Url provided"))
 	}
 	if request.Msg.Auth != nil {
 		if err := s.validatePackageRepositoryAuth(ctx, request.Header(), cluster, pkgRepository.GetNamespace(), rptype, request.Msg.Auth, pkgRepository, pkgSecret); err != nil {
@@ -852,7 +852,7 @@ func (s *Server) validatePackageRepositoryUpdate(ctx context.Context, cluster st
 		case corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS:
 		case corev1.PackageRepositoryStatus_STATUS_REASON_FAILED:
 		default:
-			return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("the repository is not in a stable state, wait for the repository to reconcile"))
+			return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("The repository is not in a stable state, wait for the repository to reconcile"))
 		}
 	}
 
@@ -862,29 +862,29 @@ func (s *Server) validatePackageRepositoryUpdate(ctx context.Context, cluster st
 func (s *Server) validatePackageRepositoryDetails(rptype string, any *anypb.Any) error {
 	details := &kappcorev1.KappControllerPackageRepositoryCustomDetail{}
 	if err := any.UnmarshalTo(details); err != nil {
-		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("custom details are invalid: %w", err))
+		return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("The custom details are invalid: %w", err))
 	}
 	if fetch := details.Fetch; fetch != nil {
 		switch {
 		case fetch.ImgpkgBundle != nil:
 			if rptype != typeImgPkgBundle {
-				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("custom details do not match the expected type %s", rptype))
+				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("The custom details do not match the expected type %s", rptype))
 			}
 		case fetch.Image != nil:
 			if rptype != typeImage {
-				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("custom details do not match the expected type %s", rptype))
+				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("The custom details do not match the expected type %s", rptype))
 			}
 		case fetch.Git != nil:
 			if rptype != typeGIT {
-				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("custom details do not match the expected type %s", rptype))
+				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("The custom details do not match the expected type %s", rptype))
 			}
 		case fetch.Http != nil:
 			if rptype != typeHTTP {
-				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("custom details do not match the expected type %s", rptype))
+				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("The custom details do not match the expected type %s", rptype))
 			}
 		case fetch.Inline != nil:
 			if rptype != typeInline {
-				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("custom details do not match the expected type %s", rptype))
+				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("The custom details do not match the expected type %s", rptype))
 			}
 		}
 	}
@@ -931,31 +931,31 @@ func (s *Server) validatePackageRepositoryAuth(ctx context.Context, headers http
 	if auth.GetSecretRef() != nil {
 		name := auth.GetSecretRef().Name
 		if name == "" {
-			return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid auth, the secret name is not provided"))
+			return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Invalid auth, the secret name is not provided"))
 		}
 
 		secret, err := s.getSecret(ctx, headers, cluster, namespace, name)
 		if err != nil {
 			err = connecterror.FromK8sError("get", "Secret", name, err)
-			return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid auth, the secret could not be accessed: %w", err))
+			return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Invalid auth, the secret could not be accessed: %w", err))
 		}
 
 		switch auth.Type {
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
 			if !isBasicAuth(secret) {
-				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid auth, the secret does not match the expected Type"))
+				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Invalid auth, the secret does not match the expected Type"))
 			}
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_SSH:
 			if !isSshAuth(secret) {
-				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid auth, the secret does not match the expected Type"))
+				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Invalid auth, the secret does not match the expected Type"))
 			}
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
 			if !isDockerAuth(secret) {
-				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid auth, the secret does not match the expected Type"))
+				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Invalid auth, the secret does not match the expected Type"))
 			}
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER:
 			if !isBearerAuth(secret) {
-				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid auth, the secret does not match the expected Type"))
+				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Invalid auth, the secret does not match the expected Type"))
 			}
 		}
 
@@ -969,41 +969,41 @@ func (s *Server) validatePackageRepositoryAuth(ctx context.Context, headers http
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
 		up := auth.GetUsernamePassword()
 		if up == nil || up.Username == "" || up.Password == "" {
-			return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing basic auth credentials"))
+			return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Missing basic auth credentials"))
 		}
 		if pkgSecret == nil || !isBasicAuth(pkgSecret) {
 			if up.Username == redacted || up.Password == redacted {
-				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid auth, unexpected REDACTED content"))
+				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Invalid auth, unexpected REDACTED content"))
 			}
 		}
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_SSH:
 		ssh := auth.GetSshCreds()
 		if ssh == nil || ssh.PrivateKey == "" {
-			return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing SSH auth credentials"))
+			return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Missing SSH auth credentials"))
 		}
 		if pkgSecret == nil || !isSshAuth(pkgSecret) {
 			if ssh.PrivateKey == redacted || ssh.KnownHosts == redacted {
-				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid auth, unexpected REDACTED content"))
+				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Invalid auth, unexpected REDACTED content"))
 			}
 		}
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
 		docker := auth.GetDockerCreds()
 		if docker == nil || docker.Username == "" || docker.Password == "" || docker.Server == "" {
-			return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing Docker Config auth credentials"))
+			return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Missing Docker Config auth credentials"))
 		}
 		if pkgSecret == nil || !isDockerAuth(pkgSecret) {
 			if docker.Username == redacted || docker.Password == redacted || docker.Server == redacted || docker.Email == redacted {
-				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid auth, unexpected REDACTED content"))
+				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Invalid auth, unexpected REDACTED content"))
 			}
 		}
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER:
 		token := auth.GetHeader()
 		if token == "" {
-			return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing Token auth credentials"))
+			return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Missing Token auth credentials"))
 		}
 		if pkgSecret == nil || !isBearerAuth(pkgSecret) {
 			if token == redacted {
-				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid auth, unexpected REDACTED content"))
+				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Invalid auth, unexpected REDACTED content"))
 			}
 		}
 	}

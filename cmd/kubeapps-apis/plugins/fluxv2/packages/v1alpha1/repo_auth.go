@@ -176,8 +176,7 @@ func (s *Server) validateUserManagedRepoSecret(
 	var secretRef string
 	if secretRefTls != "" && secretRefAuth != "" && secretRefTls != secretRefAuth {
 		// flux repo spec only allows one secret per HelmRepository CRD
-		return nil, connect.NewError(
-			connect.CodeInvalidArgument, fmt.Errorf("TLS config secret and Auth secret must be the same"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("TLS config secret and Auth secret must be the same"))
 	} else if secretRefTls != "" {
 		secretRef = secretRefTls
 	} else if secretRefAuth != "" {
@@ -282,7 +281,7 @@ func (s *Server) getRepoTlsConfigAndAuth(ctx context.Context, headers http.Heade
 	if repo.Spec.SecretRef != nil {
 		secretName := repo.Spec.SecretRef.Name
 		if s == nil || s.clientGetter == nil {
-			return nil, nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unexpected state in clientGetterHolder instance"))
+			return nil, nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unexpected state in clientGetterHolder instance"))
 		}
 		typedClient, err := s.clientGetter.Typed(headers, s.kubeappsCluster)
 		if err != nil {

@@ -238,10 +238,7 @@ func (r *OCIChartRepository) listRepositoryNames() ([]string, error) {
 	}
 
 	if r.repositoryLister == nil {
-		return nil, connect.NewError(
-			connect.CodeInternal,
-			fmt.Errorf("No repository lister found for OCI registry with URL: [%s]",
-				r.url.String()))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("No repository lister found for OCI registry with URL: [%s]", r.url.String()))
 	}
 
 	return r.repositoryLister.ListRepositoryNames(r)
@@ -463,10 +460,7 @@ func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo s
 
 	cacheEntry, ok := cacheEntryUntyped.(repoCacheEntryValue)
 	if !ok {
-		return nil, false, connect.NewError(
-			connect.CodeInternal,
-			fmt.Errorf("unexpected value found in cache for key [%s]: %v",
-				key, cacheEntryUntyped))
+		return nil, false, connect.NewError(connect.CodeInternal, fmt.Errorf("Unexpected value found in cache for key [%s]: %v", key, cacheEntryUntyped))
 	}
 
 	ociChartRepo, err := s.newOCIChartRepositoryAndLogin(context.Background(), repo)
@@ -579,9 +573,7 @@ func (r *OCIChartRepository) shortRepoName(fullRepoName string) (string, error) 
 	if strings.HasPrefix(fullRepoName, expectedPrefix) {
 		return fullRepoName[len(expectedPrefix):], nil
 	} else {
-		err := connect.NewError(connect.CodeInternal,
-			fmt.Errorf("Unexpected repository name: expected prefix: [%s], actual name: [%s]",
-				expectedPrefix, fullRepoName))
+		err := connect.NewError(connect.CodeInternal, fmt.Errorf("Unexpected repository name: expected prefix: [%s], actual name: [%s]", expectedPrefix, fullRepoName))
 		return "", err
 	}
 }
@@ -593,7 +585,7 @@ func (s *Server) newOCIChartRepositoryAndLogin(ctx context.Context, repo sourcev
 
 func (s *repoEventSink) newOCIChartRepositoryAndLogin(ctx context.Context, repo sourcev1.HelmRepository) (*OCIChartRepository, error) {
 	if loginOpts, getterOpts, cred, err := s.clientOptionsForOciRepo(ctx, repo); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to create registry client: %w", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to create registry client: %w", err))
 	} else {
 		return s.newOCIChartRepositoryAndLoginWithOptions(repo.Spec.URL, loginOpts, getterOpts, cred)
 	}
@@ -614,10 +606,10 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 	// Create new registry client and login if needed.
 	registryClient, file, err := registryClientBuilderFn(loginOpts != nil, tlsConfig, getterOpts, helmProvider)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to create registry client due to: %w", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to create registry client due to: %w", err))
 	}
 	if registryClient == nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to create registry client"))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to create registry client"))
 	}
 	if file != "" {
 		defer func() {
@@ -646,14 +638,14 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 		withRegistryCredentialFn(registryCredentialFn),
 		withTlsConfig(tlsConfig))
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to parse URL '%s': %w", registryURL, err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to parse URL '%s': %w", registryURL, err))
 	}
 
 	// Attempt to login to the registry if credentials are provided.
 	if loginOpts != nil {
 		err := ociRepo.registryClient.Login(ociRepo.url.Host, loginOpts...)
 		if err != nil {
-			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to login to registry '%s' due to %w", registryURL, err))
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to login to registry '%s' due to %w", registryURL, err))
 		}
 	}
 	return ociRepo, nil

@@ -35,7 +35,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *connect.Requ
 
 	// validation
 	if cluster != s.globalPackagingCluster {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("installing package repositories in other clusters in not supported yet"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Installing package repositories in other clusters in not supported yet"))
 	}
 	if err := s.validatePackageRepositoryCreate(ctx, cluster, request); err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *connect.Requ
 	if request.Msg.Auth != nil && request.Msg.Auth.Type != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED && request.Msg.Auth.GetSecretRef() == nil {
 		pkgSecret, err = s.buildPkgRepositorySecretCreate(namespace, request.Msg.Name, request.Msg.Auth)
 		if err != nil {
-			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to build the associated secret: %w", err))
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to build the associated secret: %w", err))
 		}
 
 		pkgSecret, err = s.createSecret(ctx, request.Header(), cluster, pkgSecret)
@@ -59,7 +59,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *connect.Requ
 	// create repository
 	pkgRepository, err := s.buildPkgRepositoryCreate(request.Msg, pkgSecret)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to build the PackageRepository: %w", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to build the PackageRepository: %w", err))
 	}
 	pkgRepository, err = s.createPkgRepository(ctx, request.Header(), cluster, namespace, pkgRepository)
 	if err != nil {
@@ -125,7 +125,7 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *connec
 	// translate
 	repository, err := s.buildPackageRepository(pkgRepository, pkgSecret, cluster)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to convert the PackageRepository: %w", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to convert the PackageRepository: %w", err))
 	}
 
 	// response
@@ -185,7 +185,7 @@ func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *con
 		repo, err := s.buildPackageRepositorySummary(repo, cluster)
 		if err != nil {
 			// todo -> instead of failing the whole query, we should be able to log the error along with the response
-			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to convert the PackageRepository: %w", err))
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to convert the PackageRepository: %w", err))
 		}
 		repositories = append(repositories, repo)
 	}
@@ -217,10 +217,10 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *connect.R
 
 	// identity validation
 	if cluster != s.globalPackagingCluster {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("updating package repositories in other clusters in not supported yet"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Updating package repositories in other clusters in not supported yet"))
 	}
 	if name == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request Name provided"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No request Name provided"))
 	}
 
 	// fetch existing repository
@@ -260,11 +260,11 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *connect.R
 		var newSecret *k8scorev1.Secret
 		if pkgSecret == nil {
 			if newSecret, err = s.buildPkgRepositorySecretCreate(namespace, name, request.Msg.Auth); err != nil {
-				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to build the associated secret: %w", err))
+				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to build the associated secret: %w", err))
 			}
 		} else {
 			if newSecret, err = s.buildPkgRepositorySecretUpdate(pkgSecret, namespace, name, request.Msg.Auth); err != nil {
-				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to build the associated secret: %w", err))
+				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to build the associated secret: %w", err))
 			}
 		}
 
@@ -289,7 +289,7 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *connect.R
 	// update repository
 	pkgRepository, err = s.buildPkgRepositoryUpdate(request.Msg, pkgRepository, pkgSecret)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to build the PackageRepository: %w", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to build the PackageRepository: %w", err))
 	}
 	_, err = s.updatePkgRepository(ctx, request.Header(), cluster, namespace, pkgRepository)
 	if err != nil {
@@ -348,7 +348,7 @@ func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *c
 	cluster := request.Msg.GetContext().GetCluster()
 	namespace := request.Msg.GetContext().GetNamespace()
 	if cluster == "" && namespace != "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("cluster must be specified when namespace is present: %s", namespace))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Cluster must be specified when namespace is present: %s", namespace))
 	}
 	typedClient, err := s.clientGetter.Typed(request.Header(), cluster)
 	if err != nil {

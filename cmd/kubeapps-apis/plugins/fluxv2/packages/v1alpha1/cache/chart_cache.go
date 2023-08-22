@@ -576,7 +576,7 @@ func (c *ChartCache) String() string {
 func (c *ChartCache) fromKey(key string) (namespace, chartID, chartVersion string, err error) {
 	parts := strings.Split(key, KeySegmentsSeparator)
 	if len(parts) != 4 || parts[0] != "helmcharts" || len(parts[1]) == 0 || len(parts[2]) == 0 || len(parts[3]) == 0 {
-		return "", "", "", connect.NewError(connect.CodeInternal, fmt.Errorf("invalid key [%s]", key))
+		return "", "", "", connect.NewError(connect.CodeInternal, fmt.Errorf("Invalid key [%s]", key))
 	}
 	return parts[1], parts[2], parts[3], nil
 }

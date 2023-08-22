@@ -34,7 +34,7 @@ type checkNSResult struct {
 func FindAccessibleNamespaces(userClientGetter clientgetter.TypedClientFunc, serviceAccountClientGetter clientgetter.TypedClientFunc, maxWorkers int) ([]corev1.Namespace, error) {
 	userClient, err := userClientGetter()
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the k8s client: '%w'", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the k8s client: '%w'", err))
 	}
 
 	backgroundCtx := context.Background()
@@ -50,7 +50,7 @@ func FindAccessibleNamespaces(userClientGetter clientgetter.TypedClientFunc, ser
 			// the cluster config service account otherwise.
 			serviceAccountClient, err := serviceAccountClientGetter()
 			if err != nil {
-				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the in-cluster k8s client: '%w'", err))
+				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the in-cluster k8s client: '%w'", err))
 			}
 			namespaces, err = serviceAccountClient.CoreV1().Namespaces().List(backgroundCtx, metav1.ListOptions{})
 			if err != nil && k8sErrors.IsForbidden(err) {

@@ -322,7 +322,7 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.S
 		var err error
 		token, err := extractToken(headers)
 		if err != nil {
-			return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("invalid authorization metadata: %w", err))
+			return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("Invalid authorization metadata: %w", err))
 		}
 
 		var config *rest.Config

@@ -162,17 +162,17 @@ func newClientGetter(configGetter core.KubernetesConfigGetter, useServiceAccount
 			// to use depends on which cluster is targeted.
 			restConfig, err := rest.InClusterConfig()
 			if err != nil {
-				return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get config : %w", err))
+				return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to get config : %w", err))
 			}
 			err = setupRestConfigForCluster(restConfig, cluster, clustersConfig)
 			if err != nil {
-				return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to setup config for cluster : %w", err))
+				return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to setup config for cluster : %w", err))
 			}
 			return restConfig, nil
 		}
 		restConfig, err := configGetter(headers, cluster)
 		if err != nil {
-			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get config : %v", err))
+			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to get config : %v", err))
 		}
 		return restConfig, nil
 	}
@@ -192,7 +192,7 @@ func setupRestConfigForCluster(restConfig *rest.Config, cluster string, clusters
 	} else {
 		additionalCluster, ok := clustersConfig.Clusters[cluster]
 		if !ok {
-			return connect.NewError(connect.CodeInternal, fmt.Errorf("cluster %q has no configuration", cluster))
+			return connect.NewError(connect.CodeInternal, fmt.Errorf("Cluster %q has no configuration", cluster))
 		}
 		// We *always* overwrite the token, even if it was configured empty.
 		restConfig.BearerToken = additionalCluster.ServiceToken
@@ -231,7 +231,7 @@ func (s *Server) GetResources(ctx context.Context, r *connect.Request[v1alpha1.G
 	// we only return the requested ones.
 	if len(r.Msg.GetResourceRefs()) == 0 {
 		if r.Msg.GetWatch() {
-			return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("resource refs must be specified in request when watching resources"))
+			return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Resource refs must be specified in request when watching resources"))
 		}
 		resourcesToReturn = refsResponse.Msg.GetResourceRefs()
 	} else {
@@ -244,7 +244,7 @@ func (s *Server) GetResources(ctx context.Context, r *connect.Request[v1alpha1.G
 				}
 			}
 			if !found {
-				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("requested resource %+v does not belong to installed package %+v", requestedRef, r.Msg.GetInstalledPackageRef()))
+				return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Requested resource %+v does not belong to installed package %+v", requestedRef, r.Msg.GetInstalledPackageRef()))
 			}
 		}
 		resourcesToReturn = r.Msg.GetResourceRefs()
@@ -259,7 +259,7 @@ func (s *Server) GetResources(ctx context.Context, r *connect.Request[v1alpha1.G
 	for _, ref := range resourcesToReturn {
 		groupVersion, err := schema.ParseGroupVersion(ref.ApiVersion)
 		if err != nil {
-			return connect.NewError(connect.CodeInternal, fmt.Errorf("unable to parse group version from %q: %w", ref.ApiVersion, err))
+			return connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to parse group version from %q: %w", ref.ApiVersion, err))
 		}
 		gvk := groupVersion.WithKind(ref.Kind)
 
@@ -267,7 +267,7 @@ func (s *Server) GetResources(ctx context.Context, r *connect.Request[v1alpha1.G
 		// the scope of the resource (namespaced or not).
 		gvr, scopeName, err := s.kindToResource(s.restMapper, gvk)
 		if err != nil {
-			return connect.NewError(connect.CodeInternal, fmt.Errorf("unable to map group-kind %v to resource: %w", gvk.GroupKind(), err))
+			return connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to map group-kind %v to resource: %w", gvk.GroupKind(), err))
 		}
 
 		if !r.Msg.GetWatch() {
@@ -278,7 +278,7 @@ func (s *Server) GetResources(ctx context.Context, r *connect.Request[v1alpha1.G
 				resource, err = dynamicClient.Resource(gvr).Get(ctx, ref.GetName(), metav1.GetOptions{})
 			}
 			if err != nil {
-				return connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get resource referenced by %+v: %w", ref, err))
+				return connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get resource referenced by %+v: %w", ref, err))
 			}
 			err = sendResourceData(ref, resource, stream)
 			if err != nil {
@@ -299,7 +299,7 @@ func (s *Server) GetResources(ctx context.Context, r *connect.Request[v1alpha1.G
 		}
 		if err != nil {
 			log.Errorf("Unable to watch resource %v: %v", ref, err)
-			return connect.NewError(connect.CodeInternal, fmt.Errorf("unable to watch resource %v", ref))
+			return connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to watch resource %v", ref))
 		}
 		watchers = append(watchers, &ResourceWatcher{
 			ResourceRef: ref,
@@ -333,7 +333,7 @@ func (s *Server) GetServiceAccountNames(ctx context.Context, r *connect.Request[
 
 	typedClient, err := s.clientGetter.Typed(r.Header(), cluster)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the k8s client: '%w'", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the k8s client: '%w'", err))
 	}
 
 	saList, err := typedClient.CoreV1().ServiceAccounts(namespace).List(ctx, metav1.ListOptions{})
@@ -358,7 +358,7 @@ func (s *Server) GetServiceAccountNames(ctx context.Context, r *connect.Request[
 func sendResourceData(ref *pkgsGRPCv1alpha1.ResourceRef, obj interface{}, s *connect.ServerStream[v1alpha1.GetResourcesResponse]) error {
 	resourceBytes, err := json.Marshal(obj)
 	if err != nil {
-		return connect.NewError(connect.CodeInternal, fmt.Errorf("unable to marshal json for resource: %w", err))
+		return connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to marshal json for resource: %w", err))
 	}
 
 	// Note, a string in Go is effectively a read-only slice of bytes.
@@ -368,7 +368,7 @@ func sendResourceData(ref *pkgsGRPCv1alpha1.ResourceRef, obj interface{}, s *con
 		Manifest:    string(resourceBytes),
 	})
 	if err != nil {
-		return connect.NewError(connect.CodeInternal, fmt.Errorf("unable send GetResourcesResponse: %w", err))
+		return connect.NewError(connect.CodeInternal, fmt.Errorf("Unable send GetResourcesResponse: %w", err))
 	}
 
 	return nil

@@ -183,7 +183,7 @@ func (s *Server) MaxWorkers() int {
 // GetManager ensures a manager is available and returns it.
 func (s *Server) GetManager() (utils.AssetManager, error) {
 	if s.manager == nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("server not configured with manager"))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Server not configured with manager"))
 	}
 	manager := s.manager
 	return manager, nil
@@ -403,7 +403,7 @@ func AvailablePackageDetailFromChart(chart *models.Chart, chartFiles *models.Cha
 
 	isValid, err := pkgutils.IsValidChart(chart)
 	if !isValid || err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("invalid chart: %w", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Invalid chart: %w", err))
 	}
 
 	pkg.DisplayName = chart.Name
@@ -1084,10 +1084,10 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 func (s *Server) AddPackageRepository(ctx context.Context, request *connect.Request[corev1.AddPackageRepositoryRequest]) (*connect.Response[corev1.AddPackageRepositoryResponse], error) {
 
 	if request == nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request provided"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No request provided"))
 	}
 	if request.Msg.Name == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no package repository Name provided"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No package repository Name provided"))
 	}
 
 	repoName := request.Msg.Name
@@ -1115,7 +1115,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *connect.Requ
 	if request.Msg.CustomDetail != nil {
 		customDetail = &helmv1.HelmPackageRepositoryCustomDetail{}
 		if err := request.Msg.CustomDetail.UnmarshalTo(customDetail); err != nil {
-			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("customDetail could not be parsed: [%v]", request.Msg.CustomDetail))
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("The custom details could not be parsed: [%v]", request.Msg.CustomDetail))
 		}
 		log.Infof("+helm customDetail [%v]", customDetail)
 	}
@@ -1148,11 +1148,11 @@ func (s *Server) getClient(headers http.Header, cluster string, namespace string
 
 func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *connect.Request[corev1.GetPackageRepositoryDetailRequest]) (*connect.Response[corev1.GetPackageRepositoryDetailResponse], error) {
 	if request == nil || request.Msg.PackageRepoRef == nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request PackageRepoRef provided"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No request PackageRepoRef provided"))
 	}
 	repoRef := request.Msg.GetPackageRepoRef()
 	if repoRef.GetContext() == nil || repoRef.GetContext().GetNamespace() == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no valid context provided"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No valid context provided"))
 	}
 	log.Infof("+helm GetPackageRepositoryDetail '%s' in context [%v]", repoRef.Identifier, repoRef.Context)
 
@@ -1171,7 +1171,7 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *connec
 	// Map to target struct
 	repositoryDetail, err := s.mapToPackageRepositoryDetail(appRepo, cluster, namespace, caCertSecret, authSecret, imagesPullSecret)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to convert the AppRepository: %w", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to convert the AppRepository: %w", err))
 	}
 
 	// response
@@ -1196,11 +1196,11 @@ func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *con
 
 func (s *Server) UpdatePackageRepository(ctx context.Context, request *connect.Request[corev1.UpdatePackageRepositoryRequest]) (*connect.Response[corev1.UpdatePackageRepositoryResponse], error) {
 	if request == nil || request.Msg.PackageRepoRef == nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request PackageRepoRef provided"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No request PackageRepoRef provided"))
 	}
 	repoRef := request.Msg.GetPackageRepoRef()
 	if repoRef.GetContext() == nil || repoRef.GetContext().GetNamespace() == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no valid context provided"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No valid context provided"))
 	}
 	log.Infof("+helm UpdatePackageRepository '%s' in context [%v]", repoRef.Identifier, repoRef.Context)
 
@@ -1221,7 +1221,7 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *connect.R
 	if request.Msg.CustomDetail != nil {
 		customDetail = &helmv1.HelmPackageRepositoryCustomDetail{}
 		if err := request.Msg.CustomDetail.UnmarshalTo(customDetail); err != nil {
-			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("customDetail could not be parsed: [%v]", request.Msg.CustomDetail))
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("The custom details could not be parsed: [%v]", request.Msg.CustomDetail))
 		}
 		log.V(4).Infof("+helm upgrade repo %s customDetail [%v]", repoRef.Identifier, customDetail)
 	}
@@ -1252,11 +1252,11 @@ func (s *Server) DeletePackageRepository(ctx context.Context, request *connect.R
 	log.Infof("+helm DeletePackageRepository [%v]", request)
 
 	if request == nil || request.Msg.PackageRepoRef == nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request PackageRepoRef provided"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No request PackageRepoRef provided"))
 	}
 	repoRef := request.Msg.GetPackageRepoRef()
 	if repoRef.GetContext() == nil || repoRef.GetContext().GetNamespace() == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no valid context provided"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No valid context provided"))
 	}
 	cluster := repoRef.GetContext().GetCluster()
 

@@ -126,7 +126,7 @@ func (cp ClientProvider) ApiExt(headers http.Header, cluster string) (apiext.Int
 
 func (cp ClientProvider) GetClients(headers http.Header, cluster string) (*ClientGetter, error) {
 	if cp.ClientsFunc == nil {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("clients provider function is not set"))
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Clients provider function is not set"))
 	}
 	return cp.ClientsFunc(headers, cluster)
 }
@@ -148,7 +148,7 @@ type FixedClusterClientProvider struct {
 func (bcp FixedClusterClientProvider) Typed(ctx context.Context) (kubernetes.Interface, error) {
 	clientGetter, err := bcp.GetClients(ctx)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to build clients due to: %w", err))
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to build clients due to: %w", err))
 	}
 	return clientGetter.Typed()
 }
@@ -156,7 +156,7 @@ func (bcp FixedClusterClientProvider) Typed(ctx context.Context) (kubernetes.Int
 func (bcp FixedClusterClientProvider) Dynamic(ctx context.Context) (dynamic.Interface, error) {
 	clientGetter, err := bcp.GetClients(ctx)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to build clients due to: %w", err))
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to build clients due to: %w", err))
 	}
 	return clientGetter.Dynamic()
 }
@@ -164,7 +164,7 @@ func (bcp FixedClusterClientProvider) Dynamic(ctx context.Context) (dynamic.Inte
 func (bcp FixedClusterClientProvider) ControllerRuntime(ctx context.Context) (client.WithWatch, error) {
 	clientGetter, err := bcp.GetClients(ctx)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to build clients due to: %w", err))
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to build clients due to: %w", err))
 	}
 	return clientGetter.ControllerRuntime()
 }
@@ -172,14 +172,14 @@ func (bcp FixedClusterClientProvider) ControllerRuntime(ctx context.Context) (cl
 func (bcp FixedClusterClientProvider) ApiExt(ctx context.Context) (apiext.Interface, error) {
 	clientGetter, err := bcp.GetClients(ctx)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to build clients due to: %w", err))
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to build clients due to: %w", err))
 	}
 	return clientGetter.ApiExt()
 }
 
 func (bcp FixedClusterClientProvider) GetClients(ctx context.Context) (*ClientGetter, error) {
 	if bcp.ClientsFunc == nil {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("clients provider function is not set"))
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Clients provider function is not set"))
 	}
 	return bcp.ClientsFunc(ctx)
 }
@@ -188,7 +188,7 @@ func (bcp FixedClusterClientProvider) GetClients(ctx context.Context) (*ClientGe
 func buildClientsProviderFunction(configGetter core.KubernetesConfigGetter, options Options) (GetClientsFunc, error) {
 	return func(headers http.Header, cluster string) (*ClientGetter, error) {
 		if configGetter == nil {
-			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("configGetter arg required"))
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("The configGetter arg is required"))
 		}
 		config, err := configGetter(headers, cluster)
 		if err != nil {
@@ -208,7 +208,7 @@ func buildClientGetter(config *rest.Config, options Options) (*ClientGetter, err
 	var typedClientFunc TypedClientFunc = func() (kubernetes.Interface, error) {
 		typedClient, err := kubernetes.NewForConfig(config)
 		if err != nil {
-			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get typed client due to: %w", err))
+			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to get typed client due to: %w", err))
 		}
 		return typedClient, nil
 	}
@@ -216,7 +216,7 @@ func buildClientGetter(config *rest.Config, options Options) (*ClientGetter, err
 	var dynamicClientFunc DynamicClientFunc = func() (dynamic.Interface, error) {
 		dynamicClient, err := dynamic.NewForConfig(config)
 		if err != nil {
-			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get dynamic client due to: %w", err))
+			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to get dynamic client due to: %w", err))
 		}
 		return dynamicClient, nil
 	}
@@ -232,7 +232,7 @@ func buildClientGetter(config *rest.Config, options Options) (*ClientGetter, err
 
 		ctrlClient, err := client.NewWithWatch(config, ctrlOpts)
 		if err != nil {
-			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get controller runtime client due to: %w", err))
+			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to get controller runtime client due to: %w", err))
 		}
 		return ctrlClient, nil
 	}
@@ -240,7 +240,7 @@ func buildClientGetter(config *rest.Config, options Options) (*ClientGetter, err
 	var apiExtClientFunc ApiExtFunc = func() (apiext.Interface, error) {
 		apiExtensions, err := apiext.NewForConfig(config)
 		if err != nil {
-			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get api extensions client due to: %w", err))
+			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to get api extensions client due to: %w", err))
 		}
 		return apiExtensions, nil
 	}
@@ -250,7 +250,7 @@ func buildClientGetter(config *rest.Config, options Options) (*ClientGetter, err
 func NewClientProvider(configGetter core.KubernetesConfigGetter, options Options) (ClientProviderInterface, error) {
 	clientsGetFunc, err := buildClientsProviderFunction(configGetter, options)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get client provider functions due to: %w", err))
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to get client provider functions due to: %w", err))
 	}
 	return &ClientProvider{ClientsFunc: clientsGetFunc}, nil
 }

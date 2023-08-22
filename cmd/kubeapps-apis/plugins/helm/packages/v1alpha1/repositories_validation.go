@@ -39,7 +39,7 @@ func (s *Server) ValidateRepository(ctx context.Context, appRepo *apprepov1alpha
 	if len(appRepo.Spec.DockerRegistrySecrets) > 0 && appRepo.Namespace == s.GetGlobalPackagingNamespace() {
 		// TODO(mnelson): we may also want to validate that any docker registry secrets listed
 		// already exist in the namespace.
-		return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("docker registry secrets cannot be set for app repositories available in all namespaces"))
+		return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("The docker registry secrets cannot be set for app repositories available in all namespaces"))
 	}
 
 	validator, err := s.getValidator(appRepo, secret)

@@ -29,7 +29,7 @@ func (s *Server) CheckNamespaceExists(ctx context.Context, r *connect.Request[v1
 
 	typedClient, err := s.clientGetter.Typed(r.Header(), cluster)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the k8s client: '%w'", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the k8s client: '%w'", err))
 	}
 
 	_, err = typedClient.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
@@ -56,7 +56,7 @@ func (s *Server) CreateNamespace(ctx context.Context, r *connect.Request[v1alpha
 
 	typedClient, err := s.clientGetter.Typed(r.Header(), cluster)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the k8s client: '%w'", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the k8s client: '%w'", err))
 	}
 
 	_, err = typedClient.CoreV1().Namespaces().Create(ctx, &core.Namespace{
@@ -106,12 +106,12 @@ func (s *Server) GetNamespaceNames(ctx context.Context, r *connect.Request[v1alp
 // CanI Checks if the operation can be performed according to incoming auth rbac
 func (s *Server) CanI(ctx context.Context, r *connect.Request[v1alpha1.CanIRequest]) (*connect.Response[v1alpha1.CanIResponse], error) {
 	if r.Msg.GetContext() == nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("context parameter is required"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Context parameter is required"))
 	}
 	namespace := r.Msg.GetContext().GetNamespace()
 	cluster := r.Msg.GetContext().GetCluster()
 	if cluster == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("cluster parameter is required"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Cluster parameter is required"))
 	}
 	log.InfoS("+resources CanI", "cluster", cluster, "namespace", namespace, "group", r.Msg.GetGroup(), "resource", r.Msg.GetResource(), "verb", r.Msg.GetVerb())
 
@@ -124,7 +124,7 @@ func (s *Server) CanI(ctx context.Context, r *connect.Request[v1alpha1.CanIReque
 		typedClient, err = s.clientGetter.Typed(r.Header(), cluster)
 	}
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the k8s client: '%w'", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the k8s client: '%w'", err))
 	}
 
 	reviewResult, err := typedClient.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, &authorizationapi.SelfSubjectAccessReview{

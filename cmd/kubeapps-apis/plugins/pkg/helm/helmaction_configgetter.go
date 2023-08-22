@@ -21,17 +21,17 @@ type HelmActionConfigGetterFunc func(headers http.Header, namespace string) (*ac
 func NewHelmActionConfigGetter(configGetter core.KubernetesConfigGetter, cluster string) HelmActionConfigGetterFunc {
 	return func(headers http.Header, namespace string) (*action.Configuration, error) {
 		if configGetter == nil {
-			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("configGetter arg required"))
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("The configGetter arg is required"))
 		}
 		config, err := configGetter(headers, cluster)
 		if err != nil {
-			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get config due to: %w", err))
+			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to get config due to: %w", err))
 		}
 
 		restClientGetter := agent.NewConfigFlagsFromCluster(namespace, config)
 		clientSet, err := kubernetes.NewForConfig(config)
 		if err != nil {
-			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to create kubernetes client due to: %w", err))
+			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to create kubernetes client due to: %w", err))
 		}
 		// TODO(mnelson): Update to allow different helm storage options.
 		storage := agent.StorageForSecrets(namespace, clientSet)

@@ -17,7 +17,7 @@ func FromK8sError(verb, resource, identifier string, err error) error {
 		identifier = "all"
 	}
 	if errors.IsNotFound(err) {
-		return connect.NewError(connect.CodeNotFound, fmt.Errorf("unable to %s the %s '%s' due to '%w'", verb, resource, identifier, err))
+		return connect.NewError(connect.CodeNotFound, fmt.Errorf("Unable to %s the %s '%s' due to '%w'", verb, resource, identifier, err))
 	} else if errors.IsForbidden(err) {
 		return connect.NewError(connect.CodePermissionDenied, fmt.Errorf("Forbidden to %s the %s '%s' due to '%w'", verb, resource, identifier, err))
 	} else if errors.IsUnauthorized(err) {
@@ -25,5 +25,5 @@ func FromK8sError(verb, resource, identifier string, err error) error {
 	} else if errors.IsAlreadyExists(err) {
 		return connect.NewError(connect.CodeAlreadyExists, fmt.Errorf("Cannot %s the %s '%s' due to '%w' as it already exists", verb, resource, identifier, err))
 	}
-	return connect.NewError(connect.CodeInternal, fmt.Errorf("unable to %s the %s '%s' due to '%w'", verb, resource, identifier, err))
+	return connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to %s the %s '%s' due to '%w'", verb, resource, identifier, err))
 }

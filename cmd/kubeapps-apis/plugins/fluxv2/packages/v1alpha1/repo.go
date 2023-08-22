@@ -113,7 +113,7 @@ func (s *Server) getRepoInCluster(ctx context.Context, headers http.Header, key 
 // regexp expressions are used for matching actual names against expected patters
 func (s *Server) filterReadyReposByName(repoList []sourcev1.HelmRepository, match []string) (sets.Set[string], error) {
 	if s.repoCache == nil {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("server cache has not been properly initialized"))
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Server cache has not been properly initialized"))
 	}
 
 	resultKeys := sets.Set[string]{}
@@ -191,10 +191,7 @@ func (s *Server) repoCacheEntryFromUntyped(key string, value interface{}) (*repo
 	}
 	typedValue, ok := value.(repoCacheEntryValue)
 	if !ok {
-		return nil, connect.NewError(
-			connect.CodeInternal,
-			fmt.Errorf("unexpected value fetched from cache: type: [%T], value: [%v]",
-				value, value))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unexpected value fetched from cache: type: [%T], value: [%v]", value, value))
 	}
 	if typedValue.Type == "oci" {
 		// ref https://github.com/vmware-tanzu/kubeapps/issues/5007#issuecomment-1217293240
@@ -207,10 +204,7 @@ func (s *Server) repoCacheEntryFromUntyped(key string, value interface{}) (*repo
 		} else if value != nil {
 			typedValue, ok = value.(repoCacheEntryValue)
 			if !ok {
-				return nil, connect.NewError(
-					connect.CodeInternal,
-					fmt.Errorf("unexpected value fetched from cache: type: [%T], value: [%v]",
-						value, value))
+				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unexpected value fetched from cache: type: [%T], value: [%v]", value, value))
 			}
 		}
 	}
@@ -228,25 +222,25 @@ func (s *Server) httpClientOptionsForRepo(ctx context.Context, headers http.Head
 
 func (s *Server) newRepo(ctx context.Context, request *connect.Request[corev1.AddPackageRepositoryRequest]) (*connect.Response[corev1.PackageRepositoryReference], error) {
 	if request.Msg.Name == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request Name provided"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No request Name provided"))
 	}
 
 	// flux repositories are now considered to be namespaced, to support the most common cases.
 	// see discussion at https://github.com/vmware-tanzu/kubeapps/issues/5542
 	if !request.Msg.GetNamespaceScoped() {
-		return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("global-scoped repositories are not supported"))
+		return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("Global-scoped repositories are not supported"))
 	}
 
 	typ := request.Msg.GetType()
 	if typ != "helm" && typ != sourcev1.HelmRepositoryTypeOCI {
-		return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("repository type [%s] not supported", typ))
+		return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("Repository type [%s] not supported", typ))
 	}
 
 	description := request.Msg.GetDescription()
 	url := request.Msg.GetUrl()
 	tlsConfig := request.Msg.GetTlsConfig()
 	if url == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("repository url may not be empty"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Repository url may not be empty"))
 	} else if tlsConfig != nil && tlsConfig.InsecureSkipVerify {
 		// ref https://github.com/fluxcd/source-controller/issues/807
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("TLS flag insecureSkipVerify is not supported"))
@@ -270,7 +264,7 @@ func (s *Server) newRepo(ctx context.Context, request *connect.Request[corev1.Ad
 	if request.Msg.CustomDetail != nil {
 		customDetail = &v1alpha1.FluxPackageRepositoryCustomDetail{}
 		if err := request.Msg.CustomDetail.UnmarshalTo(customDetail); err != nil {
-			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("customDetail could not be parsed due to: %w", err))
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("The customDetail could not be parsed due to: %w", err))
 		}
 		provider = customDetail.Provider
 
@@ -333,7 +327,7 @@ func (s *Server) repoDetail(ctx context.Context, headers http.Header, repoRef *c
 		if customDetail, err = anypb.New(&v1alpha1.FluxPackageRepositoryCustomDetail{
 			Provider: repo.Spec.Provider,
 		}); err != nil {
-			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("custom detail could not be marshalled due to: %w", err))
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("The customDetail could not be marshalled due to: %w", err))
 		}
 	}
 
@@ -426,11 +420,11 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 	// Updates to non-pending repos (i.e. success or failed status) are allowed
 	complete, _, _ := isHelmRepositoryReady(*repo)
 	if !complete {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("updates to repositories pending reconciliation are not supported"))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Updates to repositories pending reconciliation are not supported"))
 	}
 
 	if request.Msg.Url == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("repository url may not be empty"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Repository url may not be empty"))
 	}
 	repo.Spec.URL = request.Msg.Url
 
@@ -439,7 +433,7 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 
 	if request.Msg.Interval != "" {
 		if duration, err := pkgutils.ToDuration(request.Msg.Interval); err != nil {
-			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("interval is invalid: %w", err))
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Interval is invalid: %w", err))
 		} else {
 			repo.Spec.Interval = *duration
 		}
@@ -473,7 +467,7 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 	if request.Msg.CustomDetail != nil {
 		customDetail := &v1alpha1.FluxPackageRepositoryCustomDetail{}
 		if err := request.Msg.CustomDetail.UnmarshalTo(customDetail); err != nil {
-			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("customDetail could not be parsed due to: %w", err))
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("The custom details could not be parsed due to: %w", err))
 		}
 		provider := customDetail.Provider
 
@@ -745,10 +739,7 @@ func (s *repoEventSink) onModifyHttpRepo(key string, oldValue interface{}, repo 
 
 	cacheEntry, ok := cacheEntryUntyped.(repoCacheEntryValue)
 	if !ok {
-		return nil, false, connect.NewError(
-			connect.CodeInternal,
-			fmt.Errorf("unexpected value found in cache for key [%s]: %v",
-				key, cacheEntryUntyped))
+		return nil, false, connect.NewError(connect.CodeInternal, fmt.Errorf("Unexpected value found in cache for key [%s]: %v", key, cacheEntryUntyped))
 	}
 
 	if cacheEntry.Checksum != newChecksum {
@@ -762,7 +753,7 @@ func (s *repoEventSink) onModifyHttpRepo(key string, oldValue interface{}, repo 
 func (s *repoEventSink) onGetRepo(key string, value interface{}) (interface{}, error) {
 	b, ok := value.([]byte)
 	if !ok {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unexpected value found in cache for key [%s]: %v", key, value))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unexpected value found in cache for key [%s]: %v", key, value))
 	}
 
 	dec := gob.NewDecoder(bytes.NewReader(b))
@@ -798,7 +789,7 @@ func (s *repoEventSink) onResync() error {
 func (s *repoEventSink) fromKey(key string) (*types.NamespacedName, error) {
 	parts := strings.Split(key, cache.KeySegmentsSeparator)
 	if len(parts) != 3 || parts[0] != fluxHelmRepositories || len(parts[1]) == 0 || len(parts[2]) == 0 {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("invalid key [%s]", key))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Invalid key [%s]", key))
 	}
 	return &types.NamespacedName{Namespace: parts[1], Name: parts[2]}, nil
 }
@@ -812,7 +803,7 @@ func (s *repoEventSink) getRepoSecret(ctx context.Context, repo sourcev1.HelmRep
 		return nil, nil
 	}
 	if s == nil || s.clientGetter == nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unexpected state in clientGetter instance"))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unexpected state in clientGetter instance"))
 	}
 	typedClient, err := s.clientGetter.Typed(ctx)
 	if err != nil {
@@ -924,7 +915,7 @@ func newFluxHelmRepo(
 	pollInterval := defaultPollInterval
 	if interval != "" {
 		if duration, err := pkgutils.ToDuration(interval); err != nil {
-			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("interval is invalid: %w", err))
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Interval is invalid: %w", err))
 		} else {
 			pollInterval = *duration
 		}

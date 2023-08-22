@@ -589,8 +589,7 @@ func validateUserManagedRepoSecret(
 
 	var secretRef string
 	if secretRefTls != "" && secretRefAuth != "" && secretRefTls != secretRefAuth {
-		return nil, connect.NewError(
-			connect.CodeInvalidArgument, fmt.Errorf("TLS config secret and Auth secret must be the same"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("TLS config secret and Auth secret must be the same"))
 	} else if secretRefTls != "" {
 		secretRef = secretRefTls
 	} else if secretRefAuth != "" {
