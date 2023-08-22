@@ -258,3 +258,51 @@ apprepository:
 ```
 
 Please mind the `noProxy` section, otherwise, you might not be able to access the charts.
+
+### Forcing an AppRepository deletion
+
+When removing an AppRepository, the CR controller looks for any existing [finalizer](https://kubernetes.io/docs/concepts/overview/working-with-objects/finalizers/) before performing the actual removal. They are just keys that tell Kubernetes to wait until specific conditions are met before it fully deletes resources marked for deletion.
+
+Each AppRepository has a `apprepositories.kubeapps.com/apprepo-cleanup-finalizer` finalizer that will trigger a clean-up Job before the actual removal. Usually, it should work without any issues and right after spinning up the clean-up Job, the finalizer should get automatically removed and, therefore, the AppRepository, deleted.
+However, under certain conditions, the process might fail and the finalizer won't be removed. In this case, you can manually remove it by running:
+
+```bash
+# Replace YOUR_APPREPOSITORY_NAME with your AppRepository name
+kubectl -n kubeapps patch AppRepository YOUR_APPREPOSITORY_NAME -p '{"metadata":{"finalizers":null}}' --type=merge
+```
+
+After running that command, the finalizer will get removed and the AppRepository object will be deleted automatically. However, the clean-up Job might have not get triggered, so you will need to manually create a Job as follows:
+
+```bash
+# Replace YOUR_APPREPOSITORY_NAME with your AppRepository name
+# Also, replace "kubeapps" with the namespace on which you have Kubeapps installed
+cat <<EOF | kubectl apply -f -
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: manual-cleanup-job
+  namespace: kubeapps
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - args:
+            - delete
+            - YOUR_APPREPOSITORY_NAME
+            - --namespace=kubeapps
+            - --database-url=kubeapps-postgresql:5432
+            - --database-user=postgres
+            - --database-name=assets
+          command:
+            - /asset-syncer
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: postgres-password
+                  name: kubeapps-postgresql
+          image: docker.io/kubeapps/asset-syncer:latest
+          name: delete
+EOF
+```

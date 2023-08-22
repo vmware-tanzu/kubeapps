@@ -72,9 +72,9 @@ func init() {
 func setFlags(c *cobra.Command) {
 	c.Flags().StringVar(&serveOpts.Kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
 	c.Flags().StringVar(&serveOpts.APIServerURL, "apiserver", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
-	c.Flags().StringVar(&serveOpts.RepoSyncImage, "repo-sync-image", "docker.io/kubeapps/asset-syncer:latest", "container repo/image to use in CronJobs")
-	c.Flags().StringSliceVar(&serveOpts.RepoSyncImagePullSecrets, "repo-sync-image-pullsecrets", nil, "optional reference to secrets in the same namespace to use for pulling the image used by this pod")
-	c.Flags().StringVar(&serveOpts.RepoSyncCommand, "repo-sync-cmd", "/chart-repo", "command used to sync/delete repos for repo-sync-image")
+	c.Flags().StringVar(&serveOpts.RepoSyncImage, "repo-sync-image", "docker.io/kubeapps/asset-syncer:latest", "Container repo/image to use in CronJobs")
+	c.Flags().StringSliceVar(&serveOpts.RepoSyncImagePullSecrets, "repo-sync-image-pullsecrets", nil, "Optional reference to secrets in the same namespace to use for pulling the image used by this pod")
+	c.Flags().StringVar(&serveOpts.RepoSyncCommand, "repo-sync-cmd", "/chart-repo", "Command used to sync/delete repos for repo-sync-image")
 	c.Flags().StringVar(&serveOpts.KubeappsNamespace, "namespace", "kubeapps", "Namespace to discover AppRepository resources")
 	c.Flags().StringVar(&serveOpts.GlobalPackagingNamespace, "global-repos-namespace", "kubeapps", "Namespace for global repos")
 	c.Flags().BoolVar(&serveOpts.ReposPerNamespace, "repos-per-namespace", true, "Defaults to watch for repos in all namespaces. Switch to false to watch only the configured namespace.")
@@ -86,8 +86,11 @@ func setFlags(c *cobra.Command) {
 	c.Flags().StringVar(&serveOpts.UserAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
 	c.Flags().StringVar(&serveOpts.Crontab, "crontab", "*/10 * * * *", "CronTab to specify schedule")
 	c.Flags().StringVar(&serveOpts.TTLSecondsAfterFinished, "ttl-lifetime-afterfinished-job", "3600", "Lifetime limit after which the resource Jobs are deleted expressed in seconds by default is 3600 (1h)")
-	c.Flags().StringSliceVar(&serveOpts.CustomAnnotations, "custom-annotations", []string{""}, "optional annotations to be passed to the generated CronJobs, Jobs and Pods objects. For example: my/annotation=foo")
-	c.Flags().StringSliceVar(&serveOpts.CustomLabels, "custom-labels", []string{""}, "optional labels to be passed to the generated CronJobs, Jobs and Pods objects. For example: my/label=foo")
+	c.Flags().Int32Var(&serveOpts.SuccessfulJobsHistoryLimit, "successful-jobs-history-limit", 3, "Number of successful finished jobs to retain")
+	c.Flags().Int32Var(&serveOpts.FailedJobsHistoryLimit, "failed-jobs-history-limit", 1, "Number of failed finished jobs to retain")
+	c.Flags().StringVar(&serveOpts.ConcurrencyPolicy, "concurrency-policy", "Replace", "How to treat concurrent executions of a Job. Valid values are: 'Allow', 'Forbid' and 'Replace'")
+	c.Flags().StringSliceVar(&serveOpts.CustomAnnotations, "custom-annotations", []string{""}, "Optional annotations to be passed to the generated CronJobs, Jobs and Pods objects. For example: my/annotation=foo")
+	c.Flags().StringSliceVar(&serveOpts.CustomLabels, "custom-labels", []string{""}, "Optional labels to be passed to the generated CronJobs, Jobs and Pods objects. For example: my/label=foo")
 	c.Flags().BoolVar(&serveOpts.V1Beta1CronJobs, "v1-beta1-cron-jobs", false, "Defaults to false and so using the v1 cronjobs.")
 }
 
@@ -97,7 +100,7 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		log.Errorf("Using config file: %v", viper.ConfigFileUsed())
+		log.Infof("Using config file: %v", viper.ConfigFileUsed())
 	}
 }
 
