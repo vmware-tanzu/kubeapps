@@ -29,7 +29,7 @@ func newRootCmd() *cobra.Command {
 			serveOpts.UserAgent = server.GetUserAgent(version, serveOpts.UserAgentComment)
 			serveOptsCopy := serveOpts
 			serveOptsCopy.DatabasePassword = "REDACTED"
-			log.Infof("asset-syncer has been configured with: %#v", serveOptsCopy)
+			log.InfoS("The component 'asset-syncer' has been configured with", "serverOptions", serveOptsCopy)
 		},
 		Version: "devel",
 	}

@@ -30,14 +30,14 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
-	klogv2 "k8s.io/klog/v2"
+	log "k8s.io/klog/v2"
 )
 
-func getLogLevelOfEndpoint(endpoint string) klogv2.Level {
+func getLogLevelOfEndpoint(endpoint string) log.Level {
 
 	// Add all endpoint function names which you want to suppress in interceptor logging
 	suppressLoggingOfEndpoints := []string{"GetConfiguredPlugins"}
-	var level klogv2.Level
+	var level log.Level
 
 	// level=3 is default logging level
 	level = 3
@@ -61,7 +61,7 @@ func LogRequest(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo
 
 	// Format string : [status code] [duration] [full path]
 	// OK 97.752µs /kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageSummaries
-	klogv2.V(level).Infof("%v %s %s\n",
+	log.V(level).Infof("%v %s %s\n",
 		status.Code(err),
 		time.Since(start),
 		info.FullMethod)
@@ -120,12 +120,12 @@ func Serve(serveOpts core.ServeOptions) error {
 	}))
 
 	if serveOpts.UnsafeLocalDevKubeconfig {
-		klogv2.Warning("Using the local Kubeconfig file instead of the actual in-cluster's config. This is not recommended except for development purposes.")
+		log.Warning("Using the local Kubeconfig file instead of the actual in-cluster's config. This is not recommended except for development purposes.")
 	}
 
-	klogv2.Infof("Starting server on %q", listenAddr)
+	log.Infof("Starting server on %q", listenAddr)
 	if err := http.ListenAndServe(listenAddr, h2c.NewHandler(mux, &http2.Server{})); err != nil {
-		klogv2.Fatalf("failed to server: %+v", err)
+		log.Fatalf("Failed to server: %+v", err)
 	}
 
 	return nil
