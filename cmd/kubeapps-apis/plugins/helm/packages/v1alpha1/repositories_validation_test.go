@@ -269,7 +269,7 @@ func TestOCIValidate(t *testing.T) {
 			},
 			expectedResponse: &ValidationResponse{
 				Code:    400,
-				Message: "Unexpected status code when querying \"nginx\": 404",
+				Message: "unexpected status code when querying \"nginx\": 404",
 			},
 		},
 		{
