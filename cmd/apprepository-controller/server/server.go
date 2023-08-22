@@ -16,44 +16,47 @@ import (
 )
 
 type Config struct {
-	APIServerURL             string
-	Kubeconfig               string
-	RepoSyncImage            string
-	RepoSyncImagePullSecrets []string
-	ImagePullSecretsRefs     []corev1.LocalObjectReference
-	RepoSyncCommand          string
-	KubeappsNamespace        string
-	GlobalPackagingNamespace string
-	DBURL                    string
-	DBUser                   string
-	DBName                   string
-	DBSecretName             string
-	DBSecretKey              string
-	UserAgentComment         string
-	Crontab                  string
-	TTLSecondsAfterFinished  string
-	ReposPerNamespace        bool
-	CustomAnnotations        []string
-	CustomLabels             []string
-	ParsedCustomAnnotations  map[string]string
-	ParsedCustomLabels       map[string]string
-	V1Beta1CronJobs          bool
+	APIServerURL               string
+	Kubeconfig                 string
+	RepoSyncImage              string
+	RepoSyncImagePullSecrets   []string
+	ImagePullSecretsRefs       []corev1.LocalObjectReference
+	RepoSyncCommand            string
+	KubeappsNamespace          string
+	GlobalPackagingNamespace   string
+	DBURL                      string
+	DBUser                     string
+	DBName                     string
+	DBSecretName               string
+	DBSecretKey                string
+	UserAgentComment           string
+	Crontab                    string
+	TTLSecondsAfterFinished    string
+	SuccessfulJobsHistoryLimit int32
+	FailedJobsHistoryLimit     int32
+	ConcurrencyPolicy          string
+	ReposPerNamespace          bool
+	CustomAnnotations          []string
+	CustomLabels               []string
+	ParsedCustomAnnotations    map[string]string
+	ParsedCustomLabels         map[string]string
+	V1Beta1CronJobs            bool
 }
 
 func Serve(serveOpts Config) error {
 	cfg, err := clientcmd.BuildConfigFromFlags(serveOpts.APIServerURL, serveOpts.Kubeconfig)
 	if err != nil {
-		return fmt.Errorf("Error building kubeconfig: %s", err.Error())
+		return fmt.Errorf("error building kubeconfig: %s", err.Error())
 	}
 
 	kubeClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
-		return fmt.Errorf("Error building kubernetes clientset: %s", err.Error())
+		return fmt.Errorf("error building kubernetes clientset: %s", err.Error())
 	}
 
 	apprepoClient, err := clientset.NewForConfig(cfg)
 	if err != nil {
-		return fmt.Errorf("Error building apprepo clientset: %s", err.Error())
+		return fmt.Errorf("error building apprepo clientset: %s", err.Error())
 	}
 
 	// set up signals so we handle the first shutdown signal gracefully
@@ -75,7 +78,7 @@ func Serve(serveOpts Config) error {
 	go apprepoInformerFactory.Start(stopCh)
 
 	if err = controller.Run(2, stopCh); err != nil {
-		return fmt.Errorf("Error running controller: %s", err.Error())
+		return fmt.Errorf("error running controller: %s", err.Error())
 	}
 	return nil
 }

@@ -6,7 +6,6 @@ package server
 import (
 	"testing"
 
-	"github.com/adhocore/gronx"
 	"github.com/google/go-cmp/cmp"
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -68,8 +67,10 @@ func Test_newCronJob(t *testing.T) {
 					Annotations: map[string]string{},
 				},
 				Spec: batchv1.CronJobSpec{
-					Schedule:          "*/10 * * * *",
-					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
+					Schedule:                   "*/10 * * * *",
+					ConcurrencyPolicy:          batchv1.ReplaceConcurrent,
+					SuccessfulJobsHistoryLimit: func(val int32) *int32 { return &val }(3),
+					FailedJobsHistoryLimit:     func(val int32) *int32 { return &val }(1),
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
@@ -150,8 +151,10 @@ func Test_newCronJob(t *testing.T) {
 					Annotations: map[string]string{},
 				},
 				Spec: batchv1.CronJobSpec{
-					Schedule:          "*/10 * * * *",
-					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
+					Schedule:                   "*/10 * * * *",
+					ConcurrencyPolicy:          batchv1.ReplaceConcurrent,
+					SuccessfulJobsHistoryLimit: func(val int32) *int32 { return &val }(3),
+					FailedJobsHistoryLimit:     func(val int32) *int32 { return &val }(1),
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
@@ -245,8 +248,10 @@ func Test_newCronJob(t *testing.T) {
 					Annotations: map[string]string{},
 				},
 				Spec: batchv1.CronJobSpec{
-					Schedule:          "*/20 * * * *",
-					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
+					Schedule:                   "*/20 * * * *",
+					ConcurrencyPolicy:          batchv1.ReplaceConcurrent,
+					SuccessfulJobsHistoryLimit: func(val int32) *int32 { return &val }(3),
+					FailedJobsHistoryLimit:     func(val int32) *int32 { return &val }(1),
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
@@ -337,8 +342,10 @@ func Test_newCronJob(t *testing.T) {
 					Annotations: map[string]string{},
 				},
 				Spec: batchv1.CronJobSpec{
-					Schedule:          "*/20 * * * *",
-					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
+					Schedule:                   "*/20 * * * *",
+					ConcurrencyPolicy:          batchv1.ReplaceConcurrent,
+					SuccessfulJobsHistoryLimit: func(val int32) *int32 { return &val }(3),
+					FailedJobsHistoryLimit:     func(val int32) *int32 { return &val }(1),
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
@@ -435,8 +442,10 @@ func Test_newCronJob(t *testing.T) {
 					Annotations: map[string]string{},
 				},
 				Spec: batchv1.CronJobSpec{
-					Schedule:          "*/15 * * * *",
-					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
+					Schedule:                   "*/15 * * * *",
+					ConcurrencyPolicy:          batchv1.ReplaceConcurrent,
+					SuccessfulJobsHistoryLimit: func(val int32) *int32 { return &val }(3),
+					FailedJobsHistoryLimit:     func(val int32) *int32 { return &val }(1),
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
@@ -527,8 +536,10 @@ func Test_newCronJob(t *testing.T) {
 					Annotations: map[string]string{},
 				},
 				Spec: batchv1.CronJobSpec{
-					Schedule:          "*/2 */2 */2 */2 1-5",
-					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
+					Schedule:                   "*/2 */2 */2 */2 1-5",
+					ConcurrencyPolicy:          batchv1.ReplaceConcurrent,
+					SuccessfulJobsHistoryLimit: func(val int32) *int32 { return &val }(3),
+					FailedJobsHistoryLimit:     func(val int32) *int32 { return &val }(1),
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
@@ -585,8 +596,9 @@ func Test_newCronJob(t *testing.T) {
 			config.Crontab = tt.crontab
 			config.UserAgentComment = tt.userAgentComment
 
-			result := newCronJob(tt.apprepo, config)
+			result, _ := newCronJob(tt.apprepo, config)
 			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
+
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
@@ -600,7 +612,7 @@ func Test_newCronJob(t *testing.T) {
 			config.Crontab = tt.crontab
 			config.UserAgentComment = tt.userAgentComment
 
-			result := newCronJob(tt.apprepo, config)
+			result, _ := newCronJob(tt.apprepo, config)
 			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
@@ -1722,6 +1734,13 @@ func Test_newCleanupJob(t *testing.T) {
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
 					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								LabelRepoName:      "my-charts",
+								LabelRepoNamespace: "kubeapps",
+							},
+							Annotations: map[string]string{},
+						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: corev1.RestartPolicyNever,
 							Containers: []corev1.Container{
@@ -1767,6 +1786,13 @@ func Test_newCleanupJob(t *testing.T) {
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
 					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								LabelRepoName:      "a-really-long-long-long-long-but-valid-name-under-63-characters",
+								LabelRepoNamespace: "a-really-long-long-long-but-valid-namespace-under-63-characters",
+							},
+							Annotations: map[string]string{},
+						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: corev1.RestartPolicyNever,
 							Containers: []corev1.Container{
@@ -1802,7 +1828,13 @@ func Test_newCleanupJob(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			config := makeDefaultConfig()
-			result := newCleanupJob(tt.kubeappsNamespace, tt.repoNamespace, tt.repoName, config)
+			result := newCleanupJob(&apprepov1alpha1.AppRepository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      tt.repoName,
+					Namespace: tt.repoNamespace,
+				},
+				Spec: apprepov1alpha1.AppRepositorySpec{},
+			}, config)
 			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
@@ -1810,130 +1842,77 @@ func Test_newCleanupJob(t *testing.T) {
 	}
 }
 
-func TestObjectBelongsTo(t *testing.T) {
+func TestGenerateJobName(t *testing.T) {
 	testCases := []struct {
-		name   string
-		object metav1.Object
-		parent metav1.Object
-		expect bool
+		name      string
+		namespace string
+		jobName   string
+		pattern   string
+		addDash   bool
+		expect    string
 	}{
 		{
-			name: "it recognises a cronjob belonging to an app repository in another namespace",
-			object: &batchv1.CronJob{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "apprepo-kubeapps-sync-my-charts",
-					Namespace: "kubeapps",
-					Labels: map[string]string{
-						LabelRepoName:      "my-charts",
-						LabelRepoNamespace: "my-namespace",
-					},
-				},
-			},
-			parent: &apprepov1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "my-charts",
-					Namespace: "my-namespace",
-				},
-			},
-			expect: true,
+			name:      "good pattern",
+			namespace: "foo",
+			jobName:   "bar",
+			pattern:   "name: %s, namespace %s",
+			addDash:   false,
+			expect:    "name: foo, namespace bar",
 		},
 		{
-			name: "it returns false if the namespace does not match",
-			object: &batchv1.CronJob{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "apprepo-kubeapps-sync-my-charts",
-					Namespace: "kubeapps",
-					Labels: map[string]string{
-						LabelRepoName:      "my-charts",
-						LabelRepoNamespace: "my-namespace",
-					},
-				},
-			},
-			parent: &apprepov1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "my-charts",
-					Namespace: "my-namespace2",
-				},
-			},
-			expect: false,
+			name:      "good pattern (with dash)",
+			namespace: "foo",
+			jobName:   "bar",
+			pattern:   "name: %s, namespace %s",
+			addDash:   true,
+			expect:    "name: foo, namespace bar-",
 		},
 	}
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got, want := objectBelongsTo(tc.object, tc.parent), tc.expect; got != want {
-				t.Errorf("got: %t, want: %t", got, want)
+			res := generateJobName(tc.namespace, tc.jobName, tc.pattern, tc.addDash)
+			if len(res) > MAX_CRONJOB_CHARS {
+				t.Errorf("expected length of truncated string to be <= %d, got %d", MAX_CRONJOB_CHARS, len(res))
+			}
+			if got, want := res, tc.expect; got != want {
+				t.Errorf("got: %s, want: %s", got, want)
 			}
 		})
 	}
 }
 
-func TestTruncateAndHashString(t *testing.T) {
+func TestDeleteJobName(t *testing.T) {
 	testCases := []struct {
-		name   string
-		input  string
-		length int
-		expect string
+		name      string
+		namespace string
+		jobName   string
+		expect    string
 	}{
 		{
-			name:   "empty string",
-			input:  "",
-			length: 5,
-			expect: "",
+			name:      "short name",
+			namespace: "foo",
+			jobName:   "bar",
+			expect:    "apprepo-foo-cleanup-bar-",
 		},
 		{
-			name:   "0 length",
-			input:  "",
-			length: 0,
-			expect: "",
+			name:      "max length name",
+			namespace: "foofoofoofoofoofo",
+			jobName:   "barbarbarbarbarba",
+			expect:    "apprepo-foofoofoofoofoofo-cleanup-barbarbarbarbarba-",
 		},
 		{
-			name:   "string under the max length",
-			input:  "1234",
-			length: 5,
-			expect: "1234",
-		},
-		{
-			name:   "string that fits in the max length",
-			input:  "12345",
-			length: 5,
-			expect: "12345",
-		},
-		{
-			name:   "long string whose exceeding part gets truncated but not hashed if length < 11",
-			input:  "123456789",
-			length: 5,
-			expect: "12345",
-		},
-		{
-			name:   "long string whose exceeding part gets truncated and hashed",
-			input:  "1234567891234",
-			length: 12,
-			expect: "1-269222519",
-		},
-		{
-			name:   "string under the 52-chars length",
-			input:  "aaa",
-			length: 52,
-			expect: "aaa",
-		},
-		{
-			name:   "string that fits in the 52-chars length",
-			input:  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-			length: 52,
-			expect: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-		},
-		{
-			name:   "long string whose exceeding part gets truncated and hashed",
-			input:  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaExceedingLongName",
-			length: 52,
-			expect: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-2604272329",
+			name:      "exceeding length name",
+			namespace: "foofoofoofoofoofoofoo",
+			jobName:   "barbarbarbarbarbarbar",
+			expect:    "apprepo-foofoo-847382101-cleanup-barbar-805766666-",
 		},
 	}
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			res := truncateAndHashString(tc.input, tc.length)
+			res := deleteJobName(tc.namespace, tc.jobName)
+			if len(res) > MAX_CRONJOB_CHARS {
+				t.Errorf("expected length of truncated string to be <= %d, got %d", MAX_CRONJOB_CHARS, len(res))
+			}
 			if got, want := res, tc.expect; got != want {
 				t.Errorf("got: %s, want: %s", got, want)
 			}
@@ -2006,182 +1985,32 @@ func TestCronJobName(t *testing.T) {
 	}
 }
 
-func TestDeleteJobName(t *testing.T) {
-	testCases := []struct {
-		name      string
-		namespace string
-		jobName   string
-		expect    string
-	}{
-		{
-			name:      "short name",
-			namespace: "foo",
-			jobName:   "bar",
-			expect:    "apprepo-foo-cleanup-bar-",
-		},
-		{
-			name:      "max length name",
-			namespace: "foofoofoofoofoofo",
-			jobName:   "barbarbarbarbarba",
-			expect:    "apprepo-foofoofoofoofoofo-cleanup-barbarbarbarbarba-",
-		},
-		{
-			name:      "exceeding length name",
-			namespace: "foofoofoofoofoofoofoo",
-			jobName:   "barbarbarbarbarbarbar",
-			expect:    "apprepo-foofoo-847382101-cleanup-barbar-805766666-",
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			res := deleteJobName(tc.namespace, tc.jobName)
-			if len(res) > MAX_CRONJOB_CHARS {
-				t.Errorf("expected length of truncated string to be <= %d, got %d", MAX_CRONJOB_CHARS, len(res))
-			}
-			if got, want := res, tc.expect; got != want {
-				t.Errorf("got: %s, want: %s", got, want)
-			}
-		})
-	}
-}
-
-func TestGenerateJobName(t *testing.T) {
-	testCases := []struct {
-		name      string
-		namespace string
-		jobName   string
-		pattern   string
-		addDash   bool
-		expect    string
-	}{
-		{
-			name:      "good pattern",
-			namespace: "foo",
-			jobName:   "bar",
-			pattern:   "name: %s, namespace %s",
-			addDash:   false,
-			expect:    "name: foo, namespace bar",
-		},
-		{
-			name:      "good pattern (with dash)",
-			namespace: "foo",
-			jobName:   "bar",
-			pattern:   "name: %s, namespace %s",
-			addDash:   true,
-			expect:    "name: foo, namespace bar-",
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			res := generateJobName(tc.namespace, tc.jobName, tc.pattern, tc.addDash)
-			if len(res) > MAX_CRONJOB_CHARS {
-				t.Errorf("expected length of truncated string to be <= %d, got %d", MAX_CRONJOB_CHARS, len(res))
-			}
-			if got, want := res, tc.expect; got != want {
-				t.Errorf("got: %s, want: %s", got, want)
-			}
-		})
-	}
-}
-
-func TestIntervalToCron(t *testing.T) {
-	testCases := []struct {
-		name         string
-		interval     string
-		expectedCron string
-	}{
-		{
-			name:         "good interval, every 2 nanoseconds",
-			interval:     "2ns",
-			expectedCron: "*/1 * * * *",
-		},
-		{
-			name:         "good interval, every 2 microseconds",
-			interval:     "2us",
-			expectedCron: "*/1 * * * *",
-		},
-		{
-			name:         "good interval, every 2 milliseconds",
-			interval:     "2ms",
-			expectedCron: "*/1 * * * *",
-		},
-		{
-			name:         "good interval, every 2 seconds",
-			interval:     "2s",
-			expectedCron: "*/1 * * * *",
-		},
-		{
-			name:         "good interval, every two minutes",
-			interval:     "2m",
-			expectedCron: "*/2 * * * *",
-		},
-		{
-			name:         "good interval, every two hours",
-			interval:     "2h",
-			expectedCron: "0 */2 * * *",
-		},
-		{
-			name:         "good interval, every three days",
-			interval:     "72h",
-			expectedCron: "0 0 */3 * *",
-		},
-		{
-			name:         "good interval, every 2 months",
-			interval:     "1460h",
-			expectedCron: "0 0 1 */2 *",
-		},
-		{
-			name:         "bad interval, unsupported duration (> 1y)",
-			interval:     "17532h",
-			expectedCron: "",
-		},
-		{
-			name:         "bad interval, unsupported unit (days)",
-			interval:     "1d",
-			expectedCron: "",
-		},
-	}
-
-	gron := gronx.New()
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			cron, _ := intervalToCron(tc.interval)
-
-			valid := gron.IsValid(cron)
-			if cron != "" && !valid {
-				t.Errorf("the generated cron is invalid: %s", cron)
-			}
-
-			if got, want := cron, tc.expectedCron; got != want {
-				t.Errorf("got: %s, want: %s", got, want)
-			}
-		})
-	}
-}
-
 func makeDefaultConfig() Config {
 	return Config{
-		Kubeconfig:               "",
-		APIServerURL:             "",
-		RepoSyncImage:            repoSyncImage,
-		RepoSyncImagePullSecrets: []string{},
-		RepoSyncCommand:          "/chart-repo",
-		KubeappsNamespace:        "kubeapps",
-		GlobalPackagingNamespace: "kubeapps-global",
-		ReposPerNamespace:        true,
-		DBURL:                    "postgresql.kubeapps",
-		DBUser:                   "admin",
-		DBName:                   "assets",
-		DBSecretName:             "postgresql",
-		DBSecretKey:              "postgresql-root-password",
-		UserAgentComment:         "",
-		TTLSecondsAfterFinished:  "3600",
-		Crontab:                  "*/10 * * * *",
-		CustomAnnotations:        []string{},
-		CustomLabels:             []string{},
-		ParsedCustomLabels:       map[string]string{},
-		ParsedCustomAnnotations:  map[string]string{},
-		ImagePullSecretsRefs:     nil,
-		V1Beta1CronJobs:          false,
+		Kubeconfig:                 "",
+		APIServerURL:               "",
+		RepoSyncImage:              repoSyncImage,
+		RepoSyncImagePullSecrets:   []string{},
+		RepoSyncCommand:            "/chart-repo",
+		KubeappsNamespace:          "kubeapps",
+		GlobalPackagingNamespace:   "kubeapps-global",
+		ReposPerNamespace:          true,
+		DBURL:                      "postgresql.kubeapps",
+		DBUser:                     "admin",
+		DBName:                     "assets",
+		DBSecretName:               "postgresql",
+		DBSecretKey:                "postgresql-root-password",
+		UserAgentComment:           "",
+		TTLSecondsAfterFinished:    "3600",
+		Crontab:                    "*/10 * * * *",
+		CustomAnnotations:          []string{},
+		CustomLabels:               []string{},
+		ParsedCustomLabels:         map[string]string{},
+		ParsedCustomAnnotations:    map[string]string{},
+		ImagePullSecretsRefs:       nil,
+		V1Beta1CronJobs:            false,
+		SuccessfulJobsHistoryLimit: 3,
+		FailedJobsHistoryLimit:     1,
+		ConcurrencyPolicy:          "Replace",
 	}
 }

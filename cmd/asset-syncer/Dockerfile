@@ -17,7 +17,7 @@ ARG lint
 ARG GOLANGCILINT_VERSION="1.53.3"
 
 RUN if [ ! -z "$lint" ]; then \
-  go install github.com/golangci/golangci-lint/cmd/golangci-lint@v$GOLANGCILINT_VERSION; \
+  go install github.com/golangci/golangci-lint/cmd/golangci-lint@v$GOLANGCILINT_VERSION && \
   # Run golangci-lint to detect issues
   golangci-lint run --timeout=10m ./cmd/asset-syncer/... && \
   golangci-lint run --timeout=10m ./pkg/... ; \
