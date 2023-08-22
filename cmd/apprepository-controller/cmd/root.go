@@ -31,7 +31,7 @@ func newRootCmd() *cobra.Command {
 		Short: "Apprepository-controller is a Kubernetes controller for managing package repositories added to Kubeapps.",
 		PreRun: func(cmd *cobra.Command, args []string) {
 			initServerOpts()
-			log.Infof("apprepository-controller has been configured with: %#v", serveOpts)
+			log.Infof("Apprepository-controller has been configured with: %#v", serveOpts)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -64,7 +64,7 @@ func init() {
 	//set initial value of verbosity
 	err := flag.Set("v", "3")
 	if err != nil {
-		log.Errorf("error parsing verbosity: %v", viper.ConfigFileUsed())
+		log.Errorf("Error parsing verbosity: %v", viper.ConfigFileUsed())
 	}
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 }
@@ -100,7 +100,7 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		log.Errorf("using config file: %v", viper.ConfigFileUsed())
+		log.Infof("Using config file: %v", viper.ConfigFileUsed())
 	}
 }
 
@@ -123,7 +123,7 @@ func parseLabelsAnnotations(textArr []string) map[string]string {
 		if text != "" {
 			parts := strings.Split(text, "=")
 			if len(parts) != 2 {
-				log.Errorf("cannot parse '%s'", text)
+				log.Errorf("Cannot parse '%s'", text)
 			}
 			textMap[parts[0]] = parts[1]
 		}

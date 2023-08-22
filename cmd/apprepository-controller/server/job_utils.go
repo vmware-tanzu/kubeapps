@@ -60,7 +60,7 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository, config Config) (*batchv1
 	}
 	// If the interval is invalid, use the default global crontab
 	if err != nil {
-		log.Errorf("invalid interval for apprepo %q: %v", apprepo.GetName(), err)
+		log.Errorf("Invalid interval for apprepo %q: %v", apprepo.GetName(), err)
 		cronTime = config.Crontab
 	}
 
@@ -142,7 +142,7 @@ func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository, config Config) [
 	if apprepo.Spec.FilterRule.JQ != "" {
 		rulesJSON, err := json.Marshal(apprepo.Spec.FilterRule)
 		if err != nil {
-			log.Errorf("unable to parse filter rules for %s: %v", apprepo.GetName(), err)
+			log.Errorf("Unable to parse filter rules for %s: %v", apprepo.GetName(), err)
 		} else {
 			args = append(args, "--filter-rules", string(rulesJSON))
 		}
