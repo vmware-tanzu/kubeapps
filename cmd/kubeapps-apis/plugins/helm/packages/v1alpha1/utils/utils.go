@@ -57,12 +57,12 @@ func RegistrySecretsPerDomain(ctx context.Context, appRepoSecrets []string, name
 		}
 
 		if secret.Type != dockerConfigJSONType {
-			return nil, fmt.Errorf("AppRepository secret must be of type %q. Secret %q had type %q", dockerConfigJSONType, secretName, secret.Type)
+			return nil, fmt.Errorf("the AppRepository secret must be of type %q. Secret %q had type %q", dockerConfigJSONType, secretName, secret.Type)
 		}
 
 		dockerConfigJSONBytes, ok := secret.Data[dockerConfigJSONKey]
 		if !ok {
-			return nil, fmt.Errorf("AppRepository secret must have a data map with a key %q. Secret %q did not", dockerConfigJSONKey, secretName)
+			return nil, fmt.Errorf("the AppRepository secret must have a data map with a key %q. Secret %q did not", dockerConfigJSONKey, secretName)
 		}
 
 		dockerConfigJSON := kube.DockerConfigJSON{}

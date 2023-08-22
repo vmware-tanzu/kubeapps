@@ -154,7 +154,7 @@ func (r *HelmRepo) FilterIndex() {
 func compileJQ(rule *apprepov1alpha1.FilterRuleSpec) (*gojq.Code, []interface{}, error) {
 	query, err := gojq.Parse(rule.JQ)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Unable to parse jq query: %v", err)
+		return nil, nil, fmt.Errorf("unable to parse jq query: %v", err)
 	}
 	varNames := []string{}
 	varValues := []interface{}{}
@@ -167,7 +167,7 @@ func compileJQ(rule *apprepov1alpha1.FilterRuleSpec) (*gojq.Code, []interface{},
 		gojq.WithVariables(varNames),
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Unable to compile jq: %v", err)
+		return nil, nil, fmt.Errorf("unable to compile jq: %v", err)
 	}
 	return code, varValues, nil
 }
@@ -175,12 +175,12 @@ func compileJQ(rule *apprepov1alpha1.FilterRuleSpec) (*gojq.Code, []interface{},
 func satisfy(chartInput map[string]interface{}, code *gojq.Code, vars []interface{}) (bool, error) {
 	res, _ := code.Run(chartInput, vars...).Next()
 	if err, ok := res.(error); ok {
-		return false, fmt.Errorf("Unable to run jq: %v", err)
+		return false, fmt.Errorf("unable to run jq: %v", err)
 	}
 
 	satisfied, ok := res.(bool)
 	if !ok {
-		return false, fmt.Errorf("Unable to convert jq result to boolean. Got: %v", res)
+		return false, fmt.Errorf("unable to convert jq result to boolean. Got: %v", res)
 	}
 	return satisfied, nil
 }
@@ -227,12 +227,12 @@ func filterCharts(charts []models.Chart, filterRule *apprepov1alpha1.FilterRuleS
 		// Convert the chart to a map[interface]{}
 		chartBytes, err := json.Marshal(chart)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to parse chart: %v", err)
+			return nil, fmt.Errorf("unable to parse chart: %v", err)
 		}
 		chartInput := map[string]interface{}{}
 		err = json.Unmarshal(chartBytes, &chartInput)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to parse chart: %v", err)
+			return nil, fmt.Errorf("unable to parse chart: %v", err)
 		}
 
 		satisfied, err := satisfy(chartInput, jqCode, vars)

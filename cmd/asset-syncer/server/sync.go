@@ -17,24 +17,24 @@ import (
 
 func Sync(serveOpts Config, version string, args []string) error {
 	if len(args) != 3 {
-		return fmt.Errorf("Need exactly three arguments: [REPO NAME] [REPO URL] [REPO TYPE] (got %v)", len(args))
+		return fmt.Errorf("need exactly three arguments: [REPO NAME] [REPO URL] [REPO TYPE] (got %v)", len(args))
 	}
 
 	dbConfig := dbutils.Config{URL: serveOpts.DatabaseURL, Database: serveOpts.DatabaseName, Username: serveOpts.DatabaseUser, Password: serveOpts.DatabasePassword}
 	globalPackagingNamespace := serveOpts.GlobalPackagingNamespace
 	manager, err := newManager(dbConfig, globalPackagingNamespace)
 	if err != nil {
-		return fmt.Errorf("Error: %v", err)
+		return fmt.Errorf("error: %v", err)
 	}
 	err = manager.Init()
 	if err != nil {
-		return fmt.Errorf("Error: %v", err)
+		return fmt.Errorf("error: %v", err)
 	}
 	defer manager.Close()
 
 	netClient, err := httpclient.NewWithCertFile(additionalCAFile, serveOpts.TlsInsecureSkipVerify)
 	if err != nil {
-		return fmt.Errorf("Error: %v", err)
+		return fmt.Errorf("error: %v", err)
 	}
 
 	authorizationHeader := serveOpts.AuthorizationHeader
@@ -43,17 +43,17 @@ func Sync(serveOpts Config, version string, args []string) error {
 		dockerConfig := &kube.DockerConfigJSON{}
 		err = json.Unmarshal([]byte(serveOpts.DockerConfigJson), dockerConfig)
 		if err != nil {
-			return fmt.Errorf("Error: %v", err)
+			return fmt.Errorf("error: %v", err)
 		}
 		authorizationHeader, err = kube.GetAuthHeaderFromDockerConfig(dockerConfig)
 		if err != nil {
-			return fmt.Errorf("Error: %v", err)
+			return fmt.Errorf("error: %v", err)
 		}
 	}
 
 	filters, err := parseFilters(serveOpts.FilterRules)
 	if err != nil {
-		return fmt.Errorf("Error: %v", err)
+		return fmt.Errorf("error: %v", err)
 	}
 
 	var repoIface Repo
@@ -63,12 +63,12 @@ func Sync(serveOpts Config, version string, args []string) error {
 		repoIface, err = getOCIRepo(serveOpts.Namespace, args[0], args[1], authorizationHeader, filters, serveOpts.OciRepositories, netClient)
 	}
 	if err != nil {
-		return fmt.Errorf("Error: %v", err)
+		return fmt.Errorf("error: %v", err)
 	}
 	repo := repoIface.Repo()
 	checksum, err := repoIface.Checksum()
 	if err != nil {
-		return fmt.Errorf("Error: %v", err)
+		return fmt.Errorf("error: %v", err)
 	}
 
 	// Check if the repo has been already processed
@@ -92,14 +92,14 @@ func Sync(serveOpts Config, version string, args []string) error {
 	for _, fetchLatestOnly := range fetchLatestOnlySlice {
 		charts, err := repoIface.Charts(fetchLatestOnly)
 		if err != nil {
-			return fmt.Errorf("Error: %v", err)
+			return fmt.Errorf("error: %v", err)
 		}
 		if len(charts) == 0 {
 			log.Infof("No charts in repository to be synced, repo.URL= %v", repo.URL)
 			return nil
 		}
 		if err = manager.Sync(models.Repo{Name: repo.Name, Namespace: repo.Namespace}, charts); err != nil {
-			return fmt.Errorf("Can't add chart repository to database: %v", err)
+			return fmt.Errorf("can't add chart repository to database: %v", err)
 		}
 
 		// Fetch and store chart icons
@@ -111,7 +111,7 @@ func Sync(serveOpts Config, version string, args []string) error {
 
 	// Update cache in the database
 	if err = manager.UpdateLastCheck(repo.Namespace, repo.Name, checksum, time.Now()); err != nil {
-		return fmt.Errorf("Error: %v", err)
+		return fmt.Errorf("error: %v", err)
 	}
 
 	log.Infof("Stored repository update in cache, repo.URL= %v", repo.URL)

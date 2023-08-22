@@ -12,23 +12,23 @@ import (
 
 func InvalidateCache(serveOpts Config, args []string) error {
 	if len(args) != 0 {
-		return fmt.Errorf("This command does not take any arguments (got %v)", len(args))
+		return fmt.Errorf("this command does not take any arguments (got %v)", len(args))
 	}
 
 	dbConfig := dbutils.Config{URL: serveOpts.DatabaseURL, Database: serveOpts.DatabaseName, Username: serveOpts.DatabaseUser, Password: serveOpts.DatabasePassword}
 	manager, err := newManager(dbConfig, serveOpts.GlobalPackagingNamespace)
 	if err != nil {
-		return fmt.Errorf("Error: %v", err)
+		return fmt.Errorf("error: %v", err)
 	}
 	err = manager.Init()
 	if err != nil {
-		return fmt.Errorf("Error: %v", err)
+		return fmt.Errorf("error: %v", err)
 	}
 	defer manager.Close()
 
 	err = manager.InvalidateCache()
 	if err != nil {
-		return fmt.Errorf("Error: %v", err)
+		return fmt.Errorf("error: %v", err)
 	}
 	log.Infof("Successfully invalidated cache")
 	return nil

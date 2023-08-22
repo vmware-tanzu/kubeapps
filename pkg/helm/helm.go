@@ -101,7 +101,7 @@ func (p *OCIPuller) PullOCIChart(ref string) (*bytes.Buffer, string, error) {
 
 	_, chartData, ok := memoryStore.Get(*chartDescriptor)
 	if !ok {
-		return nil, manifest.Digest.String(), fmt.Errorf("Unable to retrieve blob with digest %s", chartDescriptor.Digest)
+		return nil, manifest.Digest.String(), fmt.Errorf("unable to retrieve blob with digest %s", chartDescriptor.Digest)
 	}
 
 	return bytes.NewBuffer(chartData), manifest.Digest.String(), nil

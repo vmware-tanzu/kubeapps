@@ -143,7 +143,7 @@ func getOCIAppRepositoryTag(cli httpclient.Client, repoURL string, repoName stri
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("Unexpected status code when querying %q: %d", repoName, resp.StatusCode)
+		return "", fmt.Errorf("unexpected status code when querying %q: %d", repoName, resp.StatusCode)
 	}
 
 	var body []byte
@@ -297,7 +297,7 @@ func (r HelmNonOCIValidator) Validate(ctx context.Context) (*ValidationResponse,
 	if response.Code != 200 {
 		body, err := io.ReadAll(res.Body)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to parse validation response. Got: %w", err)
+			return nil, fmt.Errorf("unable to parse validation response. Got: %w", err)
 		}
 		response.Message = string(body)
 	}
