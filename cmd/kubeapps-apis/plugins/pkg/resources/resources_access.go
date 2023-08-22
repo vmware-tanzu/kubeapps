@@ -5,12 +5,13 @@ package resources
 
 import (
 	"fmt"
+	"sync"
+
 	"golang.org/x/net/context"
 	authorizationapi "k8s.io/api/authorization/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
-	"sync"
 
 	log "k8s.io/klog/v2"
 )
@@ -40,7 +41,7 @@ func GetPermissionsOnResource(ctx context.Context, client kubernetes.Interface, 
 
 			response, err := doResourceAccessReview(ctx, client, gr, verb, namespace)
 			if err != nil {
-				log.Errorf("error finding permissions for %s/%s - %s in namespace %s", gr.Group, gr.Resource, verb, namespace, err)
+				log.Errorf("Error finding permissions for %s/%s - %s in namespace %s", gr.Group, gr.Resource, verb, namespace, err)
 				return
 			}
 			accessReviewChan <- accessReviewResult{

@@ -210,7 +210,7 @@ func (s *Server) GetResources(ctx context.Context, r *connect.Request[v1alpha1.G
 	// First we grab the resource references for the specified installed package.
 	coreClient, err := s.corePackagesClientGetter()
 	if err != nil {
-		log.Errorf("unable to create core packages client: %+v", err)
+		log.Errorf("Unable to create core packages client: %+v", err)
 		return err
 	}
 
@@ -222,7 +222,7 @@ func (s *Server) GetResources(ctx context.Context, r *connect.Request[v1alpha1.G
 	refsResponse, err := coreClient.GetInstalledPackageResourceRefs(ctx, newRequest)
 
 	if err != nil {
-		log.Errorf("unable to query core packages client for installed package resource refs: %+v", err)
+		log.Errorf("Unable to query core packages client for installed package resource refs: %+v", err)
 		return err
 	}
 	var resourcesToReturn []*pkgsGRPCv1alpha1.ResourceRef
@@ -298,7 +298,7 @@ func (s *Server) GetResources(ctx context.Context, r *connect.Request[v1alpha1.G
 			watcher, err = dynamicClient.Resource(gvr).Watch(ctx, listOptions)
 		}
 		if err != nil {
-			log.Errorf("unable to watch resource %v: %v", ref, err)
+			log.Errorf("Unable to watch resource %v: %v", ref, err)
 			return connect.NewError(connect.CodeInternal, fmt.Errorf("unable to watch resource %v", ref))
 		}
 		watchers = append(watchers, &ResourceWatcher{

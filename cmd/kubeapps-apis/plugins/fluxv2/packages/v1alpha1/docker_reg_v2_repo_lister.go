@@ -107,7 +107,7 @@ func (l *dockerRegistryApiV2RepositoryLister) ListRepositoryNames(ociRepo *OCICh
 		done := errors.New("(done) backstop")
 
 		fn := func(repos []string) error {
-			log.Infof("orasRegistry.Repositories fn: %s", repos)
+			log.Infof("Response from orasRegistry.Repositories fn: %s", repos)
 			curRepoMatch := false
 			for _, r := range repos {
 				// Examples:

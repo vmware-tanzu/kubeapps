@@ -133,7 +133,7 @@ func filterAllowedNamespaces(userClient kubernetes.Interface, maxWorkers int, na
 				allowedNamespaces = append(allowedNamespaces, res.ns)
 			}
 		} else {
-			log.Errorf("failed to check namespace permissions. Got %v", res.Error)
+			log.Errorf("Failed to check namespace permissions. Got %v", res.Error)
 		}
 	}
 	return allowedNamespaces, nil

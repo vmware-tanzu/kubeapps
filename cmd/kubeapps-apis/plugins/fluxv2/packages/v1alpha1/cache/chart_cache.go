@@ -304,7 +304,7 @@ func (c *ChartCache) deleteChartsHelper(repo *types.NamespacedName, keepThese se
 			log.Errorf("%+v", err)
 		} else {
 			if parts := strings.Split(chartID, "/"); len(parts) != 2 {
-				log.Errorf("unexpected chartID format: [%s]", chartID)
+				log.Errorf("Unexpected chartID format: [%s]", chartID)
 			} else if repo.Namespace == namespace && repo.Name == parts[0] {
 				redisKeysToDelete.Insert(k)
 			}
@@ -536,7 +536,7 @@ func (c *ChartCache) Get(key string, chart *models.Chart, downloadFn DownloadCha
 		for _, v := range chart.ChartVersions {
 			if v.Version == version {
 				if len(v.URLs) == 0 {
-					log.Warningf("chart: [%s], version: [%s] has no URLs", chart.ID, v.Version)
+					log.Warningf("The chart: [%s], version: [%s] has no URLs", chart.ID, v.Version)
 				} else {
 					entry = &chartCacheStoreEntry{
 						namespace:  namespace,

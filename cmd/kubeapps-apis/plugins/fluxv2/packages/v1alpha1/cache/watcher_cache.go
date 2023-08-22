@@ -607,7 +607,7 @@ func (c *NamespacedResourceWatcherCache) onAddOrModify(obj ctrlclient.Object) (e
 		// clear that key so cache doesn't contain any stale info for this object
 		keysremoved, err2 := c.redisCli.Del(c.redisCli.Context(), key).Result()
 		if err2 != nil {
-			log.Errorf("failed to delete value for object [%s] from cache due to: %v", key, err2)
+			log.Errorf("Failed to delete value for object [%s] from cache due to: %v", key, err2)
 		} else {
 			// debugging an intermittent failure
 			log.Infof("Redis [DEL %s]: %d", key, keysremoved)

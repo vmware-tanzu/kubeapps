@@ -215,7 +215,7 @@ func (s *Server) installedPackageDetail(ctx context.Context, headers http.Header
 		return nil, err
 	}
 
-	log.V(4).Infof("installedPackageDetail:\n[%s]", common.PrettyPrint(rel))
+	log.V(4).Infof("Release from installedPackageDetail:\n[%s]", common.PrettyPrint(rel))
 
 	var pkgVersionRef *corev1.VersionReference
 	version := rel.Spec.Chart.Spec.Version

@@ -69,12 +69,12 @@ func ChartsFromIndex(contents []byte, r *models.Repo, shallow bool) ([]models.Ch
 
 		// skip if the entry is empty
 		if len(entry) < 1 {
-			log.Infof("skipping chart: [%s]", key)
+			log.Infof("Skipping chart: [%s]", key)
 			continue
 		}
 
 		if entry[0].Deprecated {
-			log.Infof("skipping deprecated chart: [%s]", entry[0].Name)
+			log.Infof("Skipping deprecated chart: [%s]", entry[0].Name)
 			continue
 		}
 		charts = append(charts, newChart(entry, r, shallow))

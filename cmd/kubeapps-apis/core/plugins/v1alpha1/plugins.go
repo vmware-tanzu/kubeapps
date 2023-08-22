@@ -76,7 +76,7 @@ func NewPluginsServer(serveOpts core.ServeOptions, gwArgs core.GatewayHandlerArg
 	// Find all .so plugins in the specified plugins directory.
 	pluginPaths, err := listSOFiles(os.DirFS(pluginRootDir), serveOpts.PluginDirs)
 	if err != nil {
-		log.Fatalf("failed to check for plugins: %v", err)
+		log.Fatalf("Failed to check for plugins: %v", err)
 	}
 
 	ps := &PluginsServer{}

@@ -335,7 +335,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect
 		sortedVersions, err := pkgutils.SortByPackageVersion(chart.ChartVersions)
 		if err != nil {
 			// If there was an error parsing a version as semver, fall back to ChartVersions[0]
-			log.Errorf("error parsing versions as semver: %w", err)
+			log.Errorf("Error parsing versions as semver: %w", err)
 			version = chart.ChartVersions[0].Version
 		} else {
 			version = sortedVersions[0].Version.String()
@@ -434,7 +434,7 @@ func AvailablePackageDetailFromChart(chart *models.Chart, chartFiles *models.Cha
 		sortedVersions, err := pkgutils.SortByPackageVersion(chart.ChartVersions)
 		if err != nil {
 			// If there was an error parsing a version as semver, fall back to ChartVersions[0]
-			log.Errorf("error parsing versions as semver: %w", err)
+			log.Errorf("Error parsing versions as semver: %w", err)
 			version = chart.ChartVersions[0].Version
 			pkg.Version = &corev1.PackageAppVersion{
 				PkgVersion: chart.ChartVersions[0].Version,
@@ -547,7 +547,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *conn
 			sortedVersions, err := pkgutils.SortByPackageVersion(charts[0].ChartVersions)
 			if err != nil {
 				// If there was an error parsing a version as semver, fall back to ChartVersions[0]
-				log.Errorf("error parsing versions as semver: %w", err)
+				log.Errorf("Error parsing versions as semver: %w", err)
 				installedPkgSummaries[i].LatestVersion = &corev1.PackageAppVersion{
 					PkgVersion: charts[0].ChartVersions[0].Version,
 					AppVersion: charts[0].ChartVersions[0].AppVersion,
@@ -685,7 +685,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *connect
 			sortedVersions, err := pkgutils.SortByPackageVersion(charts[0].ChartVersions)
 			if err != nil {
 				// If there was an error parsing a version as semver, fall back to ChartVersions[0]
-				log.Errorf("error parsing versions as semver: %w", err)
+				log.Errorf("Error parsing versions as semver: %w", err)
 				installedPkgDetail.LatestVersion = &corev1.PackageAppVersion{
 					PkgVersion: charts[0].ChartVersions[0].Version,
 					AppVersion: charts[0].ChartVersions[0].AppVersion,
@@ -935,7 +935,7 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, headers http
 	userAgentString := fmt.Sprintf("%s/%s/%s/%s", UserAgentPrefix, pluginDetail.Name, pluginDetail.Version, version)
 
 	chartID := fmt.Sprintf("%s/%s", appRepo.Name, chartDetails.ChartName)
-	log.InfoS("fetching chart with user-agent", "chartID", chartID, "userAgentString", userAgentString)
+	log.InfoS("Fetching chart with user-agent", "chartID", chartID, "userAgentString", userAgentString)
 
 	// Look up the cachedChart cached in our DB to populate the tarball URL
 	cachedChart, err := s.manager.GetChartVersion(chartDetails.AppRepositoryResourceNamespace, chartID, chartDetails.Version)
@@ -947,7 +947,7 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, headers http
 	// we assume cachedChart.ChartVersions only contains 1 element
 	if cachedChart.ChartVersions != nil && len(cachedChart.ChartVersions) == 1 && cachedChart.ChartVersions[0].URLs != nil {
 		tarballURL = chartTarballURL(cachedChart.Repo, cachedChart.ChartVersions[0])
-		log.InfoS("using chart tarball", "url", tarballURL)
+		log.InfoS("Using chart tarball", "url", tarballURL)
 	}
 
 	// Grab the chart itself

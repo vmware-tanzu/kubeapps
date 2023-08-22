@@ -151,7 +151,7 @@ func getOCIAppRepositoryTag(cli httpclient.Client, repoURL string, repoName stri
 
 	body, err = io.ReadAll(resp.Body)
 	if err != nil {
-		log.Errorf("io.ReadAll : unable to get: %v", err)
+		log.Errorf("Error from io.ReadAll: unable to get: %v", err)
 		return "", err
 	}
 
@@ -183,7 +183,7 @@ func getOCIAppRepositoryMediaType(client httpclient.Client, repoURL string, repo
 	}
 	parsedURL.Path = path.Join("v2", parsedURL.Path, repoName, "manifests", tagVersion)
 
-	log.InfoS("parsedURL", "URL", parsedURL.String())
+	log.InfoS("The parsedURL", "URL", parsedURL.String())
 	req, err := http.NewRequest("GET", parsedURL.String(), nil)
 	if err != nil {
 		return "", err
@@ -230,7 +230,7 @@ func (v *HelmOCIValidator) validateOCIAppRepository(appRepo *apprepov1alpha1.App
 	if len(appRepo.Spec.OCIRepositories) == 0 {
 		u, err := url.Parse(repoURL)
 		if err != nil {
-			log.Errorf("could not parse URL: %+v", err)
+			log.Errorf("Could not parse URL: %+v", err)
 			return false, err
 		}
 		oci := utils.OciAPIClient{AuthHeader: "", Url: u, NetClient: cli}
@@ -361,7 +361,7 @@ func (v HelmOCIValidator) Validate(ctx context.Context) (*ValidationResponse, er
 		if err == nil {
 			return resp, nil
 		}
-		log.Errorf("unable to query OCI Catalog service at %q: %+v", v.OCICatalogAddr, err)
+		log.Errorf("Unable to query OCI Catalog service at %q: %+v", v.OCICatalogAddr, err)
 	}
 
 	if v.ClientGetter == nil {

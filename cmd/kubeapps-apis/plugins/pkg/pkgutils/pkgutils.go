@@ -91,7 +91,7 @@ func PackageAppVersionsSummary(versions []models.ChartVersion, versionInSummary 
 	if err != nil {
 		// If there was an error parsing a version as semver, we log the error
 		// and simply return the versions, as Helm does.
-		log.Errorf("error parsing versions as semver: %w", err)
+		log.Errorf("Error parsing versions as semver: %w", err)
 		for _, version := range versions {
 			pav = append(pav, &corev1.PackageAppVersion{
 				PkgVersion: version.Version,
@@ -200,7 +200,7 @@ func AvailablePackageSummaryFromChart(chart *models.Chart, plugin *plugins.Plugi
 		sortedVersions, err := SortByPackageVersion(chart.ChartVersions)
 		if err != nil {
 			// If there was an error parsing a version as semver, fall back to ChartVersions[0]
-			log.Errorf("error parsing versions as semver: %w", err)
+			log.Errorf("Error parsing versions as semver: %w", err)
 			pkg.LatestVersion = &corev1.PackageAppVersion{
 				PkgVersion: chart.ChartVersions[0].Version,
 				AppVersion: chart.ChartVersions[0].AppVersion,
