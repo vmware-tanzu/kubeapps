@@ -76,7 +76,7 @@ func NewPluginsServer(serveOpts core.ServeOptions, gwArgs core.GatewayHandlerArg
 	// Find all .so plugins in the specified plugins directory.
 	pluginPaths, err := listSOFiles(os.DirFS(pluginRootDir), serveOpts.PluginDirs)
 	if err != nil {
-		log.Fatalf("failed to check for plugins: %v", err)
+		log.Fatalf("Failed to check for plugins: %v", err)
 	}
 
 	ps := &PluginsServer{}
@@ -322,7 +322,7 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.S
 		var err error
 		token, err := extractToken(headers)
 		if err != nil {
-			return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("invalid authorization metadata: %w", err))
+			return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("Invalid authorization metadata: %w", err))
 		}
 
 		var config *rest.Config

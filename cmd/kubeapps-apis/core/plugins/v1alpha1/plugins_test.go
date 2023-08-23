@@ -360,18 +360,18 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 		{
 			name:           "it doesn't create the config and throws a grpc error when passing an invalid authorization metadata",
 			headers:        http.Header{"Authorization": []string{"Bla"}},
-			expectedErrMsg: connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("invalid authorization metadata: malformed authorization metadata")),
+			expectedErrMsg: connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("Invalid authorization metadata: malformed authorization metadata")),
 		},
 		{
 			name:            "it doesn't create the config and throws a grpc error for the default cluster when no authorization metadata is passed",
 			expectedAPIHost: DefaultK8sAPI,
-			expectedErrMsg:  connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("invalid authorization metadata: missing authorization metadata")),
+			expectedErrMsg:  connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("Invalid authorization metadata: missing authorization metadata")),
 		},
 		{
 			name:            "it doesn't create the config and throws a grpc error for the other cluster",
 			cluster:         OtherClusterName,
 			expectedAPIHost: OtherK8sAPI,
-			expectedErrMsg:  connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("invalid authorization metadata: missing authorization metadata")),
+			expectedErrMsg:  connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("Invalid authorization metadata: missing authorization metadata")),
 		},
 	}
 

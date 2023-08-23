@@ -63,13 +63,13 @@ func (r *DockerSecretsPostRenderer) processResourceList(resourceList []interface
 		}
 		kindValue, ok := resource["kind"]
 		if !ok {
-			log.Errorf("invalid resource: no kind. %+v", resource)
+			log.Errorf("Invalid resource: no kind. %+v", resource)
 			continue
 		}
 
 		kind, ok := kindValue.(string)
 		if !ok {
-			log.Errorf("invalid resource: non-string resource kind. %+v", resource)
+			log.Errorf("Invalid resource: non-string resource kind. %+v", resource)
 			continue
 		}
 		if items, ok := resource["items"]; ok {
@@ -140,12 +140,12 @@ func (r *DockerSecretsPostRenderer) Run(renderedManifests *bytes.Buffer) (modifi
 func (r *DockerSecretsPostRenderer) updatePodSpecWithPullSecrets(podSpec map[string]interface{}) {
 	containersObject, ok := podSpec["containers"]
 	if !ok {
-		log.Errorf("podSpec contained no containers key: %+v", podSpec)
+		log.Errorf("The podSpec contained no containers key: %+v", podSpec)
 		return
 	}
 	containers, ok := containersObject.([]interface{})
 	if !ok {
-		log.Errorf("podSpec containers key is not a slice: %+v", podSpec)
+		log.Errorf("The podSpec containers key is not a slice: %+v", podSpec)
 		return
 	}
 
@@ -169,7 +169,7 @@ func (r *DockerSecretsPostRenderer) updatePodSpecWithPullSecrets(podSpec map[str
 	for _, c := range containers {
 		container, ok := c.(map[string]interface{})
 		if !ok {
-			log.Errorf("pod spec container is not a map: %+v", c)
+			log.Errorf("The pod spec container is not a map: %+v", c)
 			continue
 		}
 		image, ok := container["image"].(string)
@@ -177,13 +177,13 @@ func (r *DockerSecretsPostRenderer) updatePodSpecWithPullSecrets(podSpec map[str
 			// NOTE: in https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.22/#container-v1-core
 			// the image is optional to allow higher level config management to default or override (such as
 			// deployments or statefulsets), but both only define pod templates which in turn define containers?
-			log.Errorf("pod spec container does not define an string image: %+v", container)
+			log.Errorf("The pod spec container does not define an string image: %+v", container)
 			continue
 		}
 
 		ref, err := reference.ParseNormalizedNamed(image)
 		if err != nil {
-			log.Errorf("unable to parse image reference: %q", image)
+			log.Errorf("Unable to parse image reference: %q", image)
 			continue
 		}
 		imageDomain := reference.Domain(ref)
@@ -194,7 +194,7 @@ func (r *DockerSecretsPostRenderer) updatePodSpecWithPullSecrets(podSpec map[str
 		}
 		// Only add the secret if it's not already included in the image pull secrets.
 		if _, ok := existingNames[secretName]; !ok {
-			log.Infof("appending imagePullSecret %q for fetching image %s", secretName, image)
+			log.Infof("Appending imagePullSecret %q for fetching image %s", secretName, image)
 			imagePullSecrets = append(imagePullSecrets, map[string]interface{}{"name": secretName})
 			existingNames[secretName] = true
 		}
@@ -237,7 +237,7 @@ func getMapForKeys(keys []string, m map[string]interface{}) map[string]interface
 	for _, k := range keys {
 		current, ok = current[k].(map[string]interface{})
 		if !ok {
-			log.Errorf("invalid resource: non-map %q, in %+v", k, m)
+			log.Errorf("Invalid resource: non-map %q, in %+v", k, m)
 			return nil
 		}
 	}

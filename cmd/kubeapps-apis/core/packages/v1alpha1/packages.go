@@ -42,7 +42,7 @@ func NewPackagesServer(pkgingPlugins []pluginsv1alpha1.PluginWithServer) (*packa
 	for i, p := range pkgingPlugins {
 		pkgsSrv, ok := p.Server.(connectpackages.PackagesServiceHandler)
 		if !ok {
-			return nil, fmt.Errorf("Unable to convert plugin %v to core PackagesServicesServer", p)
+			return nil, fmt.Errorf("unable to convert plugin %v to core PackagesServicesServer", p)
 		}
 		pluginsWithServer[i] = pkgPluginWithServer{
 			plugin: p.Plugin,

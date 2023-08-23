@@ -28,7 +28,7 @@ func TestErrorByStatus(t *testing.T) {
 			"my-resource",
 			"",
 			status.Errorf(codes.InvalidArgument, "boom!"),
-			connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the my-resource 'all' due to 'rpc error: code = InvalidArgument desc = boom!'")),
+			connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the my-resource 'all' due to 'rpc error: code = InvalidArgument desc = boom!'")),
 		},
 		{
 			"error msg for a single resources ",
@@ -36,7 +36,7 @@ func TestErrorByStatus(t *testing.T) {
 			"my-resource",
 			"my-id",
 			status.Errorf(codes.InvalidArgument, "boom!"),
-			connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the my-resource 'my-id' due to 'rpc error: code = InvalidArgument desc = boom!'")),
+			connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the my-resource 'my-id' due to 'rpc error: code = InvalidArgument desc = boom!'")),
 		},
 	}
 	for _, tt := range tests {

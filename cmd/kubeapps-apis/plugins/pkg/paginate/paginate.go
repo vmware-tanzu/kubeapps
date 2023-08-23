@@ -23,7 +23,7 @@ func PageOffsetFromPageToken(pageToken string) (int, error) {
 	}
 	offset, err := strconv.ParseInt(pageToken, 10, 0)
 	if err != nil {
-		return 0, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("unable to interpret page token %q: %w",
+		return 0, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Unable to interpret page token %q: %w",
 			pageToken, err))
 	}
 	return int(offset), nil

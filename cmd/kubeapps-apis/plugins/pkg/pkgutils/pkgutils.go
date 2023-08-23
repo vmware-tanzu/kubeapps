@@ -67,7 +67,7 @@ func SortByPackageVersion(versions []models.ChartVersion) ([]*PackageSemVersion,
 			return nil, err
 		}
 		if version.String() != v.Version {
-			return nil, fmt.Errorf("Chart version %q is not semver", v.Version)
+			return nil, fmt.Errorf("chart version %q is not semver", v.Version)
 		}
 
 		sortedVersions = append(sortedVersions, &PackageSemVersion{
@@ -91,7 +91,7 @@ func PackageAppVersionsSummary(versions []models.ChartVersion, versionInSummary 
 	if err != nil {
 		// If there was an error parsing a version as semver, we log the error
 		// and simply return the versions, as Helm does.
-		log.Errorf("error parsing versions as semver: %w", err)
+		log.Errorf("Error parsing versions as semver: %w", err)
 		for _, version := range versions {
 			pav = append(pav, &corev1.PackageAppVersion{
 				PkgVersion: version.Version,
@@ -145,26 +145,26 @@ func PackageAppVersionsSummary(versions []models.ChartVersion, versionInSummary 
 // together with required fields for our model.
 func IsValidChart(chart *models.Chart) (bool, error) {
 	if chart.Name == "" {
-		return false, connect.NewError(connect.CodeInternal, fmt.Errorf("required field .Name not found on helm chart: %v", chart))
+		return false, connect.NewError(connect.CodeInternal, fmt.Errorf("Required field .Name not found on helm chart: %v", chart))
 	}
 	if chart.ID == "" {
-		return false, connect.NewError(connect.CodeInternal, fmt.Errorf("required field .ID not found on helm chart: %v", chart))
+		return false, connect.NewError(connect.CodeInternal, fmt.Errorf("Required field .ID not found on helm chart: %v", chart))
 	}
 	if chart.Repo == nil {
-		return false, connect.NewError(connect.CodeInternal, fmt.Errorf("required field .Repo not found on helm chart: %v", chart))
+		return false, connect.NewError(connect.CodeInternal, fmt.Errorf("Required field .Repo not found on helm chart: %v", chart))
 	}
 	if chart.ChartVersions == nil || len(chart.ChartVersions) == 0 {
-		return false, connect.NewError(connect.CodeInternal, fmt.Errorf("required field .chart.ChartVersions not found on helm chart or is empty: %v", chart))
+		return false, connect.NewError(connect.CodeInternal, fmt.Errorf("Required field .chart.ChartVersions not found on helm chart or is empty: %v", chart))
 	} else {
 		for _, chartVersion := range chart.ChartVersions {
 			if chartVersion.Version == "" {
-				return false, connect.NewError(connect.CodeInternal, fmt.Errorf("required field .ChartVersions[i].Version not found on helm chart: %v", chart))
+				return false, connect.NewError(connect.CodeInternal, fmt.Errorf("Required field .ChartVersions[i].Version not found on helm chart: %v", chart))
 			}
 		}
 	}
 	for _, maintainer := range chart.Maintainers {
 		if maintainer.Name == "" {
-			return false, connect.NewError(connect.CodeInternal, fmt.Errorf("required field .Maintainers[i].Name not found on helm chart: %v", chart))
+			return false, connect.NewError(connect.CodeInternal, fmt.Errorf("Required field .Maintainers[i].Name not found on helm chart: %v", chart))
 		}
 	}
 	return true, nil
@@ -176,7 +176,7 @@ func AvailablePackageSummaryFromChart(chart *models.Chart, plugin *plugins.Plugi
 
 	isValid, err := IsValidChart(chart)
 	if !isValid || err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("invalid chart: %s", err.Error()))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Invalid chart: %s", err.Error()))
 	}
 
 	pkg.Name = chart.Name
@@ -200,7 +200,7 @@ func AvailablePackageSummaryFromChart(chart *models.Chart, plugin *plugins.Plugi
 		sortedVersions, err := SortByPackageVersion(chart.ChartVersions)
 		if err != nil {
 			// If there was an error parsing a version as semver, fall back to ChartVersions[0]
-			log.Errorf("error parsing versions as semver: %w", err)
+			log.Errorf("Error parsing versions as semver: %w", err)
 			pkg.LatestVersion = &corev1.PackageAppVersion{
 				PkgVersion: chart.ChartVersions[0].Version,
 				AppVersion: chart.ChartVersions[0].AppVersion,
@@ -239,7 +239,7 @@ func AvailablePackageSummaryFromChart(chart *models.Chart, plugin *plugins.Plugi
 func GetUnescapedPackageID(packageID string) (string, error) {
 	unescapedPackageID, err := url.QueryUnescape(packageID)
 	if err != nil {
-		return "", fmt.Errorf("Unable to decode package ID: %v. %w", packageID, err)
+		return "", fmt.Errorf("unable to decode package ID: %v. %w", packageID, err)
 	}
 	// Ensure it has at least a / character, like "my-repo/foo/bar"
 	if idx := strings.IndexByte(unescapedPackageID, '/'); idx >= 0 {
@@ -247,7 +247,7 @@ func GetUnescapedPackageID(packageID string) (string, error) {
 		id := url.QueryEscape(unescapedPackageID[idx+1:])   // the rest is the package name, which should remain escaped
 		unescapedPackageID = fmt.Sprintf("%s/%s", repo, id) // combine the repo and package name like "my-repo/foo%2Fbar"
 	} else {
-		return "", fmt.Errorf("Incorrect package ref identifier, expecting 'my-repo/foo/.../bar' %s", packageID)
+		return "", fmt.Errorf("incorrect package ref identifier, expecting 'my-repo/foo/.../bar' %s", packageID)
 	}
 	return unescapedPackageID, nil
 }

@@ -1489,7 +1489,7 @@ func Test_filterCharts(t *testing.T) {
 				JQ: "not a rule",
 			},
 			nil,
-			fmt.Errorf(`Unable to parse jq query: unexpected token "a"`),
+			fmt.Errorf(`unable to parse jq query: unexpected token "a"`),
 		},
 		{
 			"an invalid number of vars cause to return an empty set",
@@ -1501,7 +1501,7 @@ func Test_filterCharts(t *testing.T) {
 				JQ: ".name == $var1",
 			},
 			nil,
-			fmt.Errorf(`Unable to compile jq: variable not defined: $var1`),
+			fmt.Errorf(`unable to compile jq: variable not defined: $var1`),
 		},
 		{
 			"the query doesn't return a boolean",
@@ -1513,7 +1513,7 @@ func Test_filterCharts(t *testing.T) {
 				JQ: `.name`,
 			},
 			nil,
-			fmt.Errorf(`Unable to convert jq result to boolean. Got: foo`),
+			fmt.Errorf(`unable to convert jq result to boolean. Got: foo`),
 		},
 		{
 			"matches without vars",

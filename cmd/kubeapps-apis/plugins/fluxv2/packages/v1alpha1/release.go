@@ -215,7 +215,7 @@ func (s *Server) installedPackageDetail(ctx context.Context, headers http.Header
 		return nil, err
 	}
 
-	log.V(4).Infof("installedPackageDetail:\n[%s]", common.PrettyPrint(rel))
+	log.V(4).Infof("Release from installedPackageDetail:\n[%s]", common.PrettyPrint(rel))
 
 	var pkgVersionRef *corev1.VersionReference
 	version := rel.Spec.Chart.Spec.Version
@@ -397,7 +397,7 @@ func (s *Server) updateRelease(ctx context.Context, headers http.Header, package
 	// non-pending releases  (i.e. success or failed status) are allowed
 	_, reason, _ := isHelmReleaseReady(*rel)
 	if reason == corev1.InstalledPackageStatus_STATUS_REASON_PENDING {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("updates to helm releases pending reconciliation are not supported"))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Updates to helm releases pending reconciliation are not supported"))
 	}
 
 	versionExpr := versionRef.GetVersion()
@@ -432,7 +432,7 @@ func (s *Server) updateRelease(ctx context.Context, headers http.Header, package
 		if reconcile.Interval != "" {
 			reconcileInterval, err := pkgutils.ToDuration(reconcile.Interval)
 			if err != nil {
-				return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("the reconciliation interval is invalid: %w", err))
+				return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("The reconciliation interval is invalid: %w", err))
 			}
 			rel.Spec.Interval = *reconcileInterval
 			setInterval = true
@@ -533,7 +533,7 @@ func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.Namesp
 	if reconcile != nil {
 		if reconcile.Interval != "" {
 			if duration, err := pkgutils.ToDuration(reconcile.Interval); err != nil {
-				return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("the reconciliation interval is invalid: %w", err))
+				return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("The reconciliation interval is invalid: %w", err))
 			} else {
 				reconcileInterval = *duration
 			}
@@ -646,11 +646,11 @@ func installedPackageReconciliationOptions(rel *helmv2.HelmRelease) *corev1.Reco
 func installedPackageAvailablePackageRef(rel *helmv2.HelmRelease) (*corev1.AvailablePackageReference, error) {
 	repoName := rel.Spec.Chart.Spec.SourceRef.Name
 	if repoName == "" {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("missing required field spec.chart.spec.sourceRef.name"))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Missing required field spec.chart.spec.sourceRef.name"))
 	}
 	chartName := rel.Spec.Chart.Spec.Chart
 	if chartName == "" {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("missing required field spec.chart.spec.chart"))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Missing required field spec.chart.spec.chart"))
 	}
 	repoNamespace := rel.Spec.Chart.Spec.SourceRef.Namespace
 	// CrossNamespaceObjectReference namespace is optional, so

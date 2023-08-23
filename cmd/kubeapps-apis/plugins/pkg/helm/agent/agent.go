@@ -53,9 +53,9 @@ func CreateRelease(actionConfig *action.Configuration, name, namespace, valueStr
 		// Simulate the Atomic flag and delete the release if failed
 		errDelete := DeleteRelease(actionConfig, name, false, timeoutSeconds)
 		if errDelete != nil && !strings.Contains(errDelete.Error(), "release: not found") {
-			return nil, fmt.Errorf("Release %q failed: %v. Unable to delete failed release: %v", name, err, errDelete)
+			return nil, fmt.Errorf("release %q failed: %v. Unable to delete failed release: %v", name, err, errDelete)
 		}
-		return nil, fmt.Errorf("Release %q failed and has been uninstalled: %v", name, err)
+		return nil, fmt.Errorf("release %q failed and has been uninstalled: %v", name, err)
 	}
 	return release, nil
 }
@@ -98,11 +98,11 @@ func UpgradeRelease(actionConfig *action.Configuration, name, valuesYaml string,
 	}
 	values, err := chartutil.ReadValues([]byte(valuesYaml))
 	if err != nil {
-		return nil, fmt.Errorf("Unable to upgrade the release because values could not be parsed: %v", err)
+		return nil, fmt.Errorf("unable to upgrade the release because values could not be parsed: %v", err)
 	}
 	res, err := cmd.Run(name, ch, values)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to upgrade the release: %v", err)
+		return nil, fmt.Errorf("unable to upgrade the release: %v", err)
 	}
 	return res, nil
 }

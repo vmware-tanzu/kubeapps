@@ -139,7 +139,7 @@ func NewController(
 		},
 	})
 	if err != nil {
-		log.Warningf("error adding AppRepository event handler: %v", err)
+		log.Warningf("Error adding AppRepository event handler: %v", err)
 	}
 
 	controller.setBatchLister(conf.V1Beta1CronJobs, kubeInformerFactory)

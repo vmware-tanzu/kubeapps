@@ -57,7 +57,7 @@ type PostgresAssetManager struct {
 func NewPGManager(config Config, globalPackagingNamespace string) (*PostgresAssetManager, error) {
 	url := strings.Split(config.URL, ":")
 	if len(url) != 2 {
-		return nil, fmt.Errorf("Can't parse database URL: %s", config.URL)
+		return nil, fmt.Errorf("can't parse database URL: %s", config.URL)
 	}
 	connStr := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",

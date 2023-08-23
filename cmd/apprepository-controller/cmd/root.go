@@ -31,7 +31,7 @@ func newRootCmd() *cobra.Command {
 		Short: "Apprepository-controller is a Kubernetes controller for managing package repositories added to Kubeapps.",
 		PreRun: func(cmd *cobra.Command, args []string) {
 			initServerOpts()
-			log.Infof("Apprepository-controller has been configured with: %#v", serveOpts)
+			log.InfoS("The component 'apprepository-controller' has been configured with", "serverOptions", serveOpts)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 

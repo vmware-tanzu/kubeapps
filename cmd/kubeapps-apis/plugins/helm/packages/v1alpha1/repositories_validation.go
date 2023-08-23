@@ -39,7 +39,7 @@ func (s *Server) ValidateRepository(ctx context.Context, appRepo *apprepov1alpha
 	if len(appRepo.Spec.DockerRegistrySecrets) > 0 && appRepo.Namespace == s.GetGlobalPackagingNamespace() {
 		// TODO(mnelson): we may also want to validate that any docker registry secrets listed
 		// already exist in the namespace.
-		return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("docker registry secrets cannot be set for app repositories available in all namespaces"))
+		return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("The docker registry secrets cannot be set for app repositories available in all namespaces"))
 	}
 
 	validator, err := s.getValidator(appRepo, secret)
@@ -143,7 +143,7 @@ func getOCIAppRepositoryTag(cli httpclient.Client, repoURL string, repoName stri
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("Unexpected status code when querying %q: %d", repoName, resp.StatusCode)
+		return "", fmt.Errorf("unexpected status code when querying %q: %d", repoName, resp.StatusCode)
 	}
 
 	var body []byte
@@ -151,7 +151,7 @@ func getOCIAppRepositoryTag(cli httpclient.Client, repoURL string, repoName stri
 
 	body, err = io.ReadAll(resp.Body)
 	if err != nil {
-		log.Errorf("io.ReadAll : unable to get: %v", err)
+		log.Errorf("Error from io.ReadAll: unable to get: %v", err)
 		return "", err
 	}
 
@@ -183,7 +183,7 @@ func getOCIAppRepositoryMediaType(client httpclient.Client, repoURL string, repo
 	}
 	parsedURL.Path = path.Join("v2", parsedURL.Path, repoName, "manifests", tagVersion)
 
-	log.InfoS("parsedURL", "URL", parsedURL.String())
+	log.InfoS("The parsedURL", "URL", parsedURL.String())
 	req, err := http.NewRequest("GET", parsedURL.String(), nil)
 	if err != nil {
 		return "", err
@@ -230,7 +230,7 @@ func (v *HelmOCIValidator) validateOCIAppRepository(appRepo *apprepov1alpha1.App
 	if len(appRepo.Spec.OCIRepositories) == 0 {
 		u, err := url.Parse(repoURL)
 		if err != nil {
-			log.Errorf("could not parse URL: %+v", err)
+			log.Errorf("Could not parse URL: %+v", err)
 			return false, err
 		}
 		oci := utils.OciAPIClient{AuthHeader: "", Url: u, NetClient: cli}
@@ -297,7 +297,7 @@ func (r HelmNonOCIValidator) Validate(ctx context.Context) (*ValidationResponse,
 	if response.Code != 200 {
 		body, err := io.ReadAll(res.Body)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to parse validation response. Got: %w", err)
+			return nil, fmt.Errorf("unable to parse validation response. Got: %w", err)
 		}
 		response.Message = string(body)
 	}
@@ -361,7 +361,7 @@ func (v HelmOCIValidator) Validate(ctx context.Context) (*ValidationResponse, er
 		if err == nil {
 			return resp, nil
 		}
-		log.Errorf("unable to query OCI Catalog service at %q: %+v", v.OCICatalogAddr, err)
+		log.Errorf("Unable to query OCI Catalog service at %q: %+v", v.OCICatalogAddr, err)
 	}
 
 	if v.ClientGetter == nil {

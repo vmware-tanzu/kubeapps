@@ -6701,7 +6701,7 @@ func TestAddPackageRepository(t *testing.T) {
 				return request
 			},
 			expectedErrorCode:   connect.CodeInvalidArgument,
-			expectedErrorString: "secret name is not provided",
+			expectedErrorString: "the secret name is not provided",
 		},
 		{
 			name: "validate auth (user managed, secret does not exist)",
@@ -6739,7 +6739,7 @@ func TestAddPackageRepository(t *testing.T) {
 				return request
 			},
 			expectedErrorCode:   connect.CodeInvalidArgument,
-			expectedErrorString: "secret does not match",
+			expectedErrorString: "the secret does not match",
 		},
 		{
 			name: "validate auth (plugin managed, invalid config, basic auth)",
@@ -6750,7 +6750,7 @@ func TestAddPackageRepository(t *testing.T) {
 				return request
 			},
 			expectedErrorCode:   connect.CodeInvalidArgument,
-			expectedErrorString: "missing basic auth",
+			expectedErrorString: "Missing basic auth",
 		},
 		{
 			name: "validate auth (plugin managed, invalid config, docker)",
@@ -6764,7 +6764,7 @@ func TestAddPackageRepository(t *testing.T) {
 				return request
 			},
 			expectedErrorCode:   connect.CodeInvalidArgument,
-			expectedErrorString: "missing Docker Config auth",
+			expectedErrorString: "Missing Docker Config auth",
 		},
 		{
 			name: "validate auth (plugin managed, invalid config, ssh auth)",
@@ -7346,7 +7346,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				return request
 			},
 			expectedErrorCode:    connect.CodeInvalidArgument,
-			expectedStatusString: "secret name is not provided",
+			expectedStatusString: "the secret name is not provided",
 		},
 		{
 			name: "validate auth (user managed, secret does not exist)",
@@ -7381,7 +7381,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				return request
 			},
 			expectedErrorCode:    connect.CodeInvalidArgument,
-			expectedStatusString: "secret does not match",
+			expectedStatusString: "the secret does not match",
 		},
 		{
 			name: "validate auth (plugin managed, invalid config, basic auth)",
@@ -7392,7 +7392,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				return request
 			},
 			expectedErrorCode:    connect.CodeInvalidArgument,
-			expectedStatusString: "missing basic auth",
+			expectedStatusString: "Missing basic auth",
 		},
 		{
 			name: "validate auth (plugin managed, invalid config, docker)",

@@ -71,7 +71,7 @@ func getTrustedNamespacesFromHeader(ctx context.Context, headerName, headerPatte
 	}
 	r, err := regexp.Compile(headerPattern)
 	if err != nil {
-		log.Errorf("unable to compile regular expression: %v", err)
+		log.Errorf("Unable to compile regular expression: %v", err)
 		return namespaces, err
 	}
 

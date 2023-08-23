@@ -385,7 +385,7 @@ func (c *NamespacedResourceWatcherCache) Watch(options metav1.ListOptions) (watc
 
 	ctrlClient, err := c.config.ClientGetter.ControllerRuntime(ctx)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get client due to: %w", err))
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to get client due to: %w", err))
 	}
 
 	// this will start a watcher on all namespaces
@@ -421,7 +421,7 @@ func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) 
 		c.queue.Reset()
 
 		if err := c.config.OnResyncFunc(); err != nil {
-			return "", connect.NewError(connect.CodeInternal, fmt.Errorf("invocation of [OnResync] failed due to: %w", err))
+			return "", connect.NewError(connect.CodeInternal, fmt.Errorf("Invocation of [OnResync] failed due to: %w", err))
 		}
 	}
 
@@ -435,7 +435,7 @@ func (c *NamespacedResourceWatcherCache) resync(bootstrap bool) (string, error) 
 	ctx := context.Background()
 	ctrlClient, err := c.config.ClientGetter.ControllerRuntime(ctx)
 	if err != nil {
-		return "", connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get client due to: %w", err))
+		return "", connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to get client due to: %w", err))
 	}
 
 	// This code runs in the background, i.e. not in a context of any specific user request.
@@ -551,7 +551,7 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 	ctx := context.Background()
 	ctrlClient, err := c.config.ClientGetter.ControllerRuntime(ctx)
 	if err != nil {
-		return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get client due to: %w", err))
+		return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to get client due to: %w", err))
 	}
 
 	// TODO: (gfichtenholt) confidence test: I'd like to make sure the caller has the read lock,
@@ -568,7 +568,7 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 		if errors.IsNotFound(err) {
 			return c.onDelete(key)
 		} else {
-			return connect.NewError(connect.CodeInternal, fmt.Errorf("error fetching object with key [%s]: %w", key, err))
+			return connect.NewError(connect.CodeInternal, fmt.Errorf("Error fetching object with key [%s]: %w", key, err))
 		}
 	}
 	return c.onAddOrModify(obj)
@@ -607,7 +607,7 @@ func (c *NamespacedResourceWatcherCache) onAddOrModify(obj ctrlclient.Object) (e
 		// clear that key so cache doesn't contain any stale info for this object
 		keysremoved, err2 := c.redisCli.Del(c.redisCli.Context(), key).Result()
 		if err2 != nil {
-			log.Errorf("failed to delete value for object [%s] from cache due to: %v", key, err2)
+			log.Errorf("Failed to delete value for object [%s] from cache due to: %v", key, err2)
 		} else {
 			// debugging an intermittent failure
 			log.Infof("Redis [DEL %s]: %d", key, keysremoved)
@@ -951,7 +951,7 @@ func (c *NamespacedResourceWatcherCache) KeyForNamespacedName(name types.Namespa
 func (c *NamespacedResourceWatcherCache) NamespacedNameFromKey(key string) (*types.NamespacedName, error) {
 	parts := strings.Split(key, KeySegmentsSeparator)
 	if len(parts) != 3 || parts[0] != c.config.Gvr.Resource || len(parts[1]) == 0 || len(parts[2]) == 0 {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("invalid key [%s]", key))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Invalid key [%s]", key))
 	}
 	return &types.NamespacedName{Namespace: parts[1], Name: parts[2]}, nil
 }

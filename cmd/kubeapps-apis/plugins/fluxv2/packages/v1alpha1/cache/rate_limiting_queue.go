@@ -113,7 +113,7 @@ func (q *rateLimitingType) WaitUntilForgotten(item string) {
 		return q.rateLimiter.NumRequeues(item) == 0, nil
 	})
 	if err != nil {
-		log.Errorf("error when WaitUntilForgotten, error: %v", err)
+		log.Errorf("Error when WaitUntilForgotten, error: %v", err)
 	}
 }
 
@@ -294,7 +294,7 @@ func (q *Type) ShuttingDown() bool {
 func (q *Type) ShutDownWithDrain() {
 	// ref impl https://github.com/kubernetes/client-go/blob/b5c7588f8a17459d6f9c7a8dc24daecd2c35c98e/util/workqueue/queue.go#L211
 
-	log.Fatalf("func ShutDownWithDrain(%s) has not been implemented yet", q.name)
+	log.Fatalf("The func ShutDownWithDrain(%s) has not been implemented yet", q.name)
 }
 
 // expectAdd marks item as expected to be processed in the near future

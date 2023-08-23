@@ -62,7 +62,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *conn
 		if pageSize > 0 {
 			startAt = itemOffset
 			if startAt > len(pkgMetadatas) {
-				return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid pagination arguments %v", request.Msg.GetPaginationOptions()))
+				return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Invalid pagination arguments %v", request.Msg.GetPaginationOptions()))
 			}
 			pkgMetadatas = pkgMetadatas[startAt:]
 			if len(pkgMetadatas) > int(pageSize) {
@@ -99,7 +99,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *conn
 			// where a package is present *without* corresponding metadata.
 			for currentPkg.Spec.RefName != pkgMetadata.Name {
 				if currentPkg.Spec.RefName > pkgMetadata.Name {
-					return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unexpected order for kapp-controller packages, expected %q, found %q", pkgMetadata.Name, currentPkg.Spec.RefName))
+					return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unexpected order for kapp-controller packages, expected %q, found %q", pkgMetadata.Name, currentPkg.Spec.RefName))
 				}
 				log.Errorf("Package %q did not have a corresponding metadata (want %q)", currentPkg.Spec.RefName, pkgMetadata.Name)
 				currentPkg = <-getPkgsChannel
@@ -118,7 +118,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *conn
 			// this ref name, and currentPkg is for the next meta name.
 			pkgVersionMap, err := getPkgVersionsMap(pkgsForMeta)
 			if err != nil || len(pkgVersionMap[pkgMetadata.Name]) == 0 {
-				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to calculate package versions map for packages: %v, err: %v", pkgsForMeta, err))
+				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to calculate package versions map for packages: %v, err: %v", pkgsForMeta, err))
 			}
 			latestVersion := pkgVersionMap[pkgMetadata.Name][0].version.String()
 			availablePackageSummary := s.buildAvailablePackageSummary(pkgMetadata, latestVersion, cluster)
@@ -179,7 +179,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *conne
 	}
 	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the PkgVersionsMap: '%w'", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the PkgVersionsMap: '%w'", err))
 
 	}
 
@@ -213,7 +213,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect
 
 	// Validate the request
 	if request.Msg.GetAvailablePackageRef().GetContext() == nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request AvailablePackageRef.Context provided"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No request AvailablePackageRef.Context provided"))
 	}
 
 	if cluster == "" {
@@ -239,7 +239,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect
 	}
 	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the PkgVersionsMap: '%w'", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the PkgVersionsMap: '%w'", err))
 	}
 
 	var foundPkgSemver = &pkgSemver{}
@@ -253,7 +253,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect
 			}
 		}
 		if foundPkgSemver.version == nil {
-			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("unable to find %q package with version %q", pkgName, requestedPkgVersion))
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("Unable to find %q package with version %q", pkgName, requestedPkgVersion))
 		}
 	} else {
 		// If the pkgVersion wasn't specified, grab the packages to find the latest.
@@ -261,7 +261,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect
 			foundPkgSemver = &pkgVersionsMap[pkgName][0]
 			requestedPkgVersion = foundPkgSemver.version.String()
 		} else {
-			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("unable to find any versions for the package %q", pkgName))
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("Unable to find any versions for the package %q", pkgName))
 		}
 	}
 
@@ -311,7 +311,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *conn
 		if pageSize > 0 {
 			startAt = itemOffset
 			if startAt > len(pkgInstalls) {
-				return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid pagination arguments %v", request.Msg.GetPaginationOptions()))
+				return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Invalid pagination arguments %v", request.Msg.GetPaginationOptions()))
 			}
 			pkgInstalls = pkgInstalls[startAt:]
 			if len(pkgInstalls) > int(pageSize) {
@@ -414,7 +414,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *conn
 		// in different namespaces (suspect not).
 		pkgVersionsMap, err := getPkgVersionsMap(pkgsForVersionMap)
 		if err != nil {
-			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to calculate package versions map: %w", err))
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to calculate package versions map: %w", err))
 		}
 
 		// We now have all the data we need to return the result:
@@ -436,7 +436,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *conn
 			// generate the installedPackageSummary from the fetched information
 			installedPackageSummary, err := s.buildInstalledPackageSummary(pkgi, pkgData.meta, pkgVersionsMap, cluster)
 			if err != nil {
-				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to create the InstalledPackageSummary: %w", err))
+				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to create the InstalledPackageSummary: %w", err))
 			}
 
 			// append the availablePackageSummary to the slice
@@ -471,7 +471,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *connect
 
 	typedClient, err := s.clientGetter.Typed(request.Header(), cluster)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the k8s client: '%w'", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the k8s client: '%w'", err))
 	}
 
 	// fetch the package install
@@ -501,7 +501,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *connect
 	}
 	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the PkgVersionsMap: '%w'", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the PkgVersionsMap: '%w'", err))
 	}
 
 	// get the values applies i) get the secret name where it is stored; 2) get the values from the secret
@@ -552,19 +552,19 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 
 	// Validate the request
 	if request.Msg.GetAvailablePackageRef().GetContext().GetNamespace() == "" || request.Msg.GetAvailablePackageRef().GetIdentifier() == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("required context or identifier not provided"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Required context or identifier not provided"))
 	}
 	if request == nil || request.Msg.GetAvailablePackageRef() == nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request AvailablePackageRef provided"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No request AvailablePackageRef provided"))
 	}
 	if request.Msg.GetName() == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request Name provided"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No request Name provided"))
 	}
 	if request.Msg.GetTargetContext() == nil || request.Msg.GetTargetContext().GetNamespace() == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request TargetContext namespace provided"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No request TargetContext namespace provided"))
 	}
 	if request.Msg.GetReconciliationOptions() == nil || request.Msg.GetReconciliationOptions().GetServiceAccountName() == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request ReconciliationOptions serviceAccountName provided"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No request ReconciliationOptions serviceAccountName provided"))
 	}
 
 	// Retrieve additional parameters from the request
@@ -585,12 +585,12 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 	}
 
 	if targetCluster != packageCluster {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("installing packages in other clusters in not supported yet"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Installing packages in other clusters in not supported yet"))
 	}
 
 	typedClient, err := s.clientGetter.Typed(request.Header(), targetCluster)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the k8s client: '%w'", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the k8s client: '%w'", err))
 	}
 
 	// fetch the package metadata
@@ -632,7 +632,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 
 	resource, err := s.getAppResource(request.Header(), targetCluster, targetNamespace)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("unable to get the App resource: '%w'", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the App resource: '%w'", err))
 	}
 	// The InstalledPackage is considered as created once the associated kapp App gets created,
 	// so we actively wait for the App CR to be present in the cluster before returning OK
@@ -648,7 +648,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 		if err != nil {
 			return nil, connecterror.FromK8sError("delete", "PackageInstall", newPkgInstall.Name, err)
 		}
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("timeout exceeded (%v s) waiting for resource to be installed: '%w'", s.pluginConfig.timeoutSeconds, err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Timeout exceeded (%v s) waiting for resource to be installed: '%w'", s.pluginConfig.timeoutSeconds, err))
 	}
 
 	// generate the response
@@ -670,7 +670,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *connect.Re
 func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Request[corev1.UpdateInstalledPackageRequest]) (*connect.Response[corev1.UpdateInstalledPackageResponse], error) {
 	// Validate the request
 	if request == nil || request.Msg.GetInstalledPackageRef() == nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request AvailablePackageRef provided"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No request AvailablePackageRef provided"))
 	}
 	// Retrieve parameters from the request
 	packageCluster := request.Msg.GetInstalledPackageRef().GetContext().GetCluster()
@@ -679,10 +679,10 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Re
 	log.InfoS("+kapp-controller UpdateInstalledPackage", "cluster", packageCluster, "namespace", "packageNamespace", "id", installedPackageName)
 
 	if request.Msg.GetInstalledPackageRef().GetContext().GetNamespace() == "" || request.Msg.GetInstalledPackageRef().GetIdentifier() == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("required context or identifier not provided"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Required context or identifier not provided"))
 	}
 	if request.Msg.GetInstalledPackageRef().GetIdentifier() == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request Name provided"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No request Name provided"))
 	}
 
 	// Retrieve additional parameters from the request
@@ -807,7 +807,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Re
 func (s *Server) DeleteInstalledPackage(ctx context.Context, request *connect.Request[corev1.DeleteInstalledPackageRequest]) (*connect.Response[corev1.DeleteInstalledPackageResponse], error) {
 	// Validate the request
 	if request == nil || request.Msg.GetInstalledPackageRef() == nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no request InstalledPackageRef provided"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("No request InstalledPackageRef provided"))
 	}
 	// Retrieve parameters from the request
 	namespace := request.Msg.GetInstalledPackageRef().GetContext().GetNamespace()
@@ -816,7 +816,7 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *connect.Re
 	log.InfoS("+kapp-controller DeleteInstalledPackage", "namespace", namespace, "cluster", cluster, "id", identifier)
 
 	if request.Msg.GetInstalledPackageRef().GetContext().GetNamespace() == "" || request.Msg.GetInstalledPackageRef().GetIdentifier() == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("required context or identifier not provided"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Required context or identifier not provided"))
 	}
 
 	if cluster == "" {
