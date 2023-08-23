@@ -405,7 +405,7 @@ func Test_fetchRepoIndexUserAgent(t *testing.T) {
 }
 
 func Test_chartTarballURL(t *testing.T) {
-	r := &models.RepoInternal{Name: "test", URL: "http://testrepo.com"}
+	r := &models.AppRepositoryInternal{Name: "test", URL: "http://testrepo.com"}
 	tests := []struct {
 		name   string
 		cv     models.ChartVersion
@@ -489,8 +489,8 @@ func Test_newManager(t *testing.T) {
 }
 
 func Test_fetchAndImportIcon(t *testing.T) {
-	repo := &models.RepoInternal{Name: "test", Namespace: "repo-namespace"}
-	repoWithAuthorization := &models.RepoInternal{Name: "test", Namespace: "repo-namespace", AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient", URL: "https://github.com/"}
+	repo := &models.AppRepositoryInternal{Name: "test", Namespace: "repo-namespace"}
+	repoWithAuthorization := &models.AppRepositoryInternal{Name: "test", Namespace: "repo-namespace", AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient", URL: "https://github.com/"}
 
 	t.Run("no icon", func(t *testing.T) {
 		pgManager, _, cleanup := getMockManager(t)
@@ -500,7 +500,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		assert.NoError(t, fImporter.fetchAndImportIcon(c, repo, "my-user-agent", false))
 	})
 
-	charts, _ := helm.ChartsFromIndex([]byte(validRepoIndexYAML), &models.Repo{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}, false)
+	charts, _ := helm.ChartsFromIndex([]byte(validRepoIndexYAML), &models.AppRepository{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}, false)
 
 	t.Run("failed download", func(t *testing.T) {
 		pgManager, _, cleanup := getMockManager(t)
@@ -539,7 +539,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		c := models.Chart{
 			ID:   "foo",
 			Icon: "https://foo/bar/logo.svg",
-			Repo: &models.Repo{Name: repo.Name, Namespace: repo.Namespace},
+			Repo: &models.AppRepository{Name: repo.Name, Namespace: repo.Namespace},
 		}
 
 		mock.ExpectQuery("UPDATE charts SET info *").
@@ -596,7 +596,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 }
 
 type fakeRepo struct {
-	*models.RepoInternal
+	*models.AppRepositoryInternal
 	charts     []models.Chart
 	chartFiles models.ChartFiles
 }
@@ -605,8 +605,8 @@ func (r *fakeRepo) Checksum() (string, error) {
 	return "checksum", nil
 }
 
-func (r *fakeRepo) Repo() *models.RepoInternal {
-	return r.RepoInternal
+func (r *fakeRepo) AppRepository() *models.AppRepositoryInternal {
+	return r.AppRepositoryInternal
 }
 
 func (r *fakeRepo) FilterIndex() {
@@ -626,8 +626,8 @@ func (r *fakeRepo) FetchFiles(cv models.ChartVersion, userAgent string, passCred
 }
 
 func Test_fetchAndImportFiles(t *testing.T) {
-	repo := &models.RepoInternal{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}
-	charts, _ := helm.ChartsFromIndex([]byte(validRepoIndexYAML), &models.Repo{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL}, false)
+	repo := &models.AppRepositoryInternal{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}
+	charts, _ := helm.ChartsFromIndex([]byte(validRepoIndexYAML), &models.AppRepository{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL}, false)
 	chartVersion := charts[0].ChartVersions[0]
 	chartID := fmt.Sprintf("%s/%s", charts[0].Repo.Name, charts[0].Name)
 	chartFilesID := fmt.Sprintf("%s-%s", chartID, chartVersion.Version)
@@ -641,9 +641,9 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		Digest:                  chartVersion.Digest,
 	}
 	fRepo := &fakeRepo{
-		RepoInternal: repo,
-		charts:       charts,
-		chartFiles:   chartFiles,
+		AppRepositoryInternal: repo,
+		charts:                charts,
+		chartFiles:            chartFiles,
 	}
 
 	t.Run("http error", func(t *testing.T) {
@@ -656,9 +656,9 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		netClient := &badHTTPClient{}
 		fImporter := fileImporter{pgManager, netClient}
 		helmRepo := &HelmRepo{
-			content:      []byte{},
-			RepoInternal: repo,
-			netClient:    netClient,
+			content:               []byte{},
+			AppRepositoryInternal: repo,
+			netClient:             netClient,
 		}
 		assert.Error(t, fmt.Errorf("GET request to [https://kubernetes-charts.storage.googleapis.com/acs-engine-autoscaler-2.1.1.tgz] failed due to status [500]"), fImporter.fetchAndImportFiles(charts[0].Name, helmRepo, chartVersion, "my-user-agent", false))
 	})
@@ -689,9 +689,9 @@ func Test_fetchAndImportFiles(t *testing.T) {
 
 		fImporter := fileImporter{pgManager, netClient}
 		helmRepo := &HelmRepo{
-			content:      []byte{},
-			RepoInternal: repo,
-			netClient:    netClient,
+			content:               []byte{},
+			AppRepositoryInternal: repo,
+			netClient:             netClient,
 		}
 		err := fImporter.fetchAndImportFiles(chartID, helmRepo, chartVersion, "my-user-agent", false)
 		assert.NoError(t, err)
@@ -713,11 +713,11 @@ func Test_fetchAndImportFiles(t *testing.T) {
 
 		fImporter := fileImporter{pgManager, netClient}
 
-		r := &models.RepoInternal{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL, AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"}
+		r := &models.AppRepositoryInternal{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL, AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"}
 		repo := &HelmRepo{
-			RepoInternal: r,
-			content:      []byte{},
-			netClient:    netClient,
+			AppRepositoryInternal: r,
+			content:               []byte{},
+			netClient:             netClient,
 		}
 		err := fImporter.fetchAndImportFiles(chartID, repo, chartVersion, "my-user-agent", true)
 		assert.NoError(t, err)
@@ -989,7 +989,7 @@ func (o *fakeOCIAPICli) Catalog(userAgent string) ([]string, error) {
 func Test_OCIRegistry(t *testing.T) {
 	repo := OCIRegistry{
 		repositories: []string{"apache", "jenkins"},
-		RepoInternal: &models.RepoInternal{
+		AppRepositoryInternal: &models.AppRepositoryInternal{
 			URL: "http://oci-test",
 		},
 	}
@@ -1012,7 +1012,7 @@ func Test_OCIRegistry(t *testing.T) {
 	t.Run("Checksum - stores the list of tags", func(t *testing.T) {
 		emptyRepo := OCIRegistry{
 			repositories: []string{"apache"},
-			RepoInternal: &models.RepoInternal{
+			AppRepositoryInternal: &models.AppRepositoryInternal{
 				URL: "http://oci-test",
 			},
 			ociCli: &fakeOCIAPICli{
@@ -1029,7 +1029,7 @@ func Test_OCIRegistry(t *testing.T) {
 	t.Run("FilterIndex - order tags by semver", func(t *testing.T) {
 		repo := OCIRegistry{
 			repositories: []string{"apache"},
-			RepoInternal: &models.RepoInternal{
+			AppRepositoryInternal: &models.AppRepositoryInternal{
 				URL: "http://oci-test",
 			},
 			tags: map[string]TagList{
@@ -1080,7 +1080,7 @@ version: 1.0.0
 				{
 					ID:          "test/kubeapps",
 					Name:        "kubeapps",
-					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/test"},
+					Repo:        &models.AppRepository{Name: "test", URL: "http://oci-test/test"},
 					Description: "chart description",
 					Home:        "https://kubeapps.com",
 					Keywords:    []string{"helm"},
@@ -1115,7 +1115,7 @@ version: 1.0.0
 				{
 					ID:          "test/kubeapps",
 					Name:        "kubeapps",
-					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/test"},
+					Repo:        &models.AppRepository{Name: "test", URL: "http://oci-test/test"},
 					Description: "chart description",
 					Home:        "https://kubeapps.com",
 					Keywords:    []string{"helm"},
@@ -1155,7 +1155,7 @@ version: 1.0.0
 				{
 					ID:          "test/kubeapps",
 					Name:        "kubeapps",
-					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/test"},
+					Repo:        &models.AppRepository{Name: "test", URL: "http://oci-test/test"},
 					Description: "chart description",
 					Home:        "https://kubeapps.com",
 					Keywords:    []string{"helm"},
@@ -1198,7 +1198,7 @@ version: 1.0.0
 				{
 					ID:          "test/kubeapps",
 					Name:        "kubeapps",
-					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/test"},
+					Repo:        &models.AppRepository{Name: "test", URL: "http://oci-test/test"},
 					Description: "chart description",
 					Home:        "https://kubeapps.com",
 					Keywords:    []string{"helm"},
@@ -1239,7 +1239,7 @@ version: 1.0.0
 				{
 					ID:          "test/repo%2Fkubeapps",
 					Name:        "kubeapps",
-					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/"},
+					Repo:        &models.AppRepository{Name: "test", URL: "http://oci-test/"},
 					Description: "chart description",
 					Home:        "https://kubeapps.com",
 					Keywords:    []string{"helm"},
@@ -1277,7 +1277,7 @@ version: 1.0.0
 				{
 					ID:          "test/repo%2Fkubeapps",
 					Name:        "kubeapps",
-					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/"},
+					Repo:        &models.AppRepository{Name: "test", URL: "http://oci-test/"},
 					Description: "chart description",
 					Home:        "https://kubeapps.com",
 					Keywords:    []string{"helm"},
@@ -1327,7 +1327,7 @@ version: 1.0.0
 				{
 					ID:          "test/repo%2Fkubeapps",
 					Name:        "kubeapps",
-					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/"},
+					Repo:        &models.AppRepository{Name: "test", URL: "http://oci-test/"},
 					Description: "chart description",
 					Home:        "https://kubeapps.com",
 					Keywords:    []string{"helm"},
@@ -1371,8 +1371,8 @@ version: 1.0.0
 				tags[fmt.Sprintf("/v2/%s/manifests/%s", tt.chartName, tag)] = `{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`
 			}
 			chartsRepo := OCIRegistry{
-				repositories: []string{tt.chartName},
-				RepoInternal: &models.RepoInternal{Name: tt.expected[0].Repo.Name, URL: tt.expected[0].Repo.URL},
+				repositories:          []string{tt.chartName},
+				AppRepositoryInternal: &models.AppRepositoryInternal{Name: tt.expected[0].Repo.Name, URL: tt.expected[0].Repo.URL},
 				tags: map[string]TagList{
 					tt.chartName: {Name: fmt.Sprintf("test/%s", tt.chartName), Tags: tt.tags},
 				},
@@ -1417,8 +1417,8 @@ version: 1.0.0
 			"/v2/my-project/charts-index/blobs/sha256:f9f7df0ae3f50aaf9ff390034cec4286d2aa43f061ce4bc7aa3c9ac862800aba": chartsIndexSingleJSON,
 		}
 		chartsRepo := OCIRegistry{
-			repositories: []string{},
-			RepoInternal: &models.RepoInternal{Name: "common", URL: "https://example.com"},
+			repositories:          []string{},
+			AppRepositoryInternal: &models.AppRepositoryInternal{Name: "common", URL: "https://example.com"},
 			tags: map[string]TagList{
 				"common": {Name: "test/common", Tags: []string{"1.1.0"}},
 			},
@@ -1687,8 +1687,8 @@ func TestUnescapeChartsData(t *testing.T) {
 }
 
 func TestHelmRepoAppliesUnescape(t *testing.T) {
-	repo := &models.RepoInternal{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}
-	expectedRepo := &models.Repo{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL}
+	repo := &models.AppRepositoryInternal{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}
+	expectedRepo := &models.AppRepository{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL}
 	repoIndexYAMLBytes, _ := os.ReadFile("testdata/helm-index-spaces.yaml")
 	repoIndexYAML := string(repoIndexYAMLBytes)
 	expectedCharts := []models.Chart{
@@ -1722,8 +1722,8 @@ func TestHelmRepoAppliesUnescape(t *testing.T) {
 		},
 	}
 	helmRepo := &HelmRepo{
-		content:      []byte(repoIndexYAML),
-		RepoInternal: repo,
+		content:               []byte(repoIndexYAML),
+		AppRepositoryInternal: repo,
 	}
 	t.Run("Helm repo applies unescaping to chart data", func(t *testing.T) {
 		charts, _ := helmRepo.Charts(false)

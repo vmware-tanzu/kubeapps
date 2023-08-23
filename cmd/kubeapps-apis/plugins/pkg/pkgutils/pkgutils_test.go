@@ -398,7 +398,7 @@ func TestIsValidChart(t *testing.T) {
 			in: &models.Chart{
 				Name: "foo",
 				ID:   "foo/bar",
-				Repo: &models.Repo{
+				Repo: &models.AppRepository{
 					Name:      "bar",
 					Namespace: "my-ns",
 				},
@@ -414,7 +414,7 @@ func TestIsValidChart(t *testing.T) {
 			name: "it returns false if the chart name is missing",
 			in: &models.Chart{
 				ID: "foo/bar",
-				Repo: &models.Repo{
+				Repo: &models.AppRepository{
 					Name:      "bar",
 					Namespace: "my-ns",
 				},
@@ -430,7 +430,7 @@ func TestIsValidChart(t *testing.T) {
 			name: "it returns false if the chart ID is missing",
 			in: &models.Chart{
 				Name: "foo",
-				Repo: &models.Repo{
+				Repo: &models.AppRepository{
 					Name:      "bar",
 					Namespace: "my-ns",
 				},
@@ -480,7 +480,7 @@ func TestIsValidChart(t *testing.T) {
 			in: &models.Chart{
 				Name: "foo",
 				ID:   "foo/bar",
-				Repo: &models.Repo{
+				Repo: &models.AppRepository{
 					Name:      "bar",
 					Namespace: "my-ns",
 				},
@@ -536,7 +536,7 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 				Category:    DefaultChartCategory,
 				Description: "best chart",
 				Icon:        "foo.bar/icon.svg",
-				Repo: &models.Repo{
+				Repo: &models.AppRepository{
 					Name:      "bar",
 					Namespace: "my-ns",
 				},
@@ -569,7 +569,7 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 			in: &models.Chart{
 				Name: "foo",
 				ID:   "foo/bar",
-				Repo: &models.Repo{
+				Repo: &models.AppRepository{
 					Name:      "bar",
 					Namespace: "my-ns",
 				},

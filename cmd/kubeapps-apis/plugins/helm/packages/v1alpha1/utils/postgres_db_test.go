@@ -74,7 +74,7 @@ func TestGetChart(t *testing.T) {
 			pam, cleanup := getInitializedManager(t)
 			defer cleanup()
 			for namespace, charts := range tc.existingCharts {
-				pgtest.EnsureChartsExist(t, pam, charts, models.Repo{Name: repoName, Namespace: namespace})
+				pgtest.EnsureChartsExist(t, pam, charts, models.AppRepository{Name: repoName, Namespace: namespace})
 			}
 
 			chart, err := pam.GetChart(tc.namespace, tc.chartId)
@@ -159,7 +159,7 @@ func TestGetVersion(t *testing.T) {
 			pam, cleanup := getInitializedManager(t)
 			defer cleanup()
 			for namespace, charts := range tc.existingCharts {
-				pgtest.EnsureChartsExist(t, pam, charts, models.Repo{Name: repoName, Namespace: namespace})
+				pgtest.EnsureChartsExist(t, pam, charts, models.AppRepository{Name: repoName, Namespace: namespace})
 			}
 
 			chart, err := pam.GetChartVersion(tc.namespace, tc.chartId, tc.requestedVersion)
@@ -370,7 +370,7 @@ func TestGetPaginatedChartList(t *testing.T) {
 			defer cleanup()
 			for namespace, chartsPerRepo := range tc.existingCharts {
 				for repo, charts := range chartsPerRepo {
-					pgtest.EnsureChartsExist(t, pam, charts, models.Repo{Name: repo, Namespace: namespace})
+					pgtest.EnsureChartsExist(t, pam, charts, models.AppRepository{Name: repo, Namespace: namespace})
 				}
 			}
 
@@ -489,7 +489,7 @@ func TestGetChartsWithFilters(t *testing.T) {
 			defer cleanup()
 			for namespace, chartsPerRepo := range tc.existingCharts {
 				for repo, charts := range chartsPerRepo {
-					pgtest.EnsureChartsExist(t, pam, charts, models.Repo{Name: repo, Namespace: namespace})
+					pgtest.EnsureChartsExist(t, pam, charts, models.AppRepository{Name: repo, Namespace: namespace})
 				}
 			}
 

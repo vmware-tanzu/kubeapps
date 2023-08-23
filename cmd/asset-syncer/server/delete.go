@@ -27,7 +27,7 @@ func Delete(serveOpts Config, args []string) error {
 	}
 	defer manager.Close()
 
-	repo := models.Repo{Name: args[0], Namespace: serveOpts.Namespace}
+	repo := models.AppRepository{Name: args[0], Namespace: serveOpts.Namespace}
 	if err = manager.Delete(repo); err != nil {
 		return fmt.Errorf("can't delete chart repository %s from database: %v", args[0], err)
 	}

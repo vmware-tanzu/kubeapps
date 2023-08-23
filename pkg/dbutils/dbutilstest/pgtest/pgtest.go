@@ -68,7 +68,7 @@ func CountRows(t *testing.T, db dbutils.PostgresDB, table string) int {
 	return count
 }
 
-func EnsureChartsExist(t *testing.T, pam dbutils.PostgresAssetManagerIface, charts []models.Chart, repo models.Repo) {
+func EnsureChartsExist(t *testing.T, pam dbutils.PostgresAssetManagerIface, charts []models.Chart, repo models.AppRepository) {
 	_, err := pam.EnsureRepoExists(repo.Namespace, repo.Name)
 	if err != nil {
 		t.Fatalf("%+v", err)

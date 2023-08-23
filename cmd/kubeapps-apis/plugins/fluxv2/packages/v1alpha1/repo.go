@@ -661,7 +661,7 @@ func (s *repoEventSink) indexOneRepo(repo sourcev1.HelmRepository) ([]models.Cha
 		return nil, err
 	}
 
-	modelRepo := &models.Repo{
+	modelRepo := &models.AppRepository{
 		Namespace: repo.Namespace,
 		Name:      repo.Name,
 		URL:       repo.Spec.URL,

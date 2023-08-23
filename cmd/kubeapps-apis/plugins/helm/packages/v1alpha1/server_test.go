@@ -172,7 +172,7 @@ func makeChart(chartName, repoName, repoUrl, namespace string, chartVersions []s
 		Icon:        DefaultChartIconURL,
 		Maintainers: []chart.Maintainer{{Name: "me", Email: "me@me.me"}},
 		Sources:     []string{"http://source-1"},
-		Repo: &models.Repo{
+		Repo: &models.AppRepository{
 			Name:      repoName,
 			Namespace: namespace,
 			URL:       repoUrl,
@@ -2032,25 +2032,25 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 func TestChartTarballURLBuild(t *testing.T) {
 	testCases := []struct {
 		name         string
-		repo         *models.Repo
+		repo         *models.AppRepository
 		chartVersion *models.ChartVersion
 		expectedUrl  string
 	}{
 		{
 			name:         "tarball url with relative URL without leading slash in chart",
-			repo:         &models.Repo{URL: "https://demo.repo/repo1"},
+			repo:         &models.AppRepository{URL: "https://demo.repo/repo1"},
 			chartVersion: &models.ChartVersion{URLs: []string{"chart/test"}},
 			expectedUrl:  "https://demo.repo/repo1/chart/test",
 		},
 		{
 			name:         "tarball url with relative URL with leading slash in chart",
-			repo:         &models.Repo{URL: "https://demo.repo/repo1"},
+			repo:         &models.AppRepository{URL: "https://demo.repo/repo1"},
 			chartVersion: &models.ChartVersion{URLs: []string{"/chart/test"}},
 			expectedUrl:  "https://demo.repo/repo1/chart/test",
 		},
 		{
 			name:         "tarball url with absolute URL",
-			repo:         &models.Repo{URL: "https://demo.repo/repo1"},
+			repo:         &models.AppRepository{URL: "https://demo.repo/repo1"},
 			chartVersion: &models.ChartVersion{URLs: []string{"https://demo.repo/repo1/chart/test"}},
 			expectedUrl:  "https://demo.repo/repo1/chart/test",
 		},
@@ -2153,7 +2153,7 @@ func chartAssetForReleaseStub(rel *releaseStub) *models.Chart {
 	return &models.Chart{
 		Name: rel.name,
 		ID:   rel.chartID,
-		Repo: &models.Repo{
+		Repo: &models.AppRepository{
 			Namespace: rel.chartNamespace,
 		},
 		ChartVersions: chartVersions,
@@ -2194,7 +2194,7 @@ func populateAssetForTarball(t *testing.T, mock sqlmock.Sqlmock, chartId, namesp
 	chart := &models.Chart{
 		Name: chartId,
 		ID:   chartId,
-		Repo: &models.Repo{
+		Repo: &models.AppRepository{
 			Namespace: globalPackagingNamespace,
 		},
 		ChartVersions: []models.ChartVersion{{
