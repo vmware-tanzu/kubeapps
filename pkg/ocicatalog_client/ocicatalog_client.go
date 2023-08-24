@@ -11,7 +11,14 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+const (
+	CONTENT_TYPE_HELM = "helm"
+)
+
 func NewClient(ociCatalogAddr string) (ocicatalog.OCICatalogServiceClient, func(), error) {
+	if ociCatalogAddr == "" {
+		return nil, nil, fmt.Errorf("ociCatalogAddr must be specified")
+	}
 	conn, err := grpc.Dial(ociCatalogAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to contact OCI Catalog at %q: %+v", ociCatalogAddr, err)

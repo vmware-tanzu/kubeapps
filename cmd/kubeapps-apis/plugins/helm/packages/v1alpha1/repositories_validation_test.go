@@ -442,6 +442,11 @@ func TestOCIValidateWithCatalogServer(t *testing.T) {
 	ociCatalogAddr, ociCatalogDouble, cleanup := ocicatalog_clienttest.SetupTestDouble(t)
 	defer cleanup()
 
+	// We don't want to use the http client at all in these tests.
+	fakeClient := &fakeHTTPCli{
+		response: nil,
+		err:      fmt.Errorf("should not be used"),
+	}
 	testCases := []struct {
 		name             string
 		repos            []*ocicatalog.Repository
@@ -458,6 +463,9 @@ func TestOCIValidateWithCatalogServer(t *testing.T) {
 					},
 				},
 				OCICatalogAddr: ociCatalogAddr,
+				ClientGetter: func(*v1alpha1.AppRepository, *corev1.Secret) (httpclient.Client, error) {
+					return fakeClient, nil
+				},
 			},
 			repos: []*ocicatalog.Repository{
 				{
@@ -481,6 +489,9 @@ func TestOCIValidateWithCatalogServer(t *testing.T) {
 					},
 				},
 				OCICatalogAddr: ociCatalogAddr,
+				ClientGetter: func(*v1alpha1.AppRepository, *corev1.Secret) (httpclient.Client, error) {
+					return fakeClient, nil
+				},
 			},
 			repos: []*ocicatalog.Repository{
 				{
@@ -501,8 +512,14 @@ func TestOCIValidateWithCatalogServer(t *testing.T) {
 					},
 				},
 				OCICatalogAddr: ociCatalogAddr,
+				ClientGetter: func(*v1alpha1.AppRepository, *corev1.Secret) (httpclient.Client, error) {
+					return fakeClient, nil
+				},
 			},
-			expectError: true,
+			expectedResponse: &ValidationResponse{
+				Code:    400,
+				Message: "unable to determine the OCI catalog, you need to specify at least one repository",
+			},
 		},
 	}
 

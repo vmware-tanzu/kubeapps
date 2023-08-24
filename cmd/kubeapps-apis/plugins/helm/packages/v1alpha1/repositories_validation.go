@@ -216,35 +216,62 @@ func getOCIAppRepositoryMediaType(client httpclient.Client, repoURL string, repo
 
 // validateOCIAppRepository validates OCI Repos only
 // return true if mediaType == "application/vnd.cncf.helm.config" otherwise false
-func (v *HelmOCIValidator) validateOCIAppRepository(appRepo *apprepov1alpha1.AppRepository, cli httpclient.Client) (bool, error) {
+func (v *HelmOCIValidator) validateOCIAppRepository(ctx context.Context, appRepo *apprepov1alpha1.AppRepository) (bool, error) {
 
 	repoURL := strings.TrimSuffix(strings.TrimSpace(appRepo.Spec.URL), "/")
 	// If the app repo url was specified using the oci protocol - "oci://" -
 	// then we need to replace it to interact with the http(s) distribution
 	// spec API.
 	repoURL = strings.Replace(repoURL, "oci://", fmt.Sprintf("%s://", v.OCIReplacementProto), 1)
+
+	var httpCLI httpclient.Client
+	var err error
+	if v.ClientGetter != nil {
+		httpCLI, err = v.ClientGetter(v.AppRepo, v.Secret)
+		if err != nil {
+			return false, err
+		}
+	}
+
 	// For the OCI case, if no repositories are listed then we validate that a
 	// catalog is available for the registry, otherwise we want to validate that
 	// all the listed repositories are valid
 	if len(appRepo.Spec.OCIRepositories) == 0 {
+		if v.ClientGetter == nil {
+			return false, fmt.Errorf("an http ClientGetter is required to validate a repository")
+		}
 		u, err := url.Parse(repoURL)
 		if err != nil {
 			log.Errorf("Could not parse URL: %+v", err)
 			return false, err
 		}
-		oci := utils.OciAPIClient{AuthHeader: "", Url: u, NetClient: cli}
-		if oci.CatalogAvailable("") {
+		var grpcClient ocicatalog.OCICatalogServiceClient
+		if v.OCICatalogAddr != "" {
+			var closer func()
+			grpcClient, closer, err = ocicatalog_client.NewClient(v.OCICatalogAddr)
+			if err != nil {
+				return false, err
+			}
+			defer closer()
+		}
+		oci := utils.OciAPIClient{RegistryNamespaceUrl: u, HttpClient: httpCLI, GrpcClient: grpcClient}
+		if available, err := oci.CatalogAvailable(ctx, ""); err != nil {
+			log.Errorf("error calling CatalogAvailable: %+v", err)
+			return false, err
+		} else if available {
 			return true, nil
 		}
+
 		return false, ErrEmptyOCIRegistry
 	}
+
 	for _, repoName := range appRepo.Spec.OCIRepositories {
-		tagVersion, err := getOCIAppRepositoryTag(cli, repoURL, repoName)
+		tagVersion, err := getOCIAppRepositoryTag(httpCLI, repoURL, repoName)
 		if err != nil {
 			return false, err
 		}
 
-		mediaType, err := getOCIAppRepositoryMediaType(cli, repoURL, repoName, tagVersion)
+		mediaType, err := getOCIAppRepositoryMediaType(httpCLI, repoURL, repoName, tagVersion)
 		if err != nil {
 			return false, err
 		}
@@ -315,35 +342,6 @@ type HelmOCIValidator struct {
 	OCIReplacementProto string
 }
 
-func queryOCICatalog(ctx context.Context, ociCatalogAddr string, appRepoURL string) (*ValidationResponse, error) {
-	u, err := url.Parse(appRepoURL)
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse URL for OCI Catalog %q: %+v", appRepoURL, err)
-	}
-
-	client, closer, err := ocicatalog_client.NewClient(ociCatalogAddr)
-	if err != nil {
-		return nil, err
-	}
-	defer closer()
-
-	repos_stream, err := client.ListRepositoriesForRegistry(ctx, &ocicatalog.ListRepositoriesForRegistryRequest{
-		Registry:     u.Host,
-		Namespace:    u.Path,
-		ContentTypes: []string{"helm"},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error querying OCI Catalog for repos: %+v", err)
-	}
-
-	// It's enough to receive a single repo to be valid.
-	_, err = repos_stream.Recv()
-	if err != nil {
-		return nil, fmt.Errorf("error receiving OCI Repositories: %+v", err)
-	}
-	return &ValidationResponse{Code: 200, Message: "OK"}, nil
-}
-
 func (v HelmOCIValidator) Validate(ctx context.Context) (*ValidationResponse, error) {
 	// We need to either have an http client getter or access
 	// to the OCI Catalog service.
@@ -351,28 +349,8 @@ func (v HelmOCIValidator) Validate(ctx context.Context) (*ValidationResponse, er
 		return nil, fmt.Errorf("unable to validate without either http client or OCI Catalog address")
 	}
 
-	// Prefer the OCI Catalog service, but we just log and ignore errors
-	// for now so that behaviour does not change for VAC index support.
-	if v.OCICatalogAddr != "" {
-		resp, err := queryOCICatalog(ctx, v.OCICatalogAddr, v.AppRepo.Spec.URL)
-		if err == nil {
-			return resp, nil
-		}
-		log.Errorf("Unable to query OCI Catalog service at %q: %+v", v.OCICatalogAddr, err)
-	}
-
-	if v.ClientGetter == nil {
-		return nil, fmt.Errorf("unable to validate without http client")
-	}
-	var response *ValidationResponse
-	response = &ValidationResponse{Code: 200, Message: "OK"}
-
-	cli, err := v.ClientGetter(v.AppRepo, v.Secret)
-	if err != nil {
-		return nil, err
-	}
-	// If there was an error validating the OCI repository, it's not an internal error.
-	isValidRepo, err := v.validateOCIAppRepository(v.AppRepo, cli)
+	response := &ValidationResponse{Code: 200, Message: "OK"}
+	isValidRepo, err := v.validateOCIAppRepository(ctx, v.AppRepo)
 	if err != nil || !isValidRepo {
 		response = &ValidationResponse{Code: 400, Message: err.Error()}
 	}
