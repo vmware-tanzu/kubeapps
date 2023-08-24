@@ -232,7 +232,6 @@ func (v *HelmOCIValidator) validateOCIAppRepository(ctx context.Context, appRepo
 			return false, err
 		}
 	}
-	// First move below, but final will be to move this into the oci api client?
 
 	// For the OCI case, if no repositories are listed then we validate that a
 	// catalog is available for the registry, otherwise we want to validate that
@@ -343,35 +342,6 @@ type HelmOCIValidator struct {
 	OCIReplacementProto string
 }
 
-func queryOCICatalog(ctx context.Context, ociCatalogAddr string, appRepoURL string) (bool, error) {
-	u, err := url.Parse(appRepoURL)
-	if err != nil {
-		return false, fmt.Errorf("unable to parse URL for OCI Catalog %q: %+v", appRepoURL, err)
-	}
-
-	client, closer, err := ocicatalog_client.NewClient(ociCatalogAddr)
-	if err != nil {
-		return false, err
-	}
-	defer closer()
-
-	repos_stream, err := client.ListRepositoriesForRegistry(ctx, &ocicatalog.ListRepositoriesForRegistryRequest{
-		Registry:     u.Host,
-		Namespace:    u.Path,
-		ContentTypes: []string{"helm"},
-	})
-	if err != nil {
-		return false, fmt.Errorf("error querying OCI Catalog for repos: %+v", err)
-	}
-
-	// It's enough to receive a single repo to be valid.
-	_, err = repos_stream.Recv()
-	if err != nil {
-		return false, fmt.Errorf("error receiving OCI Repositories: %+v", err)
-	}
-	return true, nil
-}
-
 func (v HelmOCIValidator) Validate(ctx context.Context) (*ValidationResponse, error) {
 	// We need to either have an http client getter or access
 	// to the OCI Catalog service.
@@ -379,11 +349,8 @@ func (v HelmOCIValidator) Validate(ctx context.Context) (*ValidationResponse, er
 		return nil, fmt.Errorf("unable to validate without either http client or OCI Catalog address")
 	}
 
-<<<<<<< HEAD
-	// Prefer the OCI Catalog service, but we just log and ignore errors
-	// for now so that behaviour does not change for VAC index support.
-	if v.OCICatalogAddr != "" {
-		resp, err , err := v.validateOCIAppRepository(ctx, v.AppRepo)
+	response := &ValidationResponse{Code: 200, Message: "OK"}
+	isValidRepo, err := v.validateOCIAppRepository(ctx, v.AppRepo)
 	if err != nil || !isValidRepo {
 		response = &ValidationResponse{Code: 400, Message: err.Error()}
 	}
