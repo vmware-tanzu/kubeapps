@@ -23,12 +23,15 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	ocicatalog "github.com/vmware-tanzu/kubeapps/cmd/oci-catalog/gen/catalog/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
 	"github.com/vmware-tanzu/kubeapps/pkg/helm"
 	helmfake "github.com/vmware-tanzu/kubeapps/pkg/helm/fake"
 	helmtest "github.com/vmware-tanzu/kubeapps/pkg/helm/test"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
+	"github.com/vmware-tanzu/kubeapps/pkg/ocicatalog_client"
+	"github.com/vmware-tanzu/kubeapps/pkg/ocicatalog_client/ocicatalog_clienttest"
 	tartest "github.com/vmware-tanzu/kubeapps/pkg/tarutil/test"
 	"helm.sh/helm/v3/pkg/chart"
 	log "k8s.io/klog/v2"
@@ -602,7 +605,7 @@ type fakeRepo struct {
 	chartFiles models.ChartFiles
 }
 
-func (r *fakeRepo) Checksum() (string, error) {
+func (r *fakeRepo) Checksum(ctx context.Context) (string, error) {
 	return "checksum", nil
 }
 
@@ -614,7 +617,7 @@ func (r *fakeRepo) FilterIndex() {
 	// no-op
 }
 
-func (r *fakeRepo) Charts(shallow bool) ([]models.Chart, error) {
+func (r *fakeRepo) Charts(ctx context.Context, shallow bool) ([]models.Chart, error) {
 	return r.charts, nil
 }
 
@@ -904,6 +907,62 @@ func Test_ociAPICli(t *testing.T) {
 		}
 	})
 
+	t.Run("CatalogAvailable - returns true if oci-catalog responds", func(t *testing.T) {
+		grpcAddr, grpcDouble, closer := ocicatalog_clienttest.SetupTestDouble(t)
+		defer closer()
+		grpcDouble.Repositories = []*ocicatalog.Repository{
+			{
+				Name: "apache",
+			},
+		}
+		grpcClient, closer, err := ocicatalog_client.NewClient(grpcAddr)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		defer closer()
+
+		apiCli := &OciAPIClient{
+			RegistryNamespaceUrl: urlWithNamespace,
+			HttpClient:           &badHTTPClient{},
+			GrpcClient:           grpcClient,
+		}
+
+		got, err := apiCli.CatalogAvailable(context.Background(), "my-user-agent")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
+		if got, want := got, true; got != want {
+			t.Errorf("got: %t, want: %t", got, want)
+		}
+	})
+
+	t.Run("CatalogAvailable - returns false if oci-catalog responds with zero repos", func(t *testing.T) {
+		grpcAddr, grpcDouble, closer := ocicatalog_clienttest.SetupTestDouble(t)
+		defer closer()
+		grpcDouble.Repositories = []*ocicatalog.Repository{}
+		grpcClient, closer, err := ocicatalog_client.NewClient(grpcAddr)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		defer closer()
+
+		apiCli := &OciAPIClient{
+			RegistryNamespaceUrl: urlWithNamespace,
+			HttpClient:           &badHTTPClient{},
+			GrpcClient:           grpcClient,
+		}
+
+		got, err := apiCli.CatalogAvailable(context.Background(), "my-user-agent")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
+		if got, want := got, false; got != want {
+			t.Errorf("got: %t, want: %t", got, want)
+		}
+	})
+
 	t.Run("CatalogAvailable - returns false on any other", func(t *testing.T) {
 		apiCli := &OciAPIClient{
 			RegistryNamespaceUrl: urlWithNamespace,
@@ -931,7 +990,39 @@ func Test_ociAPICli(t *testing.T) {
 			},
 		}
 
-		got, err := apiCli.Catalog("my-user-agent")
+		got, err := apiCli.Catalog(context.Background(), "my-user-agent")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if got, want := got, []string{"common", "redis"}; !cmp.Equal(got, want) {
+			t.Errorf("got: %s, want: %s", got, want)
+		}
+	})
+
+	t.Run("Catalog - successful request via oci-catalog", func(t *testing.T) {
+		grpcAddr, grpcDouble, closer := ocicatalog_clienttest.SetupTestDouble(t)
+		defer closer()
+		grpcDouble.Repositories = []*ocicatalog.Repository{
+			{
+				Name: "common",
+			},
+			{
+				Name: "redis",
+			},
+		}
+		grpcClient, closer, err := ocicatalog_client.NewClient(grpcAddr)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		defer closer()
+		apiCli := &OciAPIClient{
+			RegistryNamespaceUrl: urlWithNamespace,
+			HttpClient:           &badHTTPClient{},
+			GrpcClient:           grpcClient,
+		}
+
+		got, err := apiCli.Catalog(context.Background(), "my-user-agent")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -959,7 +1050,7 @@ func (o *fakeOCIAPICli) CatalogAvailable(ctx context.Context, userAgent string) 
 	return false, nil
 }
 
-func (o *fakeOCIAPICli) Catalog(userAgent string) ([]string, error) {
+func (o *fakeOCIAPICli) Catalog(ctx context.Context, userAgent string) ([]string, error) {
 	return nil, nil
 }
 
@@ -973,7 +1064,7 @@ func Test_OCIRegistry(t *testing.T) {
 
 	t.Run("Checksum - failed request", func(t *testing.T) {
 		repo.ociCli = &fakeOCIAPICli{err: fmt.Errorf("request failed")}
-		_, err := repo.Checksum()
+		_, err := repo.Checksum(context.Background())
 		assert.Error(t, fmt.Errorf("request failed"), err)
 	})
 
@@ -981,7 +1072,7 @@ func Test_OCIRegistry(t *testing.T) {
 		repo.ociCli = &fakeOCIAPICli{
 			tagList: &TagList{Name: "test/apache", Tags: []string{"1.0.0", "1.1.0"}},
 		}
-		checksum, err := repo.Checksum()
+		checksum, err := repo.Checksum(context.Background())
 		assert.NoError(t, err)
 		assert.Equal(t, checksum, "b1b1ae17ddc8f83606acb8a175025a264e8634bb174b6e6a5799bdb5d20eaa58", "checksum")
 	})
@@ -996,7 +1087,7 @@ func Test_OCIRegistry(t *testing.T) {
 				tagList: &TagList{Name: "test/apache", Tags: []string{"1.0.0", "1.1.0"}},
 			},
 		}
-		_, err := emptyRepo.Checksum()
+		_, err := emptyRepo.Checksum(context.Background())
 		assert.NoError(t, err)
 		assert.Equal(t, emptyRepo.tags, map[string]TagList{
 			"apache": {Name: "test/apache", Tags: []string{"1.0.0", "1.1.0"}},
@@ -1364,7 +1455,7 @@ version: 1.0.0
 					},
 				},
 			}
-			charts, err := chartsRepo.Charts(tt.shallow)
+			charts, err := chartsRepo.Charts(context.Background(), tt.shallow)
 			assert.NoError(t, err)
 			if !cmp.Equal(charts, tt.expected) {
 				t.Errorf("Unexpected result %v", cmp.Diff(tt.expected, charts))
@@ -1410,7 +1501,7 @@ version: 1.0.0
 				},
 			},
 		}
-		charts, err := chartsRepo.Charts(true)
+		charts, err := chartsRepo.Charts(context.Background(), true)
 		assert.NoError(t, err)
 		if len(charts) != 1 && charts[0].Name != "common" {
 			t.Errorf("got: %+v", charts)
@@ -1703,7 +1794,7 @@ func TestHelmRepoAppliesUnescape(t *testing.T) {
 		AppRepositoryInternal: repo,
 	}
 	t.Run("Helm repo applies unescaping to chart data", func(t *testing.T) {
-		charts, _ := helmRepo.Charts(false)
+		charts, _ := helmRepo.Charts(context.Background(), false)
 		if !cmp.Equal(charts, expectedCharts) {
 			t.Errorf("Unexpected result: %v", cmp.Diff(charts, expectedCharts))
 		}
