@@ -5,6 +5,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -25,10 +26,12 @@ import (
 	"github.com/srwiley/oksvg"
 	"github.com/srwiley/rasterx"
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	ocicatalog "github.com/vmware-tanzu/kubeapps/cmd/oci-catalog/gen/catalog/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
 	"github.com/vmware-tanzu/kubeapps/pkg/helm"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
+	"github.com/vmware-tanzu/kubeapps/pkg/ocicatalog_client"
 	"github.com/vmware-tanzu/kubeapps/pkg/tarutil"
 	"helm.sh/helm/v3/pkg/chart"
 	helmregistry "helm.sh/helm/v3/pkg/registry"
@@ -327,29 +330,30 @@ type VACCatalog struct {
 type ociAPI interface {
 	TagList(appName, userAgent string) (*TagList, error)
 	IsHelmChart(appName, tag, userAgent string) (bool, error)
-	CatalogAvailable(userAgent string) bool
+	CatalogAvailable(ctx context.Context, userAgent string) (bool, error)
 	Catalog(userAgent string) ([]string, error)
 }
 
-// OciAPIClient enables basic interactions with an OCI registry.
-//
-// The AuthHeader is optional - if empty the http client's default Authorization
-// header will be used.
+// OciAPIClient enables basic interactions with an OCI registry
+// using (for now) a combination of the gRPC OCI catalog service
+// and the http distribution spec API.
 type OciAPIClient struct {
-	AuthHeader string
-	Url        *url.URL
-	NetClient  httpclient.Client
+	RegistryNamespaceUrl *url.URL
+	// The HttpClient is used for all http requests to the OCI Distribution
+	// spec API.
+	HttpClient httpclient.Client
+	// The GrpcClient is used when querying our OCI Catalog service, which
+	// aims to work around some of the shortfalls of the OCI Distribution spec
+	// API
+	GrpcClient ocicatalog.OCICatalogServiceClient
 }
 
 // TagList retrieves the list of tags for an asset
 func (o *OciAPIClient) TagList(appName string, userAgent string) (*TagList, error) {
-	url := *o.Url
+	url := *o.RegistryNamespaceUrl
 	url.Path = path.Join("v2", url.Path, appName, "tags", "list")
 	headers := map[string]string{}
-	if o.AuthHeader != "" {
-		headers["Authorization"] = o.AuthHeader
-	}
-	data, err := doReq(url.String(), o.NetClient, headers, userAgent)
+	data, err := doReq(url.String(), o.HttpClient, headers, userAgent)
 	if err != nil {
 		return nil, err
 	}
@@ -363,16 +367,13 @@ func (o *OciAPIClient) TagList(appName string, userAgent string) (*TagList, erro
 }
 
 func (o *OciAPIClient) IsHelmChart(appName, tag, userAgent string) (bool, error) {
-	repoURL := *o.Url
+	repoURL := *o.RegistryNamespaceUrl
 	repoURL.Path = path.Join("v2", repoURL.Path, appName, "manifests", tag)
 	log.V(4).Infof("Getting tag %s", repoURL.String())
 	headers := map[string]string{
 		"Accept": "application/vnd.oci.image.manifest.v1+json",
 	}
-	if o.AuthHeader != "" {
-		headers["Authorization"] = o.AuthHeader
-	}
-	manifestData, err := doReq(repoURL.String(), o.NetClient, headers, userAgent)
+	manifestData, err := doReq(repoURL.String(), o.HttpClient, headers, userAgent)
 	if err != nil {
 		return false, err
 	}
@@ -394,26 +395,51 @@ func (o *OciAPIClient) IsHelmChart(appName, tag, userAgent string) (bool, error)
 // name.
 // In the future, this should check the oci-catalog service for possible
 // catalogs.
-func (o *OciAPIClient) CatalogAvailable(userAgent string) bool {
+func (o *OciAPIClient) CatalogAvailable(ctx context.Context, userAgent string) (bool, error) {
 	manifest, err := o.catalogManifest(userAgent)
-	if err != nil {
-		log.Errorf("Unable to get VAC-published catalog manifest: %+v", err)
-		return false
+	if err == nil {
+		return manifest.Config.MediaType == chartsIndexMediaType, nil
 	}
-	return manifest.Config.MediaType == chartsIndexMediaType
+	log.Infof("Unable to get VAC-published catalog manifest: %+v", err)
+	if o.GrpcClient == nil {
+		// This is not currently an error as the oci-catalog service is
+		// still optional.
+		log.Errorf("VAC index not available and OCI-Catalog client is nil. Unable to determine catalog")
+		return false, nil
+	}
+	log.Infof("Attempting catalog retrieval via oci-catalog service.")
+
+	repos_stream, err := o.GrpcClient.ListRepositoriesForRegistry(ctx, &ocicatalog.ListRepositoriesForRegistryRequest{
+		Registry:     o.RegistryNamespaceUrl.Host,
+		Namespace:    o.RegistryNamespaceUrl.Path,
+		ContentTypes: []string{ocicatalog_client.CONTENT_TYPE_HELM},
+	})
+	if err != nil {
+		log.Errorf("Error querying OCI Catalog for repos: %+v", err)
+		return false, fmt.Errorf("error querying OCI catalog for repos: %+v", err)
+	}
+
+	// It's enough to receive a single repo to be valid.
+	_, err = repos_stream.Recv()
+	if err != nil {
+		if err == io.EOF {
+			log.Errorf("OCI catalog returned zero repositories for %q", o.RegistryNamespaceUrl.String())
+			return false, nil
+		}
+		log.Errorf("Error receiving OCI Repositories: %+v", err)
+		return false, fmt.Errorf("error receiving OCI Repositories: %+v", err)
+	}
+	return true, nil
 }
 
 func (o *OciAPIClient) catalogManifest(userAgent string) (*OCIManifest, error) {
-	indexURL := *o.Url
+	indexURL := *o.RegistryNamespaceUrl
 	indexURL.Path = path.Join("v2", indexURL.Path, "charts-index", "manifests", "latest")
 	log.V(4).Infof("Getting tag %s", indexURL.String())
 	headers := map[string]string{
 		"Accept": "application/vnd.oci.image.manifest.v1+json",
 	}
-	if o.AuthHeader != "" {
-		headers["Authorization"] = o.AuthHeader
-	}
-	manifestData, err := doReq(indexURL.String(), o.NetClient, headers, userAgent)
+	manifestData, err := doReq(indexURL.String(), o.HttpClient, headers, userAgent)
 	if err != nil {
 		return nil, err
 	}
@@ -442,16 +468,13 @@ func (o *OciAPIClient) Catalog(userAgent string) ([]string, error) {
 
 	blobDigest := manifest.Layers[0].Digest
 
-	blobURL := *o.Url
+	blobURL := *o.RegistryNamespaceUrl
 	blobURL.Path = path.Join("v2", blobURL.Path, "charts-index", "blobs", blobDigest)
 	log.V(4).Infof("Getting blob %s", blobURL.String())
 	headers := map[string]string{
 		"Accept": "application/vnd.vmware.charts.index.layer.v1+json",
 	}
-	if o.AuthHeader != "" {
-		headers["Authorization"] = o.AuthHeader
-	}
-	blobData, err := doReq(blobURL.String(), o.NetClient, headers, userAgent)
+	blobData, err := doReq(blobURL.String(), o.HttpClient, headers, userAgent)
 	if err != nil {
 		return nil, err
 	}
@@ -780,7 +803,7 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filter *ap
 		repositories:          ociRepos,
 		AppRepositoryInternal: &models.AppRepositoryInternal{Namespace: namespace, Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader},
 		puller:                &helm.OCIPuller{Resolver: ociResolver},
-		ociCli:                &OciAPIClient{AuthHeader: authorizationHeader, Url: url, NetClient: netClient},
+		ociCli:                &OciAPIClient{RegistryNamespaceUrl: url, HttpClient: netClient},
 		filter:                filter,
 	}, nil
 }
