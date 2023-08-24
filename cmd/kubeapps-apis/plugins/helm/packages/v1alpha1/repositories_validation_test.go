@@ -20,7 +20,7 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	ocicatalog "github.com/vmware-tanzu/kubeapps/cmd/oci-catalog/gen/catalog/v1alpha1"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
-	"github.com/vmware-tanzu/kubeapps/pkg/ocicatalogtest"
+	"github.com/vmware-tanzu/kubeapps/pkg/ocicatalog_client/ocicatalog_clienttest"
 	corev1 "k8s.io/api/core/v1"
 	log "k8s.io/klog/v2"
 )
@@ -439,7 +439,7 @@ func TestOCIValidate(t *testing.T) {
 }
 
 func TestOCIValidateWithCatalogServer(t *testing.T) {
-	ociCatalogAddr, ociCatalogDouble, cleanup := ocicatalogtest.SetupTestDouble(t)
+	ociCatalogAddr, ociCatalogDouble, cleanup := ocicatalog_clienttest.SetupTestDouble(t)
 	defer cleanup()
 
 	testCases := []struct {

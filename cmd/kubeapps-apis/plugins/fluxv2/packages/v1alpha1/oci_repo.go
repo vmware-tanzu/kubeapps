@@ -782,7 +782,7 @@ func getOciChartModel(appName string, tags TagList, ociChartRepo *OCIChartReposi
 		maintainers = append(maintainers, *maintainer)
 	}
 
-	modelRepo := &models.Repo{
+	modelRepo := &models.AppRepository{
 		Namespace: repo.Namespace,
 		Name:      repo.Name,
 		URL:       repo.Spec.URL,

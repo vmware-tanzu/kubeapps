@@ -15,7 +15,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/vmware-tanzu/kubeapps/pkg/helm"
-	"google.golang.org/grpc"
+	"github.com/vmware-tanzu/kubeapps/pkg/ocicatalog_client"
 	log "k8s.io/klog/v2"
 
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -23,7 +23,6 @@ import (
 	utils "github.com/vmware-tanzu/kubeapps/cmd/asset-syncer/server"
 	ocicatalog "github.com/vmware-tanzu/kubeapps/cmd/oci-catalog/gen/catalog/v1alpha1"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
-	"google.golang.org/grpc/credentials/insecure"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -322,13 +321,11 @@ func queryOCICatalog(ctx context.Context, ociCatalogAddr string, appRepoURL stri
 		return nil, fmt.Errorf("unable to parse URL for OCI Catalog %q: %+v", appRepoURL, err)
 	}
 
-	conn, err := grpc.Dial(ociCatalogAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	client, closer, err := ocicatalog_client.NewClient(ociCatalogAddr)
 	if err != nil {
-		return nil, fmt.Errorf("unable to contact OCI Catalog at %q: %+v", ociCatalogAddr, err)
+		return nil, err
 	}
-	defer conn.Close()
-
-	client := ocicatalog.NewOCICatalogServiceClient(conn)
+	defer closer()
 
 	repos_stream, err := client.ListRepositoriesForRegistry(ctx, &ocicatalog.ListRepositoriesForRegistryRequest{
 		Registry:     u.Host,

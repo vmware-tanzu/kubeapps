@@ -56,7 +56,7 @@ func Sync(serveOpts Config, version string, args []string) error {
 		return fmt.Errorf("error: %v", err)
 	}
 
-	var repoIface Repo
+	var repoIface ChartCatalog
 	if args[2] == "helm" {
 		repoIface, err = getHelmRepo(serveOpts.Namespace, args[0], args[1], authorizationHeader, filters, netClient, serveOpts.UserAgent)
 	} else {
@@ -65,14 +65,14 @@ func Sync(serveOpts Config, version string, args []string) error {
 	if err != nil {
 		return fmt.Errorf("error: %v", err)
 	}
-	repo := repoIface.Repo()
+	repo := repoIface.AppRepository()
 	checksum, err := repoIface.Checksum()
 	if err != nil {
 		return fmt.Errorf("error: %v", err)
 	}
 
 	// Check if the repo has been already processed
-	lastChecksum := manager.LastChecksum(models.Repo{Namespace: repo.Namespace, Name: repo.Name})
+	lastChecksum := manager.LastChecksum(models.AppRepository{Namespace: repo.Namespace, Name: repo.Name})
 	log.Infof("Last checksum: %v", lastChecksum)
 	if lastChecksum == checksum {
 		log.Infof("Skipping repository since there are no updatesrepo.URL= %v", repo.URL)
@@ -98,7 +98,7 @@ func Sync(serveOpts Config, version string, args []string) error {
 			log.Infof("No charts in repository to be synced, repo.URL= %v", repo.URL)
 			return nil
 		}
-		if err = manager.Sync(models.Repo{Name: repo.Name, Namespace: repo.Namespace}, charts); err != nil {
+		if err = manager.Sync(models.AppRepository{Name: repo.Name, Namespace: repo.Namespace}, charts); err != nil {
 			return fmt.Errorf("can't add chart repository to database: %v", err)
 		}
 

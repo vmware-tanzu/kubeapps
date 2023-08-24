@@ -975,7 +975,7 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, headers http
 	return ch, registrySecrets, nil
 }
 
-func chartTarballURL(r *models.Repo, cv models.ChartVersion) string {
+func chartTarballURL(r *models.AppRepository, cv models.ChartVersion) string {
 	// The tarball URL will always be the first URL, ie. URL[0], in the repo.chartVersions[i]:
 	// https://helm.sh/docs/topics/chart_repository/#the-index-file
 	// https://github.com/helm/helm/blob/v3.7.1/cmd/helm/search/search_test.go#L63

@@ -12,16 +12,16 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 )
 
-// Repo holds the App repository basic details
-type Repo struct {
+// AppRepository holds the App repository basic details
+type AppRepository struct {
 	Namespace string `json:"namespace"`
 	Name      string `json:"name"`
 	URL       string `json:"url"`
 	Type      string `json:"type"`
 }
 
-// RepoInternal holds the App repository details including auth
-type RepoInternal struct {
+// AppRepositoryInternal holds the App repository details including auth
+type AppRepositoryInternal struct {
 	Namespace           string `json:"namespace"`
 	Name                string `json:"name"`
 	URL                 string `json:"url"`
@@ -33,7 +33,7 @@ type RepoInternal struct {
 type Chart struct {
 	ID              string             `json:"ID" bson:"chart_id"`
 	Name            string             `json:"name"`
-	Repo            *Repo              `json:"repo"`
+	Repo            *AppRepository     `json:"repo"`
 	Description     string             `json:"description"`
 	Home            string             `json:"home"`
 	Keywords        []string           `json:"keywords"`
@@ -83,7 +83,7 @@ type ChartFiles struct {
 	DefaultValues           string
 	AdditionalDefaultValues map[string]string
 	Schema                  string
-	Repo                    *Repo
+	Repo                    *AppRepository
 	Digest                  string
 }
 

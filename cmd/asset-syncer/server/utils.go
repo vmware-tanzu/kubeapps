@@ -63,7 +63,7 @@ type Config struct {
 
 type importChartFilesJob struct {
 	ID           string
-	Repo         *models.Repo
+	Repo         *models.AppRepository
 	ChartVersion models.ChartVersion
 }
 
@@ -94,15 +94,15 @@ func parseRepoURL(repoURL string) (*url.URL, error) {
 }
 
 type assetManager interface {
-	Delete(repo models.Repo) error
-	Sync(repo models.Repo, charts []models.Chart) error
-	LastChecksum(repo models.Repo) string
+	Delete(repo models.AppRepository) error
+	Sync(repo models.AppRepository, charts []models.Chart) error
+	LastChecksum(repo models.AppRepository) string
 	UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error
 	Init() error
 	Close() error
 	InvalidateCache() error
-	updateIcon(repo models.Repo, data []byte, contentType, ID string) error
-	filesExist(repo models.Repo, chartFilesID, digest string) bool
+	updateIcon(repo models.AppRepository, data []byte, contentType, ID string) error
+	filesExist(repo models.AppRepository, chartFilesID, digest string) bool
 	insertFiles(chartID string, files models.ChartFiles) error
 }
 
@@ -119,19 +119,19 @@ func getSha256(src []byte) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-// Repo defines the methods to retrieve information from the given repository
-type Repo interface {
+// ChartCatalog defines the methods to retrieve information from the given repository
+type ChartCatalog interface {
 	Checksum() (string, error)
-	Repo() *models.RepoInternal
+	AppRepository() *models.AppRepositoryInternal
 	FilterIndex()
 	Charts(fetchLatestOnly bool) ([]models.Chart, error)
 	FetchFiles(cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error)
 }
 
-// HelmRepo implements the Repo interface for chartmuseum-like repositories
+// HelmRepo implements the ChartCatalog interface for chartmuseum-like repositories
 type HelmRepo struct {
 	content []byte
-	*models.RepoInternal
+	*models.AppRepositoryInternal
 	netClient httpclient.Client
 	filter    *apprepov1alpha1.FilterRuleSpec
 }
@@ -141,9 +141,9 @@ func (r *HelmRepo) Checksum() (string, error) {
 	return getSha256(r.content)
 }
 
-// Repo returns the repo information
-func (r *HelmRepo) Repo() *models.RepoInternal {
-	return r.RepoInternal
+// AppRepository returns the repo information
+func (r *HelmRepo) AppRepository() *models.AppRepositoryInternal {
+	return r.AppRepositoryInternal
 }
 
 // FilterRepo is a no-op for a Helm repo
@@ -249,7 +249,7 @@ func filterCharts(charts []models.Chart, filterRule *apprepov1alpha1.FilterRuleS
 
 // Charts retrieve the list of charts exposed in the repo
 func (r *HelmRepo) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
-	repo := &models.Repo{
+	repo := &models.AppRepository{
 		Namespace: r.Namespace,
 		Name:      r.Name,
 		URL:       r.URL,
@@ -269,7 +269,7 @@ func (r *HelmRepo) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 // FetchFiles retrieves the important files of a chart and version from the repo
 func (r *HelmRepo) FetchFiles(cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
 	authorizationHeader := ""
-	chartTarballURL := chartTarballURL(r.RepoInternal, cv)
+	chartTarballURL := chartTarballURL(r.AppRepositoryInternal, cv)
 
 	if passCredentials || len(r.AuthorizationHeader) > 0 && isURLDomainEqual(chartTarballURL, r.URL) {
 		authorizationHeader = r.AuthorizationHeader
@@ -292,7 +292,7 @@ type TagList struct {
 // OCIRegistry implements the Repo interface for OCI repositories
 type OCIRegistry struct {
 	repositories []string
-	*models.RepoInternal
+	*models.AppRepositoryInternal
 	tags   map[string]TagList
 	puller helm.ChartPuller
 	ociCli ociAPI
@@ -397,7 +397,7 @@ func (o *OciAPIClient) IsHelmChart(appName, tag, userAgent string) (bool, error)
 func (o *OciAPIClient) CatalogAvailable(userAgent string) bool {
 	manifest, err := o.catalogManifest(userAgent)
 	if err != nil {
-		log.Errorf("Unable to get catalog manifest: %+v", err)
+		log.Errorf("Unable to get VAC-published catalog manifest: %+v", err)
 		return false
 	}
 	return manifest.Config.MediaType == chartsIndexMediaType
@@ -506,9 +506,9 @@ func (r *OCIRegistry) Checksum() (string, error) {
 	return getSha256(content)
 }
 
-// Repo returns the repo information
-func (r *OCIRegistry) Repo() *models.RepoInternal {
-	return r.RepoInternal
+// AppRepository returns the repo information
+func (r *OCIRegistry) AppRepository() *models.AppRepositoryInternal {
+	return r.AppRepositoryInternal
 }
 
 func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPuller, r *OCIRegistry) (*models.Chart, error) {
@@ -556,7 +556,7 @@ func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPull
 	return &models.Chart{
 		ID:            path.Join(r.Name, encodedAppNameForID),
 		Name:          chartMetadata.Name,
-		Repo:          &models.Repo{Namespace: r.Namespace, Name: r.Name, URL: r.URL, Type: r.Type},
+		Repo:          &models.AppRepository{Namespace: r.Namespace, Name: r.Name, URL: r.URL, Type: r.Type},
 		Description:   chartMetadata.Description,
 		Home:          chartMetadata.Home,
 		Keywords:      chartMetadata.Keywords,
@@ -645,7 +645,7 @@ func (r *OCIRegistry) FilterIndex() {
 // Charts retrieve the list of charts exposed in the repo
 func (r *OCIRegistry) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 	result := map[string]*models.Chart{}
-	repoURL, err := parseRepoURL(r.RepoInternal.URL)
+	repoURL, err := parseRepoURL(r.AppRepositoryInternal.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -732,7 +732,7 @@ func parseFilters(filters string) (*apprepov1alpha1.FilterRuleSpec, error) {
 	return filterSpec, nil
 }
 
-func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filter *apprepov1alpha1.FilterRuleSpec, netClient httpclient.Client, userAgent string) (Repo, error) {
+func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filter *apprepov1alpha1.FilterRuleSpec, netClient httpclient.Client, userAgent string) (ChartCatalog, error) {
 	url, err := parseRepoURL(repoURL)
 	if err != nil {
 		log.Errorf("Failed to parse URL, url=%s: %v", repoURL, err)
@@ -746,7 +746,7 @@ func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filter *a
 
 	return &HelmRepo{
 		content: repoBytes,
-		RepoInternal: &models.RepoInternal{
+		AppRepositoryInternal: &models.AppRepositoryInternal{
 			Namespace:           namespace,
 			Name:                name,
 			URL:                 url.String(),
@@ -757,7 +757,7 @@ func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filter *a
 	}, nil
 }
 
-func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filter *apprepov1alpha1.FilterRuleSpec, ociRepos []string, netClient *http.Client) (Repo, error) {
+func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filter *apprepov1alpha1.FilterRuleSpec, ociRepos []string, netClient *http.Client) (ChartCatalog, error) {
 	url, err := parseRepoURL(repoURL)
 	if err != nil {
 		log.Errorf("Failed to parse URL, url=%s: %v", repoURL, err)
@@ -777,11 +777,11 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filter *ap
 	ociResolver := docker.NewResolver(docker.ResolverOptions{Headers: headers, Client: netClient})
 
 	return &OCIRegistry{
-		repositories: ociRepos,
-		RepoInternal: &models.RepoInternal{Namespace: namespace, Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader},
-		puller:       &helm.OCIPuller{Resolver: ociResolver},
-		ociCli:       &OciAPIClient{AuthHeader: authorizationHeader, Url: url, NetClient: netClient},
-		filter:       filter,
+		repositories:          ociRepos,
+		AppRepositoryInternal: &models.AppRepositoryInternal{Namespace: namespace, Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader},
+		puller:                &helm.OCIPuller{Resolver: ociResolver},
+		ociCli:                &OciAPIClient{AuthHeader: authorizationHeader, Url: url, NetClient: netClient},
+		filter:                filter,
 	}, nil
 }
 
@@ -799,7 +799,7 @@ func fetchRepoIndex(url, authHeader string, cli httpclient.Client, userAgent str
 	return doReq(indexURL.String(), cli, headers, userAgent)
 }
 
-func chartTarballURL(r *models.RepoInternal, cv models.ChartVersion) string {
+func chartTarballURL(r *models.AppRepositoryInternal, cv models.ChartVersion) string {
 	source := cv.URLs[0]
 	if _, err := parseRepoURL(source); err != nil {
 		// If the chart URL is not absolute, join with repo URL. It's fine if the
@@ -817,7 +817,7 @@ type fileImporter struct {
 	netClient httpclient.Client
 }
 
-func (f *fileImporter) fetchFiles(charts []models.Chart, repo Repo, userAgent string, passCredentials bool) {
+func (f *fileImporter) fetchFiles(charts []models.Chart, repo ChartCatalog, userAgent string, passCredentials bool) {
 	iconJobs := make(chan models.Chart, numWorkers)
 	chartFilesJobs := make(chan importChartFilesJob, numWorkers)
 	var wg sync.WaitGroup
@@ -861,11 +861,11 @@ func (f *fileImporter) fetchFiles(charts []models.Chart, repo Repo, userAgent st
 	wg.Wait()
 }
 
-func (f *fileImporter) importWorker(wg *sync.WaitGroup, icons <-chan models.Chart, chartFiles <-chan importChartFilesJob, repo Repo, userAgent string, passCredentials bool) {
+func (f *fileImporter) importWorker(wg *sync.WaitGroup, icons <-chan models.Chart, chartFiles <-chan importChartFilesJob, repo ChartCatalog, userAgent string, passCredentials bool) {
 	defer wg.Done()
 	for c := range icons {
 		log.V(4).Infof("Importing icon, name=%s", c.Name)
-		if err := f.fetchAndImportIcon(c, repo.Repo(), userAgent, passCredentials); err != nil {
+		if err := f.fetchAndImportIcon(c, repo.AppRepository(), userAgent, passCredentials); err != nil {
 			log.Errorf("Failed to import icon, name=%s: %v", c.Name, err)
 		}
 	}
@@ -877,7 +877,7 @@ func (f *fileImporter) importWorker(wg *sync.WaitGroup, icons <-chan models.Char
 	}
 }
 
-func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal, userAgent string, passCredentials bool) error {
+func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.AppRepositoryInternal, userAgent string, passCredentials bool) error {
 	if c.Icon == "" {
 		log.Infof("Icon not found, name=%s", c.Name)
 		return nil
@@ -930,15 +930,15 @@ func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal
 	b := buf.Bytes()
 	contentType = "image/png"
 
-	return f.manager.updateIcon(models.Repo{Namespace: r.Namespace, Name: r.Name}, b, contentType, c.ID)
+	return f.manager.updateIcon(models.AppRepository{Namespace: r.Namespace, Name: r.Name}, b, contentType, c.ID)
 }
 
-func (f *fileImporter) fetchAndImportFiles(chartID string, repo Repo, cv models.ChartVersion, userAgent string, passCredentials bool) error {
-	r := repo.Repo()
+func (f *fileImporter) fetchAndImportFiles(chartID string, repo ChartCatalog, cv models.ChartVersion, userAgent string, passCredentials bool) error {
+	r := repo.AppRepository()
 	chartFilesID := fmt.Sprintf("%s-%s", chartID, cv.Version)
 
 	// Check if we already have indexed files for this chart version and digest
-	if f.manager.filesExist(models.Repo{Namespace: r.Namespace, Name: r.Name}, chartFilesID, cv.Digest) {
+	if f.manager.filesExist(models.AppRepository{Namespace: r.Namespace, Name: r.Name}, chartFilesID, cv.Digest) {
 		log.V(4).Infof("Skipping existing files, id: %s, version: %s", chartID, cv.Version)
 		return nil
 	}
@@ -949,7 +949,7 @@ func (f *fileImporter) fetchAndImportFiles(chartID string, repo Repo, cv models.
 		return err
 	}
 
-	chartFiles := models.ChartFiles{ID: chartFilesID, Repo: &models.Repo{Name: r.Name, Namespace: r.Namespace, URL: r.URL}, Digest: cv.Digest}
+	chartFiles := models.ChartFiles{ID: chartFilesID, Repo: &models.AppRepository{Name: r.Name, Namespace: r.Namespace, URL: r.URL}, Digest: cv.Digest}
 	if v, ok := files[models.ReadmeKey]; ok {
 		chartFiles.Readme = v
 	} else {

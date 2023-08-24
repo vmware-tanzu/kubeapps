@@ -1315,7 +1315,7 @@ func usesBitnamiCatalog(t *testing.T) error {
 			return err
 		}
 
-		modelRepo := &models.Repo{
+		modelRepo := &models.AppRepository{
 			Namespace: "default",
 			Name:      "bitnami",
 			URL:       outside_cluster_bitnami_url,
