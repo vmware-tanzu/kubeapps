@@ -782,24 +782,6 @@ func (h *goodOCIAPIHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	return w.Result(), nil
 }
 
-type authenticatedOCIAPIHTTPClient struct {
-	response string
-}
-
-func (h *authenticatedOCIAPIHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-
-	// Ensure we're sending the right Authorization header
-	if req.Header.Get("Authorization") != "Bearer ThisSecretAccessTokenAuthenticatesTheClient" {
-		w.WriteHeader(500)
-	}
-	_, err := w.Write([]byte(h.response))
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-	return w.Result(), nil
-}
-
 func Test_ociAPICli(t *testing.T) {
 	url, _ := parseRepoURL("http://oci-test")
 
