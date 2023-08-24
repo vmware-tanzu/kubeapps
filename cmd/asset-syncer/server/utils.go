@@ -124,10 +124,10 @@ func getSha256(src []byte) (string, error) {
 
 // ChartCatalog defines the methods to retrieve information from the given repository
 type ChartCatalog interface {
-	Checksum() (string, error)
+	Checksum(ctx context.Context) (string, error)
 	AppRepository() *models.AppRepositoryInternal
 	FilterIndex()
-	Charts(fetchLatestOnly bool) ([]models.Chart, error)
+	Charts(ctx context.Context, fetchLatestOnly bool) ([]models.Chart, error)
 	FetchFiles(cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error)
 }
 
@@ -140,7 +140,7 @@ type HelmRepo struct {
 }
 
 // Checksum returns the sha256 of the repo
-func (r *HelmRepo) Checksum() (string, error) {
+func (r *HelmRepo) Checksum(ctx context.Context) (string, error) {
 	return getSha256(r.content)
 }
 
@@ -251,7 +251,7 @@ func filterCharts(charts []models.Chart, filterRule *apprepov1alpha1.FilterRuleS
 }
 
 // Charts retrieve the list of charts exposed in the repo
-func (r *HelmRepo) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
+func (r *HelmRepo) Charts(ctx context.Context, fetchLatestOnly bool) ([]models.Chart, error) {
 	repo := &models.AppRepository{
 		Namespace: r.Namespace,
 		Name:      r.Name,
@@ -331,7 +331,7 @@ type ociAPI interface {
 	TagList(appName, userAgent string) (*TagList, error)
 	IsHelmChart(appName, tag, userAgent string) (bool, error)
 	CatalogAvailable(ctx context.Context, userAgent string) (bool, error)
-	Catalog(userAgent string) ([]string, error)
+	Catalog(ctx context.Context, userAgent string) ([]string, error)
 }
 
 // OciAPIClient enables basic interactions with an OCI registry
@@ -393,8 +393,6 @@ func (o *OciAPIClient) IsHelmChart(appName, tag, userAgent string) (bool, error)
 // https://docs.vmware.com/en/VMware-Application-Catalog/services/main/GUID-using-consume-metadata.html#method-2-obtain-metadata-from-the-oci-registry-10
 // although examples have "chart-index" rather than "index" as the artifact
 // name.
-// In the future, this should check the oci-catalog service for possible
-// catalogs.
 func (o *OciAPIClient) CatalogAvailable(ctx context.Context, userAgent string) (bool, error) {
 	manifest, err := o.catalogManifest(userAgent)
 	if err == nil {
@@ -451,16 +449,7 @@ func (o *OciAPIClient) catalogManifest(userAgent string) (*OCIManifest, error) {
 	return &manifest, nil
 }
 
-// Catalog returns the list of repositories in the (namespaced) registry
-// when discoverable.
-func (o *OciAPIClient) Catalog(userAgent string) ([]string, error) {
-	// TODO(minelson): all Kubeapps interactions with OCI registries should
-	// be updated to use the oras go lib.
-	manifest, err := o.catalogManifest(userAgent)
-	if err != nil {
-		return nil, err
-	}
-
+func (o *OciAPIClient) getVACReposForManifest(manifest *OCIManifest, userAgent string) ([]string, error) {
 	if len(manifest.Layers) != 1 || manifest.Layers[0].MediaType != "application/vnd.vmware.charts.index.layer.v1+json" {
 		log.Errorf("Unexpected layer in index manifest: %v", manifest)
 		return nil, fmt.Errorf("unexpected layer in index manifest")
@@ -492,6 +481,42 @@ func (o *OciAPIClient) Catalog(userAgent string) ([]string, error) {
 	return repos, nil
 }
 
+// Catalog returns the list of repositories in the (namespaced) registry
+// when discoverable.
+func (o *OciAPIClient) Catalog(ctx context.Context, userAgent string) ([]string, error) {
+	// TODO(minelson): all Kubeapps interactions with OCI registries should
+	// be updated to use the oras go lib.
+	manifest, err := o.catalogManifest(userAgent)
+	if err == nil {
+		return o.getVACReposForManifest(manifest, userAgent)
+	}
+	if o.GrpcClient != nil {
+		log.Infof("Unable to find VAC index: %+v. Attempting OCI-Catalog")
+		repos_stream, err := o.GrpcClient.ListRepositoriesForRegistry(ctx, &ocicatalog.ListRepositoriesForRegistryRequest{
+			Registry:     o.RegistryNamespaceUrl.Host,
+			Namespace:    o.RegistryNamespaceUrl.Path,
+			ContentTypes: []string{ocicatalog_client.CONTENT_TYPE_HELM},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error querying OCI catalog for repos: %+v", err)
+		}
+
+		repos := []string{}
+		for {
+			repo, err := repos_stream.Recv()
+			if err != nil {
+				if err == io.EOF {
+					return repos, nil
+				}
+				return nil, fmt.Errorf("error receiving OCI Repositories: %+v", err)
+			}
+			repos = append(repos, repo.Name)
+		}
+	} else {
+		return nil, err
+	}
+}
+
 func tagCheckerWorker(o ociAPI, tagJobs <-chan checkTagJob, resultChan chan checkTagResult) {
 	for j := range tagJobs {
 		isHelmChart, err := o.IsHelmChart(j.AppName, j.Tag, GetUserAgent("", ""))
@@ -502,11 +527,11 @@ func tagCheckerWorker(o ociAPI, tagJobs <-chan checkTagJob, resultChan chan chec
 // Checksum returns the sha256 of the repo by concatenating tags for
 // all repositories within the registry and returning the sha256.
 // Caveat: Mutated image tags won't be detected as new
-func (r *OCIRegistry) Checksum() (string, error) {
+func (r *OCIRegistry) Checksum(ctx context.Context) (string, error) {
 	r.tags = map[string]TagList{}
 
 	if len(r.repositories) == 0 {
-		repos, err := r.ociCli.Catalog("")
+		repos, err := r.ociCli.Catalog(ctx, "")
 		if err != nil {
 			return "", err
 		}
@@ -666,7 +691,7 @@ func (r *OCIRegistry) FilterIndex() {
 }
 
 // Charts retrieve the list of charts exposed in the repo
-func (r *OCIRegistry) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
+func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool) ([]models.Chart, error) {
 	result := map[string]*models.Chart{}
 	repoURL, err := parseRepoURL(r.AppRepositoryInternal.URL)
 	if err != nil {
@@ -674,7 +699,7 @@ func (r *OCIRegistry) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 	}
 
 	if len(r.repositories) == 0 {
-		repos, err := r.ociCli.Catalog("")
+		repos, err := r.ociCli.Catalog(ctx, "")
 		if err != nil {
 			return nil, err
 		}

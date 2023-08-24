@@ -4,6 +4,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -20,6 +21,7 @@ func Sync(serveOpts Config, version string, args []string) error {
 		return fmt.Errorf("need exactly three arguments: [REPO NAME] [REPO URL] [REPO TYPE] (got %v)", len(args))
 	}
 
+	ctx := context.Background()
 	dbConfig := dbutils.Config{URL: serveOpts.DatabaseURL, Database: serveOpts.DatabaseName, Username: serveOpts.DatabaseUser, Password: serveOpts.DatabasePassword}
 	globalPackagingNamespace := serveOpts.GlobalPackagingNamespace
 	manager, err := newManager(dbConfig, globalPackagingNamespace)
@@ -66,7 +68,7 @@ func Sync(serveOpts Config, version string, args []string) error {
 		return fmt.Errorf("error: %v", err)
 	}
 	repo := repoIface.AppRepository()
-	checksum, err := repoIface.Checksum()
+	checksum, err := repoIface.Checksum(ctx)
 	if err != nil {
 		return fmt.Errorf("error: %v", err)
 	}
@@ -90,7 +92,7 @@ func Sync(serveOpts Config, version string, args []string) error {
 	}
 
 	for _, fetchLatestOnly := range fetchLatestOnlySlice {
-		charts, err := repoIface.Charts(fetchLatestOnly)
+		charts, err := repoIface.Charts(ctx, fetchLatestOnly)
 		if err != nil {
 			return fmt.Errorf("error: %v", err)
 		}
