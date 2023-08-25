@@ -33,7 +33,7 @@
     "@cds/city": "^1.1.0",
     "@cds/core": "^6.5.0",
     "@cds/react": "^6.5.0",
-    "@clr/ui": "^15.9.0",
+    "@clr/ui": "^15.11.0",
     "@paciolan/remote-component": "^2.13.0",
     "@tanstack/match-sorter-utils": "^8.8.4",
     "@tanstack/react-table": "^8.9.3",
