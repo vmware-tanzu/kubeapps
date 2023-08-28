@@ -192,9 +192,9 @@ checksum = "0ea22880d78093b0cbe17c89f64a7d457941e65759157ec6cb31a31d652b05e5"
 
 [[package]]
 name = "base64"
-version = "0.21.2"
+version = "0.21.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "604178f6c5c21f02dc555784810edfb88d34ac2c73b2eae109655649ee73ce3d"
+checksum = "414dcefbc63d77c526a76b3afcf6fbb9b5e2791c19c3aa2297733208750c6e53"
 
 [[package]]
 name = "bitflags"
@@ -938,7 +938,7 @@ version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "95578de7d6eac4fba42114bc751e38c59a739968769df1be56feba6f17fd148e"
 dependencies = [
- "base64 0.21.2",
+ "base64 0.21.3",
  "bytes",
  "chrono",
  "serde",
@@ -1334,7 +1334,7 @@ name = "pinniped-proxy"
 version = "0.0.0-devel"
 dependencies = [
  "anyhow",
- "base64 0.21.2",
+ "base64 0.21.3",
  "chrono",
  "clap",
  "env_logger",
@@ -1487,7 +1487,7 @@ version = "0.11.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3e9ad3fe7488d7e34558a2033d45a0c90b72d97b4f80705666fea71472e2e6a1"
 dependencies = [
- "base64 0.21.2",
+ "base64 0.21.3",
  "bytes",
  "encoding_rs",
  "futures-core",
@@ -2017,7 +2017,7 @@ version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "55ae70283aba8d2a8b411c695c437fe25b8b5e44e23e780662002fc72fb47a82"
 dependencies = [
- "base64 0.21.2",
+ "base64 0.21.3",
  "bitflags 2.3.3",
  "bytes",
  "futures-core",
