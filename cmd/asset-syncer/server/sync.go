@@ -9,10 +9,12 @@ import (
 	"fmt"
 	"time"
 
+	ocicatalog "github.com/vmware-tanzu/kubeapps/cmd/oci-catalog/gen/catalog/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
+	"github.com/vmware-tanzu/kubeapps/pkg/ocicatalog_client"
 	log "k8s.io/klog/v2"
 )
 
@@ -62,7 +64,16 @@ func Sync(serveOpts Config, version string, args []string) error {
 	if args[2] == "helm" {
 		repoIface, err = getHelmRepo(serveOpts.Namespace, args[0], args[1], authorizationHeader, filters, netClient, serveOpts.UserAgent)
 	} else {
-		repoIface, err = getOCIRepo(serveOpts.Namespace, args[0], args[1], authorizationHeader, filters, serveOpts.OciRepositories, netClient)
+		var grpcClient ocicatalog.OCICatalogServiceClient
+		if serveOpts.OCICatalogURL != "" {
+			var closer func()
+			grpcClient, closer, err = ocicatalog_client.NewClient(serveOpts.OCICatalogURL)
+			if err != nil {
+				return fmt.Errorf("unable to create oci catalog client: %w", err)
+			}
+			defer closer()
+		}
+		repoIface, err = getOCIRepo(serveOpts.Namespace, args[0], args[1], authorizationHeader, filters, serveOpts.OciRepositories, netClient, &grpcClient)
 	}
 	if err != nil {
 		return fmt.Errorf("error: %v", err)
