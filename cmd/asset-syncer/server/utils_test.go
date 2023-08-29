@@ -311,14 +311,17 @@ func Test_syncURLInvalidity(t *testing.T) {
 }
 
 func Test_getOCIRepo(t *testing.T) {
+	grpcClient, f, err := ocicatalog_client.NewClient("test")
+	assert.NoError(t, err)
+	defer f()
 	t.Run("it should add the auth header to the resolver", func(t *testing.T) {
-		repo, err := getOCIRepo("namespace", "test", "https://test", "Basic auth", nil, []string{}, &http.Client{})
+		repo, err := getOCIRepo("namespace", "test", "https://test", "Basic auth", nil, []string{}, &http.Client{}, &grpcClient)
 		assert.NoError(t, err)
 		helmtest.CheckHeader(t, repo.(*OCIRegistry).puller, "Authorization", "Basic auth")
 	})
 
 	t.Run("it should use https for distribution spec API calls if protocol is oci", func(t *testing.T) {
-		repo, err := getOCIRepo("namespace", "test", "oci://test", "Basic auth", nil, []string{}, &http.Client{})
+		repo, err := getOCIRepo("namespace", "test", "oci://test", "Basic auth", nil, []string{}, &http.Client{}, &grpcClient)
 		assert.NoError(t, err)
 
 		client := repo.(*OCIRegistry).ociCli
