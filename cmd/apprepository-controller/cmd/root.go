@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"flag"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -47,6 +48,9 @@ func initServerOpts() {
 	serveOpts.ImagePullSecretsRefs = getImagePullSecretsRefs(serveOpts.RepoSyncImagePullSecrets)
 	serveOpts.ParsedCustomAnnotations = parseLabelsAnnotations(serveOpts.CustomAnnotations)
 	serveOpts.ParsedCustomLabels = parseLabelsAnnotations(serveOpts.CustomLabels)
+	if serveOpts.OciCatalogUrl == "" {
+		serveOpts.OciCatalogUrl = os.Getenv("OCI_CATALOG_URL")
+	}
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -92,12 +96,12 @@ func setFlags(c *cobra.Command) {
 	c.Flags().StringSliceVar(&serveOpts.CustomAnnotations, "custom-annotations", []string{""}, "Optional annotations to be passed to the generated CronJobs, Jobs and Pods objects. For example: my/annotation=foo")
 	c.Flags().StringSliceVar(&serveOpts.CustomLabels, "custom-labels", []string{""}, "Optional labels to be passed to the generated CronJobs, Jobs and Pods objects. For example: my/label=foo")
 	c.Flags().BoolVar(&serveOpts.V1Beta1CronJobs, "v1-beta1-cron-jobs", false, "Defaults to false and so using the v1 cronjobs.")
+	c.Flags().StringVar(&serveOpts.OciCatalogUrl, "oci-catalog-url", "", "URL for gRPC OCI Catalog service")
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	viper.AutomaticEnv() // read in environment variables that match
-
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		log.Infof("Using config file: %v", viper.ConfigFileUsed())

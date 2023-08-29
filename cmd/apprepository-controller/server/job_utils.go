@@ -163,6 +163,12 @@ func apprepoJobEnvVars(apprepo *apprepov1alpha1.AppRepository, config Config) []
 			},
 		},
 	})
+	if config.OciCatalogUrl != "" {
+		envVars = append(envVars, corev1.EnvVar{
+			Name:  "OCI_CATALOG_URL",
+			Value: config.OciCatalogUrl,
+		})
+	}
 	if apprepo.Spec.Auth.Header != nil {
 		if apprepo.Spec.Auth.Header.SecretKeyRef.Key == ".dockerconfigjson" {
 			envVars = append(envVars, corev1.EnvVar{

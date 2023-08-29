@@ -41,6 +41,7 @@ type Config struct {
 	ParsedCustomAnnotations    map[string]string
 	ParsedCustomLabels         map[string]string
 	V1Beta1CronJobs            bool
+	OciCatalogUrl              string
 }
 
 func Serve(serveOpts Config) error {

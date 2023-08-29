@@ -115,6 +115,7 @@ func init() {
 	serveOpts.KubeappsNamespace = os.Getenv("POD_NAMESPACE")
 	serveOpts.AuthorizationHeader = os.Getenv("AUTHORIZATION_HEADER")
 	serveOpts.DockerConfigJson = os.Getenv("DOCKER_CONFIG_JSON")
+	serveOpts.OCICatalogURL = os.Getenv("OCI_CATALOG_URL")
 }
 
 func setRootFlags(c *cobra.Command) {

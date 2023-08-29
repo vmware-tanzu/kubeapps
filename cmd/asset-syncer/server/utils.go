@@ -62,6 +62,7 @@ type Config struct {
 	KubeappsNamespace        string
 	AuthorizationHeader      string
 	DockerConfigJson         string
+	OCICatalogURL            string
 }
 
 type importChartFilesJob struct {
@@ -491,7 +492,7 @@ func (o *OciAPIClient) Catalog(ctx context.Context, userAgent string) ([]string,
 		return o.getVACReposForManifest(manifest, userAgent)
 	}
 	if o.GrpcClient != nil {
-		log.Infof("Unable to find VAC index: %+v. Attempting OCI-Catalog")
+		log.Infof("Unable to find VAC index: %+v. Attempting OCI-Catalog", err)
 		repos_stream, err := o.GrpcClient.ListRepositoriesForRegistry(ctx, &ocicatalog.ListRepositoriesForRegistryRequest{
 			Registry:     o.RegistryNamespaceUrl.Host,
 			Namespace:    o.RegistryNamespaceUrl.Path,
@@ -805,7 +806,7 @@ func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filter *a
 	}, nil
 }
 
-func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filter *apprepov1alpha1.FilterRuleSpec, ociRepos []string, netClient *http.Client) (ChartCatalog, error) {
+func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filter *apprepov1alpha1.FilterRuleSpec, ociRepos []string, netClient *http.Client, grpcClient *ocicatalog.OCICatalogServiceClient) (ChartCatalog, error) {
 	url, err := parseRepoURL(repoURL)
 	if err != nil {
 		log.Errorf("Failed to parse URL, url=%s: %v", repoURL, err)
@@ -828,7 +829,7 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filter *ap
 		repositories:          ociRepos,
 		AppRepositoryInternal: &models.AppRepositoryInternal{Namespace: namespace, Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader},
 		puller:                &helm.OCIPuller{Resolver: ociResolver},
-		ociCli:                &OciAPIClient{RegistryNamespaceUrl: url, HttpClient: netClient},
+		ociCli:                &OciAPIClient{RegistryNamespaceUrl: url, HttpClient: netClient, GrpcClient: *grpcClient},
 		filter:                filter,
 	}, nil
 }
