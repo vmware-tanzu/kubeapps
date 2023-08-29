@@ -208,7 +208,7 @@ frontend:
   image:
     registry: docker.io
     repository: bitnami/nginx
-    tag: 1.25.2-debian-11-r2
+    tag: 1.25.2-debian-11-r5
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -1145,7 +1145,7 @@ authProxy:
   image:
     registry: docker.io
     repository: bitnami/oauth2-proxy
-    tag: 7.4.0-debian-11-r275
+    tag: 7.4.0-debian-11-r278
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -1680,7 +1680,7 @@ kubeappsapis:
   ##
   livenessProbe:
     enabled: true
-    initialDelaySeconds: 10
+    initialDelaySeconds: 60
     periodSeconds: 10
     timeoutSeconds: 5
     failureThreshold: 6
@@ -1694,7 +1694,7 @@ kubeappsapis:
   ##
   readinessProbe:
     enabled: true
-    initialDelaySeconds: 5
+    initialDelaySeconds: 0
     periodSeconds: 10
     timeoutSeconds: 5
     failureThreshold: 6
