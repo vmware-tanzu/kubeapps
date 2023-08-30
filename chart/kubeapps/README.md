@@ -1,3 +1,5 @@
+<!--- app-name: Kubeapps -->
+
 # Kubeapps packaged by Bitnami
 
 Kubeapps is a web-based UI for launching and managing applications on Kubernetes. It allows users to deploy trusted applications and operators to control users access to the cluster.
@@ -110,7 +112,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | --------------------- |
 | `frontend.image.registry`                        | NGINX image registry                                                                                  | `docker.io`           |
 | `frontend.image.repository`                      | NGINX image repository                                                                                | `bitnami/nginx`       |
-| `frontend.image.tag`                             | NGINX image tag (immutable tags are recommended)                                                      | `1.25.2-debian-11-r5` |
+| `frontend.image.tag`                             | NGINX image tag (immutable tags are recommended)                                                      | `1.25.2-debian-11-r8` |
 | `frontend.image.digest`                          | NGINX image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                  |
 | `frontend.image.pullPolicy`                      | NGINX image pull policy                                                                               | `IfNotPresent`        |
 | `frontend.image.pullSecrets`                     | NGINX image pull secrets                                                                              | `[]`                  |
@@ -341,7 +343,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `authProxy.enabled`                               | Specifies whether Kubeapps should configure OAuth login/logout                                                                      | `false`                |
 | `authProxy.image.registry`                        | OAuth2 Proxy image registry                                                                                                         | `docker.io`            |
 | `authProxy.image.repository`                      | OAuth2 Proxy image repository                                                                                                       | `bitnami/oauth2-proxy` |
-| `authProxy.image.tag`                             | OAuth2 Proxy image tag (immutable tags are recommended)                                                                             | `7.4.0-debian-11-r278` |
+| `authProxy.image.tag`                             | OAuth2 Proxy image tag (immutable tags are recommended)                                                                             | `7.4.0-debian-11-r281` |
 | `authProxy.image.digest`                          | OAuth2 Proxy image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag                        | `""`                   |
 | `authProxy.image.pullPolicy`                      | OAuth2 Proxy image pull policy                                                                                                      | `IfNotPresent`         |
 | `authProxy.image.pullSecrets`                     | OAuth2 Proxy image pull secrets                                                                                                     | `[]`                   |
@@ -533,57 +535,6 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `kubeappsapis.serviceAccount.automountServiceAccountToken`                                      | Automount service account token for the server service account                                                                                                             | `true`                             |
 | `kubeappsapis.serviceAccount.annotations`                                                       | Annotations for service account. Evaluated as a template. Only used if `create` is `true`.                                                                                 | `{}`                               |
 
-### OCI Catalog chart configuration
-
-| Name                                               | Description                                                                                                 | Value                  |
-| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------- |
-| `ociCatalog.enabled`                               | Enable the OCI catalog gRPC service for cataloging                                                          | `false`                |
-| `ociCatalog.image.registry`                        | OCI Catalog image registry                                                                                  | `docker.io`            |
-| `ociCatalog.image.repository`                      | OCI Catalog image repository                                                                                | `kubeapps/oci-catalog` |
-| `ociCatalog.image.tag`                             | OCI Catalog image tag (immutable tags are recommended)                                                      | `latest`               |
-| `ociCatalog.image.digest`                          | OCI Catalog image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                   |
-| `ociCatalog.image.pullPolicy`                      | OCI Catalog image pull policy                                                                               | `IfNotPresent`         |
-| `ociCatalog.image.pullSecrets`                     | Dashboard image pull secrets                                                                                | `[]`                   |
-| `ociCatalog.image.debug`                           | Enable image debug mode                                                                                     | `false`                |
-| `ociCatalog.extraFlags`                            | Additional command line flags for OCI Catalog                                                               | `[]`                   |
-| `ociCatalog.extraEnvVars`                          | Array with extra environment variables to add to the oci-catalog container                                  | `[]`                   |
-| `ociCatalog.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for the OCI Catalog container                          | `""`                   |
-| `ociCatalog.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for the OCI Catalog container                             | `""`                   |
-| `ociCatalog.containerPorts.grpc`                   | OCI Catalog gRPC container port                                                                             | `50061`                |
-| `ociCatalog.resources.limits.cpu`                  | The CPU limits for the OCI Catalog container                                                                | `250m`                 |
-| `ociCatalog.resources.limits.memory`               | The memory limits for the OCI Catalog container                                                             | `256Mi`                |
-| `ociCatalog.resources.requests.cpu`                | The requested CPU for the OCI Catalog container                                                             | `25m`                  |
-| `ociCatalog.resources.requests.memory`             | The requested memory for the OCI Catalog container                                                          | `32Mi`                 |
-| `ociCatalog.containerSecurityContext.enabled`      | Enabled OCI Catalog containers' Security Context                                                            | `true`                 |
-| `ociCatalog.containerSecurityContext.runAsUser`    | Set OCI Catalog container's Security Context runAsUser                                                      | `1001`                 |
-| `ociCatalog.containerSecurityContext.runAsNonRoot` | Set OCI Catalog container's Security Context runAsNonRoot                                                   | `true`                 |
-| `ociCatalog.livenessProbe.enabled`                 | Enable livenessProbe                                                                                        | `true`                 |
-| `ociCatalog.livenessProbe.initialDelaySeconds`     | Initial delay seconds for livenessProbe                                                                     | `60`                   |
-| `ociCatalog.livenessProbe.periodSeconds`           | Period seconds for livenessProbe                                                                            | `10`                   |
-| `ociCatalog.livenessProbe.timeoutSeconds`          | Timeout seconds for livenessProbe                                                                           | `5`                    |
-| `ociCatalog.livenessProbe.failureThreshold`        | Failure threshold for livenessProbe                                                                         | `6`                    |
-| `ociCatalog.livenessProbe.successThreshold`        | Success threshold for livenessProbe                                                                         | `1`                    |
-| `ociCatalog.readinessProbe.enabled`                | Enable readinessProbe                                                                                       | `true`                 |
-| `ociCatalog.readinessProbe.initialDelaySeconds`    | Initial delay seconds for readinessProbe                                                                    | `0`                    |
-| `ociCatalog.readinessProbe.periodSeconds`          | Period seconds for readinessProbe                                                                           | `10`                   |
-| `ociCatalog.readinessProbe.timeoutSeconds`         | Timeout seconds for readinessProbe                                                                          | `5`                    |
-| `ociCatalog.readinessProbe.failureThreshold`       | Failure threshold for readinessProbe                                                                        | `6`                    |
-| `ociCatalog.readinessProbe.successThreshold`       | Success threshold for readinessProbe                                                                        | `1`                    |
-| `ociCatalog.startupProbe.enabled`                  | Enable startupProbe                                                                                         | `false`                |
-| `ociCatalog.startupProbe.initialDelaySeconds`      | Initial delay seconds for startupProbe                                                                      | `0`                    |
-| `ociCatalog.startupProbe.periodSeconds`            | Period seconds for startupProbe                                                                             | `10`                   |
-| `ociCatalog.startupProbe.timeoutSeconds`           | Timeout seconds for startupProbe                                                                            | `5`                    |
-| `ociCatalog.startupProbe.failureThreshold`         | Failure threshold for startupProbe                                                                          | `6`                    |
-| `ociCatalog.startupProbe.successThreshold`         | Success threshold for startupProbe                                                                          | `1`                    |
-| `ociCatalog.customLivenessProbe`                   | Custom livenessProbe that overrides the default one                                                         | `{}`                   |
-| `ociCatalog.customReadinessProbe`                  | Custom readinessProbe that overrides the default one                                                        | `{}`                   |
-| `ociCatalog.customStartupProbe`                    | Custom startupProbe that overrides the default one                                                          | `{}`                   |
-| `ociCatalog.lifecycleHooks`                        | Custom lifecycle hooks for OCI Catalog containers                                                           | `{}`                   |
-| `ociCatalog.command`                               | Override default container command (useful when using custom images)                                        | `[]`                   |
-| `ociCatalog.args`                                  | Override default container args (useful when using custom images)                                           | `[]`                   |
-| `ociCatalog.extraVolumes`                          | Optionally specify extra list of additional volumes for the OCI Catalog pod(s)                              | `[]`                   |
-| `ociCatalog.extraVolumeMounts`                     | Optionally specify extra list of additional volumeMounts for the OCI Catalog container(s)                   | `[]`                   |
-
 ### Redis&reg; chart configuration
 
 | Name                                | Description                                                      | Value                                                    |
@@ -706,6 +657,12 @@ helm upgrade $RELEASE_NAME oci://registry-1.docker.io/bitnamicharts/kubeapps
 ```
 
 If you find issues upgrading Kubeapps, check the [troubleshooting](#error-while-upgrading-the-chart) section.
+
+### To 13.0.0
+
+This major updates the Redis&reg; subchart to its newest major, 18.0.0. [Here](https://github.com/bitnami/charts/tree/main/bitnami/redis#to-1800) you can find more information about the changes introduced in that version.
+
+NOTE: Due to an error in our release process, Redis&reg;' chart versions higher or equal than 17.15.4 already use Redis&reg; 7.2 by default.
 
 ### To 12.0.0
 
