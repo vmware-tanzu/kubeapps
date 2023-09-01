@@ -5,17 +5,18 @@ package helm
 
 import (
 	"crypto/x509"
+	"net/http"
+	"net/url"
+	"os"
+	"runtime"
+	"testing"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"golang.org/x/net/http/httpproxy"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"net/http"
-	"net/url"
-	"os"
-	"runtime"
-	"testing"
 )
 
 const pemCert = `
@@ -215,15 +216,27 @@ func TestInitNetClient(t *testing.T) {
 				}
 			}
 
-			clientWithDefaultHeaders, ok := httpClient.(*httpclient.ClientWithDefaults)
+			// If the Auth header was set, secrets should be returned
+			defaultHeaderTransport, ok := httpClient.Transport.(*httpclient.DefaultHeaderTransport)
 			if !ok {
 				t.Fatalf("unable to assert expected type")
 			}
-			client, ok := clientWithDefaultHeaders.Client.(*http.Client)
-			if !ok {
-				t.Fatalf("unable to assert expected type")
+
+			_, ok = defaultHeaderTransport.DefaultHeaders["Authorization"]
+			if tc.expectedHeaders != nil {
+				if !ok {
+					t.Fatalf("expected Authorization header but found none")
+				}
+				if got, want := defaultHeaderTransport.DefaultHeaders.Get("Authorization"), authHeaderSecretData; got != want {
+					t.Errorf("got: %q, want: %q", got, want)
+				}
+			} else {
+				if ok {
+					t.Errorf("Authorization header present when non included in app repo")
+				}
 			}
-			transport, ok := client.Transport.(*http.Transport)
+
+			transport, ok := defaultHeaderTransport.Transport.(*http.Transport)
 			if !ok {
 				t.Fatalf("unable to assert expected type")
 			}
@@ -235,21 +248,6 @@ func TestInitNetClient(t *testing.T) {
 			//nolint:staticcheck
 			if got, want := len(certPool.Subjects()), tc.numCertsExpected; got != want {
 				t.Errorf("got: %d, want: %d", got, want)
-			}
-
-			// If the Auth header was set, secrets should be returned
-			_, ok = clientWithDefaultHeaders.DefaultHeaders["Authorization"]
-			if tc.expectedHeaders != nil {
-				if !ok {
-					t.Fatalf("expected Authorization header but found none")
-				}
-				if got, want := clientWithDefaultHeaders.DefaultHeaders.Get("Authorization"), authHeaderSecretData; got != want {
-					t.Errorf("got: %q, want: %q", got, want)
-				}
-			} else {
-				if ok {
-					t.Errorf("Authorization header present when non included in app repo")
-				}
 			}
 
 			// Verify that a URL is proxied or not, depending on the app repo configuration.

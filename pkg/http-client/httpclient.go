@@ -22,23 +22,31 @@ type Client interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-// ClientWithDefaults implements Client interface
-// and includes an override of the Do method which injects the following supported defaults:
-//   - headers: e.g. User-Agent and Authorization (when present)
-type ClientWithDefaults struct {
-	Client         Client
+// DefaultHeaderTransport
+//
+// Used for an http.Client that will have default headers set.
+type DefaultHeaderTransport struct {
 	DefaultHeaders http.Header
+	Transport      http.RoundTripper
 }
 
-// Do (in ClientWithDefaults) HTTP request
-func (c *ClientWithDefaults) Do(req *http.Request) (*http.Response, error) {
-	for k, v := range c.DefaultHeaders {
-		// Only add the default header if it's not already set in the request.
-		if _, ok := req.Header[k]; !ok {
-			req.Header[k] = v
+func (dht *DefaultHeaderTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	for k, vv := range dht.DefaultHeaders {
+		for _, v := range vv {
+			req.Header.Add(k, v)
 		}
 	}
-	return c.Client.Do(req)
+	return dht.Transport.RoundTrip(req)
+}
+
+func NewDefaultHeaderClient(c *http.Client, header http.Header) *http.Client {
+	return &http.Client{
+		Transport: &DefaultHeaderTransport{
+			DefaultHeaders: header,
+			Transport:      c.Transport,
+		},
+		Timeout: c.Timeout,
+	}
 }
 
 // New creates a new instance of http Client, with following default configuration:

@@ -7,12 +7,14 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	errors "errors"
-	"github.com/google/go-cmp/cmp"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 const pemCert = `
@@ -210,15 +212,7 @@ func TestGetCertPool(t *testing.T) {
 	}
 }
 
-type testClient struct {
-}
-
-func (c testClient) Do(req *http.Request) (*http.Response, error) {
-	return &http.Response{
-		Header: req.Header,
-	}, nil
-}
-func TestClientWithDefaults(t *testing.T) {
+func TestDefaultHeaderTransport(t *testing.T) {
 	initialHdrName := "TestHeader"
 	initialHdrValue := "TestHeaderValue"
 	initialHeaders := http.Header{initialHdrName: {initialHdrValue}}
@@ -265,39 +259,47 @@ func TestClientWithDefaults(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-
-			// test client to capture headers
-			testclient := &testClient{}
+			var headersReceived http.Header
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				headersReceived = r.Header
+				fmt.Fprintln(w, "Hello, world")
+			}))
+			defer server.Close()
 
 			// init invocation
-			client := &ClientWithDefaults{
-				Client:         testclient,
-				DefaultHeaders: tc.headers,
+			client := http.Client{
+				Transport: &DefaultHeaderTransport{
+					DefaultHeaders: tc.headers,
+					Transport:      http.DefaultTransport,
+				},
 			}
 
 			requestHeaders := http.Header{}
 			for k, v := range tc.initialHeaders {
 				requestHeaders[k] = v
 			}
+			testURL, err := url.Parse(server.URL)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
 			request := &http.Request{
 				Header: requestHeaders,
+				URL:    testURL,
 			}
 
 			// invocation
-			response, err := client.Do(request)
-			if err != nil || response == nil || response.Header == nil {
-				t.Fatal("unexpected error during invocation")
+			_, err = client.Do(request)
+			if err != nil {
+				t.Fatalf("unexpected error during invocation: %+v", err)
 			}
-
-			// check
-			if len(response.Header) != len(tc.expectedHeaders) {
-				t.Fatalf("response header length differs from expected, got {%+v} when expecting {%+v}", response.Header, tc.expectedHeaders)
+			// The default transport adds `Accept-Encoding` and `User-Agent`.
+			if len(headersReceived) != len(tc.expectedHeaders)+2 {
+				t.Fatalf("response header length differs from expected, got {%+v} when expecting {%+v}", headersReceived, tc.expectedHeaders)
 			}
-			for k := range tc.expectedHeaders {
-				got := response.Header.Get(k)
-				expected := tc.expectedHeaders.Get(k)
-				if got != expected {
-					t.Fatalf("response header differs from expected, got {%s} when expecting {%s}", got, expected)
+			for k, expected := range tc.expectedHeaders {
+				got := headersReceived.Get(k)
+				if got != expected[0] {
+					t.Fatalf("requested header differs from expected, got {%s} when expecting {%s}", got, expected)
 				}
 			}
 		})

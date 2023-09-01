@@ -136,7 +136,7 @@ type ChartCatalog interface {
 type HelmRepo struct {
 	content []byte
 	*models.AppRepositoryInternal
-	netClient httpclient.Client
+	netClient *http.Client
 	filter    *apprepov1alpha1.FilterRuleSpec
 }
 
@@ -781,7 +781,7 @@ func parseFilters(filters string) (*apprepov1alpha1.FilterRuleSpec, error) {
 	return filterSpec, nil
 }
 
-func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filter *apprepov1alpha1.FilterRuleSpec, netClient httpclient.Client, userAgent string) (ChartCatalog, error) {
+func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filter *apprepov1alpha1.FilterRuleSpec, netClient *http.Client, userAgent string) (ChartCatalog, error) {
 	url, err := parseRepoURL(repoURL)
 	if err != nil {
 		log.Errorf("Failed to parse URL, url=%s: %v", repoURL, err)

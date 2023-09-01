@@ -16,6 +16,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	appRepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
@@ -248,7 +249,7 @@ func TestAddPackageRepository(t *testing.T) {
 		expectedAuthCreatedSecret   *apiv1.Secret
 		expectedDockerCreatedSecret *apiv1.Secret
 		userManagedSecrets          bool
-		repoClientGetter            repositoryClientGetter
+		testRepoServer              *httptest.Server
 		expectedGlobalSecret        *apiv1.Secret
 	}{
 		{
@@ -524,25 +525,25 @@ func TestAddPackageRepository(t *testing.T) {
 			request:          addRepoReqCustomValuesHelmValid,
 			expectedResponse: addRepoExpectedResp,
 			expectedRepo:     &addRepoCustomDetailHelm,
-			repoClientGetter: newRepoHttpClient(map[string]*http.Response{"https://example.com/index.yaml": {StatusCode: 200}}),
+			testRepoServer:   newFakeRepoServer(t, map[string]*http.Response{"/index.yaml": {StatusCode: 200}}),
 		},
 		{
 			name:             "package repository with validation success (OCI)",
 			request:          addRepoReqCustomValuesOCIValid,
 			expectedResponse: addRepoExpectedResp,
 			expectedRepo:     &addRepoCustomDetailOci,
-			repoClientGetter: newRepoHttpClient(map[string]*http.Response{
-				"https://example.com/v2/repo1/tags/list?n=1":  httpResponse(200, "{ \"name\":\"repo1\", \"tags\":[\"tag1\"] }"),
-				"https://example.com/v2/repo1/manifests/tag1": httpResponse(200, "{ \"config\":{ \"mediaType\":\"application/vnd.cncf.helm.config\" } }"),
+			testRepoServer: newFakeRepoServer(t, map[string]*http.Response{
+				"/v2/repo1/tags/list":      httpResponse(200, "{ \"name\":\"repo1\", \"tags\":[\"tag1\"] }"),
+				"/v2/repo1/manifests/tag1": httpResponse(200, "{ \"config\":{ \"mediaType\":\"application/vnd.cncf.helm.config\" } }"),
 			}),
 		},
 		{
 			name:             "package repository with validation failing",
 			request:          addRepoReqCustomValuesHelmValid,
 			expectedResponse: addRepoExpectedResp,
-			repoClientGetter: newRepoHttpClient(
+			testRepoServer: newFakeRepoServer(t,
 				map[string]*http.Response{
-					"https://example.com/index.yaml": httpResponse(404, "It failed because of X and Y"),
+					"/index.yaml": httpResponse(404, "It failed because of X and Y"),
 				}),
 			errorCode: connect.CodeFailedPrecondition,
 		},
@@ -808,8 +809,15 @@ func TestAddPackageRepository(t *testing.T) {
 				secrets = append(secrets, tc.existingDockerSecret)
 			}
 			s := newServerWithSecretsAndRepos(t, secrets, nil, nil)
-			if tc.repoClientGetter != nil {
-				s.repoClientGetter = tc.repoClientGetter
+			if tc.testRepoServer != nil {
+				defer tc.testRepoServer.Close()
+				s.repoClientGetter = func(_ *appRepov1.AppRepository, _ *apiv1.Secret) (*http.Client, error) {
+					return tc.testRepoServer.Client(), nil
+				}
+				tc.request.Url = tc.testRepoServer.URL
+				if tc.expectedRepo != nil {
+					tc.expectedRepo.Spec.URL = tc.testRepoServer.URL
+				}
 			}
 
 			nsname := types.NamespacedName{Namespace: tc.request.Context.Namespace, Name: tc.request.Name}
