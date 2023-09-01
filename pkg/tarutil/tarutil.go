@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
+	"net/http"
 	"path"
 	"regexp"
 	"strings"
@@ -19,7 +20,7 @@ import (
 // Fetches helm chart details from a gzipped tarball
 //
 // name is expected in format "foo/bar" or "foo%2Fbar" if url-escaped
-func FetchChartDetailFromTarballUrl(chartTarballURL string, userAgent string, authz string, netClient httpclient.Client) (map[string]string, error) {
+func FetchChartDetailFromTarballUrl(chartTarballURL string, userAgent string, authz string, netClient *http.Client) (map[string]string, error) {
 	reqHeaders := make(map[string]string)
 	if len(userAgent) > 0 {
 		reqHeaders["User-Agent"] = userAgent

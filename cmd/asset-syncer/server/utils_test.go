@@ -11,8 +11,10 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -294,6 +296,33 @@ func (h *authenticatedTarballClient) Do(req *http.Request) (*http.Response, erro
 	return w.Result(), nil
 }
 
+func newFakeServer(t *testing.T, responses map[string]*http.Response) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		for path, response := range responses {
+			if path == r.URL.Path {
+				if response.Header != nil {
+					for k, vs := range response.Header {
+						for _, v := range vs {
+							w.Header().Set(k, v)
+						}
+					}
+				}
+				w.WriteHeader(response.StatusCode)
+				body := []byte{}
+				if response.Body != nil {
+					var err error
+					body, err = io.ReadAll(response.Body)
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
+				}
+				w.Write(body)
+				return
+			}
+		}
+	}))
+}
+
 func Test_syncURLInvalidity(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -302,9 +331,13 @@ func Test_syncURLInvalidity(t *testing.T) {
 		{"invalid URL", "not-a-url"},
 		{"invalid URL", "https//google.com"},
 	}
+
+	fakeServer := newFakeServer(t, nil)
+	defer fakeServer.Close()
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := getHelmRepo("namespace", "test", tt.repoURL, "", nil, &goodHTTPClient{}, "my-user-agent")
+			_, err := getHelmRepo("namespace", "test", tt.repoURL, "", nil, fakeServer.Client(), "my-user-agent")
 			assert.Error(t, err, tt.name)
 		})
 	}
@@ -342,36 +375,51 @@ func Test_parseFilters(t *testing.T) {
 }
 
 func Test_fetchRepoIndex(t *testing.T) {
+	fakeServer := newFakeServer(t, map[string]*http.Response{
+		"":          &http.Response{StatusCode: 200},
+		"/":         &http.Response{StatusCode: 200},
+		"/subpath/": &http.Response{StatusCode: 200},
+	})
+	defer fakeServer.Close()
+	addr := fakeServer.URL
+
 	tests := []struct {
 		name      string
 		url       string
 		userAgent string
 	}{
-		{"valid HTTP URL", "http://my.examplerepo.com", "my-user-agent"},
-		{"valid HTTPS URL", "https://my.examplerepo.com", "my-user-agent"},
-		{"valid trailing URL", "https://my.examplerepo.com/", "my-user-agent"},
-		{"valid subpath URL", "https://subpath.test/subpath/", "my-user-agent"},
-		{"valid URL with trailing spaces", "https://subpath.test/subpath/  ", "my-user-agent"},
-		{"valid URL with leading spaces", "  https://subpath.test/subpath/", "my-user-agent"},
+		{"valid HTTP URL", addr, "my-user-agent"},
+		{"valid trailing URL", addr + "/", "my-user-agent"},
+		{"valid subpath URL", addr + "/subpath/", "my-user-agent"},
+		{"valid URL with trailing spaces", addr + "/subpath/  ", "my-user-agent"},
+		{"valid URL with leading spaces", "  " + addr + "/subpath/", "my-user-agent"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			netClient := &goodHTTPClient{}
+			netClient := fakeServer.Client()
 			_, err := fetchRepoIndex(tt.url, "", netClient, tt.userAgent)
 			assert.NoError(t, err)
 		})
 	}
 
+	validAuthHeader := "Bearer ThisSecretAccessTokenAuthenticatesTheClient"
+	authServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") == validAuthHeader {
+			w.WriteHeader(200)
+			return
+		}
+		w.WriteHeader(401)
+	}))
+
 	t.Run("authenticated request", func(t *testing.T) {
-		netClient := &authenticatedHTTPClient{}
-		_, err := fetchRepoIndex("https://my.examplerepo.com", "Bearer ThisSecretAccessTokenAuthenticatesTheClient", netClient, "my-user-agent")
+		netClient := authServer.Client()
+		_, err := fetchRepoIndex(authServer.URL, validAuthHeader, netClient, "my-user-agent")
 		assert.NoError(t, err)
 	})
 
-	t.Run("failed request", func(t *testing.T) {
-		netClient := &badHTTPClient{}
-		_, err := fetchRepoIndex("https://my.examplerepo.com", "", netClient, "my-user-agent")
-		assert.Error(t, err, errors.New("failed request"))
+	t.Run("unauthenticated request", func(t *testing.T) {
+		_, err := fetchRepoIndex(authServer.URL, "Bearer: not-valid", authServer.Client(), "my-user-agent")
+		assert.Error(t, err, errors.New("failed?"))
 	})
 }
 
@@ -497,108 +545,159 @@ func Test_newManager(t *testing.T) {
 
 func Test_fetchAndImportIcon(t *testing.T) {
 	repo := &models.AppRepositoryInternal{Name: "test", Namespace: "repo-namespace"}
-	repoWithAuthorization := &models.AppRepositoryInternal{Name: "test", Namespace: "repo-namespace", AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient", URL: "https://github.com/"}
+	validBearer := "Bearer ThisSecretAccessTokenAuthenticatesTheClient"
+	repoWithAuthorization := &models.AppRepositoryInternal{Name: "test", Namespace: "repo-namespace", AuthorizationHeader: validBearer, URL: "https://github.com/"}
 
+	svgHeader := http.Header{}
+	svgHeader.Set("Content-Type", "image/svg")
+
+	server := newFakeServer(t, map[string]*http.Response{
+		"/valid_icon.png": &http.Response{
+			StatusCode: 200,
+			Body:       io.NopCloser(bytes.NewReader(iconBytes())),
+		},
+		"/valid_svg_icon.svg": &http.Response{
+			StatusCode: 200,
+			Body:       io.NopCloser(bytes.NewReader([]byte("<svg width='100' height='100'></svg>"))),
+			Header:     svgHeader,
+		},
+		"/download_fail.png": &http.Response{
+			StatusCode: 500,
+		},
+	})
+	defer server.Close()
 	t.Run("no icon", func(t *testing.T) {
 		pgManager, _, cleanup := getMockManager(t)
 		defer cleanup()
 		c := models.Chart{ID: "test/acs-engine-autoscaler"}
-		fImporter := fileImporter{pgManager, &goodHTTPClient{}}
+		fImporter := fileImporter{pgManager, server.Client()}
 		assert.NoError(t, fImporter.fetchAndImportIcon(c, repo, "my-user-agent", false))
 	})
 
-	charts, _ := helm.ChartsFromIndex([]byte(validRepoIndexYAML), &models.AppRepository{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}, false)
+	charts, _ := helm.ChartsFromIndex([]byte(validRepoIndexYAML), &models.AppRepository{Name: "test", Namespace: "repo-namespace", URL: server.URL}, false)
+	chart := charts[0]
 
 	t.Run("failed download", func(t *testing.T) {
 		pgManager, _, cleanup := getMockManager(t)
 		defer cleanup()
-		netClient := &badHTTPClient{}
-		fImporter := fileImporter{pgManager, netClient}
-		assert.Error(t, fmt.Errorf("GET request to [%s] failed due to status [500]", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo, "my-user-agent", false))
+		fImporter := fileImporter{pgManager, server.Client()}
+		chart.Icon = server.URL + "/download_fail.png"
+
+		assert.Equal(t, fmt.Errorf("GET request to [%s] failed due to status [500]", chart.Icon), fImporter.fetchAndImportIcon(chart, repo, "my-user-agent", false))
 	})
 
 	t.Run("bad icon", func(t *testing.T) {
 		pgManager, _, cleanup := getMockManager(t)
 		defer cleanup()
-		netClient := &badIconClient{}
-		c := charts[0]
-		fImporter := fileImporter{pgManager, netClient}
-		assert.Error(t, image.ErrFormat, fImporter.fetchAndImportIcon(c, repo, "my-user-agent", false))
+		fImporter := fileImporter{pgManager, server.Client()}
+		chart.Icon = server.URL + "/invalid_icon.png"
+		assert.Equal(t, image.ErrFormat, fImporter.fetchAndImportIcon(chart, repo, "my-user-agent", false))
 	})
 
 	t.Run("valid icon", func(t *testing.T) {
 		pgManager, mock, cleanup := getMockManager(t)
 		defer cleanup()
-		netClient := &goodIconClient{}
+		chart.Icon = server.URL + "/valid_icon.png"
 
 		mock.ExpectQuery("UPDATE charts SET info *").
 			WithArgs("test/acs-engine-autoscaler", "repo-namespace", "test").
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
 
-		fImporter := fileImporter{pgManager, netClient}
-		assert.NoError(t, fImporter.fetchAndImportIcon(charts[0], repo, "my-user-agent", false))
+		fImporter := fileImporter{pgManager, server.Client()}
+		assert.NoError(t, fImporter.fetchAndImportIcon(chart, repo, "my-user-agent", false))
 	})
 
 	t.Run("valid SVG icon", func(t *testing.T) {
 		pgManager, mock, cleanup := getMockManager(t)
 		defer cleanup()
-		netClient := &svgIconClient{}
-		c := models.Chart{
-			ID:   "foo",
-			Icon: "https://foo/bar/logo.svg",
-			Repo: &models.AppRepository{Name: repo.Name, Namespace: repo.Namespace},
-		}
+		chart.Icon = server.URL + "/valid_svg_icon.svg"
 
 		mock.ExpectQuery("UPDATE charts SET info *").
-			WithArgs("foo", "repo-namespace", "test").
+			WithArgs("test/acs-engine-autoscaler", "repo-namespace", "test").
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
 
-		fImporter := fileImporter{pgManager, netClient}
-		assert.NoError(t, fImporter.fetchAndImportIcon(c, repo, "my-user-agent", false))
+		fImporter := fileImporter{pgManager, server.Client()}
+		assert.NoError(t, fImporter.fetchAndImportIcon(chart, repo, "my-user-agent", false))
 	})
 
+	authServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != validBearer {
+			w.WriteHeader(401)
+			return
+		}
+		if strings.HasSuffix(r.RequestURI, "/valid_icon.png") {
+			w.WriteHeader(200)
+			w.Write(iconBytes())
+			return
+		}
+		if strings.HasSuffix(r.RequestURI, "/invalid_icon.png") {
+			w.WriteHeader(200)
+			return
+		}
+		w.WriteHeader(404)
+	}))
+	defer authServer.Close()
 	t.Run("valid icon (not passing through the auth header by default)", func(t *testing.T) {
 		pgManager, _, cleanup := getMockManager(t)
 		defer cleanup()
-		netClient := &goodAuthenticatedHTTPClient{}
+		chart.Icon = authServer.URL + "/valid_icon.png"
 
-		fImporter := fileImporter{pgManager, netClient}
-		assert.Error(t, fmt.Errorf("GET request to [%s] failed due to status [401]", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo, "my-user-agent", false))
+		fImporter := fileImporter{pgManager, authServer.Client()}
+		assert.Error(t, fmt.Errorf("GET request to [%s] failed due to status [401]", charts[0].Icon), fImporter.fetchAndImportIcon(chart, repo, "my-user-agent", false))
 	})
 
 	t.Run("valid icon (not passing through the auth header)", func(t *testing.T) {
 		pgManager, _, cleanup := getMockManager(t)
 		defer cleanup()
-		netClient := &goodAuthenticatedHTTPClient{}
+		chart.Icon = authServer.URL + "/valid_icon.png"
 
-		fImporter := fileImporter{pgManager, netClient}
-		assert.Error(t, fmt.Errorf("GET request to [%s] failed due to status [401]", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo, "my-user-agent", false))
+		fImporter := fileImporter{pgManager, authServer.Client()}
+		assert.Error(t, fmt.Errorf("GET request to [%s] failed due to status [401]", charts[0].Icon), fImporter.fetchAndImportIcon(chart, repo, "my-user-agent", false))
+	})
+
+	t.Run("valid icon (not passing through the auth header if not same domain)", func(t *testing.T) {
+		pgManager, mock, cleanup := getMockManager(t)
+		defer cleanup()
+		chart.Icon = authServer.URL + "/valid_icon.png"
+
+		mock.ExpectQuery("UPDATE charts SET info *").
+			WithArgs("test/acs-engine-autoscaler", "repo-namespace", "test").
+			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
+
+		fImporter := fileImporter{pgManager, authServer.Client()}
+		// Even though the repo has the auth token, we don't use it to download
+		// the icon if the icon is on a different domain.
+		repoWithAuthorization.URL = "https://github.com"
+		assert.Error(t, fmt.Errorf("GET request to [%s] failed due to status [401]", charts[0].Icon), fImporter.fetchAndImportIcon(chart, repoWithAuthorization, "my-user-agent", false))
 	})
 
 	t.Run("valid icon (passing through the auth header if same domain)", func(t *testing.T) {
 		pgManager, mock, cleanup := getMockManager(t)
 		defer cleanup()
-		netClient := &goodAuthenticatedHTTPClient{}
+		chart.Icon = authServer.URL + "/valid_icon.png"
 
 		mock.ExpectQuery("UPDATE charts SET info *").
 			WithArgs("test/acs-engine-autoscaler", "repo-namespace", "test").
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
 
-		fImporter := fileImporter{pgManager, netClient}
-		assert.NoError(t, fImporter.fetchAndImportIcon(charts[0], repoWithAuthorization, "my-user-agent", false))
+		fImporter := fileImporter{pgManager, authServer.Client()}
+		// If the repo URL matches the domain of the icon, then it's
+		// safe to send the creds.
+		repoWithAuthorization.URL = authServer.URL
+		assert.NoError(t, fImporter.fetchAndImportIcon(chart, repoWithAuthorization, "my-user-agent", false))
 	})
 
 	t.Run("valid icon (passing through the auth header)", func(t *testing.T) {
 		pgManager, mock, cleanup := getMockManager(t)
 		defer cleanup()
-		netClient := &goodAuthenticatedHTTPClient{}
+		chart.Icon = authServer.URL + "/valid_icon.png"
 
 		mock.ExpectQuery("UPDATE charts SET info *").
 			WithArgs("test/acs-engine-autoscaler", "repo-namespace", "test").
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
 
-		fImporter := fileImporter{pgManager, netClient}
-		assert.NoError(t, fImporter.fetchAndImportIcon(charts[0], repoWithAuthorization, "my-user-agent", true))
+		fImporter := fileImporter{pgManager, authServer.Client()}
+		assert.NoError(t, fImporter.fetchAndImportIcon(chart, repoWithAuthorization, "my-user-agent", true))
 	})
 }
 
@@ -633,9 +732,42 @@ func (r *fakeRepo) FetchFiles(cv models.ChartVersion, userAgent string, passCred
 }
 
 func Test_fetchAndImportFiles(t *testing.T) {
-	repo := &models.AppRepositoryInternal{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}
-	charts, _ := helm.ChartsFromIndex([]byte(validRepoIndexYAML), &models.AppRepository{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL}, false)
+	validAuthHeader := "Bearer ThisSecretAccessTokenAuthenticatesTheClient"
+
+	// Update the URL for the chart version file so that it uses the test server.
+	internalRepo := &models.AppRepositoryInternal{Name: "test", Namespace: "repo-namespace", AuthorizationHeader: validAuthHeader}
+	charts, _ := helm.ChartsFromIndex([]byte(validRepoIndexYAML), &models.AppRepository{Name: internalRepo.Name, Namespace: internalRepo.Namespace, URL: internalRepo.URL}, false)
 	chartVersion := charts[0].ChartVersions[0]
+	chartVersionURL, err := url.Parse(chartVersion.URLs[0])
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != validAuthHeader {
+			w.WriteHeader(401)
+			return
+		}
+		if strings.HasSuffix(r.RequestURI, ".tgz") {
+			gzw := gzip.NewWriter(w)
+			files := []tartest.TarballFile{{Name: charts[0].Name + "/Chart.yaml", Body: "should be a Chart.yaml here..."}}
+			files = append(files, tartest.TarballFile{Name: charts[0].Name + "/values.yaml", Body: testChartValues})
+			files = append(files, tartest.TarballFile{Name: charts[0].Name + "/README.md", Body: testChartReadme})
+			files = append(files, tartest.TarballFile{Name: charts[0].Name + "/values.schema.json", Body: testChartSchema})
+			tartest.CreateTestTarball(gzw, files)
+			gzw.Flush()
+			return
+		}
+		w.WriteHeader(200)
+		w.Write([]byte("Foo"))
+	}))
+	defer server.Close()
+
+	// Ensure that the server URL is used in tests.
+	internalRepo.URL = server.URL
+	chartVersion.URLs[0] = server.URL + chartVersionURL.Path
+	charts[0].Repo.URL = server.URL
+
 	chartID := fmt.Sprintf("%s/%s", charts[0].Repo.Name, charts[0].Name)
 	chartFilesID := fmt.Sprintf("%s-%s", chartID, chartVersion.Version)
 	chartFiles := models.ChartFiles{
@@ -648,7 +780,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		Digest:                  chartVersion.Digest,
 	}
 	fRepo := &fakeRepo{
-		AppRepositoryInternal: repo,
+		AppRepositoryInternal: internalRepo,
 		charts:                charts,
 		chartFiles:            chartFiles,
 	}
@@ -658,14 +790,13 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		defer cleanup()
 
 		mock.ExpectQuery("SELECT EXISTS*").
-			WithArgs(chartFilesID, repo.Name, repo.Namespace).
+			WithArgs(chartFilesID, internalRepo.Name, internalRepo.Namespace).
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
-		netClient := &badHTTPClient{}
-		fImporter := fileImporter{pgManager, netClient}
+		fImporter := fileImporter{pgManager, server.Client()}
 		helmRepo := &HelmRepo{
 			content:               []byte{},
-			AppRepositoryInternal: repo,
-			netClient:             netClient,
+			AppRepositoryInternal: internalRepo,
+			netClient:             server.Client(),
 		}
 		assert.Error(t, fmt.Errorf("GET request to [https://kubernetes-charts.storage.googleapis.com/acs-engine-autoscaler-2.1.1.tgz] failed due to status [500]"), fImporter.fetchAndImportFiles(charts[0].Name, helmRepo, chartVersion, "my-user-agent", false))
 	})
@@ -674,77 +805,24 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		pgManager, mock, cleanup := getMockManager(t)
 		defer cleanup()
 
-		files := models.ChartFiles{
-			ID:                      chartFilesID,
-			Readme:                  "",
-			DefaultValues:           "",
-			AdditionalDefaultValues: map[string]string{},
-			Schema:                  "",
-			Repo:                    charts[0].Repo,
-			Digest:                  chartVersion.Digest,
-		}
-
 		// file does not exist (no rows returned) so insertion goes ahead.
 		mock.ExpectQuery(`SELECT EXISTS*`).
-			WithArgs(chartFilesID, repo.Name, repo.Namespace, chartVersion.Digest).
+			WithArgs(chartFilesID, internalRepo.Name, internalRepo.Namespace, chartVersion.Digest).
 			WillReturnRows(sqlmock.NewRows([]string{"info"}))
 		mock.ExpectQuery("INSERT INTO files *").
-			WithArgs(chartID, repo.Name, repo.Namespace, chartFilesID, files).
+			WithArgs(chartID, internalRepo.Name, internalRepo.Namespace, chartFilesID, chartFiles).
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow("3"))
 
-		netClient := &goodTarballClient{c: charts[0], skipValues: true, skipReadme: true, skipSchema: true}
+		t.Logf("chartFiles: %+v", chartFiles)
+		netClient := server.Client()
 
 		fImporter := fileImporter{pgManager, netClient}
 		helmRepo := &HelmRepo{
 			content:               []byte{},
-			AppRepositoryInternal: repo,
-			netClient:             netClient,
+			AppRepositoryInternal: internalRepo,
+			netClient:             server.Client(),
 		}
 		err := fImporter.fetchAndImportFiles(chartID, helmRepo, chartVersion, "my-user-agent", false)
-		assert.NoError(t, err)
-	})
-
-	t.Run("authenticated request", func(t *testing.T) {
-		pgManager, mock, cleanup := getMockManager(t)
-		defer cleanup()
-
-		// file does not exist (no rows returned) so insertion goes ahead.
-		mock.ExpectQuery(`SELECT EXISTS*`).
-			WithArgs(chartFilesID, repo.Name, repo.Namespace, chartVersion.Digest).
-			WillReturnRows(sqlmock.NewRows([]string{"info"}))
-		mock.ExpectQuery("INSERT INTO files *").
-			WithArgs(chartID, repo.Name, repo.Namespace, chartFilesID, chartFiles).
-			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow("3"))
-
-		netClient := &authenticatedTarballClient{c: charts[0]}
-
-		fImporter := fileImporter{pgManager, netClient}
-
-		r := &models.AppRepositoryInternal{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL, AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"}
-		repo := &HelmRepo{
-			AppRepositoryInternal: r,
-			content:               []byte{},
-			netClient:             netClient,
-		}
-		err := fImporter.fetchAndImportFiles(chartID, repo, chartVersion, "my-user-agent", true)
-		assert.NoError(t, err)
-	})
-
-	t.Run("valid tarball", func(t *testing.T) {
-		pgManager, mock, cleanup := getMockManager(t)
-		defer cleanup()
-
-		mock.ExpectQuery(`SELECT EXISTS*`).
-			WithArgs(chartFilesID, repo.Name, repo.Namespace, chartVersion.Digest).
-			WillReturnRows(sqlmock.NewRows([]string{"info"}))
-		mock.ExpectQuery("INSERT INTO files *").
-			WithArgs(chartID, repo.Name, repo.Namespace, chartFilesID, chartFiles).
-			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow("3"))
-
-		netClient := &goodTarballClient{c: charts[0]}
-		fImporter := fileImporter{pgManager, netClient}
-
-		err := fImporter.fetchAndImportFiles(chartID, fRepo, chartVersion, "my-user-agent", false)
 		assert.NoError(t, err)
 	})
 
@@ -753,10 +831,10 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		defer cleanup()
 
 		mock.ExpectQuery(`SELECT EXISTS*`).
-			WithArgs(chartFilesID, repo.Name, repo.Namespace, chartVersion.Digest).
+			WithArgs(chartFilesID, internalRepo.Name, internalRepo.Namespace, chartVersion.Digest).
 			WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(`true`))
 
-		fImporter := fileImporter{pgManager, &goodHTTPClient{}}
+		fImporter := fileImporter{pgManager, server.Client()}
 		err := fImporter.fetchAndImportFiles(chartID, fRepo, chartVersion, "my-user-agent", false)
 		assert.NoError(t, err)
 	})

@@ -95,7 +95,6 @@ func (s *Server) newRepo(ctx context.Context, headers http.Header, repo *HelmRep
 	if err != nil {
 		return nil, err
 	}
-
 	// Repository validation
 	if repo.customDetail != nil && repo.customDetail.PerformValidation {
 		if err = s.ValidateRepository(ctx, helmRepoCrd, secret); err != nil {

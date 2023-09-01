@@ -77,7 +77,7 @@ func (s *Server) getValidator(appRepo *apprepov1alpha1.AppRepository, secret *co
 	}
 }
 
-func newRepositoryClient(appRepo *apprepov1alpha1.AppRepository, secret *corev1.Secret) (httpclient.Client, error) {
+func newRepositoryClient(appRepo *apprepov1alpha1.AppRepository, secret *corev1.Secret) (*http.Client, error) {
 	if cli, err := helm.InitNetClient(appRepo, secret, secret, nil); err != nil {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to create HTTP client for repository: %w", err))
 	} else {
