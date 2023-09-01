@@ -136,83 +136,6 @@ func (h *badHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	return w.Result(), nil
 }
 
-type goodHTTPClient struct{}
-
-func (h *goodHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-	// Don't accept trailing slashes
-	if strings.HasPrefix(req.URL.Path, "//") {
-		w.WriteHeader(500)
-	}
-
-	// Sending an empty Authorization header is not valid for http spec,
-	// some servers returning 401 for public resources in this case.
-	if v, ok := req.Header["Authorization"]; ok && len(v) == 1 && v[0] == "" {
-		w.WriteHeader(401)
-	}
-
-	// If subpath repo URL test, check that index.yaml is correctly added to the
-	// subpath
-	if req.URL.Host == "subpath.test" && req.URL.Path != "/subpath/index.yaml" {
-		w.WriteHeader(500)
-	}
-
-	_, err := w.Write([]byte(validRepoIndexYAML))
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-	return w.Result(), nil
-}
-
-type goodAuthenticatedHTTPClient struct{}
-
-func (h *goodAuthenticatedHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-
-	// Ensure we're sending an Authorization header
-	if req.Header.Get("Authorization") == "" {
-		w.WriteHeader(401)
-	} else if !strings.Contains(req.Header.Get("Authorization"), "Bearer ThisSecretAccessTokenAuthenticatesTheClient") {
-		// Ensure we're sending the right Authorization header
-		w.WriteHeader(403)
-	} else {
-		_, err := w.Write(iconBytes())
-		if err != nil {
-			log.Fatalf("%+v", err)
-		}
-	}
-	return w.Result(), nil
-}
-
-type authenticatedHTTPClient struct{}
-
-func (h *authenticatedHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-
-	// Ensure we're sending the right Authorization header
-	if !strings.Contains(req.Header.Get("Authorization"), "Bearer ThisSecretAccessTokenAuthenticatesTheClient") {
-		w.WriteHeader(500)
-	}
-	_, err := w.Write([]byte(validRepoIndexYAML))
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-	return w.Result(), nil
-}
-
-type badIconClient struct{}
-
-func (h *badIconClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-	_, err := w.Write([]byte("not-an-image"))
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-	return w.Result(), nil
-}
-
-type goodIconClient struct{}
-
 func iconBytes() []byte {
 	var b bytes.Buffer
 	img := imaging.New(1, 1, color.White)
@@ -223,78 +146,9 @@ func iconBytes() []byte {
 	return b.Bytes()
 }
 
-func (h *goodIconClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-	_, err := w.Write(iconBytes())
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-	return w.Result(), nil
-}
-
-type svgIconClient struct{}
-
-func (h *svgIconClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-	_, err := w.Write([]byte("<svg width='100' height='100'></svg>"))
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-	res := w.Result()
-	res.Header.Set("Content-Type", "image/svg")
-	return res, nil
-}
-
-type goodTarballClient struct {
-	c          models.Chart
-	skipReadme bool
-	skipValues bool
-	skipSchema bool
-}
-
 var testChartReadme = "# readme for chart\n\nBest chart in town"
 var testChartValues = "image: test"
 var testChartSchema = `{"properties": {}}`
-
-func (h *goodTarballClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-	gzw := gzip.NewWriter(w)
-	files := []tartest.TarballFile{{Name: h.c.Name + "/Chart.yaml", Body: "should be a Chart.yaml here..."}}
-	if !h.skipValues {
-		files = append(files, tartest.TarballFile{Name: h.c.Name + "/values.yaml", Body: testChartValues})
-	}
-	if !h.skipReadme {
-		files = append(files, tartest.TarballFile{Name: h.c.Name + "/README.md", Body: testChartReadme})
-	}
-	if !h.skipSchema {
-		files = append(files, tartest.TarballFile{Name: h.c.Name + "/values.schema.json", Body: testChartSchema})
-	}
-	tartest.CreateTestTarball(gzw, files)
-	gzw.Flush()
-	return w.Result(), nil
-}
-
-type authenticatedTarballClient struct {
-	c models.Chart
-}
-
-func (h *authenticatedTarballClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-
-	// Ensure we're sending the right Authorization header
-	if !strings.Contains(req.Header.Get("Authorization"), "Bearer ThisSecretAccessTokenAuthenticatesTheClient") {
-		w.WriteHeader(500)
-	} else {
-		gzw := gzip.NewWriter(w)
-		files := []tartest.TarballFile{{Name: h.c.Name + "/Chart.yaml", Body: "should be a Chart.yaml here..."}}
-		files = append(files, tartest.TarballFile{Name: h.c.Name + "/values.yaml", Body: testChartValues})
-		files = append(files, tartest.TarballFile{Name: h.c.Name + "/README.md", Body: testChartReadme})
-		files = append(files, tartest.TarballFile{Name: h.c.Name + "/values.schema.json", Body: testChartSchema})
-		tartest.CreateTestTarball(gzw, files)
-		gzw.Flush()
-	}
-	return w.Result(), nil
-}
 
 func newFakeServer(t *testing.T, responses map[string]*http.Response) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -316,7 +170,10 @@ func newFakeServer(t *testing.T, responses map[string]*http.Response) *httptest.
 						t.Fatalf("%+v", err)
 					}
 				}
-				w.Write(body)
+				_, err := w.Write(body)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
 				return
 			}
 		}
@@ -627,7 +484,10 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		}
 		if strings.HasSuffix(r.RequestURI, "/valid_icon.png") {
 			w.WriteHeader(200)
-			w.Write(iconBytes())
+			_, err := w.Write(iconBytes())
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
 			return
 		}
 		if strings.HasSuffix(r.RequestURI, "/invalid_icon.png") {
@@ -759,7 +619,10 @@ func Test_fetchAndImportFiles(t *testing.T) {
 			return
 		}
 		w.WriteHeader(200)
-		w.Write([]byte("Foo"))
+		_, err := w.Write([]byte("Foo"))
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
 	}))
 	defer server.Close()
 

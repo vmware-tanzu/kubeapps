@@ -14,23 +14,11 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	ocicatalog "github.com/vmware-tanzu/kubeapps/cmd/oci-catalog/gen/catalog/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/pkg/ocicatalog_client/ocicatalog_clienttest"
 	corev1 "k8s.io/api/core/v1"
 )
-
-type fakeHTTPCli struct {
-	request  *http.Request
-	response *http.Response
-	err      error
-}
-
-func (f *fakeHTTPCli) Do(r *http.Request) (*http.Response, error) {
-	f.request = r
-	return f.response, f.err
-}
 
 func TestNonOCIValidate(t *testing.T) {
 	testCases := []struct {
@@ -60,14 +48,14 @@ func TestNonOCIValidate(t *testing.T) {
 		},
 	}
 
-	cmpOpts := []cmp.Option{cmpopts.IgnoreUnexported(http.Request{}, strings.Reader{})}
-	cmpOpts = append(cmpOpts, cmpopts.IgnoreFields(http.Request{}, "GetBody"))
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tc.fakeRepoResponseCode)
-				w.Write([]byte(tc.fakeRepoResponseBody))
+				_, err := w.Write([]byte(tc.fakeRepoResponseBody))
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
 			}))
 			defer testServer.Close()
 

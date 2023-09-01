@@ -173,7 +173,10 @@ func newFakeRepoServer(t *testing.T, responses map[string]*http.Response) *httpt
 						t.Fatalf("%+v", err)
 					}
 				}
-				w.Write(body)
+				_, err := w.Write(body)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
 				return
 			}
 		}

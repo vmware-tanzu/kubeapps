@@ -212,14 +212,6 @@ func TestGetCertPool(t *testing.T) {
 	}
 }
 
-type testClient struct {
-}
-
-func (c testClient) Do(req *http.Request) (*http.Response, error) {
-	return &http.Response{
-		Header: req.Header,
-	}, nil
-}
 func TestDefaultHeaderTransport(t *testing.T) {
 	initialHdrName := "TestHeader"
 	initialHdrValue := "TestHeaderValue"
