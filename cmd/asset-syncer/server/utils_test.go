@@ -690,32 +690,6 @@ func Test_fetchAndImportFiles(t *testing.T) {
 	})
 }
 
-type goodOCIAPIHTTPClient struct {
-	response       string
-	responseByPath map[string]string
-}
-
-func (h *goodOCIAPIHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-	// Don't accept trailing slashes
-	if strings.HasPrefix(req.URL.Path, "//") {
-		w.WriteHeader(500)
-	}
-
-	if r, ok := h.responseByPath[req.URL.Path]; ok {
-		_, err := w.Write([]byte(r))
-		if err != nil {
-			log.Fatalf("%+v", err)
-		}
-	} else {
-		_, err := w.Write([]byte(h.response))
-		if err != nil {
-			log.Fatalf("%+v", err)
-		}
-	}
-	return w.Result(), nil
-}
-
 func Test_ociAPICli(t *testing.T) {
 	t.Run("TagList - failed request", func(t *testing.T) {
 		server := newFakeServer(t, map[string]*http.Response{
