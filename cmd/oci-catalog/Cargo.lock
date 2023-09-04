@@ -747,14 +747,14 @@ dependencies = [
  "env_logger",
  "futures-core",
  "log",
- "prost",
+ "prost 0.11.9",
  "reqwest",
  "rstest",
  "serde",
  "serde_json",
  "tokio",
  "tokio-stream",
- "tonic",
+ "tonic 0.10.0",
  "tonic-build",
  "tonic-health",
  "url",
@@ -850,6 +850,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "prost"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aa8473a65b88506c106c28ae905ca4a2b83a2993640467a41bb3080627ddfd2c"
+dependencies = [
+ "bytes",
+]
+
+[[package]]
 name = "prost-build"
 version = "0.11.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -863,7 +872,7 @@ dependencies = [
  "multimap",
  "petgraph",
  "prettyplease",
- "prost",
+ "prost 0.11.9",
  "prost-types",
  "regex",
  "syn 1.0.109",
@@ -890,7 +899,7 @@ version = "0.11.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "213622a1460818959ac1181aaeb2dc9c7f63df720db7d788b3e24eacd1983e13"
 dependencies = [
- "prost",
+ "prost 0.11.9",
 ]
 
 [[package]]
@@ -1375,11 +1384,32 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3082666a3a6433f7f511c7192923fa1fe07c69332d3c6a2e6bb040b569199d5a"
 dependencies = [
  "async-trait",
- "axum",
  "base64",
  "bytes",
  "futures-core",
  "futures-util",
+ "http",
+ "http-body",
+ "percent-encoding",
+ "pin-project",
+ "prost 0.11.9",
+ "tokio-stream",
+ "tower-layer",
+ "tower-service",
+ "tracing",
+]
+
+[[package]]
+name = "tonic"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5469afaf78a11265c343a88969045c1568aa8ecc6c787dbf756e92e70f199861"
+dependencies = [
+ "async-stream",
+ "async-trait",
+ "axum",
+ "base64",
+ "bytes",
  "h2",
  "http",
  "http-body",
@@ -1387,7 +1417,7 @@ dependencies = [
  "hyper-timeout",
  "percent-encoding",
  "pin-project",
- "prost",
+ "prost 0.12.0",
  "tokio",
  "tokio-stream",
  "tower",
@@ -1416,10 +1446,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "080964d45894b90273d2b1dd755fdd114560db8636bb41cea615213c45043c4d"
 dependencies = [
  "async-stream",
- "prost",
+ "prost 0.11.9",
  "tokio",
  "tokio-stream",
- "tonic",
+ "tonic 0.9.2",
 ]
 
 [[package]]
