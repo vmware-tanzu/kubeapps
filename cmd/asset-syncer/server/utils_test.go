@@ -120,22 +120,6 @@ const chartsIndexSingleJSON = `
 }
 `
 
-type badHTTPClient struct {
-	errMsg string
-}
-
-func (h *badHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-	w.WriteHeader(500)
-	if len(h.errMsg) > 0 {
-		_, err := w.Write([]byte(h.errMsg))
-		if err != nil {
-			return nil, err
-		}
-	}
-	return w.Result(), nil
-}
-
 func iconBytes() []byte {
 	var b bytes.Buffer
 	img := imaging.New(1, 1, color.White)
@@ -177,6 +161,7 @@ func newFakeServer(t *testing.T, responses map[string]*http.Response) *httptest.
 				return
 			}
 		}
+		w.WriteHeader(404)
 	}))
 }
 
@@ -233,9 +218,8 @@ func Test_parseFilters(t *testing.T) {
 
 func Test_fetchRepoIndex(t *testing.T) {
 	fakeServer := newFakeServer(t, map[string]*http.Response{
-		"":          &http.Response{StatusCode: 200},
-		"/":         &http.Response{StatusCode: 200},
-		"/subpath/": &http.Response{StatusCode: 200},
+		"/index.yaml":         &http.Response{StatusCode: 200},
+		"/subpath/index.yaml": &http.Response{StatusCode: 200},
 	})
 	defer fakeServer.Close()
 	addr := fakeServer.URL
@@ -420,6 +404,10 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		},
 		"/download_fail.png": &http.Response{
 			StatusCode: 500,
+		},
+		"/invalid_icon.png": &http.Response{
+			StatusCode: 200,
+			Body:       io.NopCloser(bytes.NewReader([]byte("not a valid png"))),
 		},
 	})
 	defer server.Close()
@@ -676,7 +664,6 @@ func Test_fetchAndImportFiles(t *testing.T) {
 			WithArgs(chartID, internalRepo.Name, internalRepo.Namespace, chartFilesID, chartFiles).
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow("3"))
 
-		t.Logf("chartFiles: %+v", chartFiles)
 		netClient := server.Client()
 
 		fImporter := fileImporter{pgManager, netClient}
@@ -730,25 +717,41 @@ func (h *goodOCIAPIHTTPClient) Do(req *http.Request) (*http.Response, error) {
 }
 
 func Test_ociAPICli(t *testing.T) {
-	url, _ := parseRepoURL("http://oci-test")
-
 	t.Run("TagList - failed request", func(t *testing.T) {
+		server := newFakeServer(t, map[string]*http.Response{
+			"/v2/apache/tags/list": &http.Response{
+				StatusCode: 500,
+			},
+		})
+		defer server.Close()
+		url, err := parseRepoURL(server.URL)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
 		apiCli := &OciAPIClient{
 			RegistryNamespaceUrl: url,
-			HttpClient: &badHTTPClient{
-				errMsg: "forbidden",
-			},
+			HttpClient:           server.Client(),
 		}
-		_, err := apiCli.TagList("apache", "my-user-agent")
-		assert.Error(t, fmt.Errorf("GET request to [http://oci-test/v2/apache/tags/list] failed due to status [500]: forbidden"), err)
+		_, err = apiCli.TagList("apache", "my-user-agent")
+		assert.Equal(t, fmt.Errorf("GET request to [%s/v2/apache/tags/list] failed due to status [500]", server.URL), err)
 	})
 
 	t.Run("TagList - successful request", func(t *testing.T) {
+		server := newFakeServer(t, map[string]*http.Response{
+			"/v2/apache/tags/list": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(`{"name":"test/apache","tags":["7.5.1","8.1.1"]}`)),
+			},
+		})
+		defer server.Close()
+		url, err := parseRepoURL(server.URL)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
 		apiCli := &OciAPIClient{
 			RegistryNamespaceUrl: url,
-			HttpClient: &goodOCIAPIHTTPClient{
-				response: `{"name":"test/apache","tags":["7.5.1","8.1.1"]}`,
-			},
+			HttpClient:           server.Client(),
 		}
 		result, err := apiCli.TagList("apache", "my-user-agent")
 		assert.NoError(t, err)
@@ -759,24 +762,45 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("IsHelmChart - failed request", func(t *testing.T) {
+		server := newFakeServer(t, map[string]*http.Response{
+			"/v2/apache-bad/manifests/7.5.1": &http.Response{
+				StatusCode: 500,
+			},
+		})
+		defer server.Close()
+		url, err := parseRepoURL(server.URL)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
 		apiCli := &OciAPIClient{
 			RegistryNamespaceUrl: url,
-			HttpClient:           &badHTTPClient{},
+			HttpClient:           server.Client(),
 		}
-		_, err := apiCli.IsHelmChart("apache", "7.5.1", "my-user-agent")
-		assert.Error(t, fmt.Errorf("GET request to [http://oci-test/v2/apache/manifests/7.5.1] failed due to status [500]"), err)
+		_, err = apiCli.IsHelmChart("apache-bad", "7.5.1", "my-user-agent")
+		assert.Equal(t, fmt.Errorf("GET request to [%s/v2/apache-bad/manifests/7.5.1] failed due to status [500]", server.URL), err)
 	})
 
 	t.Run("IsHelmChart - successful request", func(t *testing.T) {
+		server := newFakeServer(t, map[string]*http.Response{
+			"/v2/test/apache/manifests/7.5.1": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(`{"schemaVersion":2,"config":{"mediaType":"other","digest":"sha256:123","size":665}}`)),
+			},
+			"/v2/test/apache/manifests/8.1.1": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(`{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`)),
+			},
+		})
+		defer server.Close()
+		url, err := parseRepoURL(server.URL)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
 		apiCli := &OciAPIClient{
 			RegistryNamespaceUrl: url,
-			HttpClient: &goodOCIAPIHTTPClient{
-				responseByPath: map[string]string{
-					// 7.5.1 is not a chart
-					"/v2/test/apache/manifests/7.5.1": `{"schemaVersion":2,"config":{"mediaType":"other","digest":"sha256:123","size":665}}`,
-					"/v2/test/apache/manifests/8.1.1": `{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`,
-				},
-			},
+			HttpClient:           server.Client(),
 		}
 		is751, err := apiCli.IsHelmChart("test/apache", "7.5.1", "my-user-agent")
 		assert.NoError(t, err)
@@ -790,15 +814,22 @@ func Test_ociAPICli(t *testing.T) {
 		}
 	})
 
-	urlWithNamespace, _ := parseRepoURL("http://oci-test/test/project")
 	t.Run("CatalogAvailable - successful request", func(t *testing.T) {
+		server := newFakeServer(t, map[string]*http.Response{
+			"/v2/test/project/charts-index/manifests/latest": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(chartsIndexManifestJSON)),
+			},
+		})
+		defer server.Close()
+
+		urlWithNamespace, err := parseRepoURL(server.URL + "/test/project")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
 		apiCli := &OciAPIClient{
 			RegistryNamespaceUrl: urlWithNamespace,
-			HttpClient: &goodOCIAPIHTTPClient{
-				responseByPath: map[string]string{
-					"/v2/test/project/charts-index/manifests/latest": chartsIndexManifestJSON,
-				},
-			},
+			HttpClient:           server.Client(),
 		}
 
 		got, err := apiCli.CatalogAvailable(context.Background(), "my-user-agent")
@@ -812,13 +843,20 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("CatalogAvailable - returns false for incorrect media type", func(t *testing.T) {
-		apiCli := &OciAPIClient{
-			RegistryNamespaceUrl: urlWithNamespace,
-			HttpClient: &goodOCIAPIHTTPClient{
-				responseByPath: map[string]string{
-					"/v2/test/project/charts-index/manifests/latest": `{"config": {"mediaType": "something-else"}}`,
-				},
+		server := newFakeServer(t, map[string]*http.Response{
+			"/v2/test/project/charts-index/manifests/latest": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(`{"config": {"mediaType": "something-else"}}`)),
 			},
+		})
+		defer server.Close()
+		urlWithNamespaceBadMediaType, err := parseRepoURL(server.URL + "/test/project")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		apiCli := &OciAPIClient{
+			RegistryNamespaceUrl: urlWithNamespaceBadMediaType,
+			HttpClient:           server.Client(),
 		}
 
 		got, err := apiCli.CatalogAvailable(context.Background(), "my-user-agent")
@@ -832,13 +870,20 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("CatalogAvailable - returns false for a 404", func(t *testing.T) {
-		apiCli := &OciAPIClient{
-			RegistryNamespaceUrl: urlWithNamespace,
-			HttpClient: &goodOCIAPIHTTPClient{
-				responseByPath: map[string]string{
-					"/v2/test/project/chart-index/manifests/latest": chartsIndexMultipleJSON,
-				},
+		server := newFakeServer(t, map[string]*http.Response{
+			"/v2/test/project/charts-index/manifests/latest": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(`{"config": {"mediaType": "something-else"}}`)),
 			},
+		})
+		defer server.Close()
+		urlWithNamespaceNonExistentBlob, err := parseRepoURL(server.URL + "/test/project")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		apiCli := &OciAPIClient{
+			RegistryNamespaceUrl: urlWithNamespaceNonExistentBlob,
+			HttpClient:           server.Client(),
 		}
 
 		got, err := apiCli.CatalogAvailable(context.Background(), "my-user-agent")
@@ -852,6 +897,13 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("CatalogAvailable - returns true if oci-catalog responds", func(t *testing.T) {
+		server := newFakeServer(t, map[string]*http.Response{})
+		defer server.Close()
+		url, err := parseRepoURL(server.URL)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
 		grpcAddr, grpcDouble, closer := ocicatalog_clienttest.SetupTestDouble(t)
 		defer closer()
 		grpcDouble.Repositories = []*ocicatalog.Repository{
@@ -866,8 +918,8 @@ func Test_ociAPICli(t *testing.T) {
 		defer closer()
 
 		apiCli := &OciAPIClient{
-			RegistryNamespaceUrl: urlWithNamespace,
-			HttpClient:           &badHTTPClient{},
+			RegistryNamespaceUrl: url,
+			HttpClient:           server.Client(),
 			GrpcClient:           grpcClient,
 		}
 
@@ -882,6 +934,13 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("CatalogAvailable - returns false if oci-catalog responds with zero repos", func(t *testing.T) {
+		server := newFakeServer(t, map[string]*http.Response{})
+		defer server.Close()
+		url, err := parseRepoURL(server.URL)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
 		grpcAddr, grpcDouble, closer := ocicatalog_clienttest.SetupTestDouble(t)
 		defer closer()
 		grpcDouble.Repositories = []*ocicatalog.Repository{}
@@ -892,8 +951,8 @@ func Test_ociAPICli(t *testing.T) {
 		defer closer()
 
 		apiCli := &OciAPIClient{
-			RegistryNamespaceUrl: urlWithNamespace,
-			HttpClient:           &badHTTPClient{},
+			RegistryNamespaceUrl: url,
+			HttpClient:           server.Client(),
 			GrpcClient:           grpcClient,
 		}
 
@@ -908,9 +967,16 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("CatalogAvailable - returns false on any other", func(t *testing.T) {
+		server := newFakeServer(t, map[string]*http.Response{})
+		defer server.Close()
+		url, err := parseRepoURL(server.URL)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
 		apiCli := &OciAPIClient{
-			RegistryNamespaceUrl: urlWithNamespace,
-			HttpClient:           &badHTTPClient{},
+			RegistryNamespaceUrl: url,
+			HttpClient:           server.Client(),
 		}
 
 		got, err := apiCli.CatalogAvailable(context.Background(), "my-user-agent")
@@ -924,14 +990,25 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("Catalog - successful request", func(t *testing.T) {
-		apiCli := &OciAPIClient{
-			RegistryNamespaceUrl: urlWithNamespace,
-			HttpClient: &goodOCIAPIHTTPClient{
-				responseByPath: map[string]string{
-					"/v2/test/project/charts-index/manifests/latest":                                                              chartsIndexManifestJSON,
-					"/v2/test/project/charts-index/blobs/sha256:f9f7df0ae3f50aaf9ff390034cec4286d2aa43f061ce4bc7aa3c9ac862800aba": chartsIndexMultipleJSON,
-				},
+		server := newFakeServer(t, map[string]*http.Response{
+			"/v2/test/project/charts-index/manifests/latest": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(chartsIndexManifestJSON)),
 			},
+			"/v2/test/project/charts-index/blobs/sha256:f9f7df0ae3f50aaf9ff390034cec4286d2aa43f061ce4bc7aa3c9ac862800aba": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(chartsIndexMultipleJSON)),
+			},
+		})
+		defer server.Close()
+		url, err := parseRepoURL(server.URL + "/test/project")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
+		apiCli := &OciAPIClient{
+			RegistryNamespaceUrl: url,
+			HttpClient:           server.Client(),
 		}
 
 		got, err := apiCli.Catalog(context.Background(), "my-user-agent")
@@ -945,6 +1022,13 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("Catalog - successful request via oci-catalog", func(t *testing.T) {
+		server := newFakeServer(t, map[string]*http.Response{})
+		defer server.Close()
+		url, err := parseRepoURL(server.URL)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
 		grpcAddr, grpcDouble, closer := ocicatalog_clienttest.SetupTestDouble(t)
 		defer closer()
 		grpcDouble.Repositories = []*ocicatalog.Repository{
@@ -961,8 +1045,8 @@ func Test_ociAPICli(t *testing.T) {
 		}
 		defer closer()
 		apiCli := &OciAPIClient{
-			RegistryNamespaceUrl: urlWithNamespace,
-			HttpClient:           &badHTTPClient{},
+			RegistryNamespaceUrl: url,
+			HttpClient:           server.Client(),
 			GrpcClient:           grpcClient,
 		}
 
@@ -1009,7 +1093,7 @@ func Test_OCIRegistry(t *testing.T) {
 	t.Run("Checksum - failed request", func(t *testing.T) {
 		repo.ociCli = &fakeOCIAPICli{err: fmt.Errorf("request failed")}
 		_, err := repo.Checksum(context.Background())
-		assert.Error(t, fmt.Errorf("request failed"), err)
+		assert.Equal(t, fmt.Errorf("request failed"), err)
 	})
 
 	t.Run("Checksum - success", func(t *testing.T) {
@@ -1376,12 +1460,21 @@ version: 1.0.0
 				w[tag] = recorder
 				content[tag] = recorder.Body
 			}
-			url, _ := parseRepoURL("http://oci-test")
 
-			tags := map[string]string{}
+			tags := map[string]*http.Response{}
 			for _, tag := range tt.tags {
-				tags[fmt.Sprintf("/v2/%s/manifests/%s", tt.chartName, tag)] = `{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`
+				tags[fmt.Sprintf("/v2/%s/manifests/%s", tt.chartName, tag)] = &http.Response{
+					StatusCode: 200,
+					Body:       io.NopCloser(strings.NewReader(`{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`)),
+				}
 			}
+			server := newFakeServer(t, tags)
+			defer server.Close()
+			url, err := parseRepoURL(server.URL)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
 			chartsRepo := OCIRegistry{
 				repositories:          []string{tt.chartName},
 				AppRepositoryInternal: &models.AppRepositoryInternal{Name: tt.expected[0].Repo.Name, URL: tt.expected[0].Repo.URL},
@@ -1394,9 +1487,7 @@ version: 1.0.0
 				},
 				ociCli: &OciAPIClient{
 					RegistryNamespaceUrl: url,
-					HttpClient: &goodOCIAPIHTTPClient{
-						responseByPath: tags,
-					},
+					HttpClient:           server.Client(),
 				},
 			}
 			charts, err := chartsRepo.Charts(context.Background(), tt.shallow)
@@ -1421,13 +1512,28 @@ version: 1.0.0
 		tartest.CreateTestTarball(gzw, files)
 		gzw.Flush()
 		content[tag] = recorder.Body
-		url, _ := parseRepoURL("http://oci-test/my-project")
 
-		fakeURIs := map[string]string{
-			"/v2/my-project/common/manifests/1.1.0":        `{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`,
-			"/v2/my-project/charts-index/manifests/latest": chartsIndexManifestJSON,
-			"/v2/my-project/charts-index/blobs/sha256:f9f7df0ae3f50aaf9ff390034cec4286d2aa43f061ce4bc7aa3c9ac862800aba": chartsIndexSingleJSON,
+		fakeURIs := map[string]*http.Response{
+			"/v2/my-project/common/manifests/1.1.0": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(`{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`)),
+			},
+			"/v2/my-project/charts-index/manifests/latest": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(chartsIndexManifestJSON)),
+			},
+			"/v2/my-project/charts-index/blobs/sha256:f9f7df0ae3f50aaf9ff390034cec4286d2aa43f061ce4bc7aa3c9ac862800aba": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(chartsIndexSingleJSON)),
+			},
 		}
+		server := newFakeServer(t, fakeURIs)
+		defer server.Close()
+		url, err := parseRepoURL(server.URL + "/my-project")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
 		chartsRepo := OCIRegistry{
 			repositories:          []string{},
 			AppRepositoryInternal: &models.AppRepositoryInternal{Name: "common", URL: "https://example.com"},
@@ -1440,9 +1546,7 @@ version: 1.0.0
 			},
 			ociCli: &OciAPIClient{
 				RegistryNamespaceUrl: url,
-				HttpClient: &goodOCIAPIHTTPClient{
-					responseByPath: fakeURIs,
-				},
+				HttpClient:           server.Client(),
 			},
 		}
 		charts, err := chartsRepo.Charts(context.Background(), true)
