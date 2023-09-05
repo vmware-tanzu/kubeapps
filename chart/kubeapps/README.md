@@ -110,7 +110,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | --------------------- |
 | `frontend.image.registry`                        | NGINX image registry                                                                                  | `docker.io`           |
 | `frontend.image.repository`                      | NGINX image repository                                                                                | `bitnami/nginx`       |
-| `frontend.image.tag`                             | NGINX image tag (immutable tags are recommended)                                                      | `1.25.2-debian-11-r5` |
+| `frontend.image.tag`                             | NGINX image tag (immutable tags are recommended)                                                      | `1.25.2-debian-11-r8` |
 | `frontend.image.digest`                          | NGINX image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                  |
 | `frontend.image.pullPolicy`                      | NGINX image pull policy                                                                               | `IfNotPresent`        |
 | `frontend.image.pullSecrets`                     | NGINX image pull secrets                                                                              | `[]`                  |
@@ -341,7 +341,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `authProxy.enabled`                               | Specifies whether Kubeapps should configure OAuth login/logout                                                                      | `false`                |
 | `authProxy.image.registry`                        | OAuth2 Proxy image registry                                                                                                         | `docker.io`            |
 | `authProxy.image.repository`                      | OAuth2 Proxy image repository                                                                                                       | `bitnami/oauth2-proxy` |
-| `authProxy.image.tag`                             | OAuth2 Proxy image tag (immutable tags are recommended)                                                                             | `7.4.0-debian-11-r278` |
+| `authProxy.image.tag`                             | OAuth2 Proxy image tag (immutable tags are recommended)                                                                             | `7.4.0-debian-11-r281` |
 | `authProxy.image.digest`                          | OAuth2 Proxy image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag                        | `""`                   |
 | `authProxy.image.pullPolicy`                      | OAuth2 Proxy image pull policy                                                                                                      | `IfNotPresent`         |
 | `authProxy.image.pullSecrets`                     | OAuth2 Proxy image pull secrets                                                                                                     | `[]`                   |
@@ -706,6 +706,12 @@ helm upgrade $RELEASE_NAME oci://registry-1.docker.io/bitnamicharts/kubeapps
 ```
 
 If you find issues upgrading Kubeapps, check the [troubleshooting](#error-while-upgrading-the-chart) section.
+
+### To 13.0.0
+
+This major updates the Redis&reg; subchart to its newest major, 18.0.0. [Here](https://github.com/bitnami/charts/tree/main/bitnami/redis#to-1800) you can find more information about the changes introduced in that version.
+
+NOTE: Due to an error in our release process, Redis&reg;' chart versions higher or equal than 17.15.4 already use Redis&reg; 7.2 by default.
 
 ### To 12.0.0
 
