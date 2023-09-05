@@ -292,7 +292,7 @@ frontend:
   podSecurityContext:
     enabled: true
     fsGroup: 1001
-  ## Configure Container Security Context (only main container)
+  ## Configure Container Security Context for NGINX
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
   ## @param frontend.containerSecurityContext.enabled Enabled NGINX containers' Security Context
   ## @param frontend.containerSecurityContext.runAsUser Set NGINX container's Security Context runAsUser
