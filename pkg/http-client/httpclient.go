@@ -18,10 +18,6 @@ const (
 	defaultTimeoutSeconds = 180
 )
 
-type Client interface {
-	Do(req *http.Request) (*http.Response, error)
-}
-
 // DefaultHeaderTransport
 //
 // Used for an http.Client that will have default headers set.
@@ -174,7 +170,7 @@ func NewClientTLS(certBytes, keyBytes, caBytes []byte) (*tls.Config, error) {
 // Get performs an HTTP GET request using provided client, URL and request headers.
 // returns response body, as bytes on successful status, or error body,
 // if applicable on error status
-func Get(url string, cli Client, headers map[string]string) ([]byte, error) {
+func Get(url string, cli *http.Client, headers map[string]string) ([]byte, error) {
 	reader, _, err := GetStream(url, cli, headers)
 	if reader != nil {
 		defer reader.Close()
@@ -190,7 +186,7 @@ func Get(url string, cli Client, headers map[string]string) ([]byte, error) {
 // if applicable on error status
 // returns response as a stream, as well as response content type
 // NOTE: it is the caller's responsibility to close the reader stream when no longer needed
-func GetStream(url string, cli Client, reqHeaders map[string]string) (io.ReadCloser, string, error) {
+func GetStream(url string, cli *http.Client, reqHeaders map[string]string) (io.ReadCloser, string, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, "", err

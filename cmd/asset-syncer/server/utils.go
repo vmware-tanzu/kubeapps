@@ -303,7 +303,7 @@ type OCIRegistry struct {
 	filter *apprepov1alpha1.FilterRuleSpec
 }
 
-func doReq(url string, cli httpclient.Client, headers map[string]string, userAgent string) ([]byte, error) {
+func doReq(url string, cli *http.Client, headers map[string]string, userAgent string) ([]byte, error) {
 	headers["User-Agent"] = userAgent
 	return httpclient.Get(url, cli, headers)
 }
@@ -342,7 +342,7 @@ type OciAPIClient struct {
 	RegistryNamespaceUrl *url.URL
 	// The HttpClient is used for all http requests to the OCI Distribution
 	// spec API.
-	HttpClient httpclient.Client
+	HttpClient *http.Client
 	// The GrpcClient is used when querying our OCI Catalog service, which
 	// aims to work around some of the shortfalls of the OCI Distribution spec
 	// API
@@ -834,7 +834,7 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filter *ap
 	}, nil
 }
 
-func fetchRepoIndex(url, authHeader string, cli httpclient.Client, userAgent string) ([]byte, error) {
+func fetchRepoIndex(url, authHeader string, cli *http.Client, userAgent string) ([]byte, error) {
 	indexURL, err := parseRepoURL(url)
 	if err != nil {
 		log.Errorf("Failed to parse URL, url=%s: %v", url, err)
@@ -863,7 +863,7 @@ func chartTarballURL(r *models.AppRepositoryInternal, cv models.ChartVersion) st
 
 type fileImporter struct {
 	manager   assetManager
-	netClient httpclient.Client
+	netClient *http.Client
 }
 
 func (f *fileImporter) fetchFiles(charts []models.Chart, repo ChartCatalog, userAgent string, passCredentials bool) {

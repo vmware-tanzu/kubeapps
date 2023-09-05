@@ -22,7 +22,6 @@ import (
 	// TODO(minelson): refactor these utils into shareable lib.
 	utils "github.com/vmware-tanzu/kubeapps/cmd/asset-syncer/server"
 	ocicatalog "github.com/vmware-tanzu/kubeapps/cmd/oci-catalog/gen/catalog/v1alpha1"
-	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -111,7 +110,7 @@ type repoManifest struct {
 }
 
 // getOCIAppRepositoryTag Gets a tag for the given repo URL & name
-func getOCIAppRepositoryTag(cli httpclient.Client, repoURL string, repoName string) (string, error) {
+func getOCIAppRepositoryTag(cli *http.Client, repoURL string, repoName string) (string, error) {
 	// This function is the implementation of below curl command
 	// curl -XGET -H "Authorization: Basic $harborauthz"
 	//		-H "Accept: application/vnd.oci.image.manifest.v1+json"
@@ -170,7 +169,7 @@ func getOCIAppRepositoryTag(cli httpclient.Client, repoURL string, repoName stri
 }
 
 // getOCIAppRepositoryMediaType Gets manifests config.MediaType for the given repo URL & Name
-func getOCIAppRepositoryMediaType(client httpclient.Client, repoURL string, repoName string, tagVersion string) (string, error) {
+func getOCIAppRepositoryMediaType(client *http.Client, repoURL string, repoName string, tagVersion string) (string, error) {
 	// This function is the implementation of below curl command
 	// curl -XGET -H "Authorization: Basic $harborauthz"
 	//		 -H "Accept: application/vnd.oci.image.manifest.v1+json"
@@ -224,7 +223,7 @@ func (v *HelmOCIValidator) validateOCIAppRepository(ctx context.Context, appRepo
 	// spec API.
 	repoURL = strings.Replace(repoURL, "oci://", fmt.Sprintf("%s://", v.OCIReplacementProto), 1)
 
-	var httpCLI httpclient.Client
+	var httpCLI *http.Client
 	var err error
 	if v.ClientGetter != nil {
 		httpCLI, err = v.ClientGetter(v.AppRepo, v.Secret)

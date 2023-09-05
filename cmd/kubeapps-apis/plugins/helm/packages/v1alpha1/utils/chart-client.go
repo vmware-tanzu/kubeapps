@@ -5,20 +5,20 @@ package utils
 
 import (
 	"fmt"
-	"github.com/containerd/containerd/remotes/docker"
-	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	"github.com/vmware-tanzu/kubeapps/pkg/helm"
-	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
-	"github.com/vmware-tanzu/kubeapps/pkg/kube"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chart/loader"
 	"io"
-	corev1 "k8s.io/api/core/v1"
-	log "k8s.io/klog/v2"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
+
+	"github.com/containerd/containerd/remotes/docker"
+	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/pkg/helm"
+	"github.com/vmware-tanzu/kubeapps/pkg/kube"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
+	corev1 "k8s.io/api/core/v1"
+	log "k8s.io/klog/v2"
 
 	k8scorev1 "k8s.io/api/core/v1"
 )
@@ -53,7 +53,7 @@ type ChartClient interface {
 // HelmRepoClient struct contains the clients required to retrieve charts info
 type HelmRepoClient struct {
 	userAgent string
-	netClient httpclient.Client
+	netClient *http.Client
 }
 
 // NewChartClient returns a new ChartClient
@@ -101,7 +101,7 @@ func (c *HelmRepoClient) GetChart(details *ChartDetails, repoURL string) (*chart
 	}
 
 	log.Infof("Downloading %s ...", chartURL)
-	chart, err := fetchChart(&c.netClient, chartURL)
+	chart, err := fetchChart(c.netClient, chartURL)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func resolveChartURL(indexURL, chartURL string) (string, error) {
 }
 
 // fetchChart returns the Chart content given an URL
-func fetchChart(netClient *httpclient.Client, chartURL string) (*chart.Chart, error) {
+func fetchChart(netClient *http.Client, chartURL string) (*chart.Chart, error) {
 	req, err := getReq(chartURL)
 	if err != nil {
 		return nil, err
