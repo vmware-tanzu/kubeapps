@@ -1251,15 +1251,25 @@
   dependencies:
     "@bufbuild/connect" "0.12.0"
 
-"@bufbuild/connect@0.12.0", "@bufbuild/connect@^0.12.0":
+"@bufbuild/connect@0.12.0":
   version "0.12.0"
   resolved "https://registry.yarnpkg.com/@bufbuild/connect/-/connect-0.12.0.tgz#b339dc913135e0d29f143cae76581f7b090be34f"
   integrity sha512-rYn3Akp7teOkvqxguLbf6QKizH37Yeo33lseV+JHDZC19CsAV9wrrZM17Sa+LNEBj/hrYtQF7EIcllgGxhv9aw==
 
-"@bufbuild/protobuf@1.4.2", "@bufbuild/protobuf@^1.2.1", "@bufbuild/protobuf@^1.4.1", "@bufbuild/protobuf@^1.4.2":
+"@bufbuild/connect@^0.13.0":
+  version "0.13.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/connect/-/connect-0.13.0.tgz#97a84a2cac747c7a52d4421a3382d8d165f61c99"
+  integrity sha512-eZSMbVLyUFtXiZNORgCEvv580xKZeYQdMOWj2i/nxOcpXQcrEzTMTA7SZzWv4k4gveWCOSRoWmYDeOhfWXJv0g==
+
+"@bufbuild/protobuf@1.4.2", "@bufbuild/protobuf@^1.4.1", "@bufbuild/protobuf@^1.4.2":
   version "1.4.2"
   resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.4.2.tgz#dc4faf21264a47b71a15806616043cb006e80ac8"
   integrity sha512-JyEH8Z+OD5Sc2opSg86qMHn1EM1Sa+zj/Tc0ovxdwk56ByVNONJSabuCUbLQp+eKN3rWNfrho0X+3SEqEPXIow==
+
+"@bufbuild/protobuf@^1.2.1":
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.3.1.tgz#c4de66bacbe7ac97fe054e68314aeba6f45177f9"
+  integrity sha512-BUyJWutgP2S8K/1NphOJokuwDckXS4qI2T1pGZAlkFdZchWae3jm6fCdkcGbLlM1QLOcNFFePd+7Feo4BYGrJQ==
 
 "@bufbuild/protoc-gen-connect-es@^0.13.0":
   version "0.13.0"
