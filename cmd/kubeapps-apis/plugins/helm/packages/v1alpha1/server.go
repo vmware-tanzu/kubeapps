@@ -30,7 +30,6 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
-	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 	"google.golang.org/protobuf/types/known/anypb"
 	"helm.sh/helm/v3/pkg/action"
@@ -59,7 +58,7 @@ const (
 )
 
 type createRelease func(*action.Configuration, string, string, string, *chart.Chart, map[string]string, int32) (*release.Release, error)
-type repositoryClientGetter func(appRepo *appRepov1.AppRepository, secret *corek8sv1.Secret) (httpclient.Client, error)
+type repositoryClientGetter func(appRepo *appRepov1.AppRepository, secret *corek8sv1.Secret) (*http.Client, error)
 
 // Server implements the helm packages v1alpha1 interface.
 type Server struct {

@@ -11,8 +11,10 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -118,99 +120,6 @@ const chartsIndexSingleJSON = `
 }
 `
 
-type badHTTPClient struct {
-	errMsg string
-}
-
-func (h *badHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-	w.WriteHeader(500)
-	if len(h.errMsg) > 0 {
-		_, err := w.Write([]byte(h.errMsg))
-		if err != nil {
-			return nil, err
-		}
-	}
-	return w.Result(), nil
-}
-
-type goodHTTPClient struct{}
-
-func (h *goodHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-	// Don't accept trailing slashes
-	if strings.HasPrefix(req.URL.Path, "//") {
-		w.WriteHeader(500)
-	}
-
-	// Sending an empty Authorization header is not valid for http spec,
-	// some servers returning 401 for public resources in this case.
-	if v, ok := req.Header["Authorization"]; ok && len(v) == 1 && v[0] == "" {
-		w.WriteHeader(401)
-	}
-
-	// If subpath repo URL test, check that index.yaml is correctly added to the
-	// subpath
-	if req.URL.Host == "subpath.test" && req.URL.Path != "/subpath/index.yaml" {
-		w.WriteHeader(500)
-	}
-
-	_, err := w.Write([]byte(validRepoIndexYAML))
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-	return w.Result(), nil
-}
-
-type goodAuthenticatedHTTPClient struct{}
-
-func (h *goodAuthenticatedHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-
-	// Ensure we're sending an Authorization header
-	if req.Header.Get("Authorization") == "" {
-		w.WriteHeader(401)
-	} else if !strings.Contains(req.Header.Get("Authorization"), "Bearer ThisSecretAccessTokenAuthenticatesTheClient") {
-		// Ensure we're sending the right Authorization header
-		w.WriteHeader(403)
-	} else {
-		_, err := w.Write(iconBytes())
-		if err != nil {
-			log.Fatalf("%+v", err)
-		}
-	}
-	return w.Result(), nil
-}
-
-type authenticatedHTTPClient struct{}
-
-func (h *authenticatedHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-
-	// Ensure we're sending the right Authorization header
-	if !strings.Contains(req.Header.Get("Authorization"), "Bearer ThisSecretAccessTokenAuthenticatesTheClient") {
-		w.WriteHeader(500)
-	}
-	_, err := w.Write([]byte(validRepoIndexYAML))
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-	return w.Result(), nil
-}
-
-type badIconClient struct{}
-
-func (h *badIconClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-	_, err := w.Write([]byte("not-an-image"))
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-	return w.Result(), nil
-}
-
-type goodIconClient struct{}
-
 func iconBytes() []byte {
 	var b bytes.Buffer
 	img := imaging.New(1, 1, color.White)
@@ -221,77 +130,39 @@ func iconBytes() []byte {
 	return b.Bytes()
 }
 
-func (h *goodIconClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-	_, err := w.Write(iconBytes())
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-	return w.Result(), nil
-}
-
-type svgIconClient struct{}
-
-func (h *svgIconClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-	_, err := w.Write([]byte("<svg width='100' height='100'></svg>"))
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-	res := w.Result()
-	res.Header.Set("Content-Type", "image/svg")
-	return res, nil
-}
-
-type goodTarballClient struct {
-	c          models.Chart
-	skipReadme bool
-	skipValues bool
-	skipSchema bool
-}
-
 var testChartReadme = "# readme for chart\n\nBest chart in town"
 var testChartValues = "image: test"
 var testChartSchema = `{"properties": {}}`
 
-func (h *goodTarballClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-	gzw := gzip.NewWriter(w)
-	files := []tartest.TarballFile{{Name: h.c.Name + "/Chart.yaml", Body: "should be a Chart.yaml here..."}}
-	if !h.skipValues {
-		files = append(files, tartest.TarballFile{Name: h.c.Name + "/values.yaml", Body: testChartValues})
-	}
-	if !h.skipReadme {
-		files = append(files, tartest.TarballFile{Name: h.c.Name + "/README.md", Body: testChartReadme})
-	}
-	if !h.skipSchema {
-		files = append(files, tartest.TarballFile{Name: h.c.Name + "/values.schema.json", Body: testChartSchema})
-	}
-	tartest.CreateTestTarball(gzw, files)
-	gzw.Flush()
-	return w.Result(), nil
-}
-
-type authenticatedTarballClient struct {
-	c models.Chart
-}
-
-func (h *authenticatedTarballClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-
-	// Ensure we're sending the right Authorization header
-	if !strings.Contains(req.Header.Get("Authorization"), "Bearer ThisSecretAccessTokenAuthenticatesTheClient") {
-		w.WriteHeader(500)
-	} else {
-		gzw := gzip.NewWriter(w)
-		files := []tartest.TarballFile{{Name: h.c.Name + "/Chart.yaml", Body: "should be a Chart.yaml here..."}}
-		files = append(files, tartest.TarballFile{Name: h.c.Name + "/values.yaml", Body: testChartValues})
-		files = append(files, tartest.TarballFile{Name: h.c.Name + "/README.md", Body: testChartReadme})
-		files = append(files, tartest.TarballFile{Name: h.c.Name + "/values.schema.json", Body: testChartSchema})
-		tartest.CreateTestTarball(gzw, files)
-		gzw.Flush()
-	}
-	return w.Result(), nil
+func newFakeServer(t *testing.T, responses map[string]*http.Response) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		for path, response := range responses {
+			if path == r.URL.Path {
+				if response.Header != nil {
+					for k, vs := range response.Header {
+						for _, v := range vs {
+							w.Header().Set(k, v)
+						}
+					}
+				}
+				w.WriteHeader(response.StatusCode)
+				body := []byte{}
+				if response.Body != nil {
+					var err error
+					body, err = io.ReadAll(response.Body)
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
+				}
+				_, err := w.Write(body)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				return
+			}
+		}
+		w.WriteHeader(404)
+	}))
 }
 
 func Test_syncURLInvalidity(t *testing.T) {
@@ -302,9 +173,13 @@ func Test_syncURLInvalidity(t *testing.T) {
 		{"invalid URL", "not-a-url"},
 		{"invalid URL", "https//google.com"},
 	}
+
+	fakeServer := newFakeServer(t, nil)
+	defer fakeServer.Close()
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := getHelmRepo("namespace", "test", tt.repoURL, "", nil, &goodHTTPClient{}, "my-user-agent")
+			_, err := getHelmRepo("namespace", "test", tt.repoURL, "", nil, fakeServer.Client(), "my-user-agent")
 			assert.Error(t, err, tt.name)
 		})
 	}
@@ -342,36 +217,50 @@ func Test_parseFilters(t *testing.T) {
 }
 
 func Test_fetchRepoIndex(t *testing.T) {
+	fakeServer := newFakeServer(t, map[string]*http.Response{
+		"/index.yaml":         &http.Response{StatusCode: 200},
+		"/subpath/index.yaml": &http.Response{StatusCode: 200},
+	})
+	defer fakeServer.Close()
+	addr := fakeServer.URL
+
 	tests := []struct {
 		name      string
 		url       string
 		userAgent string
 	}{
-		{"valid HTTP URL", "http://my.examplerepo.com", "my-user-agent"},
-		{"valid HTTPS URL", "https://my.examplerepo.com", "my-user-agent"},
-		{"valid trailing URL", "https://my.examplerepo.com/", "my-user-agent"},
-		{"valid subpath URL", "https://subpath.test/subpath/", "my-user-agent"},
-		{"valid URL with trailing spaces", "https://subpath.test/subpath/  ", "my-user-agent"},
-		{"valid URL with leading spaces", "  https://subpath.test/subpath/", "my-user-agent"},
+		{"valid HTTP URL", addr, "my-user-agent"},
+		{"valid trailing URL", addr + "/", "my-user-agent"},
+		{"valid subpath URL", addr + "/subpath/", "my-user-agent"},
+		{"valid URL with trailing spaces", addr + "/subpath/  ", "my-user-agent"},
+		{"valid URL with leading spaces", "  " + addr + "/subpath/", "my-user-agent"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			netClient := &goodHTTPClient{}
+			netClient := fakeServer.Client()
 			_, err := fetchRepoIndex(tt.url, "", netClient, tt.userAgent)
 			assert.NoError(t, err)
 		})
 	}
 
+	validAuthHeader := "Bearer ThisSecretAccessTokenAuthenticatesTheClient"
+	authServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") == validAuthHeader {
+			w.WriteHeader(200)
+			return
+		}
+		w.WriteHeader(401)
+	}))
+
 	t.Run("authenticated request", func(t *testing.T) {
-		netClient := &authenticatedHTTPClient{}
-		_, err := fetchRepoIndex("https://my.examplerepo.com", "Bearer ThisSecretAccessTokenAuthenticatesTheClient", netClient, "my-user-agent")
+		netClient := authServer.Client()
+		_, err := fetchRepoIndex(authServer.URL, validAuthHeader, netClient, "my-user-agent")
 		assert.NoError(t, err)
 	})
 
-	t.Run("failed request", func(t *testing.T) {
-		netClient := &badHTTPClient{}
-		_, err := fetchRepoIndex("https://my.examplerepo.com", "", netClient, "my-user-agent")
-		assert.Error(t, err, errors.New("failed request"))
+	t.Run("unauthenticated request", func(t *testing.T) {
+		_, err := fetchRepoIndex(authServer.URL, "Bearer: not-valid", authServer.Client(), "my-user-agent")
+		assert.Error(t, err, errors.New("failed?"))
 	})
 }
 
@@ -497,108 +386,166 @@ func Test_newManager(t *testing.T) {
 
 func Test_fetchAndImportIcon(t *testing.T) {
 	repo := &models.AppRepositoryInternal{Name: "test", Namespace: "repo-namespace"}
-	repoWithAuthorization := &models.AppRepositoryInternal{Name: "test", Namespace: "repo-namespace", AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient", URL: "https://github.com/"}
+	validBearer := "Bearer ThisSecretAccessTokenAuthenticatesTheClient"
+	repoWithAuthorization := &models.AppRepositoryInternal{Name: "test", Namespace: "repo-namespace", AuthorizationHeader: validBearer, URL: "https://github.com/"}
 
+	svgHeader := http.Header{}
+	svgHeader.Set("Content-Type", "image/svg")
+
+	server := newFakeServer(t, map[string]*http.Response{
+		"/valid_icon.png": &http.Response{
+			StatusCode: 200,
+			Body:       io.NopCloser(bytes.NewReader(iconBytes())),
+		},
+		"/valid_svg_icon.svg": &http.Response{
+			StatusCode: 200,
+			Body:       io.NopCloser(bytes.NewReader([]byte("<svg width='100' height='100'></svg>"))),
+			Header:     svgHeader,
+		},
+		"/download_fail.png": &http.Response{
+			StatusCode: 500,
+		},
+		"/invalid_icon.png": &http.Response{
+			StatusCode: 200,
+			Body:       io.NopCloser(bytes.NewReader([]byte("not a valid png"))),
+		},
+	})
+	defer server.Close()
 	t.Run("no icon", func(t *testing.T) {
 		pgManager, _, cleanup := getMockManager(t)
 		defer cleanup()
 		c := models.Chart{ID: "test/acs-engine-autoscaler"}
-		fImporter := fileImporter{pgManager, &goodHTTPClient{}}
+		fImporter := fileImporter{pgManager, server.Client()}
 		assert.NoError(t, fImporter.fetchAndImportIcon(c, repo, "my-user-agent", false))
 	})
 
-	charts, _ := helm.ChartsFromIndex([]byte(validRepoIndexYAML), &models.AppRepository{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}, false)
+	charts, _ := helm.ChartsFromIndex([]byte(validRepoIndexYAML), &models.AppRepository{Name: "test", Namespace: "repo-namespace", URL: server.URL}, false)
+	chart := charts[0]
 
 	t.Run("failed download", func(t *testing.T) {
 		pgManager, _, cleanup := getMockManager(t)
 		defer cleanup()
-		netClient := &badHTTPClient{}
-		fImporter := fileImporter{pgManager, netClient}
-		assert.Error(t, fmt.Errorf("GET request to [%s] failed due to status [500]", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo, "my-user-agent", false))
+		fImporter := fileImporter{pgManager, server.Client()}
+		chart.Icon = server.URL + "/download_fail.png"
+
+		assert.Equal(t, fmt.Errorf("GET request to [%s] failed due to status [500]", chart.Icon), fImporter.fetchAndImportIcon(chart, repo, "my-user-agent", false))
 	})
 
 	t.Run("bad icon", func(t *testing.T) {
 		pgManager, _, cleanup := getMockManager(t)
 		defer cleanup()
-		netClient := &badIconClient{}
-		c := charts[0]
-		fImporter := fileImporter{pgManager, netClient}
-		assert.Error(t, image.ErrFormat, fImporter.fetchAndImportIcon(c, repo, "my-user-agent", false))
+		fImporter := fileImporter{pgManager, server.Client()}
+		chart.Icon = server.URL + "/invalid_icon.png"
+		assert.Equal(t, image.ErrFormat, fImporter.fetchAndImportIcon(chart, repo, "my-user-agent", false))
 	})
 
 	t.Run("valid icon", func(t *testing.T) {
 		pgManager, mock, cleanup := getMockManager(t)
 		defer cleanup()
-		netClient := &goodIconClient{}
+		chart.Icon = server.URL + "/valid_icon.png"
 
 		mock.ExpectQuery("UPDATE charts SET info *").
 			WithArgs("test/acs-engine-autoscaler", "repo-namespace", "test").
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
 
-		fImporter := fileImporter{pgManager, netClient}
-		assert.NoError(t, fImporter.fetchAndImportIcon(charts[0], repo, "my-user-agent", false))
+		fImporter := fileImporter{pgManager, server.Client()}
+		assert.NoError(t, fImporter.fetchAndImportIcon(chart, repo, "my-user-agent", false))
 	})
 
 	t.Run("valid SVG icon", func(t *testing.T) {
 		pgManager, mock, cleanup := getMockManager(t)
 		defer cleanup()
-		netClient := &svgIconClient{}
-		c := models.Chart{
-			ID:   "foo",
-			Icon: "https://foo/bar/logo.svg",
-			Repo: &models.AppRepository{Name: repo.Name, Namespace: repo.Namespace},
-		}
+		chart.Icon = server.URL + "/valid_svg_icon.svg"
 
 		mock.ExpectQuery("UPDATE charts SET info *").
-			WithArgs("foo", "repo-namespace", "test").
+			WithArgs("test/acs-engine-autoscaler", "repo-namespace", "test").
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
 
-		fImporter := fileImporter{pgManager, netClient}
-		assert.NoError(t, fImporter.fetchAndImportIcon(c, repo, "my-user-agent", false))
+		fImporter := fileImporter{pgManager, server.Client()}
+		assert.NoError(t, fImporter.fetchAndImportIcon(chart, repo, "my-user-agent", false))
 	})
 
+	authServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != validBearer {
+			w.WriteHeader(401)
+			return
+		}
+		if strings.HasSuffix(r.RequestURI, "/valid_icon.png") {
+			w.WriteHeader(200)
+			_, err := w.Write(iconBytes())
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			return
+		}
+		if strings.HasSuffix(r.RequestURI, "/invalid_icon.png") {
+			w.WriteHeader(200)
+			return
+		}
+		w.WriteHeader(404)
+	}))
+	defer authServer.Close()
 	t.Run("valid icon (not passing through the auth header by default)", func(t *testing.T) {
 		pgManager, _, cleanup := getMockManager(t)
 		defer cleanup()
-		netClient := &goodAuthenticatedHTTPClient{}
+		chart.Icon = authServer.URL + "/valid_icon.png"
 
-		fImporter := fileImporter{pgManager, netClient}
-		assert.Error(t, fmt.Errorf("GET request to [%s] failed due to status [401]", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo, "my-user-agent", false))
+		fImporter := fileImporter{pgManager, authServer.Client()}
+		assert.Error(t, fmt.Errorf("GET request to [%s] failed due to status [401]", charts[0].Icon), fImporter.fetchAndImportIcon(chart, repo, "my-user-agent", false))
 	})
 
 	t.Run("valid icon (not passing through the auth header)", func(t *testing.T) {
 		pgManager, _, cleanup := getMockManager(t)
 		defer cleanup()
-		netClient := &goodAuthenticatedHTTPClient{}
+		chart.Icon = authServer.URL + "/valid_icon.png"
 
-		fImporter := fileImporter{pgManager, netClient}
-		assert.Error(t, fmt.Errorf("GET request to [%s] failed due to status [401]", charts[0].Icon), fImporter.fetchAndImportIcon(charts[0], repo, "my-user-agent", false))
+		fImporter := fileImporter{pgManager, authServer.Client()}
+		assert.Error(t, fmt.Errorf("GET request to [%s] failed due to status [401]", charts[0].Icon), fImporter.fetchAndImportIcon(chart, repo, "my-user-agent", false))
+	})
+
+	t.Run("valid icon (not passing through the auth header if not same domain)", func(t *testing.T) {
+		pgManager, mock, cleanup := getMockManager(t)
+		defer cleanup()
+		chart.Icon = authServer.URL + "/valid_icon.png"
+
+		mock.ExpectQuery("UPDATE charts SET info *").
+			WithArgs("test/acs-engine-autoscaler", "repo-namespace", "test").
+			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
+
+		fImporter := fileImporter{pgManager, authServer.Client()}
+		// Even though the repo has the auth token, we don't use it to download
+		// the icon if the icon is on a different domain.
+		repoWithAuthorization.URL = "https://github.com"
+		assert.Error(t, fmt.Errorf("GET request to [%s] failed due to status [401]", charts[0].Icon), fImporter.fetchAndImportIcon(chart, repoWithAuthorization, "my-user-agent", false))
 	})
 
 	t.Run("valid icon (passing through the auth header if same domain)", func(t *testing.T) {
 		pgManager, mock, cleanup := getMockManager(t)
 		defer cleanup()
-		netClient := &goodAuthenticatedHTTPClient{}
+		chart.Icon = authServer.URL + "/valid_icon.png"
 
 		mock.ExpectQuery("UPDATE charts SET info *").
 			WithArgs("test/acs-engine-autoscaler", "repo-namespace", "test").
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
 
-		fImporter := fileImporter{pgManager, netClient}
-		assert.NoError(t, fImporter.fetchAndImportIcon(charts[0], repoWithAuthorization, "my-user-agent", false))
+		fImporter := fileImporter{pgManager, authServer.Client()}
+		// If the repo URL matches the domain of the icon, then it's
+		// safe to send the creds.
+		repoWithAuthorization.URL = authServer.URL
+		assert.NoError(t, fImporter.fetchAndImportIcon(chart, repoWithAuthorization, "my-user-agent", false))
 	})
 
 	t.Run("valid icon (passing through the auth header)", func(t *testing.T) {
 		pgManager, mock, cleanup := getMockManager(t)
 		defer cleanup()
-		netClient := &goodAuthenticatedHTTPClient{}
+		chart.Icon = authServer.URL + "/valid_icon.png"
 
 		mock.ExpectQuery("UPDATE charts SET info *").
 			WithArgs("test/acs-engine-autoscaler", "repo-namespace", "test").
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
 
-		fImporter := fileImporter{pgManager, netClient}
-		assert.NoError(t, fImporter.fetchAndImportIcon(charts[0], repoWithAuthorization, "my-user-agent", true))
+		fImporter := fileImporter{pgManager, authServer.Client()}
+		assert.NoError(t, fImporter.fetchAndImportIcon(chart, repoWithAuthorization, "my-user-agent", true))
 	})
 }
 
@@ -633,9 +580,45 @@ func (r *fakeRepo) FetchFiles(cv models.ChartVersion, userAgent string, passCred
 }
 
 func Test_fetchAndImportFiles(t *testing.T) {
-	repo := &models.AppRepositoryInternal{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}
-	charts, _ := helm.ChartsFromIndex([]byte(validRepoIndexYAML), &models.AppRepository{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL}, false)
+	validAuthHeader := "Bearer ThisSecretAccessTokenAuthenticatesTheClient"
+
+	// Update the URL for the chart version file so that it uses the test server.
+	internalRepo := &models.AppRepositoryInternal{Name: "test", Namespace: "repo-namespace", AuthorizationHeader: validAuthHeader}
+	charts, _ := helm.ChartsFromIndex([]byte(validRepoIndexYAML), &models.AppRepository{Name: internalRepo.Name, Namespace: internalRepo.Namespace, URL: internalRepo.URL}, false)
 	chartVersion := charts[0].ChartVersions[0]
+	chartVersionURL, err := url.Parse(chartVersion.URLs[0])
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != validAuthHeader {
+			w.WriteHeader(401)
+			return
+		}
+		if strings.HasSuffix(r.RequestURI, ".tgz") {
+			gzw := gzip.NewWriter(w)
+			files := []tartest.TarballFile{{Name: charts[0].Name + "/Chart.yaml", Body: "should be a Chart.yaml here..."}}
+			files = append(files, tartest.TarballFile{Name: charts[0].Name + "/values.yaml", Body: testChartValues})
+			files = append(files, tartest.TarballFile{Name: charts[0].Name + "/README.md", Body: testChartReadme})
+			files = append(files, tartest.TarballFile{Name: charts[0].Name + "/values.schema.json", Body: testChartSchema})
+			tartest.CreateTestTarball(gzw, files)
+			gzw.Flush()
+			return
+		}
+		w.WriteHeader(200)
+		_, err := w.Write([]byte("Foo"))
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+	}))
+	defer server.Close()
+
+	// Ensure that the server URL is used in tests.
+	internalRepo.URL = server.URL
+	chartVersion.URLs[0] = server.URL + chartVersionURL.Path
+	charts[0].Repo.URL = server.URL
+
 	chartID := fmt.Sprintf("%s/%s", charts[0].Repo.Name, charts[0].Name)
 	chartFilesID := fmt.Sprintf("%s-%s", chartID, chartVersion.Version)
 	chartFiles := models.ChartFiles{
@@ -648,7 +631,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		Digest:                  chartVersion.Digest,
 	}
 	fRepo := &fakeRepo{
-		AppRepositoryInternal: repo,
+		AppRepositoryInternal: internalRepo,
 		charts:                charts,
 		chartFiles:            chartFiles,
 	}
@@ -658,14 +641,13 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		defer cleanup()
 
 		mock.ExpectQuery("SELECT EXISTS*").
-			WithArgs(chartFilesID, repo.Name, repo.Namespace).
+			WithArgs(chartFilesID, internalRepo.Name, internalRepo.Namespace).
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1))
-		netClient := &badHTTPClient{}
-		fImporter := fileImporter{pgManager, netClient}
+		fImporter := fileImporter{pgManager, server.Client()}
 		helmRepo := &HelmRepo{
 			content:               []byte{},
-			AppRepositoryInternal: repo,
-			netClient:             netClient,
+			AppRepositoryInternal: internalRepo,
+			netClient:             server.Client(),
 		}
 		assert.Error(t, fmt.Errorf("GET request to [https://kubernetes-charts.storage.googleapis.com/acs-engine-autoscaler-2.1.1.tgz] failed due to status [500]"), fImporter.fetchAndImportFiles(charts[0].Name, helmRepo, chartVersion, "my-user-agent", false))
 	})
@@ -674,77 +656,23 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		pgManager, mock, cleanup := getMockManager(t)
 		defer cleanup()
 
-		files := models.ChartFiles{
-			ID:                      chartFilesID,
-			Readme:                  "",
-			DefaultValues:           "",
-			AdditionalDefaultValues: map[string]string{},
-			Schema:                  "",
-			Repo:                    charts[0].Repo,
-			Digest:                  chartVersion.Digest,
-		}
-
 		// file does not exist (no rows returned) so insertion goes ahead.
 		mock.ExpectQuery(`SELECT EXISTS*`).
-			WithArgs(chartFilesID, repo.Name, repo.Namespace, chartVersion.Digest).
+			WithArgs(chartFilesID, internalRepo.Name, internalRepo.Namespace, chartVersion.Digest).
 			WillReturnRows(sqlmock.NewRows([]string{"info"}))
 		mock.ExpectQuery("INSERT INTO files *").
-			WithArgs(chartID, repo.Name, repo.Namespace, chartFilesID, files).
+			WithArgs(chartID, internalRepo.Name, internalRepo.Namespace, chartFilesID, chartFiles).
 			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow("3"))
 
-		netClient := &goodTarballClient{c: charts[0], skipValues: true, skipReadme: true, skipSchema: true}
+		netClient := server.Client()
 
 		fImporter := fileImporter{pgManager, netClient}
 		helmRepo := &HelmRepo{
 			content:               []byte{},
-			AppRepositoryInternal: repo,
-			netClient:             netClient,
+			AppRepositoryInternal: internalRepo,
+			netClient:             server.Client(),
 		}
 		err := fImporter.fetchAndImportFiles(chartID, helmRepo, chartVersion, "my-user-agent", false)
-		assert.NoError(t, err)
-	})
-
-	t.Run("authenticated request", func(t *testing.T) {
-		pgManager, mock, cleanup := getMockManager(t)
-		defer cleanup()
-
-		// file does not exist (no rows returned) so insertion goes ahead.
-		mock.ExpectQuery(`SELECT EXISTS*`).
-			WithArgs(chartFilesID, repo.Name, repo.Namespace, chartVersion.Digest).
-			WillReturnRows(sqlmock.NewRows([]string{"info"}))
-		mock.ExpectQuery("INSERT INTO files *").
-			WithArgs(chartID, repo.Name, repo.Namespace, chartFilesID, chartFiles).
-			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow("3"))
-
-		netClient := &authenticatedTarballClient{c: charts[0]}
-
-		fImporter := fileImporter{pgManager, netClient}
-
-		r := &models.AppRepositoryInternal{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL, AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"}
-		repo := &HelmRepo{
-			AppRepositoryInternal: r,
-			content:               []byte{},
-			netClient:             netClient,
-		}
-		err := fImporter.fetchAndImportFiles(chartID, repo, chartVersion, "my-user-agent", true)
-		assert.NoError(t, err)
-	})
-
-	t.Run("valid tarball", func(t *testing.T) {
-		pgManager, mock, cleanup := getMockManager(t)
-		defer cleanup()
-
-		mock.ExpectQuery(`SELECT EXISTS*`).
-			WithArgs(chartFilesID, repo.Name, repo.Namespace, chartVersion.Digest).
-			WillReturnRows(sqlmock.NewRows([]string{"info"}))
-		mock.ExpectQuery("INSERT INTO files *").
-			WithArgs(chartID, repo.Name, repo.Namespace, chartFilesID, chartFiles).
-			WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow("3"))
-
-		netClient := &goodTarballClient{c: charts[0]}
-		fImporter := fileImporter{pgManager, netClient}
-
-		err := fImporter.fetchAndImportFiles(chartID, fRepo, chartVersion, "my-user-agent", false)
 		assert.NoError(t, err)
 	})
 
@@ -753,61 +681,51 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		defer cleanup()
 
 		mock.ExpectQuery(`SELECT EXISTS*`).
-			WithArgs(chartFilesID, repo.Name, repo.Namespace, chartVersion.Digest).
+			WithArgs(chartFilesID, internalRepo.Name, internalRepo.Namespace, chartVersion.Digest).
 			WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(`true`))
 
-		fImporter := fileImporter{pgManager, &goodHTTPClient{}}
+		fImporter := fileImporter{pgManager, server.Client()}
 		err := fImporter.fetchAndImportFiles(chartID, fRepo, chartVersion, "my-user-agent", false)
 		assert.NoError(t, err)
 	})
 }
 
-type goodOCIAPIHTTPClient struct {
-	response       string
-	responseByPath map[string]string
-}
-
-func (h *goodOCIAPIHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	w := httptest.NewRecorder()
-	// Don't accept trailing slashes
-	if strings.HasPrefix(req.URL.Path, "//") {
-		w.WriteHeader(500)
-	}
-
-	if r, ok := h.responseByPath[req.URL.Path]; ok {
-		_, err := w.Write([]byte(r))
-		if err != nil {
-			log.Fatalf("%+v", err)
-		}
-	} else {
-		_, err := w.Write([]byte(h.response))
-		if err != nil {
-			log.Fatalf("%+v", err)
-		}
-	}
-	return w.Result(), nil
-}
-
 func Test_ociAPICli(t *testing.T) {
-	url, _ := parseRepoURL("http://oci-test")
-
 	t.Run("TagList - failed request", func(t *testing.T) {
+		server := newFakeServer(t, map[string]*http.Response{
+			"/v2/apache/tags/list": &http.Response{
+				StatusCode: 500,
+			},
+		})
+		defer server.Close()
+		url, err := parseRepoURL(server.URL)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
 		apiCli := &OciAPIClient{
 			RegistryNamespaceUrl: url,
-			HttpClient: &badHTTPClient{
-				errMsg: "forbidden",
-			},
+			HttpClient:           server.Client(),
 		}
-		_, err := apiCli.TagList("apache", "my-user-agent")
-		assert.Error(t, fmt.Errorf("GET request to [http://oci-test/v2/apache/tags/list] failed due to status [500]: forbidden"), err)
+		_, err = apiCli.TagList("apache", "my-user-agent")
+		assert.Equal(t, fmt.Errorf("GET request to [%s/v2/apache/tags/list] failed due to status [500]", server.URL), err)
 	})
 
 	t.Run("TagList - successful request", func(t *testing.T) {
+		server := newFakeServer(t, map[string]*http.Response{
+			"/v2/apache/tags/list": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(`{"name":"test/apache","tags":["7.5.1","8.1.1"]}`)),
+			},
+		})
+		defer server.Close()
+		url, err := parseRepoURL(server.URL)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
 		apiCli := &OciAPIClient{
 			RegistryNamespaceUrl: url,
-			HttpClient: &goodOCIAPIHTTPClient{
-				response: `{"name":"test/apache","tags":["7.5.1","8.1.1"]}`,
-			},
+			HttpClient:           server.Client(),
 		}
 		result, err := apiCli.TagList("apache", "my-user-agent")
 		assert.NoError(t, err)
@@ -818,24 +736,45 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("IsHelmChart - failed request", func(t *testing.T) {
+		server := newFakeServer(t, map[string]*http.Response{
+			"/v2/apache-bad/manifests/7.5.1": &http.Response{
+				StatusCode: 500,
+			},
+		})
+		defer server.Close()
+		url, err := parseRepoURL(server.URL)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
 		apiCli := &OciAPIClient{
 			RegistryNamespaceUrl: url,
-			HttpClient:           &badHTTPClient{},
+			HttpClient:           server.Client(),
 		}
-		_, err := apiCli.IsHelmChart("apache", "7.5.1", "my-user-agent")
-		assert.Error(t, fmt.Errorf("GET request to [http://oci-test/v2/apache/manifests/7.5.1] failed due to status [500]"), err)
+		_, err = apiCli.IsHelmChart("apache-bad", "7.5.1", "my-user-agent")
+		assert.Equal(t, fmt.Errorf("GET request to [%s/v2/apache-bad/manifests/7.5.1] failed due to status [500]", server.URL), err)
 	})
 
 	t.Run("IsHelmChart - successful request", func(t *testing.T) {
+		server := newFakeServer(t, map[string]*http.Response{
+			"/v2/test/apache/manifests/7.5.1": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(`{"schemaVersion":2,"config":{"mediaType":"other","digest":"sha256:123","size":665}}`)),
+			},
+			"/v2/test/apache/manifests/8.1.1": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(`{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`)),
+			},
+		})
+		defer server.Close()
+		url, err := parseRepoURL(server.URL)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
 		apiCli := &OciAPIClient{
 			RegistryNamespaceUrl: url,
-			HttpClient: &goodOCIAPIHTTPClient{
-				responseByPath: map[string]string{
-					// 7.5.1 is not a chart
-					"/v2/test/apache/manifests/7.5.1": `{"schemaVersion":2,"config":{"mediaType":"other","digest":"sha256:123","size":665}}`,
-					"/v2/test/apache/manifests/8.1.1": `{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`,
-				},
-			},
+			HttpClient:           server.Client(),
 		}
 		is751, err := apiCli.IsHelmChart("test/apache", "7.5.1", "my-user-agent")
 		assert.NoError(t, err)
@@ -849,15 +788,22 @@ func Test_ociAPICli(t *testing.T) {
 		}
 	})
 
-	urlWithNamespace, _ := parseRepoURL("http://oci-test/test/project")
 	t.Run("CatalogAvailable - successful request", func(t *testing.T) {
+		server := newFakeServer(t, map[string]*http.Response{
+			"/v2/test/project/charts-index/manifests/latest": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(chartsIndexManifestJSON)),
+			},
+		})
+		defer server.Close()
+
+		urlWithNamespace, err := parseRepoURL(server.URL + "/test/project")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
 		apiCli := &OciAPIClient{
 			RegistryNamespaceUrl: urlWithNamespace,
-			HttpClient: &goodOCIAPIHTTPClient{
-				responseByPath: map[string]string{
-					"/v2/test/project/charts-index/manifests/latest": chartsIndexManifestJSON,
-				},
-			},
+			HttpClient:           server.Client(),
 		}
 
 		got, err := apiCli.CatalogAvailable(context.Background(), "my-user-agent")
@@ -871,13 +817,20 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("CatalogAvailable - returns false for incorrect media type", func(t *testing.T) {
-		apiCli := &OciAPIClient{
-			RegistryNamespaceUrl: urlWithNamespace,
-			HttpClient: &goodOCIAPIHTTPClient{
-				responseByPath: map[string]string{
-					"/v2/test/project/charts-index/manifests/latest": `{"config": {"mediaType": "something-else"}}`,
-				},
+		server := newFakeServer(t, map[string]*http.Response{
+			"/v2/test/project/charts-index/manifests/latest": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(`{"config": {"mediaType": "something-else"}}`)),
 			},
+		})
+		defer server.Close()
+		urlWithNamespaceBadMediaType, err := parseRepoURL(server.URL + "/test/project")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		apiCli := &OciAPIClient{
+			RegistryNamespaceUrl: urlWithNamespaceBadMediaType,
+			HttpClient:           server.Client(),
 		}
 
 		got, err := apiCli.CatalogAvailable(context.Background(), "my-user-agent")
@@ -891,13 +844,20 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("CatalogAvailable - returns false for a 404", func(t *testing.T) {
-		apiCli := &OciAPIClient{
-			RegistryNamespaceUrl: urlWithNamespace,
-			HttpClient: &goodOCIAPIHTTPClient{
-				responseByPath: map[string]string{
-					"/v2/test/project/chart-index/manifests/latest": chartsIndexMultipleJSON,
-				},
+		server := newFakeServer(t, map[string]*http.Response{
+			"/v2/test/project/charts-index/manifests/latest": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(`{"config": {"mediaType": "something-else"}}`)),
 			},
+		})
+		defer server.Close()
+		urlWithNamespaceNonExistentBlob, err := parseRepoURL(server.URL + "/test/project")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		apiCli := &OciAPIClient{
+			RegistryNamespaceUrl: urlWithNamespaceNonExistentBlob,
+			HttpClient:           server.Client(),
 		}
 
 		got, err := apiCli.CatalogAvailable(context.Background(), "my-user-agent")
@@ -911,6 +871,13 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("CatalogAvailable - returns true if oci-catalog responds", func(t *testing.T) {
+		server := newFakeServer(t, map[string]*http.Response{})
+		defer server.Close()
+		url, err := parseRepoURL(server.URL)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
 		grpcAddr, grpcDouble, closer := ocicatalog_clienttest.SetupTestDouble(t)
 		defer closer()
 		grpcDouble.Repositories = []*ocicatalog.Repository{
@@ -925,8 +892,8 @@ func Test_ociAPICli(t *testing.T) {
 		defer closer()
 
 		apiCli := &OciAPIClient{
-			RegistryNamespaceUrl: urlWithNamespace,
-			HttpClient:           &badHTTPClient{},
+			RegistryNamespaceUrl: url,
+			HttpClient:           server.Client(),
 			GrpcClient:           grpcClient,
 		}
 
@@ -941,6 +908,13 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("CatalogAvailable - returns false if oci-catalog responds with zero repos", func(t *testing.T) {
+		server := newFakeServer(t, map[string]*http.Response{})
+		defer server.Close()
+		url, err := parseRepoURL(server.URL)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
 		grpcAddr, grpcDouble, closer := ocicatalog_clienttest.SetupTestDouble(t)
 		defer closer()
 		grpcDouble.Repositories = []*ocicatalog.Repository{}
@@ -951,8 +925,8 @@ func Test_ociAPICli(t *testing.T) {
 		defer closer()
 
 		apiCli := &OciAPIClient{
-			RegistryNamespaceUrl: urlWithNamespace,
-			HttpClient:           &badHTTPClient{},
+			RegistryNamespaceUrl: url,
+			HttpClient:           server.Client(),
 			GrpcClient:           grpcClient,
 		}
 
@@ -967,9 +941,16 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("CatalogAvailable - returns false on any other", func(t *testing.T) {
+		server := newFakeServer(t, map[string]*http.Response{})
+		defer server.Close()
+		url, err := parseRepoURL(server.URL)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
 		apiCli := &OciAPIClient{
-			RegistryNamespaceUrl: urlWithNamespace,
-			HttpClient:           &badHTTPClient{},
+			RegistryNamespaceUrl: url,
+			HttpClient:           server.Client(),
 		}
 
 		got, err := apiCli.CatalogAvailable(context.Background(), "my-user-agent")
@@ -983,14 +964,25 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("Catalog - successful request", func(t *testing.T) {
-		apiCli := &OciAPIClient{
-			RegistryNamespaceUrl: urlWithNamespace,
-			HttpClient: &goodOCIAPIHTTPClient{
-				responseByPath: map[string]string{
-					"/v2/test/project/charts-index/manifests/latest":                                                              chartsIndexManifestJSON,
-					"/v2/test/project/charts-index/blobs/sha256:f9f7df0ae3f50aaf9ff390034cec4286d2aa43f061ce4bc7aa3c9ac862800aba": chartsIndexMultipleJSON,
-				},
+		server := newFakeServer(t, map[string]*http.Response{
+			"/v2/test/project/charts-index/manifests/latest": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(chartsIndexManifestJSON)),
 			},
+			"/v2/test/project/charts-index/blobs/sha256:f9f7df0ae3f50aaf9ff390034cec4286d2aa43f061ce4bc7aa3c9ac862800aba": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(chartsIndexMultipleJSON)),
+			},
+		})
+		defer server.Close()
+		url, err := parseRepoURL(server.URL + "/test/project")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
+		apiCli := &OciAPIClient{
+			RegistryNamespaceUrl: url,
+			HttpClient:           server.Client(),
 		}
 
 		got, err := apiCli.Catalog(context.Background(), "my-user-agent")
@@ -1004,6 +996,13 @@ func Test_ociAPICli(t *testing.T) {
 	})
 
 	t.Run("Catalog - successful request via oci-catalog", func(t *testing.T) {
+		server := newFakeServer(t, map[string]*http.Response{})
+		defer server.Close()
+		url, err := parseRepoURL(server.URL)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
 		grpcAddr, grpcDouble, closer := ocicatalog_clienttest.SetupTestDouble(t)
 		defer closer()
 		grpcDouble.Repositories = []*ocicatalog.Repository{
@@ -1020,8 +1019,8 @@ func Test_ociAPICli(t *testing.T) {
 		}
 		defer closer()
 		apiCli := &OciAPIClient{
-			RegistryNamespaceUrl: urlWithNamespace,
-			HttpClient:           &badHTTPClient{},
+			RegistryNamespaceUrl: url,
+			HttpClient:           server.Client(),
 			GrpcClient:           grpcClient,
 		}
 
@@ -1068,7 +1067,7 @@ func Test_OCIRegistry(t *testing.T) {
 	t.Run("Checksum - failed request", func(t *testing.T) {
 		repo.ociCli = &fakeOCIAPICli{err: fmt.Errorf("request failed")}
 		_, err := repo.Checksum(context.Background())
-		assert.Error(t, fmt.Errorf("request failed"), err)
+		assert.Equal(t, fmt.Errorf("request failed"), err)
 	})
 
 	t.Run("Checksum - success", func(t *testing.T) {
@@ -1435,12 +1434,21 @@ version: 1.0.0
 				w[tag] = recorder
 				content[tag] = recorder.Body
 			}
-			url, _ := parseRepoURL("http://oci-test")
 
-			tags := map[string]string{}
+			tags := map[string]*http.Response{}
 			for _, tag := range tt.tags {
-				tags[fmt.Sprintf("/v2/%s/manifests/%s", tt.chartName, tag)] = `{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`
+				tags[fmt.Sprintf("/v2/%s/manifests/%s", tt.chartName, tag)] = &http.Response{
+					StatusCode: 200,
+					Body:       io.NopCloser(strings.NewReader(`{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`)),
+				}
 			}
+			server := newFakeServer(t, tags)
+			defer server.Close()
+			url, err := parseRepoURL(server.URL)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
 			chartsRepo := OCIRegistry{
 				repositories:          []string{tt.chartName},
 				AppRepositoryInternal: &models.AppRepositoryInternal{Name: tt.expected[0].Repo.Name, URL: tt.expected[0].Repo.URL},
@@ -1453,9 +1461,7 @@ version: 1.0.0
 				},
 				ociCli: &OciAPIClient{
 					RegistryNamespaceUrl: url,
-					HttpClient: &goodOCIAPIHTTPClient{
-						responseByPath: tags,
-					},
+					HttpClient:           server.Client(),
 				},
 			}
 			charts, err := chartsRepo.Charts(context.Background(), tt.shallow)
@@ -1480,13 +1486,28 @@ version: 1.0.0
 		tartest.CreateTestTarball(gzw, files)
 		gzw.Flush()
 		content[tag] = recorder.Body
-		url, _ := parseRepoURL("http://oci-test/my-project")
 
-		fakeURIs := map[string]string{
-			"/v2/my-project/common/manifests/1.1.0":        `{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`,
-			"/v2/my-project/charts-index/manifests/latest": chartsIndexManifestJSON,
-			"/v2/my-project/charts-index/blobs/sha256:f9f7df0ae3f50aaf9ff390034cec4286d2aa43f061ce4bc7aa3c9ac862800aba": chartsIndexSingleJSON,
+		fakeURIs := map[string]*http.Response{
+			"/v2/my-project/common/manifests/1.1.0": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(`{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`)),
+			},
+			"/v2/my-project/charts-index/manifests/latest": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(chartsIndexManifestJSON)),
+			},
+			"/v2/my-project/charts-index/blobs/sha256:f9f7df0ae3f50aaf9ff390034cec4286d2aa43f061ce4bc7aa3c9ac862800aba": &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(chartsIndexSingleJSON)),
+			},
 		}
+		server := newFakeServer(t, fakeURIs)
+		defer server.Close()
+		url, err := parseRepoURL(server.URL + "/my-project")
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
 		chartsRepo := OCIRegistry{
 			repositories:          []string{},
 			AppRepositoryInternal: &models.AppRepositoryInternal{Name: "common", URL: "https://example.com"},
@@ -1499,9 +1520,7 @@ version: 1.0.0
 			},
 			ociCli: &OciAPIClient{
 				RegistryNamespaceUrl: url,
-				HttpClient: &goodOCIAPIHTTPClient{
-					responseByPath: fakeURIs,
-				},
+				HttpClient:           server.Client(),
 			},
 		}
 		charts, err := chartsRepo.Charts(context.Background(), true)

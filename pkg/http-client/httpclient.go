@@ -18,27 +18,31 @@ const (
 	defaultTimeoutSeconds = 180
 )
 
-type Client interface {
-	Do(req *http.Request) (*http.Response, error)
-}
-
-// ClientWithDefaults implements Client interface
-// and includes an override of the Do method which injects the following supported defaults:
-//   - headers: e.g. User-Agent and Authorization (when present)
-type ClientWithDefaults struct {
-	Client         Client
+// DefaultHeaderTransport
+//
+// Used for an http.Client that will have default headers set.
+type DefaultHeaderTransport struct {
 	DefaultHeaders http.Header
+	Transport      http.RoundTripper
 }
 
-// Do (in ClientWithDefaults) HTTP request
-func (c *ClientWithDefaults) Do(req *http.Request) (*http.Response, error) {
-	for k, v := range c.DefaultHeaders {
-		// Only add the default header if it's not already set in the request.
-		if _, ok := req.Header[k]; !ok {
-			req.Header[k] = v
+func (dht *DefaultHeaderTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	for k, vv := range dht.DefaultHeaders {
+		for _, v := range vv {
+			req.Header.Add(k, v)
 		}
 	}
-	return c.Client.Do(req)
+	return dht.Transport.RoundTrip(req)
+}
+
+func NewDefaultHeaderClient(c *http.Client, header http.Header) *http.Client {
+	return &http.Client{
+		Transport: &DefaultHeaderTransport{
+			DefaultHeaders: header,
+			Transport:      c.Transport,
+		},
+		Timeout: c.Timeout,
+	}
 }
 
 // New creates a new instance of http Client, with following default configuration:
@@ -166,7 +170,7 @@ func NewClientTLS(certBytes, keyBytes, caBytes []byte) (*tls.Config, error) {
 // Get performs an HTTP GET request using provided client, URL and request headers.
 // returns response body, as bytes on successful status, or error body,
 // if applicable on error status
-func Get(url string, cli Client, headers map[string]string) ([]byte, error) {
+func Get(url string, cli *http.Client, headers map[string]string) ([]byte, error) {
 	reader, _, err := GetStream(url, cli, headers)
 	if reader != nil {
 		defer reader.Close()
@@ -182,7 +186,7 @@ func Get(url string, cli Client, headers map[string]string) ([]byte, error) {
 // if applicable on error status
 // returns response as a stream, as well as response content type
 // NOTE: it is the caller's responsibility to close the reader stream when no longer needed
-func GetStream(url string, cli Client, reqHeaders map[string]string) (io.ReadCloser, string, error) {
+func GetStream(url string, cli *http.Client, reqHeaders map[string]string) (io.ReadCloser, string, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, "", err

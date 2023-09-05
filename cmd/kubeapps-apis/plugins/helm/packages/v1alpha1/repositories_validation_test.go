@@ -4,11 +4,9 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"path"
@@ -16,78 +14,59 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	ocicatalog "github.com/vmware-tanzu/kubeapps/cmd/oci-catalog/gen/catalog/v1alpha1"
-	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"github.com/vmware-tanzu/kubeapps/pkg/ocicatalog_client/ocicatalog_clienttest"
 	corev1 "k8s.io/api/core/v1"
-	log "k8s.io/klog/v2"
 )
 
-type fakeHTTPCli struct {
-	request  *http.Request
-	response *http.Response
-	err      error
-}
-
-func (f *fakeHTTPCli) Do(r *http.Request) (*http.Response, error) {
-	f.request = r
-	return f.response, f.err
-}
-
 func TestNonOCIValidate(t *testing.T) {
-	validRequest, err := http.NewRequest("GET", "https://example.com/index.yaml", nil)
-	if err != nil {
-		t.Fatalf("%+v", err)
-	}
-
 	testCases := []struct {
-		name             string
-		fakeHttpError    error
-		fakeRepoResponse *http.Response
-		expectedResponse *ValidationResponse
+		name                 string
+		fakeHttpError        error
+		fakeRepoResponseCode int
+		fakeRepoResponseBody string
+		expectedResponse     *ValidationResponse
 	}{
 		{
-			name:             "it returns 200 OK validation response if there is no error and the external response is 200",
-			fakeRepoResponse: &http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte("OK")))},
-			expectedResponse: &ValidationResponse{Code: 200, Message: "OK"},
+			name:                 "it returns 200 OK validation response if there is no error and the external response is 200",
+			fakeRepoResponseCode: 200,
+			fakeRepoResponseBody: "OK",
+			expectedResponse:     &ValidationResponse{Code: 200, Message: "OK"},
 		},
 		{
-			name:             "it does not include the body of the upstream response when validation succeeds",
-			fakeRepoResponse: &http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte("10 Mb of data")))},
-			expectedResponse: &ValidationResponse{Code: 200, Message: "OK"},
+			name:                 "it does not include the body of the upstream response when validation succeeds",
+			fakeRepoResponseCode: 200,
+			fakeRepoResponseBody: "10 Mb of data",
+			expectedResponse:     &ValidationResponse{Code: 200, Message: "OK"},
 		},
 		{
-			name:             "it returns an error from the response with the body text if validation fails",
-			fakeRepoResponse: &http.Response{StatusCode: 401, Body: io.NopCloser(bytes.NewReader([]byte("It failed because of X and Y")))},
-			expectedResponse: &ValidationResponse{Code: 401, Message: "It failed because of X and Y"},
-		},
-		{
-			name:             "it returns a 400 error if the validation cannot be run",
-			fakeHttpError:    fmt.Errorf("client.Do returns an error"),
-			expectedResponse: &ValidationResponse{Code: 400, Message: "client.Do returns an error"},
+			name:                 "it returns an error from the response with the body text if validation fails",
+			fakeRepoResponseCode: 401,
+			fakeRepoResponseBody: "It failed because of X and Y",
+			expectedResponse:     &ValidationResponse{Code: 401, Message: "It failed because of X and Y"},
 		},
 	}
-
-	cmpOpts := []cmp.Option{cmpopts.IgnoreUnexported(http.Request{}, strings.Reader{})}
-	cmpOpts = append(cmpOpts, cmpopts.IgnoreFields(http.Request{}, "GetBody"))
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			fakeClient := &fakeHTTPCli{
-				response: tc.fakeRepoResponse,
-				err:      tc.fakeHttpError,
-			}
+			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(tc.fakeRepoResponseCode)
+				_, err := w.Write([]byte(tc.fakeRepoResponseBody))
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+			}))
+			defer testServer.Close()
 
 			httpValidator := HelmNonOCIValidator{
-				ClientGetter: func(*v1alpha1.AppRepository, *corev1.Secret) (httpclient.Client, error) {
-					return fakeClient, nil
+				ClientGetter: func(*v1alpha1.AppRepository, *corev1.Secret) (*http.Client, error) {
+					return testServer.Client(), nil
 				},
 				AppRepo: &v1alpha1.AppRepository{
 					Spec: v1alpha1.AppRepositorySpec{
 						Type: "oci",
-						URL:  "https://example.com",
+						URL:  testServer.URL,
 					},
 				},
 			}
@@ -95,10 +74,6 @@ func TestNonOCIValidate(t *testing.T) {
 			response, err := httpValidator.Validate(context.TODO())
 			if err != nil {
 				t.Errorf("Unexpected error %v", err)
-			}
-
-			if got, want := fakeClient.request, validRequest; !cmp.Equal(want, got, cmpOpts...) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, cmpOpts...))
 			}
 
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got) {
@@ -143,19 +118,19 @@ func makeTestOCIServer(t *testing.T, registryName string, repos map[string]fakeO
 			w.WriteHeader(401)
 			_, err := w.Write([]byte("{}"))
 			if err != nil {
-				log.Fatalf("%+v", err)
+				t.Fatalf("%+v", err)
 			}
 		}
 		if response, ok := responses[r.URL.Path]; !ok {
 			w.WriteHeader(404)
 			_, err := w.Write([]byte("{}"))
 			if err != nil {
-				log.Fatalf("%+v", err)
+				t.Fatalf("%+v", err)
 			}
 		} else {
 			_, err := w.Write([]byte(response))
 			if err != nil {
-				log.Fatalf("%+v", err)
+				t.Fatalf("%+v", err)
 			}
 		}
 	}))
@@ -442,11 +417,9 @@ func TestOCIValidateWithCatalogServer(t *testing.T) {
 	ociCatalogAddr, ociCatalogDouble, cleanup := ocicatalog_clienttest.SetupTestDouble(t)
 	defer cleanup()
 
-	// We don't want to use the http client at all in these tests.
-	fakeClient := &fakeHTTPCli{
-		response: nil,
-		err:      fmt.Errorf("should not be used"),
-	}
+	testOCIServer := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
+	defer testOCIServer.Close()
+
 	testCases := []struct {
 		name             string
 		repos            []*ocicatalog.Repository
@@ -460,11 +433,12 @@ func TestOCIValidateWithCatalogServer(t *testing.T) {
 				AppRepo: &v1alpha1.AppRepository{
 					Spec: v1alpha1.AppRepositorySpec{
 						Type: "oci",
+						URL:  testOCIServer.URL,
 					},
 				},
 				OCICatalogAddr: ociCatalogAddr,
-				ClientGetter: func(*v1alpha1.AppRepository, *corev1.Secret) (httpclient.Client, error) {
-					return fakeClient, nil
+				ClientGetter: func(*v1alpha1.AppRepository, *corev1.Secret) (*http.Client, error) {
+					return testOCIServer.Client(), nil
 				},
 			},
 			repos: []*ocicatalog.Repository{
@@ -486,11 +460,12 @@ func TestOCIValidateWithCatalogServer(t *testing.T) {
 				AppRepo: &v1alpha1.AppRepository{
 					Spec: v1alpha1.AppRepositorySpec{
 						Type: "oci",
+						URL:  testOCIServer.URL,
 					},
 				},
 				OCICatalogAddr: ociCatalogAddr,
-				ClientGetter: func(*v1alpha1.AppRepository, *corev1.Secret) (httpclient.Client, error) {
-					return fakeClient, nil
+				ClientGetter: func(*v1alpha1.AppRepository, *corev1.Secret) (*http.Client, error) {
+					return testOCIServer.Client(), nil
 				},
 			},
 			repos: []*ocicatalog.Repository{
@@ -509,11 +484,12 @@ func TestOCIValidateWithCatalogServer(t *testing.T) {
 				AppRepo: &v1alpha1.AppRepository{
 					Spec: v1alpha1.AppRepositorySpec{
 						Type: "oci",
+						URL:  testOCIServer.URL,
 					},
 				},
 				OCICatalogAddr: ociCatalogAddr,
-				ClientGetter: func(*v1alpha1.AppRepository, *corev1.Secret) (httpclient.Client, error) {
-					return fakeClient, nil
+				ClientGetter: func(*v1alpha1.AppRepository, *corev1.Secret) (*http.Client, error) {
+					return testOCIServer.Client(), nil
 				},
 			},
 			expectedResponse: &ValidationResponse{

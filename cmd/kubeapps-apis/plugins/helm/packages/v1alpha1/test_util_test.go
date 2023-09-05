@@ -9,13 +9,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 
 	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	apiv1 "k8s.io/api/core/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
@@ -160,24 +160,27 @@ func addTlsToSecret(secret *apiv1.Secret, pub, priv, ca []byte) *apiv1.Secret {
 	return secret
 }
 
-func newRepoHttpClient(responses map[string]*http.Response) repositoryClientGetter {
-	return func(appRepo *appRepov1.AppRepository, secret *apiv1.Secret) (httpclient.Client, error) {
-		return &fakeHTTPClient{
-			responses: responses,
-		}, nil
-	}
-}
-
-type fakeHTTPClient struct {
-	responses map[string]*http.Response
-}
-
-func (f *fakeHTTPClient) Do(h *http.Request) (*http.Response, error) {
-	if resp, ok := f.responses[h.URL.String()]; !ok {
-		return nil, fmt.Errorf("url requested '%s' not found in valid responses %v", h.URL.String(), f.responses)
-	} else {
-		return resp, nil
-	}
+func newFakeRepoServer(t *testing.T, responses map[string]*http.Response) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		for path, response := range responses {
+			if path == r.URL.Path {
+				w.WriteHeader(response.StatusCode)
+				body := []byte{}
+				if response.Body != nil {
+					var err error
+					body, err = io.ReadAll(response.Body)
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
+				}
+				_, err := w.Write(body)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				return
+			}
+		}
+	}))
 }
 
 func httpResponse(statusCode int, body string) *http.Response {
