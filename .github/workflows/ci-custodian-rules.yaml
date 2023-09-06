@@ -15,7 +15,7 @@ jobs:
     if: github.repository == 'vmware-tanzu/kubeapps'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: gscho/setup-cloud-custodian@v1
         with:
           include-gcp: true
