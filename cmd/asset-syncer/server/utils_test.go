@@ -37,6 +37,7 @@ import (
 	tartest "github.com/vmware-tanzu/kubeapps/pkg/tarutil/test"
 	"helm.sh/helm/v3/pkg/chart"
 	log "k8s.io/klog/v2"
+	"oras.land/oras-go/v2/registry/remote/errcode"
 )
 
 var validRepoIndexYAMLBytes, _ = os.ReadFile("testdata/valid-index.yaml")
@@ -708,14 +709,23 @@ func Test_ociAPICli(t *testing.T) {
 			HttpClient:           server.Client(),
 		}
 		_, err = apiCli.TagList("apache", "my-user-agent")
-		assert.Equal(t, fmt.Errorf("GET request to [%s/v2/apache/tags/list] failed due to status [500]", server.URL), err)
+		if err == nil {
+			t.Fatalf("got: nil, want: error")
+		}
+		errResponse, ok := err.(*errcode.ErrorResponse)
+		if !ok {
+			t.Fatalf("got: %+v, want: *errcode.ErrorResponse", err)
+		}
+		if got, want := errResponse.StatusCode, http.StatusInternalServerError; got != want {
+			t.Errorf("got: %d, want: %d", got, want)
+		}
 	})
 
 	t.Run("TagList - successful request", func(t *testing.T) {
 		server := newFakeServer(t, map[string]*http.Response{
 			"/v2/apache/tags/list": &http.Response{
 				StatusCode: 200,
-				Body:       io.NopCloser(strings.NewReader(`{"name":"test/apache","tags":["7.5.1","8.1.1"]}`)),
+				Body:       io.NopCloser(strings.NewReader(`{"name":"apache","tags":["7.5.1","8.1.1"]}`)),
 			},
 		})
 		defer server.Close()
@@ -729,7 +739,7 @@ func Test_ociAPICli(t *testing.T) {
 		}
 		result, err := apiCli.TagList("apache", "my-user-agent")
 		assert.NoError(t, err)
-		expectedTagList := &TagList{Name: "test/apache", Tags: []string{"7.5.1", "8.1.1"}}
+		expectedTagList := &TagList{Name: "apache", Tags: []string{"7.5.1", "8.1.1"}}
 		if !cmp.Equal(result, expectedTagList) {
 			t.Errorf("Unexpected result %v", cmp.Diff(result, expectedTagList))
 		}
@@ -752,18 +762,59 @@ func Test_ociAPICli(t *testing.T) {
 			HttpClient:           server.Client(),
 		}
 		_, err = apiCli.IsHelmChart("apache-bad", "7.5.1", "my-user-agent")
-		assert.Equal(t, fmt.Errorf("GET request to [%s/v2/apache-bad/manifests/7.5.1] failed due to status [500]", server.URL), err)
+
+		if err == nil {
+			t.Fatalf("got: nil, want: error")
+		}
+		errResponse, ok := err.(*errcode.ErrorResponse)
+		if !ok {
+			t.Fatalf("got: %+v, want: *errcode.ErrorResponse", err)
+		}
+		if got, want := errResponse.StatusCode, http.StatusInternalServerError; got != want {
+			t.Errorf("got: %d, want: %d", got, want)
+		}
 	})
 
 	t.Run("IsHelmChart - successful request", func(t *testing.T) {
+		manifest751 := `{"schemaVersion":2,"config":{"mediaType":"other","digest":"sha256:123","size":665}}`
+		sha751, err := getSha256([]byte(manifest751))
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		sha751 = "sha256:" + sha751
+		header751 := http.Header{}
+		header751.Set("Docker-Content-Digest", sha751)
+		header751.Set("Content-Type", "foo")
+		header751.Set("Content-Length", fmt.Sprintf("%d", len(manifest751)))
+
+		manifest811 := `{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:456","size":665}}`
+		sha811, err := getSha256([]byte(manifest811))
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		sha811 = "sha256:" + sha811
+		header811 := http.Header{}
+		header811.Set("Docker-Content-Digest", sha811)
+		header811.Set("Content-Type", "foo")
+		header811.Set("Content-Length", fmt.Sprintf("%d", len(manifest811)))
 		server := newFakeServer(t, map[string]*http.Response{
-			"/v2/test/apache/manifests/7.5.1": &http.Response{
+			"/v2/test/apache/manifests/7.5.1": {
 				StatusCode: 200,
-				Body:       io.NopCloser(strings.NewReader(`{"schemaVersion":2,"config":{"mediaType":"other","digest":"sha256:123","size":665}}`)),
+				Header:     header751,
 			},
-			"/v2/test/apache/manifests/8.1.1": &http.Response{
+			"/v2/test/apache/blobs/" + sha751: {
 				StatusCode: 200,
-				Body:       io.NopCloser(strings.NewReader(`{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`)),
+				Body:       io.NopCloser(strings.NewReader(manifest751)),
+				Header:     header751,
+			},
+			"/v2/test/apache/manifests/8.1.1": {
+				StatusCode: 200,
+				Header:     header811,
+			},
+			"/v2/test/apache/blobs/" + sha811: {
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader(manifest811)),
+				Header:     header811,
 			},
 		})
 		defer server.Close()

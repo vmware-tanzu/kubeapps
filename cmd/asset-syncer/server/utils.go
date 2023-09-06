@@ -36,6 +36,9 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	helmregistry "helm.sh/helm/v3/pkg/registry"
 	log "k8s.io/klog/v2"
+	"oras.land/oras-go/v2/content"
+	"oras.land/oras-go/v2/registry/remote"
+	"oras.land/oras-go/v2/registry/remote/auth"
 	"sigs.k8s.io/yaml"
 )
 
@@ -349,35 +352,76 @@ type OciAPIClient struct {
 	GrpcClient ocicatalog.OCICatalogServiceClient
 }
 
+func (o *OciAPIClient) getOrasRepoClient(appName string, userAgent string) (*remote.Repository, error) {
+	url := *o.RegistryNamespaceUrl
+	repoName := path.Join(url.Path, appName)
+	repoRef := path.Join(url.Host, repoName)
+	orasRepoClient, err := remote.NewRepository(repoRef)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create ORAS client for %q: %w", repoRef, err)
+	}
+	if url.Scheme == "http" {
+		orasRepoClient.PlainHTTP = true
+	}
+
+	// Set the http client using our own which adds headers for auth.
+	header := auth.DefaultClient.Header.Clone()
+	if userAgent != "" {
+		header.Set("User-Agent", userAgent)
+	}
+	orasRepoClient.Client = &auth.Client{
+		Client: o.HttpClient,
+		Cache:  auth.DefaultCache,
+		Header: header,
+	}
+	return orasRepoClient, nil
+}
+
 // TagList retrieves the list of tags for an asset
 func (o *OciAPIClient) TagList(appName string, userAgent string) (*TagList, error) {
-	url := *o.RegistryNamespaceUrl
-	url.Path = path.Join("v2", url.Path, appName, "tags", "list")
-	headers := map[string]string{}
-	data, err := doReq(url.String(), o.HttpClient, headers, userAgent)
+	orasRepoClient, err := o.getOrasRepoClient(appName, userAgent)
 	if err != nil {
 		return nil, err
 	}
 
-	var appTags TagList
-	err = json.Unmarshal(data, &appTags)
+	tags := []string{}
+
+	err = orasRepoClient.Tags(context.TODO(), "", func(ts []string) error {
+		tags = append(tags, ts...)
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	return &appTags, nil
+
+	return &TagList{
+		Name: orasRepoClient.Reference.Repository,
+		Tags: tags,
+	}, nil
 }
 
 func (o *OciAPIClient) IsHelmChart(appName, tag, userAgent string) (bool, error) {
-	repoURL := *o.RegistryNamespaceUrl
-	repoURL.Path = path.Join("v2", repoURL.Path, appName, "manifests", tag)
-	log.V(4).Infof("Getting tag %s", repoURL.String())
-	headers := map[string]string{
-		"Accept": "application/vnd.oci.image.manifest.v1+json",
-	}
-	manifestData, err := doReq(repoURL.String(), o.HttpClient, headers, userAgent)
+	orasRepoClient, err := o.getOrasRepoClient(appName, userAgent)
 	if err != nil {
 		return false, err
 	}
+	ctx := context.TODO()
+	descriptor, err := orasRepoClient.Resolve(ctx, tag)
+	if err != nil {
+		log.Errorf("got error: %+v", err)
+		return false, err
+	}
+	rc, err := orasRepoClient.Fetch(ctx, descriptor)
+	if err != nil {
+		return false, err
+	}
+	defer rc.Close()
+
+	manifestData, err := content.ReadAll(rc, descriptor)
+	if err != nil {
+		return false, err
+	}
+
 	var manifest OCIManifest
 	err = json.Unmarshal(manifestData, &manifest)
 	if err != nil {
@@ -485,8 +529,6 @@ func (o *OciAPIClient) getVACReposForManifest(manifest *OCIManifest, userAgent s
 // Catalog returns the list of repositories in the (namespaced) registry
 // when discoverable.
 func (o *OciAPIClient) Catalog(ctx context.Context, userAgent string) ([]string, error) {
-	// TODO(minelson): all Kubeapps interactions with OCI registries should
-	// be updated to use the oras go lib.
 	manifest, err := o.catalogManifest(userAgent)
 	if err == nil {
 		return o.getVACReposForManifest(manifest, userAgent)

@@ -2945,10 +2945,10 @@
   dependencies:
     "@types/node" "*"
 
-"@types/lodash@^4.14.197":
-  version "4.14.197"
-  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.197.tgz#e95c5ddcc814ec3e84c891910a01e0c8a378c54b"
-  integrity sha512-BMVOiWs0uNxHVlHBgzTIqJYmj+PgCo4euloGF+5m4okL3rEYzM2EEv78mw8zWSMM57dM7kVIgJ2QDvwHSoCI5g==
+"@types/lodash@^4.14.198":
+  version "4.14.198"
+  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.198.tgz#4d27465257011aedc741a809f1269941fa2c5d4c"
+  integrity sha512-trNJ/vtMZYMLhfN45uLq4ShQSw0/S7xCTLLVM+WM1rmFpba/VS42jVUgaO3w/NOLiWR/09lnYk0yMaA/atdIsg==
 
 "@types/mdast@^3.0.0":
   version "3.0.12"
@@ -10222,10 +10222,10 @@ mkdirp@^0.5.1, mkdirp@~0.5.1:
   dependencies:
     minimist "^1.2.6"
 
-mock-socket@^9.2.1:
-  version "9.2.1"
-  resolved "https://registry.yarnpkg.com/mock-socket/-/mock-socket-9.2.1.tgz#cc9c0810aa4d0afe02d721dcb2b7e657c00e2282"
-  integrity sha512-aw9F9T9G2zpGipLLhSNh6ZpgUyUl4frcVmRN08uE1NWPWg43Wx6+sGPDbQ7E5iFZZDJW5b5bypMeAEHqTbIFag==
+mock-socket@^9.3.0:
+  version "9.3.0"
+  resolved "https://registry.yarnpkg.com/mock-socket/-/mock-socket-9.3.0.tgz#f98286c3d5a0d3633a9a88bb61e2d258190f2755"
+  integrity sha512-TFaQaIxXbzNke3z9nhSnMJFQn8l7QPmF+Luhh8MPHqkmr6B4fPquOTSILCjGUyxDBPv9AFxuaTGmRINDHDmkdQ==
 
 modern-normalize@1.1.0, modern-normalize@^1.1.0:
   version "1.1.0"
