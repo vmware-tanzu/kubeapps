@@ -43,8 +43,17 @@ import (
 )
 
 const (
-	additionalCAFile     = "/usr/local/share/ca-certificates/ca.crt"
-	numWorkers           = 10
+	additionalCAFile = "/usr/local/share/ca-certificates/ca.crt"
+	// numWorkersFiles is the number of workers used when pulling non-OCI charts
+	// to extract files (Readme, values, etc.), as well as chart icons
+	// generally.
+	numWorkersFiles = 10
+
+	// numWorkersOCI is the number of workers used when pulling charts from OCI
+	// registries. For now we restrict the number of workers pulling charts from
+	// OCI repositories to one, until we can better manage request limits for
+	// the Bitnami OCI repo on dockerhub.
+	numWorkersOCI        = 1
 	chartsIndexMediaType = "application/vnd.vmware.charts.index.config.v1+json"
 )
 
@@ -671,12 +680,12 @@ func chartImportWorker(repoURL *url.URL, r *OCIRegistry, chartJobs <-chan pullCh
 func (r *OCIRegistry) FilterIndex() {
 	unfilteredTags := r.tags
 	r.tags = map[string]TagList{}
-	checktagJobs := make(chan checkTagJob, numWorkers)
-	tagcheckRes := make(chan checkTagResult, numWorkers)
+	checktagJobs := make(chan checkTagJob, numWorkersOCI)
+	tagcheckRes := make(chan checkTagResult, numWorkersOCI)
 	var wg sync.WaitGroup
 
 	// Process 10 tags at a time
-	for i := 0; i < numWorkers; i++ {
+	for i := 0; i < numWorkersOCI; i++ {
 		wg.Add(1)
 		go func() {
 			tagCheckerWorker(r.ociCli, checktagJobs, tagcheckRes)
@@ -749,11 +758,11 @@ func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool) ([]model
 		r.repositories = repos
 	}
 
-	chartJobs := make(chan pullChartJob, numWorkers)
-	chartResults := make(chan pullChartResult, numWorkers)
+	chartJobs := make(chan pullChartJob, numWorkersOCI)
+	chartResults := make(chan pullChartResult, numWorkersOCI)
 	var wg sync.WaitGroup
 	// Process 10 charts at a time
-	for i := 0; i < numWorkers; i++ {
+	for i := 0; i < numWorkersOCI; i++ {
 		wg.Add(1)
 		go func() {
 			chartImportWorker(repoURL, r, chartJobs, chartResults)
@@ -766,10 +775,11 @@ func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool) ([]model
 		close(chartResults)
 	}()
 
-	log.V(4).Infof("Starting %d workers", numWorkers)
+	log.V(4).Infof("Starting %d workers", numWorkersOCI)
 	go func() {
 		for _, appName := range r.repositories {
 			if fetchLatestOnly {
+				// Ensure that the tag is a helm chart.
 				chartJobs <- pullChartJob{AppName: appName, Tag: r.tags[appName].Tags[0]}
 			} else {
 				for _, tag := range r.tags[appName].Tags {
@@ -909,12 +919,12 @@ type fileImporter struct {
 }
 
 func (f *fileImporter) fetchFiles(charts []models.Chart, repo ChartCatalog, userAgent string, passCredentials bool) {
-	iconJobs := make(chan models.Chart, numWorkers)
-	chartFilesJobs := make(chan importChartFilesJob, numWorkers)
+	iconJobs := make(chan models.Chart, numWorkersFiles)
+	chartFilesJobs := make(chan importChartFilesJob, numWorkersFiles)
 	var wg sync.WaitGroup
 
-	log.V(4).Infof("Starting %d workers", numWorkers)
-	for i := 0; i < numWorkers; i++ {
+	log.V(4).Infof("Starting %d workers", numWorkersFiles)
+	for i := 0; i < numWorkersFiles; i++ {
 		wg.Add(1)
 		go f.importWorker(&wg, iconJobs, chartFilesJobs, repo, userAgent, passCredentials)
 	}
