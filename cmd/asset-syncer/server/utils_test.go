@@ -564,7 +564,7 @@ func (r *fakeRepo) AppRepository() *models.AppRepositoryInternal {
 	return r.AppRepositoryInternal
 }
 
-func (r *fakeRepo) FilterIndex() {
+func (r *fakeRepo) SortVersions() {
 	// no-op
 }
 
@@ -1147,7 +1147,7 @@ func Test_OCIRegistry(t *testing.T) {
 		}, "expected tags")
 	})
 
-	t.Run("FilterIndex - order tags by semver", func(t *testing.T) {
+	t.Run("SortVersions - order tags by semver", func(t *testing.T) {
 		repo := OCIRegistry{
 			repositories: []string{"apache"},
 			AppRepositoryInternal: &models.AppRepositoryInternal{
@@ -1158,7 +1158,7 @@ func Test_OCIRegistry(t *testing.T) {
 			},
 			ociCli: &fakeOCIAPICli{},
 		}
-		repo.FilterIndex()
+		repo.SortVersions()
 		assert.Equal(t, repo.tags, map[string]TagList{
 			"apache": {Name: "test/apache", Tags: []string{"2.0.0", "1.1.0", "1.0.0"}},
 		}, "tag list")

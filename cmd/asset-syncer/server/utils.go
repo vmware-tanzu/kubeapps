@@ -139,7 +139,7 @@ func getSha256(src []byte) (string, error) {
 type ChartCatalog interface {
 	Checksum(ctx context.Context) (string, error)
 	AppRepository() *models.AppRepositoryInternal
-	FilterIndex()
+	SortVersions()
 	Charts(ctx context.Context, fetchLatestOnly bool) ([]models.Chart, error)
 	FetchFiles(cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error)
 }
@@ -162,8 +162,8 @@ func (r *HelmRepo) AppRepository() *models.AppRepositoryInternal {
 	return r.AppRepositoryInternal
 }
 
-// FilterRepo is a no-op for a Helm repo
-func (r *HelmRepo) FilterIndex() {
+// SortVersions is a no-op for a Helm repo as tags are listed in order.
+func (r *HelmRepo) SortVersions() {
 	// no-op
 }
 
@@ -676,50 +676,8 @@ func chartImportWorker(repoURL *url.URL, r *OCIRegistry, chartJobs <-chan pullCh
 	}
 }
 
-// FilterIndex remove non chart tags
-func (r *OCIRegistry) FilterIndex() {
-	unfilteredTags := r.tags
-	r.tags = map[string]TagList{}
-	checktagJobs := make(chan checkTagJob, numWorkersOCI)
-	tagcheckRes := make(chan checkTagResult, numWorkersOCI)
-	var wg sync.WaitGroup
-
-	// Process 10 tags at a time
-	for i := 0; i < numWorkersOCI; i++ {
-		wg.Add(1)
-		go func() {
-			tagCheckerWorker(r.ociCli, checktagJobs, tagcheckRes)
-			wg.Done()
-		}()
-	}
-	go func() {
-		wg.Wait()
-		close(tagcheckRes)
-	}()
-
-	go func() {
-		for _, appName := range r.repositories {
-			for _, tag := range unfilteredTags[appName].Tags {
-				checktagJobs <- checkTagJob{AppName: appName, Tag: tag}
-			}
-		}
-		close(checktagJobs)
-	}()
-
-	// Start receiving tags
-	for res := range tagcheckRes {
-		if res.Error == nil {
-			if res.isHelmChart {
-				r.tags[res.AppName] = TagList{
-					Name: unfilteredTags[res.AppName].Name,
-					Tags: append(r.tags[res.AppName].Tags, res.Tag),
-				}
-			}
-		} else {
-			log.Errorf("Failed to pull chart. Got %v", res.Error)
-		}
-	}
-
+// SortVersions sorts the tags for each app in semver order.
+func (r *OCIRegistry) SortVersions() {
 	// Order tags by semver
 	for _, appName := range r.repositories {
 		vs := make([]*semver.Version, len(r.tags[appName].Tags))
@@ -779,7 +737,10 @@ func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool) ([]model
 	go func() {
 		for _, appName := range r.repositories {
 			if fetchLatestOnly {
-				// Ensure that the tag is a helm chart.
+				// TODO(minelson): There's a small but non-zero chance that the
+				// latest tag is for non-chart data. We should iterate here to
+				// get the latest chart tag (after removing the expensive filter
+				// of all tags).
 				chartJobs <- pullChartJob{AppName: appName, Tag: r.tags[appName].Tags[0]}
 			} else {
 				for _, tag := range r.tags[appName].Tags {

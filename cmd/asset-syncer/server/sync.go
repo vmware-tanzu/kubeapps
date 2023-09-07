@@ -92,8 +92,8 @@ func Sync(serveOpts Config, version string, args []string) error {
 		return nil
 	}
 
-	// First filter the list of charts (still without applying custom filters)
-	repoIface.FilterIndex()
+	// Sort the versions for each app within the catalog according to semver.
+	repoIface.SortVersions()
 
 	fetchLatestOnlySlice := []bool{false}
 	if lastChecksum == "" {
