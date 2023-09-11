@@ -27,7 +27,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/google/go-containerregistry v0.15.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.17.1
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.0
 	github.com/itchyny/gojq v0.12.13
 	github.com/jinzhu/copier v0.4.0
 	github.com/lib/pq v1.10.9
@@ -209,7 +209,7 @@ require (
 	go.starlark.net v0.0.0-20230726094710-7dadff395006 // indirect
 	golang.org/x/crypto v0.13.0 // indirect
 	golang.org/x/image v0.9.0 // indirect
-	golang.org/x/oauth2 v0.11.0 // indirect
+	golang.org/x/oauth2 v0.12.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/term v0.12.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
