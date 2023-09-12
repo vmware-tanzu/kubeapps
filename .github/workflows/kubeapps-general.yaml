@@ -277,7 +277,7 @@ jobs:
         run: |
           echo "img_name=${{matrix.image}}" >> $GITHUB_OUTPUT
           echo "img_file=/tmp/${{matrix.image}}-image.tar" >> $GITHUB_OUTPUT
-      - uses: docker/metadata-action@v4
+      - uses: docker/metadata-action@v5
         id: meta
         with:
           images: ${{needs.setup.outputs.img_prefix}}${{steps.setup.outputs.img_name}}${{needs.setup.outputs.img_modifier}}
@@ -314,7 +314,7 @@ jobs:
           echo "img_name=${IMG_NAME}" >> $GITHUB_OUTPUT
           echo "img_file=/tmp/${IMG_NAME}-image.tar" >> $GITHUB_OUTPUT
       - uses: actions/checkout@v4
-      - uses: docker/metadata-action@v4
+      - uses: docker/metadata-action@v5
         id: meta
         with:
           images: ${{needs.setup.outputs.img_prefix}}${{steps.setup.outputs.img_name}}${{needs.setup.outputs.img_modifier}}
@@ -351,7 +351,7 @@ jobs:
           echo "img_name=${IMG_NAME}" >> $GITHUB_OUTPUT
           echo "img_file=/tmp/${IMG_NAME}-image.tar" >> $GITHUB_OUTPUT
       - uses: actions/checkout@v4
-      - uses: docker/metadata-action@v4
+      - uses: docker/metadata-action@v5
         id: meta
         with:
           images: ${{needs.setup.outputs.img_prefix}}${{steps.setup.outputs.img_name}}${{needs.setup.outputs.img_modifier}}
