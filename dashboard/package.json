@@ -107,7 +107,7 @@
     "eslint-plugin-redos": "^4.4.5",
     "jest-enzyme": "^7.1.2",
     "jest-plugin-context": "^2.9.0",
-    "mock-socket": "^9.3.0",
+    "mock-socket": "^9.3.1",
     "monaco-editor-webpack-plugin": "^7.1.0",
     "node-polyfill-webpack-plugin": "^2.0.1",
     "npm-run-all": "^4.1.5",
