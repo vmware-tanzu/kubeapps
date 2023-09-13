@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"image"
@@ -191,13 +192,13 @@ func Test_getOCIRepo(t *testing.T) {
 	assert.NoError(t, err)
 	defer f()
 	t.Run("it should add the auth header to the resolver", func(t *testing.T) {
-		repo, err := getOCIRepo("namespace", "test", "https://test", "Basic auth", nil, []string{}, &http.Client{}, &grpcClient)
+		repo, err := getOCIRepo("namespace", "test", "https://test", "Basic auth", nil, []string{}, &http.Client{}, &grpcClient, nil)
 		assert.NoError(t, err)
 		helmtest.CheckHeader(t, repo.(*OCIRegistry).puller, "Authorization", "Basic auth")
 	})
 
 	t.Run("it should use https for distribution spec API calls if protocol is oci", func(t *testing.T) {
-		repo, err := getOCIRepo("namespace", "test", "oci://test", "Basic auth", nil, []string{}, &http.Client{}, &grpcClient)
+		repo, err := getOCIRepo("namespace", "test", "oci://test", "Basic auth", nil, []string{}, &http.Client{}, &grpcClient, nil)
 		assert.NoError(t, err)
 
 		client := repo.(*OCIRegistry).ociCli
@@ -1108,62 +1109,6 @@ func (o *fakeOCIAPICli) Catalog(ctx context.Context, userAgent string) ([]string
 }
 
 func Test_OCIRegistry(t *testing.T) {
-	repo := OCIRegistry{
-		repositories: []string{"apache", "jenkins"},
-		AppRepositoryInternal: &models.AppRepositoryInternal{
-			URL: "http://oci-test",
-		},
-	}
-
-	t.Run("Checksum - failed request", func(t *testing.T) {
-		repo.ociCli = &fakeOCIAPICli{err: fmt.Errorf("request failed")}
-		_, err := repo.Checksum(context.Background())
-		assert.Equal(t, fmt.Errorf("request failed"), err)
-	})
-
-	t.Run("Checksum - success", func(t *testing.T) {
-		repo.ociCli = &fakeOCIAPICli{
-			tagList: &TagList{Name: "test/apache", Tags: []string{"1.0.0", "1.1.0"}},
-		}
-		checksum, err := repo.Checksum(context.Background())
-		assert.NoError(t, err)
-		assert.Equal(t, checksum, "b1b1ae17ddc8f83606acb8a175025a264e8634bb174b6e6a5799bdb5d20eaa58", "checksum")
-	})
-
-	t.Run("Checksum - stores the list of tags", func(t *testing.T) {
-		emptyRepo := OCIRegistry{
-			repositories: []string{"apache"},
-			AppRepositoryInternal: &models.AppRepositoryInternal{
-				URL: "http://oci-test",
-			},
-			ociCli: &fakeOCIAPICli{
-				tagList: &TagList{Name: "test/apache", Tags: []string{"1.0.0", "1.1.0"}},
-			},
-		}
-		_, err := emptyRepo.Checksum(context.Background())
-		assert.NoError(t, err)
-		assert.Equal(t, emptyRepo.tags, map[string]TagList{
-			"apache": {Name: "test/apache", Tags: []string{"1.0.0", "1.1.0"}},
-		}, "expected tags")
-	})
-
-	t.Run("SortVersions - order tags by semver", func(t *testing.T) {
-		repo := OCIRegistry{
-			repositories: []string{"apache"},
-			AppRepositoryInternal: &models.AppRepositoryInternal{
-				URL: "http://oci-test",
-			},
-			tags: map[string]TagList{
-				"apache": {Name: "test/apache", Tags: []string{"1.0.0", "2.0.0", "1.1.0"}},
-			},
-			ociCli: &fakeOCIAPICli{},
-		}
-		repo.SortVersions()
-		assert.Equal(t, repo.tags, map[string]TagList{
-			"apache": {Name: "test/apache", Tags: []string{"2.0.0", "1.1.0", "1.0.0"}},
-		}, "tag list")
-	})
-
 	chartYAML := `
 annotations:
   category: Infrastructure
@@ -1493,6 +1438,17 @@ version: 1.0.0
 					Body:       io.NopCloser(strings.NewReader(`{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`)),
 				}
 			}
+			tagList, err := json.Marshal(TagList{
+				Name: fmt.Sprintf("test/%s", tt.chartName),
+				Tags: tt.tags,
+			})
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			tags[fmt.Sprintf("/v2/%s/tags/list", tt.chartName)] = &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(bytes.NewReader(tagList)),
+			}
 			server := newFakeServer(t, tags)
 			defer server.Close()
 			url, err := parseRepoURL(server.URL)
@@ -1500,12 +1456,14 @@ version: 1.0.0
 				t.Fatalf("%+v", err)
 			}
 
+			pgManager, mockDB, cleanup := getMockManager(t)
+			defer cleanup()
+			mockDB.ExpectQuery("SELECT info FROM charts *").
+				WillReturnRows(sqlmock.NewRows([]string{"info"}).
+					AddRow(string("{}")))
 			chartsRepo := OCIRegistry{
 				repositories:          []string{tt.chartName},
 				AppRepositoryInternal: &models.AppRepositoryInternal{Name: tt.expected[0].Repo.Name, URL: tt.expected[0].Repo.URL},
-				tags: map[string]TagList{
-					tt.chartName: {Name: fmt.Sprintf("test/%s", tt.chartName), Tags: tt.tags},
-				},
 				puller: &helmfake.OCIPuller{
 					Content:  content,
 					Checksum: "123",
@@ -1514,6 +1472,7 @@ version: 1.0.0
 					RegistryNamespaceUrl: url,
 					HttpClient:           server.Client(),
 				},
+				manager: pgManager,
 			}
 			charts, err := chartsRepo.Charts(context.Background(), tt.shallow)
 			assert.NoError(t, err)
@@ -1538,18 +1497,30 @@ version: 1.0.0
 		gzw.Flush()
 		content[tag] = recorder.Body
 
+		tagList, err := json.Marshal(TagList{
+			Name: "test/common",
+			Tags: []string{"1.1.0"},
+		})
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+
 		fakeURIs := map[string]*http.Response{
-			"/v2/my-project/common/manifests/1.1.0": &http.Response{
+			"/v2/my-project/common/manifests/1.1.0": {
 				StatusCode: 200,
 				Body:       io.NopCloser(strings.NewReader(`{"schemaVersion":2,"config":{"mediaType":"application/vnd.cncf.helm.config.v1+json","digest":"sha256:123","size":665}}`)),
 			},
-			"/v2/my-project/charts-index/manifests/latest": &http.Response{
+			"/v2/my-project/charts-index/manifests/latest": {
 				StatusCode: 200,
 				Body:       io.NopCloser(strings.NewReader(chartsIndexManifestJSON)),
 			},
-			"/v2/my-project/charts-index/blobs/sha256:f9f7df0ae3f50aaf9ff390034cec4286d2aa43f061ce4bc7aa3c9ac862800aba": &http.Response{
+			"/v2/my-project/charts-index/blobs/sha256:f9f7df0ae3f50aaf9ff390034cec4286d2aa43f061ce4bc7aa3c9ac862800aba": {
 				StatusCode: 200,
 				Body:       io.NopCloser(strings.NewReader(chartsIndexSingleJSON)),
+			},
+			"/v2/my-project/common/tags/list": {
+				StatusCode: 200,
+				Body:       io.NopCloser(bytes.NewReader(tagList)),
 			},
 		}
 		server := newFakeServer(t, fakeURIs)
@@ -1559,12 +1530,15 @@ version: 1.0.0
 			t.Fatalf("%+v", err)
 		}
 
+		pgManager, mockDB, cleanup := getMockManager(t)
+		defer cleanup()
+		mockDB.ExpectQuery("SELECT info FROM charts *").
+			WillReturnRows(sqlmock.NewRows([]string{"info"}).
+				AddRow(string("{}")))
+
 		chartsRepo := OCIRegistry{
 			repositories:          []string{},
-			AppRepositoryInternal: &models.AppRepositoryInternal{Name: "common", URL: "https://example.com"},
-			tags: map[string]TagList{
-				"common": {Name: "test/common", Tags: []string{"1.1.0"}},
-			},
+			AppRepositoryInternal: &models.AppRepositoryInternal{Name: "common", URL: server.URL},
 			puller: &helmfake.OCIPuller{
 				Content:  content,
 				Checksum: "123",
@@ -1573,6 +1547,7 @@ version: 1.0.0
 				RegistryNamespaceUrl: url,
 				HttpClient:           server.Client(),
 			},
+			manager: pgManager,
 		}
 		charts, err := chartsRepo.Charts(context.Background(), true)
 		assert.NoError(t, err)

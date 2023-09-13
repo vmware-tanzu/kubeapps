@@ -73,7 +73,7 @@ func Sync(serveOpts Config, version string, args []string) error {
 			}
 			defer closer()
 		}
-		repoIface, err = getOCIRepo(serveOpts.Namespace, args[0], args[1], authorizationHeader, filters, serveOpts.OciRepositories, netClient, &grpcClient)
+		repoIface, err = getOCIRepo(serveOpts.Namespace, args[0], args[1], authorizationHeader, filters, serveOpts.OciRepositories, netClient, &grpcClient, manager)
 	}
 	if err != nil {
 		return fmt.Errorf("error: %v", err)
@@ -86,14 +86,11 @@ func Sync(serveOpts Config, version string, args []string) error {
 
 	// Check if the repo has been already processed
 	lastChecksum := manager.LastChecksum(models.AppRepository{Namespace: repo.Namespace, Name: repo.Name})
-	log.Infof("Last checksum: %v", lastChecksum)
+	log.V(3).Infof("Current checksum: %q. Previous checksum: %q", checksum, lastChecksum)
 	if lastChecksum == checksum {
-		log.Infof("Skipping repository since there are no updatesrepo.URL= %v", repo.URL)
+		log.V(3).Infof("Skipping repository since checksum has not changed. repo.URL= %q", repo.URL)
 		return nil
 	}
-
-	// Sort the versions for each app within the catalog according to semver.
-	repoIface.SortVersions()
 
 	fetchLatestOnlySlice := []bool{false}
 	if lastChecksum == "" {
@@ -108,7 +105,7 @@ func Sync(serveOpts Config, version string, args []string) error {
 			return fmt.Errorf("error: %v", err)
 		}
 		if len(charts) == 0 {
-			log.Infof("No charts in repository to be synced, repo.URL= %v", repo.URL)
+			log.Infof("No charts in repository needing to be synced, repo.URL= %v", repo.URL)
 			return nil
 		}
 		if err = manager.Sync(models.AppRepository{Name: repo.Name, Namespace: repo.Namespace}, charts); err != nil {
@@ -118,8 +115,7 @@ func Sync(serveOpts Config, version string, args []string) error {
 		// Fetch and store chart icons
 		fImporter := fileImporter{manager, netClient}
 		fImporter.fetchFiles(charts, repoIface, serveOpts.UserAgent, serveOpts.PassCredentials)
-		log.Infof("Repository synced, shallow=%v", fetchLatestOnly)
-
+		log.V(4).Infof("Repository synced, shallow=%v", fetchLatestOnly)
 	}
 
 	// Update cache in the database

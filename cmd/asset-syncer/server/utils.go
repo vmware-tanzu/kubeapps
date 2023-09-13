@@ -6,6 +6,7 @@ package server
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -36,6 +37,7 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	helmregistry "helm.sh/helm/v3/pkg/registry"
 	log "k8s.io/klog/v2"
+	"k8s.io/kubectl/pkg/util/slice"
 	"oras.land/oras-go/v2/content"
 	"oras.land/oras-go/v2/registry/remote"
 	"oras.land/oras-go/v2/registry/remote/auth"
@@ -50,10 +52,10 @@ const (
 	numWorkersFiles = 10
 
 	// numWorkersOCI is the number of workers used when pulling charts from OCI
-	// registries. For now we restrict the number of workers pulling charts from
-	// OCI repositories to one, until we can better manage request limits for
+	// registries. This may need to be adjusted depending on public
+	// registry limits until we can better manage request limits for
 	// the Bitnami OCI repo on dockerhub.
-	numWorkersOCI        = 1
+	numWorkersOCI        = 5
 	chartsIndexMediaType = "application/vnd.vmware.charts.index.config.v1+json"
 )
 
@@ -114,6 +116,7 @@ type assetManager interface {
 	Sync(repo models.AppRepository, charts []models.Chart) error
 	LastChecksum(repo models.AppRepository) string
 	UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error
+	ChartVersions(repo models.AppRepository) (map[string][]string, error)
 	Init() error
 	Close() error
 	InvalidateCache() error
@@ -139,7 +142,6 @@ func getSha256(src []byte) (string, error) {
 type ChartCatalog interface {
 	Checksum(ctx context.Context) (string, error)
 	AppRepository() *models.AppRepositoryInternal
-	SortVersions()
 	Charts(ctx context.Context, fetchLatestOnly bool) ([]models.Chart, error)
 	FetchFiles(cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error)
 }
@@ -160,11 +162,6 @@ func (r *HelmRepo) Checksum(ctx context.Context) (string, error) {
 // AppRepository returns the repo information
 func (r *HelmRepo) AppRepository() *models.AppRepositoryInternal {
 	return r.AppRepositoryInternal
-}
-
-// SortVersions is a no-op for a Helm repo as tags are listed in order.
-func (r *HelmRepo) SortVersions() {
-	// no-op
 }
 
 func compileJQ(rule *apprepov1alpha1.FilterRuleSpec) (*gojq.Code, []interface{}, error) {
@@ -309,10 +306,10 @@ type TagList struct {
 type OCIRegistry struct {
 	repositories []string
 	*models.AppRepositoryInternal
-	tags   map[string]TagList
-	puller helm.ChartPuller
-	ociCli ociAPI
-	filter *apprepov1alpha1.FilterRuleSpec
+	puller  helm.ChartPuller
+	ociCli  ociAPI
+	filter  *apprepov1alpha1.FilterRuleSpec
+	manager assetManager
 }
 
 func doReq(url string, cli *http.Client, headers map[string]string, userAgent string) ([]byte, error) {
@@ -452,14 +449,14 @@ func (o *OciAPIClient) CatalogAvailable(ctx context.Context, userAgent string) (
 	if err == nil {
 		return manifest.Config.MediaType == chartsIndexMediaType, nil
 	}
-	log.Infof("Unable to get VAC-published catalog manifest: %+v", err)
+	log.V(4).Infof("Unable to get VAC-published catalog manifest: %+v", err)
 	if o.GrpcClient == nil {
 		// This is not currently an error as the oci-catalog service is
 		// still optional.
 		log.Errorf("VAC index not available and OCI-Catalog client is nil. Unable to determine catalog")
 		return false, nil
 	}
-	log.Infof("Attempting catalog retrieval via oci-catalog service.")
+	log.V(4).Infof("Attempting catalog retrieval via oci-catalog service.")
 
 	repos_stream, err := o.GrpcClient.ListRepositoriesForRegistry(ctx, &ocicatalog.ListRepositoriesForRegistryRequest{
 		Registry:     o.RegistryNamespaceUrl.Host,
@@ -543,7 +540,7 @@ func (o *OciAPIClient) Catalog(ctx context.Context, userAgent string) ([]string,
 		return o.getVACReposForManifest(manifest, userAgent)
 	}
 	if o.GrpcClient != nil {
-		log.Infof("Unable to find VAC index: %+v. Attempting OCI-Catalog", err)
+		log.V(4).Infof("Unable to find VAC index: %+v. Attempting OCI-Catalog", err)
 		repos_stream, err := o.GrpcClient.ListRepositoriesForRegistry(ctx, &ocicatalog.ListRepositoriesForRegistryRequest{
 			Registry:     o.RegistryNamespaceUrl.Host,
 			Namespace:    o.RegistryNamespaceUrl.Path,
@@ -558,6 +555,7 @@ func (o *OciAPIClient) Catalog(ctx context.Context, userAgent string) ([]string,
 			repo, err := repos_stream.Recv()
 			if err != nil {
 				if err == io.EOF {
+					log.V(4).Infof("Received repos from oci-catalog service: %+v", repos)
 					return repos, nil
 				}
 				return nil, fmt.Errorf("error receiving OCI Repositories: %+v", err)
@@ -565,6 +563,7 @@ func (o *OciAPIClient) Catalog(ctx context.Context, userAgent string) ([]string,
 			repos = append(repos, repo.Name)
 		}
 	} else {
+		log.V(4).Infof("Unable to find VAC index: %+v and oci-catalog service not configured", err)
 		return nil, err
 	}
 }
@@ -576,34 +575,16 @@ func tagCheckerWorker(o ociAPI, tagJobs <-chan checkTagJob, resultChan chan chec
 	}
 }
 
-// Checksum returns the sha256 of the repo by concatenating tags for
-// all repositories within the registry and returning the sha256.
-// Caveat: Mutated image tags won't be detected as new
+// Checksum returns a random sha256 so that the OCI sync will always be
+// performed.  This is because we check each app individually whether it has any
+// versions that need syncing.
 func (r *OCIRegistry) Checksum(ctx context.Context) (string, error) {
-	r.tags = map[string]TagList{}
-
-	if len(r.repositories) == 0 {
-		repos, err := r.ociCli.Catalog(ctx, "")
-		if err != nil {
-			return "", err
-		}
-		r.repositories = repos
-	}
-
-	for _, appName := range r.repositories {
-		tags, err := r.ociCli.TagList(appName, GetUserAgent("", ""))
-		if err != nil {
-			return "", err
-		}
-		r.tags[appName] = *tags
-	}
-
-	content, err := json.Marshal(r.tags)
-	if err != nil {
+	data := make([]byte, 10)
+	if _, err := rand.Read(data); err == nil {
+		return fmt.Sprintf("%x", sha256.Sum256(data)), nil
+	} else {
 		return "", err
 	}
-
-	return getSha256(content)
 }
 
 // AppRepository returns the repo information
@@ -613,7 +594,6 @@ func (r *OCIRegistry) AppRepository() *models.AppRepositoryInternal {
 
 func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPuller, r *OCIRegistry) (*models.Chart, error) {
 	ref := path.Join(repoURL.Host, repoURL.Path, fmt.Sprintf("%s:%s", appName, tag))
-
 	chartBuffer, digest, err := puller.PullOCIChart(ref)
 	if err != nil {
 		return nil, err
@@ -676,38 +656,31 @@ func chartImportWorker(repoURL *url.URL, r *OCIRegistry, chartJobs <-chan pullCh
 	}
 }
 
-// SortVersions sorts the tags for each app in semver order.
-func (r *OCIRegistry) SortVersions() {
-	// Order tags by semver
-	for _, appName := range r.repositories {
-		vs := make([]*semver.Version, len(r.tags[appName].Tags))
-		for i, r := range r.tags[appName].Tags {
-			v, err := semver.NewVersion(r)
-			if err != nil {
-				log.Errorf("Error parsing version: %s", err)
-			}
-			vs[i] = v
+// orderVersions orders the slice of versions using reverse semver
+func orderVersions(versions []string) ([]string, error) {
+	vs := make([]*semver.Version, len(versions))
+	for i, r := range versions {
+		v, err := semver.NewVersion(r)
+		if err != nil {
+			log.Errorf("Error parsing version: %s", err)
 		}
-		sort.Sort(sort.Reverse(semver.Collection(vs)))
-		orderedTags := []string{}
-		for _, v := range vs {
-			orderedTags = append(orderedTags, v.String())
-		}
-		r.tags[appName] = TagList{
-			Name: r.tags[appName].Name,
-			Tags: orderedTags,
-		}
+		vs[i] = v
 	}
+	sort.Sort(sort.Reverse(semver.Collection(vs)))
+	orderedVersions := make([]string, len(versions))
+	for i, v := range vs {
+		orderedVersions[i] = v.String()
+	}
+	return orderedVersions, nil
 }
 
-// Charts retrieve the list of charts exposed in the repo
+// Charts retrieve the list of actual charts exposed in the repo.
 func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool) ([]models.Chart, error) {
 	result := map[string]*models.Chart{}
 	repoURL, err := parseRepoURL(r.AppRepositoryInternal.URL)
 	if err != nil {
 		return nil, err
 	}
-
 	if len(r.repositories) == 0 {
 		repos, err := r.ociCli.Catalog(ctx, "")
 		if err != nil {
@@ -715,11 +688,10 @@ func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool) ([]model
 		}
 		r.repositories = repos
 	}
-
 	chartJobs := make(chan pullChartJob, numWorkersOCI)
 	chartResults := make(chan pullChartResult, numWorkersOCI)
 	var wg sync.WaitGroup
-	// Process 10 charts at a time
+	// Process n charts at a time
 	for i := 0; i < numWorkersOCI; i++ {
 		wg.Add(1)
 		go func() {
@@ -733,19 +705,49 @@ func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool) ([]model
 		close(chartResults)
 	}()
 
+	// Get the current versions that we're aware of from the DB
+	repo := models.AppRepository{Namespace: r.Namespace, Name: r.Name, URL: r.URL, Type: r.Type}
+	currentVersionsForApp, err := r.manager.ChartVersions(repo)
+	if err != nil {
+		return nil, err
+	}
+
 	log.V(4).Infof("Starting %d workers", numWorkersOCI)
 	go func() {
 		for _, appName := range r.repositories {
+			// Get the list of tags for the app
+			tagList, err := r.ociCli.TagList(appName, GetUserAgent("", ""))
+			if err != nil {
+				log.V(3).ErrorS(err, "unable to list tags")
+				log.Errorf("unable to list tags: %+v", err)
+				close(chartJobs)
+				return
+			}
+			tags, err := orderVersions(tagList.Tags)
+			if err != nil {
+				log.V(3).ErrorS(err, "Error parsing version")
+				close(chartJobs)
+				return
+			}
+			// Find the tags present in DB, in order verify the difference.
+			syncedVersions := currentVersionsForApp[appName]
 			if fetchLatestOnly {
 				// TODO(minelson): There's a small but non-zero chance that the
 				// latest tag is for non-chart data. We should iterate here to
 				// get the latest chart tag (after removing the expensive filter
 				// of all tags).
-				chartJobs <- pullChartJob{AppName: appName, Tag: r.tags[appName].Tags[0]}
+				chartJobs <- pullChartJob{AppName: appName, Tag: tags[0]}
+				log.V(4).Infof("Queued only the first tag for %q for shallow sync : %q", appName, tags[0])
 			} else {
-				for _, tag := range r.tags[appName].Tags {
-					chartJobs <- pullChartJob{AppName: appName, Tag: tag}
+				// We want to sync only those versions that we don't already have synced
+				tagsToSync := []string{}
+				for _, tag := range tags {
+					if !slice.ContainsString(syncedVersions, tag, func(s string) string { return s }) {
+						tagsToSync = append(tagsToSync, tag)
+						chartJobs <- pullChartJob{AppName: appName, Tag: tag}
+					}
 				}
+				log.V(4).Infof("Queued the following tags for %q, as they were not yet cached: %v", appName, tagsToSync)
 			}
 		}
 		close(chartJobs)
@@ -819,7 +821,7 @@ func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filter *a
 	}, nil
 }
 
-func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filter *apprepov1alpha1.FilterRuleSpec, ociRepos []string, netClient *http.Client, grpcClient *ocicatalog.OCICatalogServiceClient) (ChartCatalog, error) {
+func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filter *apprepov1alpha1.FilterRuleSpec, ociRepos []string, netClient *http.Client, grpcClient *ocicatalog.OCICatalogServiceClient, manager assetManager) (ChartCatalog, error) {
 	url, err := parseRepoURL(repoURL)
 	if err != nil {
 		log.Errorf("Failed to parse URL, url=%s: %v", repoURL, err)
@@ -844,6 +846,7 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filter *ap
 		puller:                &helm.OCIPuller{Resolver: ociResolver},
 		ociCli:                &OciAPIClient{RegistryNamespaceUrl: url, HttpClient: netClient, GrpcClient: *grpcClient},
 		filter:                filter,
+		manager:               manager,
 	}, nil
 }
 

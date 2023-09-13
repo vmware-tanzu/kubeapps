@@ -104,7 +104,7 @@ func init() {
 	log.InitFlags(nil)
 	cobra.OnInitialize(initConfig)
 	//set initial value of verbosity
-	err := flag.Set("v", "3")
+	err := flag.Set("v", "4")
 	if err != nil {
 		log.Errorf("Error parsing verbosity: %v", viper.ConfigFileUsed())
 	}
