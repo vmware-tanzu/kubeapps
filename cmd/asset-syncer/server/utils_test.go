@@ -1087,27 +1087,6 @@ func Test_ociAPICli(t *testing.T) {
 	})
 }
 
-type fakeOCIAPICli struct {
-	tagList *TagList
-	err     error
-}
-
-func (o *fakeOCIAPICli) TagList(appName, userAgent string) (*TagList, error) {
-	return o.tagList, o.err
-}
-
-func (o *fakeOCIAPICli) IsHelmChart(appName, tag, userAgent string) (bool, error) {
-	return true, o.err
-}
-
-func (o *fakeOCIAPICli) CatalogAvailable(ctx context.Context, userAgent string) (bool, error) {
-	return false, nil
-}
-
-func (o *fakeOCIAPICli) Catalog(ctx context.Context, userAgent string) ([]string, error) {
-	return nil, nil
-}
-
 func Test_OCIRegistry(t *testing.T) {
 	chartYAML := `
 annotations:

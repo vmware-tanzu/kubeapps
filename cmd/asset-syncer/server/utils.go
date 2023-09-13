@@ -95,17 +95,6 @@ type pullChartResult struct {
 	Error error
 }
 
-type checkTagJob struct {
-	AppName string
-	Tag     string
-}
-
-type checkTagResult struct {
-	checkTagJob
-	isHelmChart bool
-	Error       error
-}
-
 func parseRepoURL(repoURL string) (*url.URL, error) {
 	repoURL = strings.TrimSpace(repoURL)
 	return url.ParseRequestURI(repoURL)
@@ -565,13 +554,6 @@ func (o *OciAPIClient) Catalog(ctx context.Context, userAgent string) ([]string,
 	} else {
 		log.V(4).Infof("Unable to find VAC index: %+v and oci-catalog service not configured", err)
 		return nil, err
-	}
-}
-
-func tagCheckerWorker(o ociAPI, tagJobs <-chan checkTagJob, resultChan chan checkTagResult) {
-	for j := range tagJobs {
-		isHelmChart, err := o.IsHelmChart(j.AppName, j.Tag, GetUserAgent("", ""))
-		resultChan <- checkTagResult{j, isHelmChart, err}
 	}
 }
 
