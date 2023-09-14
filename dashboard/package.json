@@ -58,7 +58,7 @@
     "react-minimal-pie-chart": "^8.4.0",
     "react-monaco-editor": "^0.54.0",
     "react-redux": "^7.2.9",
-    "react-router-dom": "^6.15.0",
+    "react-router-dom": "^6.16.0",
     "react-router-hash-link": "^2.4.3",
     "react-tooltip": "^5.21.3",
     "react-transition-group": "^4.4.5",
