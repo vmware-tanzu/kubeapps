@@ -86,13 +86,13 @@ type importChartFilesJob struct {
 }
 
 type pullChartJob struct {
-	AppName string
-	Tag     string
+	AppName        string
+	VersionsToSync []string
 }
 
 type pullChartResult struct {
-	Chart *models.Chart
-	Error error
+	Chart  models.Chart
+	Errors []error
 }
 
 func parseRepoURL(repoURL string) (*url.URL, error) {
@@ -131,8 +131,9 @@ func getSha256(src []byte) (string, error) {
 type ChartCatalog interface {
 	Checksum(ctx context.Context) (string, error)
 	AppRepository() *models.AppRepositoryInternal
-	Charts(ctx context.Context, fetchLatestOnly bool) ([]models.Chart, error)
+	Charts(ctx context.Context, fetchLatestOnly bool, charts chan pullChartResult) error
 	FetchFiles(cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error)
+	Filters() *apprepov1alpha1.FilterRuleSpec
 }
 
 // HelmRepo implements the ChartCatalog interface for chartmuseum-like repositories
@@ -151,6 +152,10 @@ func (r *HelmRepo) Checksum(ctx context.Context) (string, error) {
 // AppRepository returns the repo information
 func (r *HelmRepo) AppRepository() *models.AppRepositoryInternal {
 	return r.AppRepositoryInternal
+}
+
+func (r *HelmRepo) Filters() *apprepov1alpha1.FilterRuleSpec {
+	return r.filter
 }
 
 func compileJQ(rule *apprepov1alpha1.FilterRuleSpec) (*gojq.Code, []interface{}, error) {
@@ -188,14 +193,10 @@ func satisfy(chartInput map[string]interface{}, code *gojq.Code, vars []interfac
 }
 
 // Make sure charts are treated without escaped data
-func unescapeChartsData(charts []models.Chart) []models.Chart {
-	result := []models.Chart{}
-	for _, chart := range charts {
-		chart.Name = unescapeOrDefaultValue(chart.Name)
-		chart.ID = unescapeOrDefaultValue(chart.ID)
-		result = append(result, chart)
-	}
-	return result
+func unescapeChartData(chart models.Chart) models.Chart {
+	chart.Name = unescapeOrDefaultValue(chart.Name)
+	chart.ID = unescapeOrDefaultValue(chart.ID)
+	return chart
 }
 
 // Unescape string or return value itself if error
@@ -215,57 +216,66 @@ func unescapeOrDefaultValue(value string) string {
 	}
 }
 
-func filterCharts(charts []models.Chart, filterRule *apprepov1alpha1.FilterRuleSpec) ([]models.Chart, error) {
+func filterMatches(chart models.Chart, filterRule *apprepov1alpha1.FilterRuleSpec) (bool, error) {
 	if filterRule == nil || filterRule.JQ == "" {
 		// No filter
-		return charts, nil
+		return true, nil
 	}
 	jqCode, vars, err := compileJQ(filterRule)
 	if err != nil {
-		return nil, err
+		return false, err
 	}
-	result := []models.Chart{}
-	for _, chart := range charts {
-		// Convert the chart to a map[interface]{}
-		chartBytes, err := json.Marshal(chart)
-		if err != nil {
-			return nil, fmt.Errorf("unable to parse chart: %v", err)
-		}
-		chartInput := map[string]interface{}{}
-		err = json.Unmarshal(chartBytes, &chartInput)
-		if err != nil {
-			return nil, fmt.Errorf("unable to parse chart: %v", err)
-		}
+	// Convert the chart to a map[interface]{}
+	chartBytes, err := json.Marshal(chart)
+	if err != nil {
+		return false, fmt.Errorf("unable to parse chart: %v", err)
+	}
+	chartInput := map[string]interface{}{}
+	err = json.Unmarshal(chartBytes, &chartInput)
+	if err != nil {
+		return false, fmt.Errorf("unable to parse chart: %v", err)
+	}
 
-		satisfied, err := satisfy(chartInput, jqCode, vars)
-		if err != nil {
-			return nil, err
-		}
-		if satisfied {
-			// All rules have been checked and matched
-			result = append(result, chart)
-		}
+	satisfied, err := satisfy(chartInput, jqCode, vars)
+	if err != nil {
+		return false, err
 	}
-	return result, nil
+	return satisfied, nil
 }
 
 // Charts retrieve the list of charts exposed in the repo
-func (r *HelmRepo) Charts(ctx context.Context, fetchLatestOnly bool) ([]models.Chart, error) {
+func (r *HelmRepo) Charts(ctx context.Context, fetchLatestOnly bool, chartResults chan pullChartResult) error {
 	repo := &models.AppRepository{
 		Namespace: r.Namespace,
 		Name:      r.Name,
 		URL:       r.URL,
 		Type:      r.Type,
 	}
+	// ChartsFromIndex currently gets all charts quick quickly (as it is just
+	// parsing the index).
 	charts, err := helm.ChartsFromIndex(r.content, repo, fetchLatestOnly)
 	if err != nil {
-		return []models.Chart{}, err
+		return err
 	}
 	if len(charts) == 0 {
-		return []models.Chart{}, nil
+		close(chartResults)
+		return nil
 	}
 
-	return filterCharts(unescapeChartsData(charts), r.filter)
+	unescapedCharts := []models.Chart{}
+	for _, c := range charts {
+		unescapedCharts = append(unescapedCharts, unescapeChartData(c))
+	}
+
+	go func() {
+		for _, chart := range unescapedCharts {
+			chartResults <- pullChartResult{
+				Chart: chart,
+			}
+		}
+		close(chartResults)
+	}()
+	return nil
 }
 
 // FetchFiles retrieves the important files of a chart and version from the repo
@@ -569,6 +579,10 @@ func (r *OCIRegistry) Checksum(ctx context.Context) (string, error) {
 	}
 }
 
+func (r *OCIRegistry) Filters() *apprepov1alpha1.FilterRuleSpec {
+	return r.filter
+}
+
 // AppRepository returns the repo information
 func (r *OCIRegistry) AppRepository() *models.AppRepositoryInternal {
 	return r.AppRepositoryInternal
@@ -632,9 +646,25 @@ func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPull
 
 func chartImportWorker(repoURL *url.URL, r *OCIRegistry, chartJobs <-chan pullChartJob, resultChan chan pullChartResult) {
 	for j := range chartJobs {
-		log.V(4).Infof("Pulling chart, name=%s, tag=%s", j.AppName, j.Tag)
-		chart, err := pullAndExtract(repoURL, j.AppName, j.Tag, r.puller, r)
-		resultChan <- pullChartResult{chart, err}
+		var chart *models.Chart
+		errors := []error{}
+		log.V(4).Infof("Pulling chart, name=%s, tags=%s", j.AppName, j.VersionsToSync)
+		for _, tag := range j.VersionsToSync {
+			c, err := pullAndExtract(repoURL, j.AppName, tag, r.puller, r)
+			if err != nil {
+				errors = append(errors, err)
+				continue
+			}
+			// The model is *weird*, but the first (latest) chart is used as the
+			// main chart, and has a single chart version of itself, so
+			// subsequent charts are just used for the extra chart versions.
+			if chart == nil {
+				chart = c
+			} else {
+				chart.ChartVersions = append(chart.ChartVersions, c.ChartVersions...)
+			}
+		}
+		resultChan <- pullChartResult{*chart, errors}
 	}
 }
 
@@ -657,23 +687,22 @@ func orderVersions(versions []string) ([]string, error) {
 }
 
 // Charts retrieve the list of actual charts exposed in the repo.
-func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool) ([]models.Chart, error) {
-	result := map[string]*models.Chart{}
+func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool, chartBatchResults chan pullChartResult) error {
 	repoURL, err := parseRepoURL(r.AppRepositoryInternal.URL)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if len(r.repositories) == 0 {
 		repos, err := r.ociCli.Catalog(ctx, "")
 		if err != nil {
-			return nil, err
+			return err
 		}
 		r.repositories = repos
 	}
 	chartJobs := make(chan pullChartJob, numWorkersOCI)
 	chartResults := make(chan pullChartResult, numWorkersOCI)
 	var wg sync.WaitGroup
-	// Process n charts at a time
+	// Process n apps at a time
 	for i := 0; i < numWorkersOCI; i++ {
 		wg.Add(1)
 		go func() {
@@ -691,7 +720,7 @@ func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool) ([]model
 	repo := models.AppRepository{Namespace: r.Namespace, Name: r.Name, URL: r.URL, Type: r.Type}
 	currentVersionsForApp, err := r.manager.ChartVersions(repo)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	log.V(4).Infof("Starting %d workers", numWorkersOCI)
@@ -718,44 +747,39 @@ func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool) ([]model
 				// latest tag is for non-chart data. We should iterate here to
 				// get the latest chart tag (after removing the expensive filter
 				// of all tags).
-				chartJobs <- pullChartJob{AppName: appName, Tag: tags[0]}
+				chartJobs <- pullChartJob{
+					AppName:        appName,
+					VersionsToSync: []string{tags[0]},
+				}
 				log.V(4).Infof("Queued only the first tag for %q for shallow sync : %q", appName, tags[0])
 			} else {
 				// We want to sync only those versions that we don't already have synced
-				tagsToSync := []string{}
+				versionsToSync := []string{}
 				for _, tag := range tags {
 					if !slice.ContainsString(syncedVersions, tag, func(s string) string { return s }) {
-						tagsToSync = append(tagsToSync, tag)
-						chartJobs <- pullChartJob{AppName: appName, Tag: tag}
+						versionsToSync = append(versionsToSync, tag)
 					}
 				}
-				log.V(4).Infof("Queued the following tags for %q, as they were not yet cached: %v", appName, tagsToSync)
+				chartJobs <- pullChartJob{
+					AppName:        appName,
+					VersionsToSync: versionsToSync,
+				}
+				log.V(4).Infof("Queued %q tags %v for sync", appName, versionsToSync)
 			}
 		}
 		close(chartJobs)
 	}()
 
-	// Start receiving charts
-	for res := range chartResults {
-		if res.Error == nil {
-			ch := res.Chart
-			log.V(4).Infof("Received chart %s from channel", ch.ID)
-			if r, ok := result[ch.ID]; ok {
-				// Chart already exists, append version
-				r.ChartVersions = append(r.ChartVersions, ch.ChartVersions...)
-			} else {
-				result[ch.ID] = ch
-			}
-		} else {
-			log.Errorf("Failed to pull chart. Got %v", res.Error)
+	go func() {
+		// Start receiving charts from the multiple workers and pass them down
+		// to the caller.
+		for res := range chartResults {
+			chartBatchResults <- res
 		}
-	}
+		close(chartBatchResults)
+	}()
 
-	charts := []models.Chart{}
-	for _, c := range result {
-		charts = append(charts, *c)
-	}
-	return filterCharts(charts, r.filter)
+	return nil
 }
 
 // FetchFiles do nothing for the OCI case since they have been already fetched in the Charts() method

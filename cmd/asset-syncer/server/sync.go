@@ -100,22 +100,48 @@ func Sync(serveOpts Config, version string, args []string) error {
 	}
 
 	for _, fetchLatestOnly := range fetchLatestOnlySlice {
-		charts, err := repoIface.Charts(ctx, fetchLatestOnly)
+		// Update so that we get charts for a specific app each time,
+		// perhaps with a channel? Then can sync just those for that app
+		// before moving on to the next one?
+		chartResults := make(chan pullChartResult, 2)
+		err := repoIface.Charts(ctx, fetchLatestOnly, chartResults)
 		if err != nil {
 			return fmt.Errorf("error: %v", err)
 		}
-		if len(charts) == 0 {
-			log.Infof("No charts in repository needing to be synced, repo.URL= %v", repo.URL)
-			return nil
-		}
-		if err = manager.Sync(models.AppRepository{Name: repo.Name, Namespace: repo.Namespace}, charts); err != nil {
-			return fmt.Errorf("can't add chart repository to database: %v", err)
-		}
+		// Need to:
+		// 2. Somehow communicate the chart results which are already synced
+		//    so that we only sync the new ones, and don't delete the existing
+		//    ones? Alternatively, return the charts to be deleted.
+		// 3. Sync each batch without deleting existing.
+		for chartBatch := range chartResults {
+			if len(chartBatch.Errors) != 0 {
+				chartName := chartBatch.Chart.Name
 
-		// Fetch and store chart icons
-		fImporter := fileImporter{manager, netClient}
-		fImporter.fetchFiles(charts, repoIface, serveOpts.UserAgent, serveOpts.PassCredentials)
-		log.V(4).Infof("Repository synced, shallow=%v", fetchLatestOnly)
+				log.Infof("There were errors syncing chart %q: %v", chartName, chartBatch.Errors)
+				if len(chartBatch.Chart.ChartVersions) == 0 {
+					continue
+				}
+			}
+
+			matches, err := filterMatches(chartBatch.Chart, repoIface.Filters())
+			if err != nil {
+				return fmt.Errorf("error while applying filter: %w", err)
+			}
+			if !matches {
+				continue
+			}
+
+			// TODO(minelson): update to pass in tags to delete.
+			// Update Sync to take just *models.Chart and tags to delete.
+			if err = manager.Sync(models.AppRepository{Name: repo.Name, Namespace: repo.Namespace}, []models.Chart{chartBatch.Chart}); err != nil {
+				return fmt.Errorf("can't add chart repository to database: %v", err)
+			}
+
+			// Fetch and store chart icons
+			fImporter := fileImporter{manager, netClient}
+			fImporter.fetchFiles([]models.Chart{chartBatch.Chart}, repoIface, serveOpts.UserAgent, serveOpts.PassCredentials)
+			log.V(4).Infof("Repository synced, shallow=%v", fetchLatestOnly)
+		}
 	}
 
 	// Update cache in the database
