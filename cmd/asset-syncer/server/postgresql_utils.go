@@ -8,7 +8,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -104,16 +103,20 @@ func (m *postgresAssetManager) importCharts(charts []models.Chart, repo models.A
 }
 
 func (m *postgresAssetManager) removeMissingCharts(repo models.AppRepository, charts []models.Chart) error {
-	var chartIDs []string
-	for _, chart := range charts {
-		chartIDs = append(chartIDs, fmt.Sprintf("'%s'", chart.ID))
-	}
-	chartIDsString := strings.Join(chartIDs, ", ")
-	rows, err := m.DB.Query(fmt.Sprintf("DELETE FROM %s WHERE chart_id NOT IN (%s) AND repo_name = $1 AND repo_namespace = $2", dbutils.ChartTable, chartIDsString), repo.Name, repo.Namespace)
-	if rows != nil {
-		defer rows.Close()
-	}
-	return err
+	// TODO(minelson): Need to refactor this to accept a list of chart (IDs?)
+	// to remove, rather than naively removing all charts are not in the
+	// set of synced charts.
+	return nil
+	// var chartIDs []string
+	// for _, chart := range charts {
+	// 	chartIDs = append(chartIDs, fmt.Sprintf("'%s'", chart.ID))
+	// }
+	// chartIDsString := strings.Join(chartIDs, ", ")
+	// rows, err := m.DB.Query(fmt.Sprintf("DELETE FROM %s WHERE chart_id NOT IN (%s) AND repo_name = $1 AND repo_namespace = $2", dbutils.ChartTable, chartIDsString), repo.Name, repo.Namespace)
+	// if rows != nil {
+	// 	defer rows.Close()
+	// }
+	// return err
 }
 
 func (m *postgresAssetManager) Delete(repo models.AppRepository) error {

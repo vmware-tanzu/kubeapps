@@ -100,19 +100,21 @@ func Sync(serveOpts Config, version string, args []string) error {
 	}
 
 	for _, fetchLatestOnly := range fetchLatestOnlySlice {
-		// Update so that we get charts for a specific app each time,
-		// perhaps with a channel? Then can sync just those for that app
-		// before moving on to the next one?
+		// We want to receive results per app so that we can sync that app
+		// immediately and have a more responsive UX experience. A channel
+		// gives us a way to pull results as they're generated (like an
+		// iterator).
 		chartResults := make(chan pullChartResult, 2)
 		err := repoIface.Charts(ctx, fetchLatestOnly, chartResults)
 		if err != nil {
 			return fmt.Errorf("error: %v", err)
 		}
-		// Need to:
-		// 2. Somehow communicate the chart results which are already synced
-		//    so that we only sync the new ones, and don't delete the existing
-		//    ones? Alternatively, return the charts to be deleted.
-		// 3. Sync each batch without deleting existing.
+
+		// TODO(minelson): Still need to ensure that what is synced includes
+		// the previously synced data, not just the new data to be synced.
+		// Also need to collect the apps to be deleted, rather than simply
+		// deleting everything that's not in the set of charts being synced
+		// (as it does today).
 		for chartBatch := range chartResults {
 			if len(chartBatch.Errors) != 0 {
 				chartName := chartBatch.Chart.Name
