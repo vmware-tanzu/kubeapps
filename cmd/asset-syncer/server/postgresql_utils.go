@@ -181,7 +181,7 @@ func (m *postgresAssetManager) insertFiles(chartId string, files models.ChartFil
 }
 
 // ChartVersions returns a map of ordered versions for each chart in the repo.
-func (m *postgresAssetManager) ChartVersions(repo models.AppRepository) (map[string][]string, error) {
+func (m *postgresAssetManager) ChartVersions(repo models.AppRepository) (map[string]*models.Chart, error) {
 	dbQuery := fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND repo_name = $2 ORDER BY (info->>'name')", dbutils.ChartTable)
 
 	charts, err := m.QueryAllCharts(dbQuery, repo.Namespace, repo.Name)
@@ -189,17 +189,9 @@ func (m *postgresAssetManager) ChartVersions(repo models.AppRepository) (map[str
 		return nil, err
 	}
 
-	chartVersions := map[string][]string{}
+	chartsByName := map[string]*models.Chart{}
 	for _, chart := range charts {
-		versions := make([]string, len(chart.ChartVersions))
-		for i, cv := range chart.ChartVersions {
-			versions[i] = cv.Version
-		}
-		orderedVersions, err := orderVersions(versions)
-		if err != nil {
-			return nil, err
-		}
-		chartVersions[chart.Name] = orderedVersions
+		chartsByName[chart.Name] = chart
 	}
-	return chartVersions, nil
+	return chartsByName, nil
 }

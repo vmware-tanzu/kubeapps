@@ -1,4 +1,4 @@
-// Copyright 2021-2022 the Kubeapps contributors.
+// Copyright 2021-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 // Currently these tests will be skipped entirely unless the

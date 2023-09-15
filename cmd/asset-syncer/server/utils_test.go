@@ -1955,3 +1955,105 @@ func Test_isURLDomainEqual(t *testing.T) {
 		})
 	}
 }
+
+func TestOrderedChartVersions(t *testing.T) {
+	testCases := []struct {
+		name          string
+		chartVersions []models.ChartVersion
+		expected      []models.ChartVersion
+	}{
+		{
+			name: "re-orders an unordered slice",
+			chartVersions: []models.ChartVersion{
+				{
+					Version: "1.2.3",
+				},
+				{
+					Version: "1.2.2",
+				},
+				{
+					Version: "1.2.4",
+				},
+			},
+			expected: []models.ChartVersion{
+				{
+					Version: "1.2.4",
+				},
+				{
+					Version: "1.2.3",
+				},
+				{
+					Version: "1.2.2",
+				},
+			},
+		},
+		{
+			name: "an unparsable version is shifted to the end",
+			chartVersions: []models.ChartVersion{
+				{
+					Version: "1.2.4",
+				},
+				{
+					Version: "not-a-version",
+				},
+				{
+					Version: "1.2.2",
+				},
+			},
+			expected: []models.ChartVersion{
+				{
+					Version: "1.2.4",
+				},
+				{
+					Version: "1.2.2",
+				},
+				{
+					Version: "not-a-version",
+				},
+			},
+		},
+		{
+			name: "a combination of unorderd versions andan unparsable version is ordered correctly",
+			chartVersions: []models.ChartVersion{
+				{
+					Version: "1.2.2",
+				},
+				{
+					Version: "1.2.4",
+				},
+				{
+					Version: "not-a-version",
+				},
+				{
+					Version: "1.2.3",
+				},
+			},
+			expected: []models.ChartVersion{
+				{
+					Version: "1.2.4",
+				},
+				{
+					Version: "1.2.3",
+				},
+				{
+					Version: "1.2.2",
+				},
+				{
+					Version: "not-a-version",
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			chartVersions := tc.chartVersions
+
+			orderedChartVersions(chartVersions)
+
+			if !cmp.Equal(chartVersions, tc.expected) {
+				t.Errorf(cmp.Diff(tc.expected, chartVersions))
+			}
+		})
+	}
+}

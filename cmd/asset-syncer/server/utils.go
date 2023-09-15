@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -88,6 +89,7 @@ type importChartFilesJob struct {
 type pullChartJob struct {
 	AppName        string
 	VersionsToSync []string
+	Chart          *models.Chart
 }
 
 type pullChartResult struct {
@@ -105,7 +107,7 @@ type assetManager interface {
 	Sync(repo models.AppRepository, charts []models.Chart) error
 	LastChecksum(repo models.AppRepository) string
 	UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error
-	ChartVersions(repo models.AppRepository) (map[string][]string, error)
+	ChartVersions(repo models.AppRepository) (map[string]*models.Chart, error)
 	Init() error
 	Close() error
 	InvalidateCache() error
@@ -646,7 +648,7 @@ func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPull
 
 func chartImportWorker(repoURL *url.URL, r *OCIRegistry, chartJobs <-chan pullChartJob, resultChan chan pullChartResult) {
 	for j := range chartJobs {
-		var chart *models.Chart
+		chart := j.Chart
 		errors := []error{}
 		log.V(4).Infof("Pulling chart, name=%s, tags=%s", j.AppName, j.VersionsToSync)
 		for _, tag := range j.VersionsToSync {
@@ -664,8 +666,27 @@ func chartImportWorker(repoURL *url.URL, r *OCIRegistry, chartJobs <-chan pullCh
 				chart.ChartVersions = append(chart.ChartVersions, c.ChartVersions...)
 			}
 		}
+
+		// Re-sort the ChartVersions
+		orderedChartVersions(chart.ChartVersions)
+
 		resultChan <- pullChartResult{*chart, errors}
 	}
+}
+
+// orderedChartVersions orders the chart versions in descending semver
+func orderedChartVersions(chartVersions []models.ChartVersion) {
+	slices.SortFunc(chartVersions, func(a, b models.ChartVersion) int {
+		va, err := semver.NewVersion(a.Version)
+		if err != nil {
+			return +1
+		}
+		vb, err := semver.NewVersion(b.Version)
+		if err != nil {
+			return -1
+		}
+		return vb.Compare(va)
+	})
 }
 
 // orderVersions orders the slice of versions using reverse semver
@@ -741,7 +762,7 @@ func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool, chartBat
 				return
 			}
 			// Find the tags present in DB, in order verify the difference.
-			syncedVersions := currentVersionsForApp[appName]
+			syncedChart := currentVersionsForApp[appName]
 			if fetchLatestOnly {
 				// TODO(minelson): There's a small but non-zero chance that the
 				// latest tag is for non-chart data. We should iterate here to
@@ -750,11 +771,18 @@ func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool, chartBat
 				chartJobs <- pullChartJob{
 					AppName:        appName,
 					VersionsToSync: []string{tags[0]},
+					Chart:          syncedChart,
 				}
 				log.V(4).Infof("Queued only the first tag for %q for shallow sync : %q", appName, tags[0])
 			} else {
 				// We want to sync only those versions that we don't already have synced
 				versionsToSync := []string{}
+				syncedVersions := []string{}
+				if syncedChart != nil {
+					for _, cv := range syncedChart.ChartVersions {
+						syncedVersions = append(syncedVersions, cv.Version)
+					}
+				}
 				for _, tag := range tags {
 					if !slice.ContainsString(syncedVersions, tag, func(s string) string { return s }) {
 						versionsToSync = append(versionsToSync, tag)
@@ -763,6 +791,7 @@ func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool, chartBat
 				chartJobs <- pullChartJob{
 					AppName:        appName,
 					VersionsToSync: versionsToSync,
+					Chart:          syncedChart,
 				}
 				log.V(4).Infof("Queued %q tags %v for sync", appName, versionsToSync)
 			}
