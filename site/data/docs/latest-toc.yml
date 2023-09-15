@@ -17,6 +17,8 @@ toc:
         page: Managing Carvel packages
       - url: /tutorials/managing-flux-packages
         page: Managing Flux packages
+      - url: /tutorials/managing-package-repositories
+        page: Managing Package Repositories
       - url: /tutorials/kubeapps-on-tkg
         page: Kubeapps on TKG
         subitems:
@@ -32,23 +34,6 @@ toc:
             suburl: /tutorials/kubeapps-on-tkg/step-4
           - subpage: Conclusion
             suburl: /tutorials/kubeapps-on-tkg/conclusion
-      - url: /tutorials/kubeapps-on-tce
-        page: Kubeapps on TCE
-        subitems:
-          - subpage: Introduction
-            suburl: /tutorials/kubeapps-on-tce/introduction
-          - subpage: "Step 1: Preparing the TCE cluster"
-            suburl: /tutorials/kubeapps-on-tce/01-TCE-cluster-preparation
-          - subpage: "Step 2A: Deploy an unmanaged TCE cluster"
-            suburl: /tutorials/kubeapps-on-tce/02-TCE-unmanaged-cluster
-          - subpage: "Step 2B: Deploy a managed TCE cluster"
-            suburl: /tutorials/kubeapps-on-tce/02-TCE-managed-cluster
-          - subpage: "Step 3: Preparing Kubeapps deployment"
-            suburl: /tutorials/kubeapps-on-tce/03-preparing-kubeapps-deployment
-          - subpage: "Step 4: Deploy Kubeapps"
-            suburl: /tutorials/kubeapps-on-tce/04-deploying-kubeapps
-          - subpage: "Step 5: Managing applications"
-            suburl: /tutorials/kubeapps-on-tce/05-managing-applications
 
   - title: How-to guides
     subfolderitems:
@@ -73,8 +58,10 @@ toc:
     subfolderitems:
       - url: /background/architecture
         page: Architecture
+      - url: /background/multicluster
+        page: Multicluster mode
       - url: /background/update-api-docs
-        page: Kubeapps API documentation
+        page: Update API documentation
 
   - title: Reference
     subfolderitems:
@@ -90,6 +77,14 @@ toc:
         page: End-to-end testing configuration
       - url: /reference/developer/release-process
         page: Release process
+      - url: /reference/developer/style-guide
+        page: Documentation style guide
+      - url: /reference/developer/build
+        page: Build information
+      - url: /reference/developer/using-makefiles
+        page: Using makefiles
+      - url: /reference/developer/issue-triage-process
+        page: Issue triage process
       - url: /reference/translations/translate-kubeapps
         page: Translations
 

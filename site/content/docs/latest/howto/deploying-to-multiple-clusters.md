@@ -1,5 +1,7 @@
 # Configuring Kubeapps for multiple clusters
 
+<!-- TODO(agamez): piece of docs requiring update. Reason: screenshots using old Kubeapps logo -->
+
 It is now possible to configure Kubeapps to target other clusters when deploying a chart, in addition to the cluster on which Kubeapps is itself deployed.
 
 Once configured, you can select the cluster to which you are deploying in the same way that you can already select the namespace to which you are deploying:

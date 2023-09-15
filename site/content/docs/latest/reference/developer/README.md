@@ -17,3 +17,15 @@ See the [Kubeapps APIs Service Developer Guide](kubeapps-apis.md) for more infor
 The `asset-syncer` component is a tool that scans a Helm chart repository and populates chart metadata in the database. This metadata is then served by the `kubeapps-apis` component.
 
 Please refer to the [Kubeapps asset-syncer Developer Guide](asset-syncer.md) for the developer setup.
+
+## pinniped-proxy
+
+The `pinniped-proxy` component is a XXXX.
+
+Please refer to the [Kubeapps pinniped-proxy Developer Guide](pinniped-proxy.md) for the developer setup.
+
+## oci-catalog
+
+The `oci-catalog` component is a XXXX.
+
+Please refer to the [Kubeapps oci-catalog Developer Guide](oci-catalog.md) for the developer setup.
