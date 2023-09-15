@@ -2629,17 +2629,17 @@
   dependencies:
     remove-accents "0.4.2"
 
-"@tanstack/react-table@^8.9.9":
-  version "8.9.9"
-  resolved "https://registry.yarnpkg.com/@tanstack/react-table/-/react-table-8.9.9.tgz#c19d6b800699623f458abd67bb57373be5a4f53d"
-  integrity sha512-BzffnRo4+4wNa7OFnOxw6Dgq3jFvkfvZBqg1janXfZobo0VRmMMI8KNVu/WRkescr1VWbrGUDKzEzEe3L1veKw==
+"@tanstack/react-table@^8.9.10":
+  version "8.9.10"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-table/-/react-table-8.9.10.tgz#6bba3ff355697a1cc2f2bbb26febf603b1645573"
+  integrity sha512-iwlZz4pjNHsYbfxYhJrpXz1vY3d2R2LFrVhCIVNYMnEsnnMfBXDuYrlFTtnf+NQy+rLCf+YGeoq84B87II3ETA==
   dependencies:
-    "@tanstack/table-core" "8.9.9"
+    "@tanstack/table-core" "8.9.10"
 
-"@tanstack/table-core@8.9.9":
-  version "8.9.9"
-  resolved "https://registry.yarnpkg.com/@tanstack/table-core/-/table-core-8.9.9.tgz#81663535e778906901eb85a2f07c8643bcd3d9e7"
-  integrity sha512-cv9J3qmIn5t9dljp19S3GDsqMyAVV5+XsvK2tbOezUV3WZW4xQzkpS20uMihHMlD8uup1v0i/OePGadz2TC2Eg==
+"@tanstack/table-core@8.9.10":
+  version "8.9.10"
+  resolved "https://registry.yarnpkg.com/@tanstack/table-core/-/table-core-8.9.10.tgz#e5b3fce6405412e11a80e0f632d2983b664b431d"
+  integrity sha512-02JhSZWl60ZlldOlUuCNiTvmV/R+ufCTVDB3spNjjtfZCryQsmvvQsbOK2UOgjHHtZKZORPJcjYXTua6G04qiw==
 
 "@testing-library/dom@^8.0.0":
   version "8.20.1"
