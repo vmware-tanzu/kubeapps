@@ -277,16 +277,16 @@ jobs:
         run: |
           echo "img_name=${{matrix.image}}" >> $GITHUB_OUTPUT
           echo "img_file=/tmp/${{matrix.image}}-image.tar" >> $GITHUB_OUTPUT
-      - uses: docker/metadata-action@v4
+      - uses: docker/metadata-action@v5
         id: meta
         with:
           images: ${{needs.setup.outputs.img_prefix}}${{steps.setup.outputs.img_name}}${{needs.setup.outputs.img_modifier}}
           flavor: latest=true
           tags: ${{needs.setup.outputs.img_dev_tag}}
-      - uses: docker/setup-qemu-action@v2
-      - uses: docker/setup-buildx-action@v2
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
       - name: Build image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           file: cmd/${{matrix.image}}/Dockerfile
           platforms: ${{ env.IMG_PLATFORMS }}
@@ -314,16 +314,16 @@ jobs:
           echo "img_name=${IMG_NAME}" >> $GITHUB_OUTPUT
           echo "img_file=/tmp/${IMG_NAME}-image.tar" >> $GITHUB_OUTPUT
       - uses: actions/checkout@v4
-      - uses: docker/metadata-action@v4
+      - uses: docker/metadata-action@v5
         id: meta
         with:
           images: ${{needs.setup.outputs.img_prefix}}${{steps.setup.outputs.img_name}}${{needs.setup.outputs.img_modifier}}
           flavor: latest=true
           tags: ${{needs.setup.outputs.img_dev_tag}}
-      - uses: docker/setup-qemu-action@v2
-      - uses: docker/setup-buildx-action@v2
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
       - name: Build image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           context: dashboard
           platforms: ${{ env.IMG_PLATFORMS }}
@@ -351,15 +351,15 @@ jobs:
           echo "img_name=${IMG_NAME}" >> $GITHUB_OUTPUT
           echo "img_file=/tmp/${IMG_NAME}-image.tar" >> $GITHUB_OUTPUT
       - uses: actions/checkout@v4
-      - uses: docker/metadata-action@v4
+      - uses: docker/metadata-action@v5
         id: meta
         with:
           images: ${{needs.setup.outputs.img_prefix}}${{steps.setup.outputs.img_name}}${{needs.setup.outputs.img_modifier}}
           flavor: latest=true
           tags: ${{needs.setup.outputs.img_dev_tag}}
-      - uses: docker/setup-buildx-action@v2
+      - uses: docker/setup-buildx-action@v3
       - name: Build image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           context: integration
           # It doesn't make sense investing CI time in making a multiplatform image here
@@ -389,7 +389,7 @@ jobs:
     steps:
       - run: echo "IMAGES_TO_PUSH=\"${IMAGES_TO_PUSH} ${ADDITIONAL_IMAGES_TO_PUSH}\"" >> $GITHUB_ENV
       - name: Login to Docker Hub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
@@ -560,7 +560,7 @@ jobs:
       IMG_PREFIX: ${{ needs.setup.outputs.img_prefix }}
     steps:
       - name: Login to Docker Hub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
