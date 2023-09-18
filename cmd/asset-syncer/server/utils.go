@@ -111,6 +111,7 @@ type assetManager interface {
 	Init() error
 	Close() error
 	InvalidateCache() error
+	RemoveMissingCharts(repo models.AppRepository, chartNames []string) error
 	updateIcon(repo models.AppRepository, data []byte, contentType, ID string) error
 	filesExist(repo models.AppRepository, chartFilesID, digest string) bool
 	insertFiles(chartID string, files models.ChartFiles) error
@@ -133,7 +134,7 @@ func getSha256(src []byte) (string, error) {
 type ChartCatalog interface {
 	Checksum(ctx context.Context) (string, error)
 	AppRepository() *models.AppRepositoryInternal
-	Charts(ctx context.Context, fetchLatestOnly bool, charts chan pullChartResult) error
+	Charts(ctx context.Context, fetchLatestOnly bool, charts chan pullChartResult) ([]string, error)
 	FetchFiles(cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error)
 	Filters() *apprepov1alpha1.FilterRuleSpec
 }
@@ -144,6 +145,7 @@ type HelmRepo struct {
 	*models.AppRepositoryInternal
 	netClient *http.Client
 	filter    *apprepov1alpha1.FilterRuleSpec
+	manager   assetManager
 }
 
 // Checksum returns the sha256 of the repo
@@ -246,7 +248,7 @@ func filterMatches(chart models.Chart, filterRule *apprepov1alpha1.FilterRuleSpe
 }
 
 // Charts retrieve the list of charts exposed in the repo
-func (r *HelmRepo) Charts(ctx context.Context, fetchLatestOnly bool, chartResults chan pullChartResult) error {
+func (r *HelmRepo) Charts(ctx context.Context, fetchLatestOnly bool, chartResults chan pullChartResult) ([]string, error) {
 	repo := &models.AppRepository{
 		Namespace: r.Namespace,
 		Name:      r.Name,
@@ -257,16 +259,19 @@ func (r *HelmRepo) Charts(ctx context.Context, fetchLatestOnly bool, chartResult
 	// parsing the index).
 	charts, err := helm.ChartsFromIndex(r.content, repo, fetchLatestOnly)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(charts) == 0 {
 		close(chartResults)
-		return nil
+		return nil, nil
 	}
 
 	unescapedCharts := []models.Chart{}
+	newChartNames := []string{}
 	for _, c := range charts {
-		unescapedCharts = append(unescapedCharts, unescapeChartData(c))
+		unescapedChart := unescapeChartData(c)
+		newChartNames = append(newChartNames, unescapedChart.Name)
+		unescapedCharts = append(unescapedCharts, unescapedChart)
 	}
 
 	go func() {
@@ -277,7 +282,18 @@ func (r *HelmRepo) Charts(ctx context.Context, fetchLatestOnly bool, chartResult
 		}
 		close(chartResults)
 	}()
-	return nil
+
+	syncedChartsForRepo, err := r.manager.ChartsForRepo(*repo)
+	if err != nil {
+		return nil, err
+	}
+	chartsForDeletion := []string{}
+	for syncedChartName := range syncedChartsForRepo {
+		if !slice.ContainsString(newChartNames, syncedChartName, func(s string) string { return s }) {
+			chartsForDeletion = append(chartsForDeletion, syncedChartName)
+		}
+	}
+	return chartsForDeletion, nil
 }
 
 // FetchFiles retrieves the important files of a chart and version from the repo
@@ -709,15 +725,15 @@ func orderVersions(versions []string) ([]string, error) {
 }
 
 // Charts retrieve the list of actual charts needing syncing in the repo.
-func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool, chartResults chan pullChartResult) error {
+func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool, chartResults chan pullChartResult) ([]string, error) {
 	repoURL, err := parseRepoURL(r.AppRepositoryInternal.URL)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(r.repositories) == 0 {
 		repos, err := r.ociCli.Catalog(ctx, "")
 		if err != nil {
-			return err
+			return nil, err
 		}
 		r.repositories = repos
 	}
@@ -740,9 +756,9 @@ func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool, chartRes
 
 	// Get the current versions that we're aware of from the DB
 	repo := models.AppRepository{Namespace: r.Namespace, Name: r.Name, URL: r.URL, Type: r.Type}
-	chartsForRepo, err := r.manager.ChartsForRepo(repo)
+	syncedChartsForRepo, err := r.manager.ChartsForRepo(repo)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	log.V(4).Infof("Starting %d workers", numWorkersOCI)
@@ -763,7 +779,7 @@ func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool, chartRes
 				return
 			}
 			// Find the tags present in DB, in order verify the difference.
-			syncedChart := chartsForRepo[appName]
+			syncedChart := syncedChartsForRepo[appName]
 			syncedVersions := []string{}
 			if syncedChart != nil {
 				for _, cv := range syncedChart.ChartVersions {
@@ -814,7 +830,14 @@ func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool, chartRes
 		close(chartResults)
 	}()
 
-	return nil
+	chartsForDeletion := []string{}
+	for syncedChartName := range syncedChartsForRepo {
+		if !slice.ContainsString(r.repositories, syncedChartName, func(s string) string { return s }) {
+			chartsForDeletion = append(chartsForDeletion, syncedChartName)
+		}
+	}
+
+	return chartsForDeletion, nil
 }
 
 // FetchFiles do nothing for the OCI case since they have been already fetched in the Charts() method
@@ -837,7 +860,7 @@ func parseFilters(filters string) (*apprepov1alpha1.FilterRuleSpec, error) {
 	return filterSpec, nil
 }
 
-func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filter *apprepov1alpha1.FilterRuleSpec, netClient *http.Client, userAgent string) (ChartCatalog, error) {
+func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filter *apprepov1alpha1.FilterRuleSpec, netClient *http.Client, userAgent string, manager assetManager) (ChartCatalog, error) {
 	url, err := parseRepoURL(repoURL)
 	if err != nil {
 		log.Errorf("Failed to parse URL, url=%s: %v", repoURL, err)
@@ -859,6 +882,7 @@ func getHelmRepo(namespace, name, repoURL, authorizationHeader string, filter *a
 		},
 		netClient: netClient,
 		filter:    filter,
+		manager:   manager,
 	}, nil
 }
 

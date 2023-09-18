@@ -366,7 +366,7 @@ func TestRemoveMissingCharts(t *testing.T) {
 				ensureFilesExist(t, pam, chartID, files)
 			}
 
-			err := pam.removeMissingCharts(repo, tc.remainingCharts)
+			err := pam.RemoveMissingCharts(repo, []string{"TODO", "fixme"})
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}

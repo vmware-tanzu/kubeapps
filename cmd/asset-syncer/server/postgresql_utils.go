@@ -8,11 +8,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	_ "github.com/lib/pq"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
+	log "k8s.io/klog/v2"
 )
 
 var ErrMultipleRows = fmt.Errorf("more than one row returned in query result")
@@ -81,21 +83,18 @@ func (m *postgresAssetManager) UpdateLastCheck(repoNamespace, repoName, checksum
 	return err
 }
 
-func (m *postgresAssetManager) removeMissingCharts(repo models.AppRepository, charts []models.Chart) error {
-	// TODO(minelson): Need to refactor this to accept a list of chart (IDs?)
-	// to remove, rather than naively removing all charts are not in the
-	// set of synced charts.
-	return nil
-	// var chartIDs []string
-	// for _, chart := range charts {
-	// 	chartIDs = append(chartIDs, fmt.Sprintf("'%s'", chart.ID))
-	// }
-	// chartIDsString := strings.Join(chartIDs, ", ")
-	// rows, err := m.DB.Query(fmt.Sprintf("DELETE FROM %s WHERE chart_id NOT IN (%s) AND repo_name = $1 AND repo_namespace = $2", dbutils.ChartTable, chartIDsString), repo.Name, repo.Namespace)
-	// if rows != nil {
-	// 	defer rows.Close()
-	// }
-	// return err
+func (m *postgresAssetManager) RemoveMissingCharts(repo models.AppRepository, chartNames []string) error {
+	var quotedChartNames []string
+	for _, chartName := range chartNames {
+		quotedChartNames = append(quotedChartNames, fmt.Sprintf("'%s'", chartName))
+	}
+	chartNamesString := strings.Join(quotedChartNames, ", ")
+	log.V(4).Infof("Removing the following charts that are no longer present in the repo: %s", chartNamesString)
+	rows, err := m.DB.Query(fmt.Sprintf("DELETE FROM %s WHERE info->>'Name' IN (%s) AND repo_name = $1 AND repo_namespace = $2", dbutils.ChartTable, chartNamesString), repo.Name, repo.Namespace)
+	if rows != nil {
+		defer rows.Close()
+	}
+	return err
 }
 
 func (m *postgresAssetManager) Delete(repo models.AppRepository) error {
