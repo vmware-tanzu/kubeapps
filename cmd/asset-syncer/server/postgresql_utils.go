@@ -90,7 +90,7 @@ func (m *postgresAssetManager) RemoveMissingCharts(repo models.AppRepository, ch
 	}
 	chartNamesString := strings.Join(quotedChartNames, ", ")
 	log.V(4).Infof("Removing the following charts that are no longer present in the repo: %s", chartNamesString)
-	rows, err := m.DB.Query(fmt.Sprintf("DELETE FROM %s WHERE info->>'Name' IN (%s) AND repo_name = $1 AND repo_namespace = $2", dbutils.ChartTable, chartNamesString), repo.Name, repo.Namespace)
+	rows, err := m.DB.Query(fmt.Sprintf("DELETE FROM %s WHERE info->>'name' IN (%s) AND repo_name = $1 AND repo_namespace = $2", dbutils.ChartTable, chartNamesString), repo.Name, repo.Namespace)
 	if rows != nil {
 		defer rows.Close()
 	}

@@ -80,7 +80,7 @@ func Test_PGremoveMissingCharts(t *testing.T) {
 	defer cleanup()
 
 	repo := models.AppRepository{Name: "repo"}
-	mock.ExpectQuery(`^DELETE FROM charts WHERE info->>'Name' IN \('foo', 'bar'\) AND repo_name = \$1 AND repo_namespace = \$2`).
+	mock.ExpectQuery(`^DELETE FROM charts WHERE info->>'name' IN \('foo', 'bar'\) AND repo_name = \$1 AND repo_namespace = \$2`).
 		WithArgs(repo.Name, repo.Namespace).
 		WillReturnRows(sqlmock.NewRows([]string{"ID"}).AddRow(1).AddRow(2))
 

@@ -171,7 +171,7 @@ func TestInsertFiles(t *testing.T) {
 
 func ensureFilesExist(t *testing.T, pam *postgresAssetManager, chartID string, files []models.ChartFiles) {
 	for _, f := range files {
-		pgtest.EnsureChartsExist(t, pam, []models.Chart{{ID: chartID}}, *f.Repo)
+		pgtest.EnsureChartsExist(t, pam, []models.Chart{{ID: chartID, Name: chartID}}, *f.Repo)
 		err := pam.insertFiles(chartID, f)
 		if err != nil {
 			t.Fatalf("%+v", err)
@@ -257,10 +257,10 @@ func TestRemoveMissingCharts(t *testing.T) {
 		name string
 		// existingFiles maps a chartID to a slice of files for different
 		// versions of that chart.
-		existingFiles   map[string][]models.ChartFiles
-		remainingCharts []models.Chart
-		expectedCharts  int
-		expectedFiles   int
+		existingFiles  map[string][]models.ChartFiles
+		chartsToRemove []string
+		expectedCharts int
+		expectedFiles  int
 	}{
 		{
 			name: "it removes missing charts and files",
@@ -274,9 +274,7 @@ func TestRemoveMissingCharts(t *testing.T) {
 					{ID: "other-chart-3", Readme: "A Readme", Repo: &repo},
 				},
 			},
-			remainingCharts: []models.Chart{
-				{ID: "my-chart"},
-			},
+			chartsToRemove: []string{"other-chart"},
 			expectedCharts: 1,
 			expectedFiles:  1,
 		},
@@ -297,10 +295,7 @@ func TestRemoveMissingCharts(t *testing.T) {
 					{ID: "third-chart-3", Readme: "A Readme", Repo: &repo},
 				},
 			},
-			remainingCharts: []models.Chart{
-				{ID: "my-chart"},
-				{ID: "other-chart"},
-			},
+			chartsToRemove: []string{"third-chart"},
 			expectedCharts: 2,
 			expectedFiles:  4,
 		},
@@ -323,10 +318,7 @@ func TestRemoveMissingCharts(t *testing.T) {
 					{ID: "third-chart-3", Readme: "A Readme", Repo: &repo},
 				},
 			},
-			remainingCharts: []models.Chart{
-				{ID: "my-chart"},
-				{ID: "third-chart"},
-			},
+			chartsToRemove: []string{"other-chart"},
 			expectedCharts: 3,
 			expectedFiles:  7,
 		},
@@ -349,10 +341,7 @@ func TestRemoveMissingCharts(t *testing.T) {
 					{ID: "third-chart-3", Readme: "A Readme", Repo: &repo},
 				},
 			},
-			remainingCharts: []models.Chart{
-				{ID: "my-chart"},
-				{ID: "third-chart"},
-			},
+			chartsToRemove: []string{"other-chart"},
 			expectedCharts: 3,
 			expectedFiles:  7,
 		},
@@ -366,7 +355,7 @@ func TestRemoveMissingCharts(t *testing.T) {
 				ensureFilesExist(t, pam, chartID, files)
 			}
 
-			err := pam.RemoveMissingCharts(repo, []string{"TODO", "fixme"})
+			err := pam.RemoveMissingCharts(repo, tc.chartsToRemove)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
