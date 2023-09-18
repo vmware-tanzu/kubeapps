@@ -345,6 +345,22 @@ func TestRemoveMissingCharts(t *testing.T) {
 			expectedCharts: 3,
 			expectedFiles:  7,
 		},
+		{
+			name: "it does not error if no missing charts to remove",
+			existingFiles: map[string][]models.ChartFiles{
+				"my-chart": {
+					{ID: "my-chart-1", Readme: "A Readme", Repo: &repo},
+				},
+				"other-chart": {
+					{ID: "other-chart-1", Readme: "A Readme", Repo: &repo},
+					{ID: "other-chart-2", Readme: "A Readme", Repo: &repo},
+					{ID: "other-chart-3", Readme: "A Readme", Repo: &repo},
+				},
+			},
+			chartsToRemove: []string{},
+			expectedCharts: 2,
+			expectedFiles:  4,
+		},
 	}
 
 	for _, tc := range testCases {

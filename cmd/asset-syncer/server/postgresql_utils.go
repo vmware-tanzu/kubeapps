@@ -84,6 +84,10 @@ func (m *postgresAssetManager) UpdateLastCheck(repoNamespace, repoName, checksum
 }
 
 func (m *postgresAssetManager) RemoveMissingCharts(repo models.AppRepository, chartNames []string) error {
+	if len(chartNames) == 0 {
+		log.V(4).Infof("No synced charts missing from repository. Nothing to remove.")
+		return nil
+	}
 	var quotedChartNames []string
 	for _, chartName := range chartNames {
 		quotedChartNames = append(quotedChartNames, fmt.Sprintf("'%s'", chartName))
