@@ -38,24 +38,22 @@ func newPGManager(config dbutils.Config, globalPackagingNamespace string) (asset
 // These steps are processed in this way to ensure relevant chart data is
 // imported into the database as fast as possible. E.g. we want all icons for
 // charts before fetching readmes for each chart and version pair.
-func (m *postgresAssetManager) Sync(repo models.AppRepository, charts []models.Chart) error {
-	err := m.InitTables()
-	if err != nil {
-		return err
-	}
-	// Ensure the repo exists so FK constraints will be met.
-	_, err = m.EnsureRepoExists(repo.Namespace, repo.Name)
+func (m *postgresAssetManager) Sync(repo models.AppRepository, chart models.Chart) error {
+	_, err := m.EnsureRepoExists(repo.Namespace, repo.Name)
 	if err != nil {
 		return err
 	}
 
-	err = m.importCharts(charts, repo)
+	d, err := json.Marshal(chart)
 	if err != nil {
 		return err
 	}
-
-	// Remove charts no longer existing in index
-	return m.removeMissingCharts(repo, charts)
+	_, err = m.DB.Exec(fmt.Sprintf(`INSERT INTO %s (repo_namespace, repo_name, chart_id, info)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (chart_id, repo_namespace, repo_name)
+		DO UPDATE SET info = $4
+		`, dbutils.ChartTable), repo.Namespace, repo.Name, chart.ID, string(d))
+	return err
 }
 
 func (m *postgresAssetManager) LastChecksum(repo models.AppRepository) string {
@@ -81,25 +79,6 @@ func (m *postgresAssetManager) UpdateLastCheck(repoNamespace, repoName, checksum
 		defer rows.Close()
 	}
 	return err
-}
-
-func (m *postgresAssetManager) importCharts(charts []models.Chart, repo models.AppRepository) error {
-	for _, chart := range charts {
-		d, err := json.Marshal(chart)
-		if err != nil {
-			return err
-		}
-		_, err = m.DB.Exec(fmt.Sprintf(`INSERT INTO %s (repo_namespace, repo_name, chart_id, info)
-		VALUES ($1, $2, $3, $4)
-		ON CONFLICT (chart_id, repo_namespace, repo_name)
-		DO UPDATE SET info = $4
-		`, dbutils.ChartTable), repo.Namespace, repo.Name, chart.ID, string(d))
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (m *postgresAssetManager) removeMissingCharts(repo models.AppRepository, charts []models.Chart) error {

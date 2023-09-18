@@ -73,6 +73,11 @@ func (m *PostgresAssetManager) Init() error {
 		return err
 	}
 	m.DB = db
+
+	err = m.InitTables()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

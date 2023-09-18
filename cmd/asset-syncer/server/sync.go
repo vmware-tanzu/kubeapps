@@ -34,6 +34,7 @@ func Sync(serveOpts Config, version string, args []string) error {
 	if err != nil {
 		return fmt.Errorf("error: %v", err)
 	}
+
 	defer manager.Close()
 
 	netClient, err := httpclient.NewWithCertFile(additionalCAFile, serveOpts.TlsInsecureSkipVerify)
@@ -110,8 +111,6 @@ func Sync(serveOpts Config, version string, args []string) error {
 			return fmt.Errorf("error: %v", err)
 		}
 
-		// TODO(minelson): Still need to ensure that what is synced includes
-		// the previously synced data, not just the new data to be synced.
 		// Also need to collect the apps to be deleted, rather than simply
 		// deleting everything that's not in the set of charts being synced
 		// (as it does today).
@@ -133,9 +132,7 @@ func Sync(serveOpts Config, version string, args []string) error {
 				continue
 			}
 
-			// TODO(minelson): update to pass in tags to delete.
-			// Update Sync to take just *models.Chart and tags to delete.
-			if err = manager.Sync(models.AppRepository{Name: repo.Name, Namespace: repo.Namespace}, []models.Chart{chartBatch.Chart}); err != nil {
+			if err = manager.Sync(models.AppRepository{Name: repo.Name, Namespace: repo.Namespace}, chartBatch.Chart); err != nil {
 				return fmt.Errorf("can't add chart repository to database: %v", err)
 			}
 

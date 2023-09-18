@@ -88,14 +88,13 @@ func TestImportCharts(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name   string
-		charts []models.Chart
+		name  string
+		chart models.Chart
 	}{
 		{
 			name: "it inserts the charts",
-			charts: []models.Chart{
-				{Name: "my-chart1", Repo: &repo, ID: "foo/bar:123"},
-				{Name: "my-chart2", Repo: &repo, ID: "foo/bar:456"},
+			chart: models.Chart{
+				Name: "my-chart1", Repo: &repo, ID: "foo/bar:123",
 			},
 		},
 	}
@@ -104,12 +103,8 @@ func TestImportCharts(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			pam, cleanup := getInitializedManager(t)
 			defer cleanup()
-			_, err := pam.EnsureRepoExists(repo.Namespace, repo.Name)
-			if err != nil {
-				t.Fatalf("%+v", err)
-			}
 
-			err = pam.importCharts(tc.charts, repo)
+			err := pam.Sync(repo, tc.chart)
 			if err != nil {
 				t.Errorf("%+v", err)
 			}

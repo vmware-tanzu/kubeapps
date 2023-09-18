@@ -104,7 +104,7 @@ func parseRepoURL(repoURL string) (*url.URL, error) {
 
 type assetManager interface {
 	Delete(repo models.AppRepository) error
-	Sync(repo models.AppRepository, charts []models.Chart) error
+	Sync(repo models.AppRepository, chart models.Chart) error
 	LastChecksum(repo models.AppRepository) string
 	UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error
 	ChartsForRepo(repo models.AppRepository) (map[string]*models.Chart, error)
@@ -708,8 +708,8 @@ func orderVersions(versions []string) ([]string, error) {
 	return orderedVersions, nil
 }
 
-// Charts retrieve the list of actual charts exposed in the repo.
-func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool, chartBatchResults chan pullChartResult) error {
+// Charts retrieve the list of actual charts needing syncing in the repo.
+func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool, chartResults chan pullChartResult) error {
 	repoURL, err := parseRepoURL(r.AppRepositoryInternal.URL)
 	if err != nil {
 		return err
@@ -722,20 +722,20 @@ func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool, chartBat
 		r.repositories = repos
 	}
 	chartJobs := make(chan pullChartJob, numWorkersOCI)
-	chartResults := make(chan pullChartResult, numWorkersOCI)
+	workerChartResults := make(chan pullChartResult, numWorkersOCI)
 	var wg sync.WaitGroup
 	// Process n apps at a time
 	for i := 0; i < numWorkersOCI; i++ {
 		wg.Add(1)
 		go func() {
-			chartImportWorker(repoURL, r, chartJobs, chartResults)
+			chartImportWorker(repoURL, r, chartJobs, workerChartResults)
 			wg.Done()
 		}()
 	}
 	// When we know all workers have sent their data in chartChan, close it.
 	go func() {
 		wg.Wait()
-		close(chartResults)
+		close(workerChartResults)
 	}()
 
 	// Get the current versions that we're aware of from the DB
@@ -785,9 +785,8 @@ func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool, chartBat
 
 			if fetchLatestOnly {
 				// TODO(minelson): There's a small but non-zero chance that the
-				// latest tag is for non-chart data. We should iterate here to
-				// get the latest chart tag (after removing the expensive filter
-				// of all tags).
+				// latest tag is for non-chart data. Worst case here is that the app
+				// won't appear in the UI until the non-shallow sync syncs its chart tags.
 				chartJobs <- pullChartJob{
 					AppName:        appName,
 					VersionsToSync: []string{versionsToSync[0]},
@@ -809,10 +808,10 @@ func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool, chartBat
 	go func() {
 		// Start receiving charts from the multiple workers and pass them down
 		// to the caller.
-		for res := range chartResults {
-			chartBatchResults <- res
+		for res := range workerChartResults {
+			chartResults <- res
 		}
-		close(chartBatchResults)
+		close(chartResults)
 	}()
 
 	return nil
