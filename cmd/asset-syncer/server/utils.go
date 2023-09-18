@@ -107,7 +107,7 @@ type assetManager interface {
 	Sync(repo models.AppRepository, charts []models.Chart) error
 	LastChecksum(repo models.AppRepository) string
 	UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error
-	ChartVersions(repo models.AppRepository) (map[string]*models.Chart, error)
+	ChartsForRepo(repo models.AppRepository) (map[string]*models.Chart, error)
 	Init() error
 	Close() error
 	InvalidateCache() error
@@ -648,6 +648,7 @@ func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPull
 
 func chartImportWorker(repoURL *url.URL, r *OCIRegistry, chartJobs <-chan pullChartJob, resultChan chan pullChartResult) {
 	for j := range chartJobs {
+		// Note that j.Chart will only be non-nil if this chart was previously synced.
 		chart := j.Chart
 		errors := []error{}
 		log.V(4).Infof("Pulling chart, name=%s, tags=%s", j.AppName, j.VersionsToSync)
@@ -739,7 +740,7 @@ func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool, chartBat
 
 	// Get the current versions that we're aware of from the DB
 	repo := models.AppRepository{Namespace: r.Namespace, Name: r.Name, URL: r.URL, Type: r.Type}
-	currentVersionsForApp, err := r.manager.ChartVersions(repo)
+	chartsForRepo, err := r.manager.ChartsForRepo(repo)
 	if err != nil {
 		return err
 	}
@@ -762,7 +763,26 @@ func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool, chartBat
 				return
 			}
 			// Find the tags present in DB, in order verify the difference.
-			syncedChart := currentVersionsForApp[appName]
+			syncedChart := chartsForRepo[appName]
+			syncedVersions := []string{}
+			if syncedChart != nil {
+				for _, cv := range syncedChart.ChartVersions {
+					syncedVersions = append(syncedVersions, cv.Version)
+				}
+			}
+			// We want to sync only those versions that we don't already have synced
+			versionsToSync := []string{}
+			for _, tag := range tags {
+				if !slice.ContainsString(syncedVersions, tag, func(s string) string { return s }) {
+					versionsToSync = append(versionsToSync, tag)
+				}
+			}
+
+			if len(versionsToSync) == 0 {
+				log.V(4).Infof("No versions requiring sync for %q", appName)
+				continue
+			}
+
 			if fetchLatestOnly {
 				// TODO(minelson): There's a small but non-zero chance that the
 				// latest tag is for non-chart data. We should iterate here to
@@ -770,24 +790,11 @@ func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool, chartBat
 				// of all tags).
 				chartJobs <- pullChartJob{
 					AppName:        appName,
-					VersionsToSync: []string{tags[0]},
+					VersionsToSync: []string{versionsToSync[0]},
 					Chart:          syncedChart,
 				}
-				log.V(4).Infof("Queued only the first tag for %q for shallow sync : %q", appName, tags[0])
+				log.V(4).Infof("Queued only the first tag for %q for shallow sync : %q", appName, versionsToSync[0])
 			} else {
-				// We want to sync only those versions that we don't already have synced
-				versionsToSync := []string{}
-				syncedVersions := []string{}
-				if syncedChart != nil {
-					for _, cv := range syncedChart.ChartVersions {
-						syncedVersions = append(syncedVersions, cv.Version)
-					}
-				}
-				for _, tag := range tags {
-					if !slice.ContainsString(syncedVersions, tag, func(s string) string { return s }) {
-						versionsToSync = append(versionsToSync, tag)
-					}
-				}
 				chartJobs <- pullChartJob{
 					AppName:        appName,
 					VersionsToSync: versionsToSync,
