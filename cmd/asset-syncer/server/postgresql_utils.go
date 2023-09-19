@@ -14,6 +14,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
+	log "k8s.io/klog/v2"
 )
 
 var ErrMultipleRows = fmt.Errorf("more than one row returned in query result")
@@ -39,24 +40,22 @@ func newPGManager(config dbutils.Config, globalPackagingNamespace string) (asset
 // These steps are processed in this way to ensure relevant chart data is
 // imported into the database as fast as possible. E.g. we want all icons for
 // charts before fetching readmes for each chart and version pair.
-func (m *postgresAssetManager) Sync(repo models.AppRepository, charts []models.Chart) error {
-	err := m.InitTables()
-	if err != nil {
-		return err
-	}
-	// Ensure the repo exists so FK constraints will be met.
-	_, err = m.EnsureRepoExists(repo.Namespace, repo.Name)
+func (m *postgresAssetManager) Sync(repo models.AppRepository, chart models.Chart) error {
+	_, err := m.EnsureRepoExists(repo.Namespace, repo.Name)
 	if err != nil {
 		return err
 	}
 
-	err = m.importCharts(charts, repo)
+	d, err := json.Marshal(chart)
 	if err != nil {
 		return err
 	}
-
-	// Remove charts no longer existing in index
-	return m.removeMissingCharts(repo, charts)
+	_, err = m.DB.Exec(fmt.Sprintf(`INSERT INTO %s (repo_namespace, repo_name, chart_id, info)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (chart_id, repo_namespace, repo_name)
+		DO UPDATE SET info = $4
+		`, dbutils.ChartTable), repo.Namespace, repo.Name, chart.ID, string(d))
+	return err
 }
 
 func (m *postgresAssetManager) LastChecksum(repo models.AppRepository) string {
@@ -84,32 +83,18 @@ func (m *postgresAssetManager) UpdateLastCheck(repoNamespace, repoName, checksum
 	return err
 }
 
-func (m *postgresAssetManager) importCharts(charts []models.Chart, repo models.AppRepository) error {
-	for _, chart := range charts {
-		d, err := json.Marshal(chart)
-		if err != nil {
-			return err
-		}
-		_, err = m.DB.Exec(fmt.Sprintf(`INSERT INTO %s (repo_namespace, repo_name, chart_id, info)
-		VALUES ($1, $2, $3, $4)
-		ON CONFLICT (chart_id, repo_namespace, repo_name)
-		DO UPDATE SET info = $4
-		`, dbutils.ChartTable), repo.Namespace, repo.Name, chart.ID, string(d))
-		if err != nil {
-			return err
-		}
+func (m *postgresAssetManager) RemoveMissingCharts(repo models.AppRepository, chartNames []string) error {
+	if len(chartNames) == 0 {
+		log.V(4).Infof("No synced charts missing from repository. Nothing to remove.")
+		return nil
 	}
-
-	return nil
-}
-
-func (m *postgresAssetManager) removeMissingCharts(repo models.AppRepository, charts []models.Chart) error {
-	var chartIDs []string
-	for _, chart := range charts {
-		chartIDs = append(chartIDs, fmt.Sprintf("'%s'", chart.ID))
+	var quotedChartNames []string
+	for _, chartName := range chartNames {
+		quotedChartNames = append(quotedChartNames, fmt.Sprintf("'%s'", chartName))
 	}
-	chartIDsString := strings.Join(chartIDs, ", ")
-	rows, err := m.DB.Query(fmt.Sprintf("DELETE FROM %s WHERE chart_id NOT IN (%s) AND repo_name = $1 AND repo_namespace = $2", dbutils.ChartTable, chartIDsString), repo.Name, repo.Namespace)
+	chartNamesString := strings.Join(quotedChartNames, ", ")
+	log.V(4).Infof("Removing the following charts that are no longer present in the repo: %s", chartNamesString)
+	rows, err := m.DB.Query(fmt.Sprintf("DELETE FROM %s WHERE info->>'name' IN (%s) AND repo_name = $1 AND repo_namespace = $2", dbutils.ChartTable, chartNamesString), repo.Name, repo.Namespace)
 	if rows != nil {
 		defer rows.Close()
 	}
@@ -177,8 +162,9 @@ func (m *postgresAssetManager) insertFiles(chartId string, files models.ChartFil
 	return err
 }
 
-// ChartVersions returns a map of ordered versions for each chart in the repo.
-func (m *postgresAssetManager) ChartVersions(repo models.AppRepository) (map[string][]string, error) {
+// ChartsForRepo returns a map of charts with all previously synced charts in
+// the repo.
+func (m *postgresAssetManager) ChartsForRepo(repo models.AppRepository) (map[string]*models.Chart, error) {
 	dbQuery := fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND repo_name = $2 ORDER BY (info->>'name')", dbutils.ChartTable)
 
 	charts, err := m.QueryAllCharts(dbQuery, repo.Namespace, repo.Name)
@@ -186,17 +172,9 @@ func (m *postgresAssetManager) ChartVersions(repo models.AppRepository) (map[str
 		return nil, err
 	}
 
-	chartVersions := map[string][]string{}
+	chartsByName := map[string]*models.Chart{}
 	for _, chart := range charts {
-		versions := make([]string, len(chart.ChartVersions))
-		for i, cv := range chart.ChartVersions {
-			versions[i] = cv.Version
-		}
-		orderedVersions, err := orderVersions(versions)
-		if err != nil {
-			return nil, err
-		}
-		chartVersions[chart.Name] = orderedVersions
+		chartsByName[chart.Name] = chart
 	}
-	return chartVersions, nil
+	return chartsByName, nil
 }

@@ -343,6 +343,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect
 	fileID := fileIDForChart(unescapedChartID, version)
 	chartFiles, err := s.manager.GetChartFiles(namespace, fileID)
 	if err != nil {
+		log.Errorf("unable to retrieve chart files: %w", err)
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to retrieve chart files: %v", err))
 	}
 

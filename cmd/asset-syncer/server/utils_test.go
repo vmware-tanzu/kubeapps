@@ -178,10 +178,12 @@ func Test_syncURLInvalidity(t *testing.T) {
 
 	fakeServer := newFakeServer(t, nil)
 	defer fakeServer.Close()
+	pgManager, _, cleanup := getMockManager(t)
+	defer cleanup()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := getHelmRepo("namespace", "test", tt.repoURL, "", nil, fakeServer.Client(), "my-user-agent")
+			_, err := getHelmRepo("namespace", "test", tt.repoURL, "", nil, fakeServer.Client(), "my-user-agent", pgManager)
 			assert.Error(t, err, tt.name)
 		})
 	}
@@ -569,8 +571,18 @@ func (r *fakeRepo) SortVersions() {
 	// no-op
 }
 
-func (r *fakeRepo) Charts(ctx context.Context, shallow bool) ([]models.Chart, error) {
-	return r.charts, nil
+func (r *fakeRepo) Filters() *apprepov1alpha1.FilterRuleSpec {
+	return nil
+}
+
+func (r *fakeRepo) Charts(ctx context.Context, shallow bool, chartResults chan pullChartResult) ([]string, error) {
+	for _, chart := range r.charts {
+		chartResults <- pullChartResult{
+			Chart: chart,
+		}
+	}
+	close(chartResults)
+	return nil, nil
 }
 
 func (r *fakeRepo) FetchFiles(cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
@@ -1453,8 +1465,14 @@ version: 1.0.0
 				},
 				manager: pgManager,
 			}
-			charts, err := chartsRepo.Charts(context.Background(), tt.shallow)
+			chartResults := make(chan pullChartResult, 2)
+			_, err = chartsRepo.Charts(context.Background(), tt.shallow, chartResults)
 			assert.NoError(t, err)
+
+			charts := []models.Chart{}
+			for chartsResult := range chartResults {
+				charts = append(charts, chartsResult.Chart)
+			}
 			if !cmp.Equal(charts, tt.expected) {
 				t.Errorf("Unexpected result %v", cmp.Diff(tt.expected, charts))
 			}
@@ -1528,8 +1546,14 @@ version: 1.0.0
 			},
 			manager: pgManager,
 		}
-		charts, err := chartsRepo.Charts(context.Background(), true)
+		chartResults := make(chan pullChartResult, 2)
+		_, err = chartsRepo.Charts(context.Background(), true, chartResults)
 		assert.NoError(t, err)
+
+		charts := []models.Chart{}
+		for chartResult := range chartResults {
+			charts = append(charts, chartResult.Chart)
+		}
 		if len(charts) != 1 && charts[0].Name != "common" {
 			t.Errorf("got: %+v", charts)
 		}
@@ -1552,137 +1576,148 @@ version: 1.0.0
 	})
 }
 
-func Test_filterCharts(t *testing.T) {
+func Test_filterMatches(t *testing.T) {
 	tests := []struct {
 		description string
-		input       []models.Chart
+		input       models.Chart
 		rule        apprepov1alpha1.FilterRuleSpec
-		expected    []models.Chart
+		expected    bool
 		expectedErr error
 	}{
 		{
-			"should filter a chart",
-			[]models.Chart{
-				{Name: "foo"},
-				{Name: "bar"},
+			"should match a named chart",
+			models.Chart{
+				Name: "foo",
 			},
 			apprepov1alpha1.FilterRuleSpec{
 				JQ: ".name == $var1", Variables: map[string]string{"$var1": "foo"},
 			},
-			[]models.Chart{
-				{Name: "foo"},
+			true,
+			nil,
+		},
+		{
+			"should not match a named chart",
+			models.Chart{
+				Name: "bar",
 			},
+			apprepov1alpha1.FilterRuleSpec{
+				JQ: ".name == $var1", Variables: map[string]string{"$var1": "foo"},
+			},
+			false,
 			nil,
 		},
 		{
 			"an invalid rule cause to return an empty set",
-			[]models.Chart{
-				{Name: "foo"},
-				{Name: "bar"},
+			models.Chart{
+				Name: "foo",
 			},
 			apprepov1alpha1.FilterRuleSpec{
 				JQ: "not a rule",
 			},
-			nil,
+			false,
 			fmt.Errorf(`unable to parse jq query: unexpected token "a"`),
 		},
 		{
 			"an invalid number of vars cause to return an empty set",
-			[]models.Chart{
-				{Name: "foo"},
-				{Name: "bar"},
+			models.Chart{
+				Name: "foo",
 			},
 			apprepov1alpha1.FilterRuleSpec{
 				JQ: ".name == $var1",
 			},
-			nil,
+			false,
 			fmt.Errorf(`unable to compile jq: variable not defined: $var1`),
 		},
 		{
 			"the query doesn't return a boolean",
-			[]models.Chart{
-				{Name: "foo"},
-				{Name: "bar"},
+			models.Chart{
+				Name: "foo",
 			},
 			apprepov1alpha1.FilterRuleSpec{
 				JQ: `.name`,
 			},
-			nil,
+			false,
 			fmt.Errorf(`unable to convert jq result to boolean. Got: foo`),
 		},
 		{
 			"matches without vars",
-			[]models.Chart{
-				{Name: "foo"},
-				{Name: "bar"},
+			models.Chart{
+				Name: "foo",
 			},
 			apprepov1alpha1.FilterRuleSpec{
 				JQ: `.name == "foo"`,
 			},
-			[]models.Chart{
-				{Name: "foo"},
+			true,
+			nil,
+		},
+		{
+			"matches negatively without vars",
+			models.Chart{
+				Name: "bar",
 			},
+			apprepov1alpha1.FilterRuleSpec{
+				JQ: `.name == "foo"`,
+			},
+			false,
 			nil,
 		},
 		{
 			"filters a maintainer name",
-			[]models.Chart{
-				{Name: "foo", Maintainers: []chart.Maintainer{{Name: "Bitnami"}}},
-				{Name: "bar", Maintainers: []chart.Maintainer{{Name: "Hackers"}}},
+			models.Chart{
+				Name: "foo", Maintainers: []chart.Maintainer{{Name: "Bitnami"}},
 			},
 			apprepov1alpha1.FilterRuleSpec{
 				JQ: ".maintainers | any(.name == $var1)", Variables: map[string]string{"$var1": "Bitnami"},
 			},
-			[]models.Chart{
-				{Name: "foo", Maintainers: []chart.Maintainer{{Name: "Bitnami"}}},
+			true,
+			nil,
+		},
+		{
+			"filter matches negatively a maintainer name",
+			models.Chart{
+				Name: "bar", Maintainers: []chart.Maintainer{{Name: "Hackers"}},
 			},
+			apprepov1alpha1.FilterRuleSpec{
+				JQ: ".maintainers | any(.name == $var1)", Variables: map[string]string{"$var1": "Bitnami"},
+			},
+			false,
 			nil,
 		},
 		{
 			"excludes a value",
-			[]models.Chart{
-				{Name: "foo"},
-				{Name: "bar"},
+			models.Chart{
+				Name: "foo",
 			},
 			apprepov1alpha1.FilterRuleSpec{
 				JQ: ".name == $var1 | not", Variables: map[string]string{"$var1": "foo"},
 			},
-			[]models.Chart{
-				{Name: "bar"},
-			},
+			false,
 			nil,
 		},
 		{
 			"matches against a regex",
-			[]models.Chart{
-				{Name: "foo"},
-				{Name: "bar"},
+			models.Chart{
+				Name: "foo",
 			},
 			apprepov1alpha1.FilterRuleSpec{
 				JQ: `.name | test($var1)`, Variables: map[string]string{"$var1": ".*oo.*"},
 			},
-			[]models.Chart{
-				{Name: "foo"},
-			},
+			true,
 			nil,
 		},
 		{
 			"ignores an empty rule",
-			[]models.Chart{
-				{Name: "foo"},
-				{Name: "bar"},
+			models.Chart{
+				Name: "foo",
 			},
 			apprepov1alpha1.FilterRuleSpec{},
-			[]models.Chart{
-				{Name: "foo"},
-				{Name: "bar"},
-			},
+			true,
 			nil,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
-			res, err := filterCharts(tt.input, &tt.rule)
+			res, err := filterMatches(tt.input, &tt.rule)
 			if err != nil {
 				if tt.expectedErr == nil || err.Error() != tt.expectedErr.Error() {
 					t.Fatalf("Unexpected error %v", err)
@@ -1698,82 +1733,78 @@ func Test_filterCharts(t *testing.T) {
 func TestUnescapeChartsData(t *testing.T) {
 	tests := []struct {
 		description string
-		input       []models.Chart
-		expected    []models.Chart
+		input       models.Chart
+		expected    models.Chart
 	}{
 		{
 			"chart with encoded spaces in id",
-			[]models.Chart{
-				{ID: "foo%20bar"},
+			models.Chart{
+				ID: "foo%20bar",
 			},
-			[]models.Chart{
-				{ID: "foo bar"},
+			models.Chart{
+				ID: "foo bar",
 			},
 		},
 		{
 			"chart with encoded spaces in name",
-			[]models.Chart{
-				{Name: "foo%20bar"},
+			models.Chart{
+				Name: "foo%20bar",
 			},
-			[]models.Chart{
-				{Name: "foo bar"},
+			models.Chart{
+				Name: "foo bar",
 			},
 		},
 		{
 			"chart with mixed encoding in name",
-			[]models.Chart{
-				{Name: "test/foo%20bar"},
+			models.Chart{
+				Name: "test/foo%20bar",
 			},
-			[]models.Chart{
-				{Name: "test/foo bar"},
+			models.Chart{
+				Name: "test/foo bar",
 			},
 		},
 		{
 			"chart with no encoding nor spaces",
-			[]models.Chart{
-				{Name: "test/foobar"},
+			models.Chart{
+				Name: "test/foobar",
 			},
-			[]models.Chart{
-				{Name: "test/foobar"},
+			models.Chart{
+				Name: "test/foobar",
 			},
 		},
 		{
 			"chart with unencoded spaces",
-			[]models.Chart{
-				{Name: "test/foo bar"},
+			models.Chart{
+				Name: "test/foo bar",
 			},
-			[]models.Chart{
-				{Name: "test/foo bar"},
+			models.Chart{
+				Name: "test/foo bar",
 			},
 		},
 		{
 			"chart with encoded chars in name",
-			[]models.Chart{
-				{Name: "foo%23bar%2ebar"},
+			models.Chart{
+				Name: "foo%23bar%2ebar",
 			},
-			[]models.Chart{
-				{Name: "foo#bar.bar"},
+			models.Chart{
+				Name: "foo#bar.bar",
 			},
 		},
 		{
 			"slashes in the chart name are not unescaped",
-			[]models.Chart{
-				{
-					ID:   "repo-name/project1%2Ffoo%20bar",
-					Name: "project1%2Ffoo%20bar",
-				},
+			models.Chart{
+				ID:   "repo-name/project1%2Ffoo%20bar",
+				Name: "project1%2Ffoo%20bar",
 			},
-			[]models.Chart{
-				{
-					ID:   "repo-name/project1%2Ffoo bar",
-					Name: "project1%2Ffoo bar",
-				},
+			models.Chart{
+				ID:   "repo-name/project1%2Ffoo bar",
+				Name: "project1%2Ffoo bar",
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
-			res := unescapeChartsData(tt.input)
+			res := unescapeChartData(tt.input)
 			if !cmp.Equal(res, tt.expected) {
 				t.Errorf("Unexpected result: %v", cmp.Diff(res, tt.expected))
 			}
@@ -1816,14 +1847,26 @@ func TestHelmRepoAppliesUnescape(t *testing.T) {
 			ChartVersions: []models.ChartVersion{{AppVersion: "v2"}},
 		},
 	}
+	pgManager, mock, cleanup := getMockManager(t)
+	defer cleanup()
+	mock.ExpectQuery("SELECT info FROM charts").
+		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow("{}"))
 	helmRepo := &HelmRepo{
 		content:               []byte(repoIndexYAML),
 		AppRepositoryInternal: repo,
+		manager:               pgManager,
 	}
 	t.Run("Helm repo applies unescaping to chart data", func(t *testing.T) {
-		charts, _ := helmRepo.Charts(context.Background(), false)
+		chartResults := make(chan pullChartResult, 2)
+		_, err := helmRepo.Charts(context.Background(), false, chartResults)
+		assert.NoError(t, err)
+		charts := []models.Chart{}
+		for cr := range chartResults {
+			charts = append(charts, cr.Chart)
+		}
+
 		if !cmp.Equal(charts, expectedCharts) {
-			t.Errorf("Unexpected result: %v", cmp.Diff(charts, expectedCharts))
+			t.Errorf("Unexpected result: %v", cmp.Diff(expectedCharts, charts))
 		}
 	})
 }
@@ -1915,6 +1958,108 @@ func Test_isURLDomainEqual(t *testing.T) {
 			res := isURLDomainEqual(tt.url1, tt.url2)
 			if !cmp.Equal(res, tt.expected) {
 				t.Errorf("Unexpected result: %v", cmp.Diff(res, tt.expected))
+			}
+		})
+	}
+}
+
+func TestOrderedChartVersions(t *testing.T) {
+	testCases := []struct {
+		name          string
+		chartVersions []models.ChartVersion
+		expected      []models.ChartVersion
+	}{
+		{
+			name: "re-orders an unordered slice",
+			chartVersions: []models.ChartVersion{
+				{
+					Version: "1.2.3",
+				},
+				{
+					Version: "1.2.2",
+				},
+				{
+					Version: "1.2.4",
+				},
+			},
+			expected: []models.ChartVersion{
+				{
+					Version: "1.2.4",
+				},
+				{
+					Version: "1.2.3",
+				},
+				{
+					Version: "1.2.2",
+				},
+			},
+		},
+		{
+			name: "an unparsable version is shifted to the end",
+			chartVersions: []models.ChartVersion{
+				{
+					Version: "1.2.4",
+				},
+				{
+					Version: "not-a-version",
+				},
+				{
+					Version: "1.2.2",
+				},
+			},
+			expected: []models.ChartVersion{
+				{
+					Version: "1.2.4",
+				},
+				{
+					Version: "1.2.2",
+				},
+				{
+					Version: "not-a-version",
+				},
+			},
+		},
+		{
+			name: "a combination of unorderd versions andan unparsable version is ordered correctly",
+			chartVersions: []models.ChartVersion{
+				{
+					Version: "1.2.2",
+				},
+				{
+					Version: "1.2.4",
+				},
+				{
+					Version: "not-a-version",
+				},
+				{
+					Version: "1.2.3",
+				},
+			},
+			expected: []models.ChartVersion{
+				{
+					Version: "1.2.4",
+				},
+				{
+					Version: "1.2.3",
+				},
+				{
+					Version: "1.2.2",
+				},
+				{
+					Version: "not-a-version",
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			chartVersions := tc.chartVersions
+
+			orderedChartVersions(chartVersions)
+
+			if !cmp.Equal(chartVersions, tc.expected) {
+				t.Errorf(cmp.Diff(tc.expected, chartVersions))
 			}
 		})
 	}

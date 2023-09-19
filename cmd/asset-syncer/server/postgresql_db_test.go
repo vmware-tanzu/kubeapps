@@ -1,4 +1,4 @@
-// Copyright 2021-2022 the Kubeapps contributors.
+// Copyright 2021-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 // Currently these tests will be skipped entirely unless the
@@ -88,14 +88,13 @@ func TestImportCharts(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name   string
-		charts []models.Chart
+		name  string
+		chart models.Chart
 	}{
 		{
 			name: "it inserts the charts",
-			charts: []models.Chart{
-				{Name: "my-chart1", Repo: &repo, ID: "foo/bar:123"},
-				{Name: "my-chart2", Repo: &repo, ID: "foo/bar:456"},
+			chart: models.Chart{
+				Name: "my-chart1", Repo: &repo, ID: "foo/bar:123",
 			},
 		},
 	}
@@ -104,12 +103,8 @@ func TestImportCharts(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			pam, cleanup := getInitializedManager(t)
 			defer cleanup()
-			_, err := pam.EnsureRepoExists(repo.Namespace, repo.Name)
-			if err != nil {
-				t.Fatalf("%+v", err)
-			}
 
-			err = pam.importCharts(tc.charts, repo)
+			err := pam.Sync(repo, tc.chart)
 			if err != nil {
 				t.Errorf("%+v", err)
 			}
@@ -176,7 +171,7 @@ func TestInsertFiles(t *testing.T) {
 
 func ensureFilesExist(t *testing.T, pam *postgresAssetManager, chartID string, files []models.ChartFiles) {
 	for _, f := range files {
-		pgtest.EnsureChartsExist(t, pam, []models.Chart{{ID: chartID}}, *f.Repo)
+		pgtest.EnsureChartsExist(t, pam, []models.Chart{{ID: chartID, Name: chartID}}, *f.Repo)
 		err := pam.insertFiles(chartID, f)
 		if err != nil {
 			t.Fatalf("%+v", err)
@@ -262,10 +257,10 @@ func TestRemoveMissingCharts(t *testing.T) {
 		name string
 		// existingFiles maps a chartID to a slice of files for different
 		// versions of that chart.
-		existingFiles   map[string][]models.ChartFiles
-		remainingCharts []models.Chart
-		expectedCharts  int
-		expectedFiles   int
+		existingFiles  map[string][]models.ChartFiles
+		chartsToRemove []string
+		expectedCharts int
+		expectedFiles  int
 	}{
 		{
 			name: "it removes missing charts and files",
@@ -279,9 +274,7 @@ func TestRemoveMissingCharts(t *testing.T) {
 					{ID: "other-chart-3", Readme: "A Readme", Repo: &repo},
 				},
 			},
-			remainingCharts: []models.Chart{
-				{ID: "my-chart"},
-			},
+			chartsToRemove: []string{"other-chart"},
 			expectedCharts: 1,
 			expectedFiles:  1,
 		},
@@ -302,10 +295,7 @@ func TestRemoveMissingCharts(t *testing.T) {
 					{ID: "third-chart-3", Readme: "A Readme", Repo: &repo},
 				},
 			},
-			remainingCharts: []models.Chart{
-				{ID: "my-chart"},
-				{ID: "other-chart"},
-			},
+			chartsToRemove: []string{"third-chart"},
 			expectedCharts: 2,
 			expectedFiles:  4,
 		},
@@ -328,10 +318,7 @@ func TestRemoveMissingCharts(t *testing.T) {
 					{ID: "third-chart-3", Readme: "A Readme", Repo: &repo},
 				},
 			},
-			remainingCharts: []models.Chart{
-				{ID: "my-chart"},
-				{ID: "third-chart"},
-			},
+			chartsToRemove: []string{"other-chart"},
 			expectedCharts: 3,
 			expectedFiles:  7,
 		},
@@ -354,12 +341,25 @@ func TestRemoveMissingCharts(t *testing.T) {
 					{ID: "third-chart-3", Readme: "A Readme", Repo: &repo},
 				},
 			},
-			remainingCharts: []models.Chart{
-				{ID: "my-chart"},
-				{ID: "third-chart"},
-			},
+			chartsToRemove: []string{"other-chart"},
 			expectedCharts: 3,
 			expectedFiles:  7,
+		},
+		{
+			name: "it does not error if no missing charts to remove",
+			existingFiles: map[string][]models.ChartFiles{
+				"my-chart": {
+					{ID: "my-chart-1", Readme: "A Readme", Repo: &repo},
+				},
+				"other-chart": {
+					{ID: "other-chart-1", Readme: "A Readme", Repo: &repo},
+					{ID: "other-chart-2", Readme: "A Readme", Repo: &repo},
+					{ID: "other-chart-3", Readme: "A Readme", Repo: &repo},
+				},
+			},
+			chartsToRemove: []string{},
+			expectedCharts: 2,
+			expectedFiles:  4,
 		},
 	}
 
@@ -371,7 +371,7 @@ func TestRemoveMissingCharts(t *testing.T) {
 				ensureFilesExist(t, pam, chartID, files)
 			}
 
-			err := pam.removeMissingCharts(repo, tc.remainingCharts)
+			err := pam.RemoveMissingCharts(repo, tc.chartsToRemove)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
