@@ -178,10 +178,12 @@ func Test_syncURLInvalidity(t *testing.T) {
 
 	fakeServer := newFakeServer(t, nil)
 	defer fakeServer.Close()
+	pgManager, _, cleanup := getMockManager(t)
+	defer cleanup()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := getHelmRepo("namespace", "test", tt.repoURL, "", nil, fakeServer.Client(), "my-user-agent")
+			_, err := getHelmRepo("namespace", "test", tt.repoURL, "", nil, fakeServer.Client(), "my-user-agent", pgManager)
 			assert.Error(t, err, tt.name)
 		})
 	}
@@ -573,14 +575,14 @@ func (r *fakeRepo) Filters() *apprepov1alpha1.FilterRuleSpec {
 	return nil
 }
 
-func (r *fakeRepo) Charts(ctx context.Context, shallow bool, chartResults chan pullChartResult) error {
+func (r *fakeRepo) Charts(ctx context.Context, shallow bool, chartResults chan pullChartResult) ([]string, error) {
 	for _, chart := range r.charts {
 		chartResults <- pullChartResult{
 			Chart: chart,
 		}
 	}
 	close(chartResults)
-	return nil
+	return nil, nil
 }
 
 func (r *fakeRepo) FetchFiles(cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
@@ -1464,7 +1466,7 @@ version: 1.0.0
 				manager: pgManager,
 			}
 			chartResults := make(chan pullChartResult, 2)
-			err = chartsRepo.Charts(context.Background(), tt.shallow, chartResults)
+			_, err = chartsRepo.Charts(context.Background(), tt.shallow, chartResults)
 			assert.NoError(t, err)
 
 			charts := []models.Chart{}
@@ -1545,7 +1547,7 @@ version: 1.0.0
 			manager: pgManager,
 		}
 		chartResults := make(chan pullChartResult, 2)
-		err = chartsRepo.Charts(context.Background(), true, chartResults)
+		_, err = chartsRepo.Charts(context.Background(), true, chartResults)
 		assert.NoError(t, err)
 
 		charts := []models.Chart{}
@@ -1845,13 +1847,18 @@ func TestHelmRepoAppliesUnescape(t *testing.T) {
 			ChartVersions: []models.ChartVersion{{AppVersion: "v2"}},
 		},
 	}
+	pgManager, mock, cleanup := getMockManager(t)
+	defer cleanup()
+	mock.ExpectQuery("SELECT info FROM charts").
+		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow("{}"))
 	helmRepo := &HelmRepo{
 		content:               []byte(repoIndexYAML),
 		AppRepositoryInternal: repo,
+		manager:               pgManager,
 	}
 	t.Run("Helm repo applies unescaping to chart data", func(t *testing.T) {
 		chartResults := make(chan pullChartResult, 2)
-		err := helmRepo.Charts(context.Background(), false, chartResults)
+		_, err := helmRepo.Charts(context.Background(), false, chartResults)
 		assert.NoError(t, err)
 		charts := []models.Chart{}
 		for cr := range chartResults {
@@ -1951,6 +1958,108 @@ func Test_isURLDomainEqual(t *testing.T) {
 			res := isURLDomainEqual(tt.url1, tt.url2)
 			if !cmp.Equal(res, tt.expected) {
 				t.Errorf("Unexpected result: %v", cmp.Diff(res, tt.expected))
+			}
+		})
+	}
+}
+
+func TestOrderedChartVersions(t *testing.T) {
+	testCases := []struct {
+		name          string
+		chartVersions []models.ChartVersion
+		expected      []models.ChartVersion
+	}{
+		{
+			name: "re-orders an unordered slice",
+			chartVersions: []models.ChartVersion{
+				{
+					Version: "1.2.3",
+				},
+				{
+					Version: "1.2.2",
+				},
+				{
+					Version: "1.2.4",
+				},
+			},
+			expected: []models.ChartVersion{
+				{
+					Version: "1.2.4",
+				},
+				{
+					Version: "1.2.3",
+				},
+				{
+					Version: "1.2.2",
+				},
+			},
+		},
+		{
+			name: "an unparsable version is shifted to the end",
+			chartVersions: []models.ChartVersion{
+				{
+					Version: "1.2.4",
+				},
+				{
+					Version: "not-a-version",
+				},
+				{
+					Version: "1.2.2",
+				},
+			},
+			expected: []models.ChartVersion{
+				{
+					Version: "1.2.4",
+				},
+				{
+					Version: "1.2.2",
+				},
+				{
+					Version: "not-a-version",
+				},
+			},
+		},
+		{
+			name: "a combination of unorderd versions andan unparsable version is ordered correctly",
+			chartVersions: []models.ChartVersion{
+				{
+					Version: "1.2.2",
+				},
+				{
+					Version: "1.2.4",
+				},
+				{
+					Version: "not-a-version",
+				},
+				{
+					Version: "1.2.3",
+				},
+			},
+			expected: []models.ChartVersion{
+				{
+					Version: "1.2.4",
+				},
+				{
+					Version: "1.2.3",
+				},
+				{
+					Version: "1.2.2",
+				},
+				{
+					Version: "not-a-version",
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			chartVersions := tc.chartVersions
+
+			orderedChartVersions(chartVersions)
+
+			if !cmp.Equal(chartVersions, tc.expected) {
+				t.Errorf(cmp.Diff(tc.expected, chartVersions))
 			}
 		})
 	}
