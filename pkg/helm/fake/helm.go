@@ -19,7 +19,8 @@ type OCIPuller struct {
 
 // PullOCIChart returns some fake content
 func (f *OCIPuller) PullOCIChart(ociFullName string) (*bytes.Buffer, string, error) {
-	tag := strings.Split(ociFullName, ":")[1]
+	parts := strings.Split(ociFullName, ":")
+	tag := parts[len(parts)-1]
 	if f.ExpectedName != "" && f.ExpectedName != ociFullName {
 		return nil, "", fmt.Errorf("expecting %s got %s", f.ExpectedName, ociFullName)
 	}
