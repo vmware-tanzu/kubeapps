@@ -36,7 +36,7 @@ RUN curl -sSL "https://github.com/grpc-ecosystem/grpc-health-probe/releases/down
 # https://github.com/golang/go/issues/27719#issuecomment-514747274
 RUN --mount=type=cache,target=/go/pkg/mod  \
     --mount=type=cache,target=/root/.cache/go-build \
-    GOPROXY="direct" go mod download
+    GOPROXY="https://proxy.golang.org,direct" go mod download
 
 # We don't copy the pkg and cmd directories until here so the above layers can
 # be reused.
