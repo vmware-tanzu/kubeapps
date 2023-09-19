@@ -60,7 +60,7 @@ require (
 	k8s.io/klog/v2 v2.100.1
 	k8s.io/kubectl v0.26.7
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
-	oras.land/oras-go v1.2.3
+	oras.land/oras-go v1.2.4
 	oras.land/oras-go/v2 v2.3.0
 	sigs.k8s.io/controller-runtime v0.14.6
 	sigs.k8s.io/yaml v1.3.0
@@ -104,7 +104,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
-	github.com/docker/docker v23.0.6+incompatible // indirect
+	github.com/docker/docker v24.0.6+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.8.0 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
