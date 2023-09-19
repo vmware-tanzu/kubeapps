@@ -56,8 +56,9 @@ const (
 	// registries. This may need to be adjusted depending on public
 	// registry limits until we can better manage request limits for
 	// the Bitnami OCI repo on dockerhub.
-	numWorkersOCI        = 5
-	chartsIndexMediaType = "application/vnd.vmware.charts.index.config.v1+json"
+	numWorkersOCI            = 10
+	maxOCIVersionsForOneSync = 5
+	chartsIndexMediaType     = "application/vnd.vmware.charts.index.config.v1+json"
 )
 
 type Config struct {
@@ -761,7 +762,7 @@ func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool, chartRes
 		return nil, err
 	}
 
-	log.V(4).Infof("Starting %d workers", numWorkersOCI)
+	log.V(4).Infof("Starting %d workers for importing OCI charts", numWorkersOCI)
 	go func() {
 		for _, appName := range r.repositories {
 			// Get the list of tags for the app
@@ -810,12 +811,18 @@ func (r *OCIRegistry) Charts(ctx context.Context, fetchLatestOnly bool, chartRes
 				}
 				log.V(4).Infof("Queued only the first tag for %q for shallow sync : %q", appName, versionsToSync[0])
 			} else {
+				limitedVersionsToSync := versionsToSync
+				if len(limitedVersionsToSync) > maxOCIVersionsForOneSync {
+					limitedVersionsToSync = limitedVersionsToSync[:maxOCIVersionsForOneSync]
+					log.V(4).Infof("Queued only the next %d versions of %q during this sync: %v", maxOCIVersionsForOneSync, appName, versionsToSync[:maxOCIVersionsForOneSync])
+				} else {
+					log.V(4).Infof("Queued all remaining  versions for %q: %v", appName, versionsToSync)
+				}
 				chartJobs <- pullChartJob{
 					AppName:        appName,
-					VersionsToSync: versionsToSync,
+					VersionsToSync: limitedVersionsToSync,
 					Chart:          syncedChart,
 				}
-				log.V(4).Infof("Queued %q tags %v for sync", appName, versionsToSync)
 			}
 		}
 		close(chartJobs)
@@ -947,21 +954,25 @@ type fileImporter struct {
 	netClient *http.Client
 }
 
-func (f *fileImporter) fetchFiles(charts []models.Chart, repo ChartCatalog, userAgent string, passCredentials bool) {
+func (f *fileImporter) fetchFiles(inputCharts chan models.Chart, repo ChartCatalog, userAgent string, passCredentials bool, done chan bool) {
 	iconJobs := make(chan models.Chart, numWorkersFiles)
 	chartFilesJobs := make(chan importChartFilesJob, numWorkersFiles)
 	var wg sync.WaitGroup
 
-	log.V(4).Infof("Starting %d workers", numWorkersFiles)
+	log.V(4).Infof("Starting %d file importer workers", numWorkersFiles)
 	for i := 0; i < numWorkersFiles; i++ {
 		wg.Add(1)
 		go f.importWorker(&wg, iconJobs, chartFilesJobs, repo, userAgent, passCredentials)
 	}
 
-	// Enqueue jobs to process chart icons
-	for _, c := range charts {
+	// Enqueue jobs to process chart icons and record the charts for further
+	// processing.
+	charts := []models.Chart{}
+	for c := range inputCharts {
 		iconJobs <- c
+		charts = append(charts, c)
 	}
+	log.V(4).Infof("Finished queueing icon jobs")
 	// Close the iconJobs channel to signal the worker pools to move on to the
 	// chart files jobs
 	close(iconJobs)
@@ -970,9 +981,8 @@ func (f *fileImporter) fetchFiles(charts []models.Chart, repo ChartCatalog, user
 	// be processed. Append the rest of the chart versions to a list to be
 	// enqueued later
 	var toEnqueue []importChartFilesJob
+	log.V(4).Infof("Enqueuing chart file imports for first versions")
 	for _, c := range charts {
-		// TODO: Should we use the chart id, chart name with prefix, or helm chart name here? The database actually stores the chart ID so we could
-		// pass that in instead? Why don't we?
 		chartFilesJobs <- importChartFilesJob{c.ID, c.Repo, c.ChartVersions[0]}
 		for _, cv := range c.ChartVersions[1:] {
 			toEnqueue = append(toEnqueue, importChartFilesJob{c.ID, c.Repo, cv})
@@ -980,6 +990,7 @@ func (f *fileImporter) fetchFiles(charts []models.Chart, repo ChartCatalog, user
 	}
 
 	// Enqueue all the remaining chart versions
+	log.V(4).Infof("Enqueuing chart file imports for remaining versions")
 	for _, cfj := range toEnqueue {
 		chartFilesJobs <- cfj
 	}
@@ -988,7 +999,11 @@ func (f *fileImporter) fetchFiles(charts []models.Chart, repo ChartCatalog, user
 	close(chartFilesJobs)
 
 	// Wait for the worker pools to finish processing
+	log.V(4).Infof("Waiting for file import workers to complete.")
 	wg.Wait()
+
+	log.V(4).Infof("File importing complete")
+	done <- true
 }
 
 func (f *fileImporter) importWorker(wg *sync.WaitGroup, icons <-chan models.Chart, chartFiles <-chan importChartFilesJob, repo ChartCatalog, userAgent string, passCredentials bool) {

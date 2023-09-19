@@ -12,6 +12,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
+	log "k8s.io/klog/v2"
 )
 
 const AllNamespaces = "_all"
@@ -157,8 +158,10 @@ func (m *PostgresAssetManager) GetChartFiles(namespace, filesID string) (models.
 
 func (m *PostgresAssetManager) GetChartFilesWithFallback(namespace, filesID string, withFallback bool) (models.ChartFiles, error) {
 	var chartFiles models.ChartFiles
+	query := fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_files_id = $2", dbutils.ChartFilesTable)
 	err := m.QueryOne(&chartFiles, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_files_id = $2", dbutils.ChartFilesTable), namespace, filesID)
 	if err != nil {
+		log.Errorf("query %q (%q, %q) failed with %v", query, namespace, filesID, err)
 		splitID := strings.Split(filesID, "/")
 		if withFallback && len(splitID) == 2 {
 			// fallback query when a chart_files_id is not being retrieved

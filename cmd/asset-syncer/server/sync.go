@@ -101,6 +101,12 @@ func Sync(serveOpts Config, version string, args []string) error {
 	}
 
 	for _, fetchLatestOnly := range fetchLatestOnlySlice {
+		// Create the file importer to handle the icon and chart file imports.
+		fImporter := fileImporter{manager, netClient}
+		fileImporterJobs := make(chan models.Chart)
+		fileImportsDone := make(chan bool)
+		go fImporter.fetchFiles(fileImporterJobs, repoIface, serveOpts.UserAgent, serveOpts.PassCredentials, fileImportsDone)
+
 		// We want to receive results per app so that we can sync that app
 		// immediately and have a more responsive UX experience. A channel
 		// gives us a way to pull results as they're generated (like an
@@ -137,10 +143,12 @@ func Sync(serveOpts Config, version string, args []string) error {
 			}
 
 			// Fetch and store chart icons
-			fImporter := fileImporter{manager, netClient}
-			fImporter.fetchFiles([]models.Chart{chart.Chart}, repoIface, serveOpts.UserAgent, serveOpts.PassCredentials)
-			log.V(4).Infof("Repository synced, shallow=%v", fetchLatestOnly)
+			fileImporterJobs <- chart.Chart
+
+			log.V(4).Infof("Chart %q synced, shallow=%v", chart.Chart.Name, fetchLatestOnly)
 		}
+
+		close(fileImporterJobs)
 
 		err = manager.RemoveMissingCharts(models.AppRepository{
 			Namespace: repo.Namespace,
@@ -149,6 +157,12 @@ func Sync(serveOpts Config, version string, args []string) error {
 		if err != nil {
 			return fmt.Errorf("error while removing missing charts: %w", err)
 		}
+
+		// Wait for file imports to complete.
+		log.V(4).Infof("Chart data syncing complete. Waiting for file imports to complete.")
+		<-fileImportsDone
+
+		log.V(4).Infof("Repository synced, shallow=%v", fetchLatestOnly)
 	}
 
 	// Update cache in the database
