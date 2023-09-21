@@ -96,7 +96,7 @@ function DeploymentFormBody({
         <div className="deployment-form-tabs">
           <Tabs
             id="deployment-form-body-tabs"
-            columns={["YAML editor"]}
+            columns={[["YAML editor", () => {}]]}
             data={[
               <OperatorAdvancedDeploymentForm
                 appValues={values}
