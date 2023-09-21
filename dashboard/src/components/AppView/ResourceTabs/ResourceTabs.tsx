@@ -55,7 +55,7 @@ export default function ResourceTabs({
       <h3 className="section-title" id="resources-table">
         Application Resources
       </h3>
-      <Tabs id="resource-table-tabs" columns={columns} data={data} />
+      <Tabs id="resource-table-tabs" columns={columns.map(c => [c, () => {}])} data={data} />
     </section>
   );
 }

@@ -298,16 +298,19 @@ function DeploymentFormBody({
   }
 
   // creation of the each tab + its content
-  const tabColumns: JSX.Element[] = [];
+  const tabColumns: [JSX.Element, () => void][] = [];
   const tabData: JSX.Element[] = [];
 
   // Basic form creation
   if (shouldRenderBasicForm(schemaFromTheParentContainerParsed)) {
-    tabColumns.push(
-      <div role="presentation" onClick={refreshBasicParameters}>
+    tabColumns.push([
+      // This is a tuple, not an array requiring a key.
+      // eslint-disable-next-line react/jsx-key
+      <div>
         <span>Visual editor</span>
       </div>,
-    );
+      refreshBasicParameters,
+    ]);
     tabData.push(
       <>
         <BasicDeploymentForm
@@ -322,11 +325,14 @@ function DeploymentFormBody({
   }
 
   // Text editor creation
-  tabColumns.push(
-    <div role="presentation" onClick={saveAllChanges}>
+  tabColumns.push([
+    // This is a tuple, not an array requiring a key.
+    // eslint-disable-next-line react/jsx-key
+    <div>
       <span>YAML editor</span>
     </div>,
-  );
+    saveAllChanges,
+  ]);
   tabData.push(
     <AdvancedDeploymentForm
       valuesFromTheParentContainer={valuesFromTheParentContainer}
@@ -339,11 +345,14 @@ function DeploymentFormBody({
   );
   if (featureFlags?.schemaEditor?.enabled) {
     // Schema editor creation, if the feature flag is enabled
-    tabColumns.push(
-      <div role="presentation" onClick={saveAllChanges}>
+    tabColumns.push([
+      // This is a tuple, not an array requiring a key.
+      // eslint-disable-next-line react/jsx-key
+      <div>
         <span>Schema editor (advanced)</span>
       </div>,
-    );
+      saveAllChanges,
+    ]);
     tabData.push(
       <SchemaEditorForm
         schemaFromTheParentContainer={schemaFromTheParentContainerString}

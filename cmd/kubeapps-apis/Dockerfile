@@ -62,6 +62,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 # Build 'kapp-controller' plugin, version 'v1alpha1'
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
+    GOPROXY="https://proxy.golang.org,direct" \
     go build \
     -ldflags "-X github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/cmd.version=$VERSION" \
     -o /kapp-controller-packages-v1alpha1-plugin.so -buildmode=plugin \
@@ -70,6 +71,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 ## Build 'fluxv2' plugin, version 'v1alpha1'
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
+    GOPROXY="https://proxy.golang.org,direct" \
     go build \
     -ldflags "-X github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/cmd.version=$VERSION" \
     -o /fluxv2-packages-v1alpha1-plugin.so -buildmode=plugin \
@@ -78,6 +80,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 ## Build 'helm' plugin, version 'v1alpha1'
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
+    GOPROXY="https://proxy.golang.org,direct" \
     go build \
     -ldflags "-X github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/cmd.version=$VERSION" \
     -o /helm-packages-v1alpha1-plugin.so -buildmode=plugin \
@@ -86,6 +89,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 ## Build 'resources' plugin, version 'v1alpha1'
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
+    GOPROXY="https://proxy.golang.org,direct" \
     go build \
     -ldflags "-X github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/cmd.version=$VERSION" \
     -o /resources-v1alpha1-plugin.so -buildmode=plugin \
