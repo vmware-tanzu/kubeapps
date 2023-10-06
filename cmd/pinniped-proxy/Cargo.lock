@@ -1814,9 +1814,9 @@ dependencies = [
 
 [[package]]
 name = "temp-env"
-version = "0.3.5"
+version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e010429b1f3ea1311190c658c7570100f03c1dab05c16cfab774181c648d656a"
+checksum = "96374855068f47402c3121c6eed88d29cb1de8f3ab27090e273e420bdabcf050"
 dependencies = [
  "parking_lot",
 ]
