@@ -3097,10 +3097,10 @@
     "@types/scheduler" "*"
     csstype "^3.0.2"
 
-"@types/redux-mock-store@^1.0.3":
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/@types/redux-mock-store/-/redux-mock-store-1.0.3.tgz#895de4a364bc4836661570aec82f2eef5989d1fb"
-  integrity sha512-Wqe3tJa6x9MxMN4DJnMfZoBRBRak1XTPklqj4qkVm5VBpZnC8PSADf4kLuFQ9NAdHaowfWoEeUMz7NWc2GMtnA==
+"@types/redux-mock-store@^1.0.4":
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@types/redux-mock-store/-/redux-mock-store-1.0.4.tgz#d82d97d61314f02a3849a18edabd1a169581e632"
+  integrity sha512-53nDnXba4M7aOJsRod8HKENDC9M2ccm19yZcXImoP15oDLuBru+Q+WKWOCQwKYOC1S/6AJx58mFp8kd4s8q1rQ==
   dependencies:
     redux "^4.0.5"
 
