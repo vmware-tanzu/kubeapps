@@ -15,7 +15,7 @@ require (
 	github.com/containerd/containerd v1.7.6
 	github.com/cppforlife/go-cli-ui v0.0.0-20220622150351-995494831c6c
 	github.com/disintegration/imaging v1.6.2
-	github.com/distribution/distribution v2.8.2+incompatible
+	github.com/distribution/distribution v2.8.3+incompatible
 	github.com/docker/cli v24.0.6+incompatible
 	github.com/fluxcd/helm-controller/api v0.32.2
 	github.com/fluxcd/pkg/apis/meta v1.0.0
@@ -103,6 +103,7 @@ require (
 	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/distribution/reference v0.5.0 // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/docker v24.0.6+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.8.0 // indirect
