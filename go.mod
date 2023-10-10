@@ -43,7 +43,7 @@ require (
 	github.com/vmware-tanzu/carvel-kapp v0.56.0
 	github.com/vmware-tanzu/carvel-kapp-controller v0.48.1
 	github.com/vmware-tanzu/carvel-vendir v0.35.0
-	golang.org/x/net v0.16.0
+	golang.org/x/net v0.17.0
 	golang.org/x/sync v0.4.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230913181813-007df8e322eb
 	google.golang.org/grpc v1.58.2
