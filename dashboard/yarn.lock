@@ -3069,10 +3069,10 @@
     "@types/react" "*"
     "@types/react-router" "*"
 
-"@types/react-router-hash-link@^2.4.6":
-  version "2.4.6"
-  resolved "https://registry.yarnpkg.com/@types/react-router-hash-link/-/react-router-hash-link-2.4.6.tgz#6411fb185e126bb1b985c6867a0e413670082f34"
-  integrity sha512-JOV4Q1N60tJJUPisS/u1jiXn8c4jX7ThQf8XavzZYIWOIv0RP17nbyI9YgEZh1r3APXpP9ZkU1ytrlv+1+8jcw==
+"@types/react-router-hash-link@^2.4.7":
+  version "2.4.7"
+  resolved "https://registry.yarnpkg.com/@types/react-router-hash-link/-/react-router-hash-link-2.4.7.tgz#4f6f5be7ed88c49ba02e1fd69718286fa99791f8"
+  integrity sha512-pyNv43V1TiK239WIIHF6sGoEbLbwSbnsPeoF1Y2nvFPMki/6ChQMtlKxzQH8qfkztemgrSQhGyi2SJXRIo65Dg==
   dependencies:
     "@types/history" "^4.7.11"
     "@types/react" "*"
