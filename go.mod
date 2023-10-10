@@ -17,8 +17,8 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/reference v0.5.0
 	github.com/docker/cli v24.0.6+incompatible
-	github.com/fluxcd/helm-controller/api v0.32.2
-	github.com/fluxcd/pkg/apis/meta v1.0.0
+	github.com/fluxcd/helm-controller/api v0.36.1
+	github.com/fluxcd/pkg/apis/meta v1.1.2
 	github.com/fluxcd/pkg/oci v0.23.0
 	github.com/fluxcd/pkg/version v0.2.2
 	github.com/fluxcd/source-controller/api v0.36.1
@@ -51,18 +51,18 @@ require (
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.11.3
-	k8s.io/api v0.26.7
-	k8s.io/apiextensions-apiserver v0.26.3
-	k8s.io/apimachinery v0.26.7
-	k8s.io/apiserver v0.26.7
+	k8s.io/api v0.27.4
+	k8s.io/apiextensions-apiserver v0.27.4
+	k8s.io/apimachinery v0.27.4
+	k8s.io/apiserver v0.27.4
 	k8s.io/cli-runtime v0.26.7
-	k8s.io/client-go v0.26.7
+	k8s.io/client-go v0.27.4
 	k8s.io/klog/v2 v2.100.1
 	k8s.io/kubectl v0.26.7
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
 	oras.land/oras-go v1.2.4
 	oras.land/oras-go/v2 v2.3.0
-	sigs.k8s.io/controller-runtime v0.14.6
+	sigs.k8s.io/controller-runtime v0.15.1
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -117,7 +117,7 @@ require (
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/fluxcd/pkg/apis/acl v0.1.0 // indirect
-	github.com/fluxcd/pkg/apis/kustomize v1.0.0 // indirect
+	github.com/fluxcd/pkg/apis/kustomize v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/fvbommel/sortorder v1.1.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
@@ -223,7 +223,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/component-base v0.26.7 // indirect
+	k8s.io/component-base v0.27.4 // indirect
 	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/kustomize/api v0.12.1 // indirect
