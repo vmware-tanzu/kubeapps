@@ -355,6 +355,10 @@ func (s packagesServer) DeleteInstalledPackage(ctx context.Context, request *con
 	return response, nil
 }
 
+func (s packagesServer) GetAvailablePackageMetadatas(ctx context.Context, request *connect.Request[packages.GetAvailablePackageMetadatasRequest]) (*connect.Response[packages.GetAvailablePackageMetadatasResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("Unimplemented"))
+}
+
 // getPluginWithServer returns the *pkgPluginsWithServer from a given packagesServer
 // matching the plugin name
 func (s packagesServer) getPluginWithServer(plugin *v1alpha1.Plugin) *pkgPluginWithServer {

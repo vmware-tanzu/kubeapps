@@ -324,6 +324,10 @@ message GetAvailablePackageMetadatasResponse {
   // The reference to the available package related to this metadata.
   AvailablePackageReference available_package_ref = 1;
 
+  // NOTE: May also need the repository reference, for required
+  // secrets? Or rely on existing matching of repo to available package
+  // (currently used for updates).
+
   // Package Metadata
   //
   // A list of metadata associated with this available package.

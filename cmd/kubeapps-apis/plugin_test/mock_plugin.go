@@ -141,6 +141,10 @@ func (s TestPackagingPluginServer) DeleteInstalledPackage(ctx context.Context, r
 	return connect.NewResponse(&corev1.DeleteInstalledPackageResponse{}), nil
 }
 
+func (s TestPackagingPluginServer) GetAvailablePackageMetadatas(ctx context.Context, request *connect.Request[corev1.GetAvailablePackageMetadatasRequest]) (*connect.Response[corev1.GetAvailablePackageMetadatasResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("Unimplemented"))
+}
+
 type TestRepositoriesPluginServer struct {
 	corev1.UnimplementedRepositoriesServiceServer
 	Plugin                     *plugins.Plugin
