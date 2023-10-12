@@ -6,14 +6,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import type {
-  BinaryReadOptions,
-  FieldList,
-  JsonReadOptions,
-  JsonValue,
-  PartialMessage,
-  PlainMessage,
-} from "@bufbuild/protobuf";
+import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Any, Message, proto3 } from "@bufbuild/protobuf";
 import { Plugin } from "../../plugins/v1alpha1/plugins_pb";
 
@@ -52,45 +45,26 @@ export class GetAvailablePackageSummariesRequest extends Message<GetAvailablePac
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesRequest";
+  static readonly typeName = "kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "context", kind: "message", T: Context },
     { no: 2, name: "filter_options", kind: "message", T: FilterOptions },
     { no: 3, name: "pagination_options", kind: "message", T: PaginationOptions },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetAvailablePackageSummariesRequest {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetAvailablePackageSummariesRequest {
     return new GetAvailablePackageSummariesRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetAvailablePackageSummariesRequest {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetAvailablePackageSummariesRequest {
     return new GetAvailablePackageSummariesRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetAvailablePackageSummariesRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetAvailablePackageSummariesRequest {
     return new GetAvailablePackageSummariesRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a:
-      | GetAvailablePackageSummariesRequest
-      | PlainMessage<GetAvailablePackageSummariesRequest>
-      | undefined,
-    b:
-      | GetAvailablePackageSummariesRequest
-      | PlainMessage<GetAvailablePackageSummariesRequest>
-      | undefined,
-  ): boolean {
+  static equals(a: GetAvailablePackageSummariesRequest | PlainMessage<GetAvailablePackageSummariesRequest> | undefined, b: GetAvailablePackageSummariesRequest | PlainMessage<GetAvailablePackageSummariesRequest> | undefined): boolean {
     return proto3.util.equals(GetAvailablePackageSummariesRequest, a, b);
   }
 }
@@ -132,37 +106,19 @@ export class GetAvailablePackageDetailRequest extends Message<GetAvailablePackag
     { no: 2, name: "pkg_version", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetAvailablePackageDetailRequest {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetAvailablePackageDetailRequest {
     return new GetAvailablePackageDetailRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetAvailablePackageDetailRequest {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetAvailablePackageDetailRequest {
     return new GetAvailablePackageDetailRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetAvailablePackageDetailRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetAvailablePackageDetailRequest {
     return new GetAvailablePackageDetailRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a:
-      | GetAvailablePackageDetailRequest
-      | PlainMessage<GetAvailablePackageDetailRequest>
-      | undefined,
-    b:
-      | GetAvailablePackageDetailRequest
-      | PlainMessage<GetAvailablePackageDetailRequest>
-      | undefined,
-  ): boolean {
+  static equals(a: GetAvailablePackageDetailRequest | PlainMessage<GetAvailablePackageDetailRequest> | undefined, b: GetAvailablePackageDetailRequest | PlainMessage<GetAvailablePackageDetailRequest> | undefined): boolean {
     return proto3.util.equals(GetAvailablePackageDetailRequest, a, b);
   }
 }
@@ -199,45 +155,82 @@ export class GetAvailablePackageVersionsRequest extends Message<GetAvailablePack
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsRequest";
+  static readonly typeName = "kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "available_package_ref", kind: "message", T: AvailablePackageReference },
     { no: 2, name: "pkg_version", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetAvailablePackageVersionsRequest {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetAvailablePackageVersionsRequest {
     return new GetAvailablePackageVersionsRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetAvailablePackageVersionsRequest {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetAvailablePackageVersionsRequest {
     return new GetAvailablePackageVersionsRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetAvailablePackageVersionsRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetAvailablePackageVersionsRequest {
     return new GetAvailablePackageVersionsRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a:
-      | GetAvailablePackageVersionsRequest
-      | PlainMessage<GetAvailablePackageVersionsRequest>
-      | undefined,
-    b:
-      | GetAvailablePackageVersionsRequest
-      | PlainMessage<GetAvailablePackageVersionsRequest>
-      | undefined,
-  ): boolean {
+  static equals(a: GetAvailablePackageVersionsRequest | PlainMessage<GetAvailablePackageVersionsRequest> | undefined, b: GetAvailablePackageVersionsRequest | PlainMessage<GetAvailablePackageVersionsRequest> | undefined): boolean {
     return proto3.util.equals(GetAvailablePackageVersionsRequest, a, b);
+  }
+}
+
+/**
+ * GetAvailablePackageMetadatasRequest
+ *
+ * Request for GetAvailablePackageMetadatas
+ *
+ * @generated from message kubeappsapis.core.packages.v1alpha1.GetAvailablePackageMetadatasRequest
+ */
+export class GetAvailablePackageMetadatasRequest extends Message<GetAvailablePackageMetadatasRequest> {
+  /**
+   * Available Package Reference
+   *
+   * Identifies the available package for which we are requesting
+   * the metadata.
+   *
+   * @generated from field: kubeappsapis.core.packages.v1alpha1.AvailablePackageReference available_package_ref = 1;
+   */
+  availablePackageRef?: AvailablePackageReference;
+
+  /**
+   * Package Version
+   *
+   * Version reference for which metadata is requested.
+   *
+   * @generated from field: string pkg_version = 2;
+   */
+  pkgVersion = "";
+
+  constructor(data?: PartialMessage<GetAvailablePackageMetadatasRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "kubeappsapis.core.packages.v1alpha1.GetAvailablePackageMetadatasRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "available_package_ref", kind: "message", T: AvailablePackageReference },
+    { no: 2, name: "pkg_version", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetAvailablePackageMetadatasRequest {
+    return new GetAvailablePackageMetadatasRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetAvailablePackageMetadatasRequest {
+    return new GetAvailablePackageMetadatasRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetAvailablePackageMetadatasRequest {
+    return new GetAvailablePackageMetadatasRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetAvailablePackageMetadatasRequest | PlainMessage<GetAvailablePackageMetadatasRequest> | undefined, b: GetAvailablePackageMetadatasRequest | PlainMessage<GetAvailablePackageMetadatasRequest> | undefined): boolean {
+    return proto3.util.equals(GetAvailablePackageMetadatasRequest, a, b);
   }
 }
 
@@ -269,44 +262,25 @@ export class GetInstalledPackageSummariesRequest extends Message<GetInstalledPac
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesRequest";
+  static readonly typeName = "kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "context", kind: "message", T: Context },
     { no: 2, name: "pagination_options", kind: "message", T: PaginationOptions },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetInstalledPackageSummariesRequest {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetInstalledPackageSummariesRequest {
     return new GetInstalledPackageSummariesRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetInstalledPackageSummariesRequest {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetInstalledPackageSummariesRequest {
     return new GetInstalledPackageSummariesRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetInstalledPackageSummariesRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetInstalledPackageSummariesRequest {
     return new GetInstalledPackageSummariesRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a:
-      | GetInstalledPackageSummariesRequest
-      | PlainMessage<GetInstalledPackageSummariesRequest>
-      | undefined,
-    b:
-      | GetInstalledPackageSummariesRequest
-      | PlainMessage<GetInstalledPackageSummariesRequest>
-      | undefined,
-  ): boolean {
+  static equals(a: GetInstalledPackageSummariesRequest | PlainMessage<GetInstalledPackageSummariesRequest> | undefined, b: GetInstalledPackageSummariesRequest | PlainMessage<GetInstalledPackageSummariesRequest> | undefined): boolean {
     return proto3.util.equals(GetInstalledPackageSummariesRequest, a, b);
   }
 }
@@ -338,37 +312,19 @@ export class GetInstalledPackageDetailRequest extends Message<GetInstalledPackag
     { no: 1, name: "installed_package_ref", kind: "message", T: InstalledPackageReference },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetInstalledPackageDetailRequest {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetInstalledPackageDetailRequest {
     return new GetInstalledPackageDetailRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetInstalledPackageDetailRequest {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetInstalledPackageDetailRequest {
     return new GetInstalledPackageDetailRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetInstalledPackageDetailRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetInstalledPackageDetailRequest {
     return new GetInstalledPackageDetailRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a:
-      | GetInstalledPackageDetailRequest
-      | PlainMessage<GetInstalledPackageDetailRequest>
-      | undefined,
-    b:
-      | GetInstalledPackageDetailRequest
-      | PlainMessage<GetInstalledPackageDetailRequest>
-      | undefined,
-  ): boolean {
+  static equals(a: GetInstalledPackageDetailRequest | PlainMessage<GetInstalledPackageDetailRequest> | undefined, b: GetInstalledPackageDetailRequest | PlainMessage<GetInstalledPackageDetailRequest> | undefined): boolean {
     return proto3.util.equals(GetInstalledPackageDetailRequest, a, b);
   }
 }
@@ -444,31 +400,19 @@ export class CreateInstalledPackageRequest extends Message<CreateInstalledPackag
     { no: 6, name: "reconciliation_options", kind: "message", T: ReconciliationOptions },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): CreateInstalledPackageRequest {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateInstalledPackageRequest {
     return new CreateInstalledPackageRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): CreateInstalledPackageRequest {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateInstalledPackageRequest {
     return new CreateInstalledPackageRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): CreateInstalledPackageRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateInstalledPackageRequest {
     return new CreateInstalledPackageRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: CreateInstalledPackageRequest | PlainMessage<CreateInstalledPackageRequest> | undefined,
-    b: CreateInstalledPackageRequest | PlainMessage<CreateInstalledPackageRequest> | undefined,
-  ): boolean {
+  static equals(a: CreateInstalledPackageRequest | PlainMessage<CreateInstalledPackageRequest> | undefined, b: CreateInstalledPackageRequest | PlainMessage<CreateInstalledPackageRequest> | undefined): boolean {
     return proto3.util.equals(CreateInstalledPackageRequest, a, b);
   }
 }
@@ -540,31 +484,19 @@ export class UpdateInstalledPackageRequest extends Message<UpdateInstalledPackag
     { no: 4, name: "reconciliation_options", kind: "message", T: ReconciliationOptions },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): UpdateInstalledPackageRequest {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateInstalledPackageRequest {
     return new UpdateInstalledPackageRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): UpdateInstalledPackageRequest {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateInstalledPackageRequest {
     return new UpdateInstalledPackageRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): UpdateInstalledPackageRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateInstalledPackageRequest {
     return new UpdateInstalledPackageRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: UpdateInstalledPackageRequest | PlainMessage<UpdateInstalledPackageRequest> | undefined,
-    b: UpdateInstalledPackageRequest | PlainMessage<UpdateInstalledPackageRequest> | undefined,
-  ): boolean {
+  static equals(a: UpdateInstalledPackageRequest | PlainMessage<UpdateInstalledPackageRequest> | undefined, b: UpdateInstalledPackageRequest | PlainMessage<UpdateInstalledPackageRequest> | undefined): boolean {
     return proto3.util.equals(UpdateInstalledPackageRequest, a, b);
   }
 }
@@ -595,31 +527,19 @@ export class DeleteInstalledPackageRequest extends Message<DeleteInstalledPackag
     { no: 1, name: "installed_package_ref", kind: "message", T: InstalledPackageReference },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): DeleteInstalledPackageRequest {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteInstalledPackageRequest {
     return new DeleteInstalledPackageRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): DeleteInstalledPackageRequest {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteInstalledPackageRequest {
     return new DeleteInstalledPackageRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): DeleteInstalledPackageRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteInstalledPackageRequest {
     return new DeleteInstalledPackageRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: DeleteInstalledPackageRequest | PlainMessage<DeleteInstalledPackageRequest> | undefined,
-    b: DeleteInstalledPackageRequest | PlainMessage<DeleteInstalledPackageRequest> | undefined,
-  ): boolean {
+  static equals(a: DeleteInstalledPackageRequest | PlainMessage<DeleteInstalledPackageRequest> | undefined, b: DeleteInstalledPackageRequest | PlainMessage<DeleteInstalledPackageRequest> | undefined): boolean {
     return proto3.util.equals(DeleteInstalledPackageRequest, a, b);
   }
 }
@@ -643,43 +563,24 @@ export class GetInstalledPackageResourceRefsRequest extends Message<GetInstalled
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsRequest";
+  static readonly typeName = "kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "installed_package_ref", kind: "message", T: InstalledPackageReference },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetInstalledPackageResourceRefsRequest {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetInstalledPackageResourceRefsRequest {
     return new GetInstalledPackageResourceRefsRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetInstalledPackageResourceRefsRequest {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetInstalledPackageResourceRefsRequest {
     return new GetInstalledPackageResourceRefsRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetInstalledPackageResourceRefsRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetInstalledPackageResourceRefsRequest {
     return new GetInstalledPackageResourceRefsRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a:
-      | GetInstalledPackageResourceRefsRequest
-      | PlainMessage<GetInstalledPackageResourceRefsRequest>
-      | undefined,
-    b:
-      | GetInstalledPackageResourceRefsRequest
-      | PlainMessage<GetInstalledPackageResourceRefsRequest>
-      | undefined,
-  ): boolean {
+  static equals(a: GetInstalledPackageResourceRefsRequest | PlainMessage<GetInstalledPackageResourceRefsRequest> | undefined, b: GetInstalledPackageResourceRefsRequest | PlainMessage<GetInstalledPackageResourceRefsRequest> | undefined): boolean {
     return proto3.util.equals(GetInstalledPackageResourceRefsRequest, a, b);
   }
 }
@@ -731,51 +632,26 @@ export class GetAvailablePackageSummariesResponse extends Message<GetAvailablePa
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesResponse";
+  static readonly typeName = "kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {
-      no: 1,
-      name: "available_package_summaries",
-      kind: "message",
-      T: AvailablePackageSummary,
-      repeated: true,
-    },
+    { no: 1, name: "available_package_summaries", kind: "message", T: AvailablePackageSummary, repeated: true },
     { no: 2, name: "next_page_token", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "categories", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetAvailablePackageSummariesResponse {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetAvailablePackageSummariesResponse {
     return new GetAvailablePackageSummariesResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetAvailablePackageSummariesResponse {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetAvailablePackageSummariesResponse {
     return new GetAvailablePackageSummariesResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetAvailablePackageSummariesResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetAvailablePackageSummariesResponse {
     return new GetAvailablePackageSummariesResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a:
-      | GetAvailablePackageSummariesResponse
-      | PlainMessage<GetAvailablePackageSummariesResponse>
-      | undefined,
-    b:
-      | GetAvailablePackageSummariesResponse
-      | PlainMessage<GetAvailablePackageSummariesResponse>
-      | undefined,
-  ): boolean {
+  static equals(a: GetAvailablePackageSummariesResponse | PlainMessage<GetAvailablePackageSummariesResponse> | undefined, b: GetAvailablePackageSummariesResponse | PlainMessage<GetAvailablePackageSummariesResponse> | undefined): boolean {
     return proto3.util.equals(GetAvailablePackageSummariesResponse, a, b);
   }
 }
@@ -808,43 +684,24 @@ export class GetAvailablePackageDetailResponse extends Message<GetAvailablePacka
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailResponse";
+  static readonly typeName = "kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "available_package_detail", kind: "message", T: AvailablePackageDetail },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetAvailablePackageDetailResponse {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetAvailablePackageDetailResponse {
     return new GetAvailablePackageDetailResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetAvailablePackageDetailResponse {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetAvailablePackageDetailResponse {
     return new GetAvailablePackageDetailResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetAvailablePackageDetailResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetAvailablePackageDetailResponse {
     return new GetAvailablePackageDetailResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a:
-      | GetAvailablePackageDetailResponse
-      | PlainMessage<GetAvailablePackageDetailResponse>
-      | undefined,
-    b:
-      | GetAvailablePackageDetailResponse
-      | PlainMessage<GetAvailablePackageDetailResponse>
-      | undefined,
-  ): boolean {
+  static equals(a: GetAvailablePackageDetailResponse | PlainMessage<GetAvailablePackageDetailResponse> | undefined, b: GetAvailablePackageDetailResponse | PlainMessage<GetAvailablePackageDetailResponse> | undefined): boolean {
     return proto3.util.equals(GetAvailablePackageDetailResponse, a, b);
   }
 }
@@ -897,44 +754,80 @@ export class GetAvailablePackageVersionsResponse extends Message<GetAvailablePac
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse";
+  static readonly typeName = "kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "package_app_versions", kind: "message", T: PackageAppVersion, repeated: true },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetAvailablePackageVersionsResponse {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetAvailablePackageVersionsResponse {
     return new GetAvailablePackageVersionsResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetAvailablePackageVersionsResponse {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetAvailablePackageVersionsResponse {
     return new GetAvailablePackageVersionsResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetAvailablePackageVersionsResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetAvailablePackageVersionsResponse {
     return new GetAvailablePackageVersionsResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a:
-      | GetAvailablePackageVersionsResponse
-      | PlainMessage<GetAvailablePackageVersionsResponse>
-      | undefined,
-    b:
-      | GetAvailablePackageVersionsResponse
-      | PlainMessage<GetAvailablePackageVersionsResponse>
-      | undefined,
-  ): boolean {
+  static equals(a: GetAvailablePackageVersionsResponse | PlainMessage<GetAvailablePackageVersionsResponse> | undefined, b: GetAvailablePackageVersionsResponse | PlainMessage<GetAvailablePackageVersionsResponse> | undefined): boolean {
     return proto3.util.equals(GetAvailablePackageVersionsResponse, a, b);
+  }
+}
+
+/**
+ * GetAvailablePackageMetadatasResponse
+ *
+ * Response for GetAvailablePackageMetadatas
+ *
+ * @generated from message kubeappsapis.core.packages.v1alpha1.GetAvailablePackageMetadatasResponse
+ */
+export class GetAvailablePackageMetadatasResponse extends Message<GetAvailablePackageMetadatasResponse> {
+  /**
+   * Available Package Reference
+   *
+   * The reference to the available package related to this metadata.
+   *
+   * @generated from field: kubeappsapis.core.packages.v1alpha1.AvailablePackageReference available_package_ref = 1;
+   */
+  availablePackageRef?: AvailablePackageReference;
+
+  /**
+   * Package Metadata
+   *
+   * A list of metadata associated with this available package.
+   *
+   * @generated from field: repeated kubeappsapis.core.packages.v1alpha1.PackageMetadata package_metadata = 2;
+   */
+  packageMetadata: PackageMetadata[] = [];
+
+  constructor(data?: PartialMessage<GetAvailablePackageMetadatasResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "kubeappsapis.core.packages.v1alpha1.GetAvailablePackageMetadatasResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "available_package_ref", kind: "message", T: AvailablePackageReference },
+    { no: 2, name: "package_metadata", kind: "message", T: PackageMetadata, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetAvailablePackageMetadatasResponse {
+    return new GetAvailablePackageMetadatasResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetAvailablePackageMetadatasResponse {
+    return new GetAvailablePackageMetadatasResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetAvailablePackageMetadatasResponse {
+    return new GetAvailablePackageMetadatasResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetAvailablePackageMetadatasResponse | PlainMessage<GetAvailablePackageMetadatasResponse> | undefined, b: GetAvailablePackageMetadatasResponse | PlainMessage<GetAvailablePackageMetadatasResponse> | undefined): boolean {
+    return proto3.util.equals(GetAvailablePackageMetadatasResponse, a, b);
   }
 }
 
@@ -971,50 +864,25 @@ export class GetInstalledPackageSummariesResponse extends Message<GetInstalledPa
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesResponse";
+  static readonly typeName = "kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {
-      no: 1,
-      name: "installed_package_summaries",
-      kind: "message",
-      T: InstalledPackageSummary,
-      repeated: true,
-    },
+    { no: 1, name: "installed_package_summaries", kind: "message", T: InstalledPackageSummary, repeated: true },
     { no: 2, name: "next_page_token", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetInstalledPackageSummariesResponse {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetInstalledPackageSummariesResponse {
     return new GetInstalledPackageSummariesResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetInstalledPackageSummariesResponse {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetInstalledPackageSummariesResponse {
     return new GetInstalledPackageSummariesResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetInstalledPackageSummariesResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetInstalledPackageSummariesResponse {
     return new GetInstalledPackageSummariesResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a:
-      | GetInstalledPackageSummariesResponse
-      | PlainMessage<GetInstalledPackageSummariesResponse>
-      | undefined,
-    b:
-      | GetInstalledPackageSummariesResponse
-      | PlainMessage<GetInstalledPackageSummariesResponse>
-      | undefined,
-  ): boolean {
+  static equals(a: GetInstalledPackageSummariesResponse | PlainMessage<GetInstalledPackageSummariesResponse> | undefined, b: GetInstalledPackageSummariesResponse | PlainMessage<GetInstalledPackageSummariesResponse> | undefined): boolean {
     return proto3.util.equals(GetInstalledPackageSummariesResponse, a, b);
   }
 }
@@ -1047,43 +915,24 @@ export class GetInstalledPackageDetailResponse extends Message<GetInstalledPacka
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailResponse";
+  static readonly typeName = "kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "installed_package_detail", kind: "message", T: InstalledPackageDetail },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetInstalledPackageDetailResponse {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetInstalledPackageDetailResponse {
     return new GetInstalledPackageDetailResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetInstalledPackageDetailResponse {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetInstalledPackageDetailResponse {
     return new GetInstalledPackageDetailResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetInstalledPackageDetailResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetInstalledPackageDetailResponse {
     return new GetInstalledPackageDetailResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a:
-      | GetInstalledPackageDetailResponse
-      | PlainMessage<GetInstalledPackageDetailResponse>
-      | undefined,
-    b:
-      | GetInstalledPackageDetailResponse
-      | PlainMessage<GetInstalledPackageDetailResponse>
-      | undefined,
-  ): boolean {
+  static equals(a: GetInstalledPackageDetailResponse | PlainMessage<GetInstalledPackageDetailResponse> | undefined, b: GetInstalledPackageDetailResponse | PlainMessage<GetInstalledPackageDetailResponse> | undefined): boolean {
     return proto3.util.equals(GetInstalledPackageDetailResponse, a, b);
   }
 }
@@ -1117,31 +966,19 @@ export class CreateInstalledPackageResponse extends Message<CreateInstalledPacka
     { no: 1, name: "installed_package_ref", kind: "message", T: InstalledPackageReference },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): CreateInstalledPackageResponse {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateInstalledPackageResponse {
     return new CreateInstalledPackageResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): CreateInstalledPackageResponse {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateInstalledPackageResponse {
     return new CreateInstalledPackageResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): CreateInstalledPackageResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateInstalledPackageResponse {
     return new CreateInstalledPackageResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: CreateInstalledPackageResponse | PlainMessage<CreateInstalledPackageResponse> | undefined,
-    b: CreateInstalledPackageResponse | PlainMessage<CreateInstalledPackageResponse> | undefined,
-  ): boolean {
+  static equals(a: CreateInstalledPackageResponse | PlainMessage<CreateInstalledPackageResponse> | undefined, b: CreateInstalledPackageResponse | PlainMessage<CreateInstalledPackageResponse> | undefined): boolean {
     return proto3.util.equals(CreateInstalledPackageResponse, a, b);
   }
 }
@@ -1175,31 +1012,19 @@ export class UpdateInstalledPackageResponse extends Message<UpdateInstalledPacka
     { no: 1, name: "installed_package_ref", kind: "message", T: InstalledPackageReference },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): UpdateInstalledPackageResponse {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateInstalledPackageResponse {
     return new UpdateInstalledPackageResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): UpdateInstalledPackageResponse {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateInstalledPackageResponse {
     return new UpdateInstalledPackageResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): UpdateInstalledPackageResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateInstalledPackageResponse {
     return new UpdateInstalledPackageResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: UpdateInstalledPackageResponse | PlainMessage<UpdateInstalledPackageResponse> | undefined,
-    b: UpdateInstalledPackageResponse | PlainMessage<UpdateInstalledPackageResponse> | undefined,
-  ): boolean {
+  static equals(a: UpdateInstalledPackageResponse | PlainMessage<UpdateInstalledPackageResponse> | undefined, b: UpdateInstalledPackageResponse | PlainMessage<UpdateInstalledPackageResponse> | undefined): boolean {
     return proto3.util.equals(UpdateInstalledPackageResponse, a, b);
   }
 }
@@ -1221,33 +1046,22 @@ export class DeleteInstalledPackageResponse extends Message<DeleteInstalledPacka
 
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => []);
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): DeleteInstalledPackageResponse {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteInstalledPackageResponse {
     return new DeleteInstalledPackageResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): DeleteInstalledPackageResponse {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteInstalledPackageResponse {
     return new DeleteInstalledPackageResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): DeleteInstalledPackageResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteInstalledPackageResponse {
     return new DeleteInstalledPackageResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: DeleteInstalledPackageResponse | PlainMessage<DeleteInstalledPackageResponse> | undefined,
-    b: DeleteInstalledPackageResponse | PlainMessage<DeleteInstalledPackageResponse> | undefined,
-  ): boolean {
+  static equals(a: DeleteInstalledPackageResponse | PlainMessage<DeleteInstalledPackageResponse> | undefined, b: DeleteInstalledPackageResponse | PlainMessage<DeleteInstalledPackageResponse> | undefined): boolean {
     return proto3.util.equals(DeleteInstalledPackageResponse, a, b);
   }
 }
@@ -1276,44 +1090,25 @@ export class GetInstalledPackageResourceRefsResponse extends Message<GetInstalle
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsResponse";
+  static readonly typeName = "kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "context", kind: "message", T: Context },
     { no: 2, name: "resource_refs", kind: "message", T: ResourceRef, repeated: true },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetInstalledPackageResourceRefsResponse {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetInstalledPackageResourceRefsResponse {
     return new GetInstalledPackageResourceRefsResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetInstalledPackageResourceRefsResponse {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetInstalledPackageResourceRefsResponse {
     return new GetInstalledPackageResourceRefsResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetInstalledPackageResourceRefsResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetInstalledPackageResourceRefsResponse {
     return new GetInstalledPackageResourceRefsResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a:
-      | GetInstalledPackageResourceRefsResponse
-      | PlainMessage<GetInstalledPackageResourceRefsResponse>
-      | undefined,
-    b:
-      | GetInstalledPackageResourceRefsResponse
-      | PlainMessage<GetInstalledPackageResourceRefsResponse>
-      | undefined,
-  ): boolean {
+  static equals(a: GetInstalledPackageResourceRefsResponse | PlainMessage<GetInstalledPackageResourceRefsResponse> | undefined, b: GetInstalledPackageResourceRefsResponse | PlainMessage<GetInstalledPackageResourceRefsResponse> | undefined): boolean {
     return proto3.util.equals(GetInstalledPackageResourceRefsResponse, a, b);
   }
 }
@@ -1414,31 +1209,19 @@ export class AvailablePackageSummary extends Message<AvailablePackageSummary> {
     { no: 7, name: "categories", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): AvailablePackageSummary {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AvailablePackageSummary {
     return new AvailablePackageSummary().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): AvailablePackageSummary {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): AvailablePackageSummary {
     return new AvailablePackageSummary().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): AvailablePackageSummary {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): AvailablePackageSummary {
     return new AvailablePackageSummary().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: AvailablePackageSummary | PlainMessage<AvailablePackageSummary> | undefined,
-    b: AvailablePackageSummary | PlainMessage<AvailablePackageSummary> | undefined,
-  ): boolean {
+  static equals(a: AvailablePackageSummary | PlainMessage<AvailablePackageSummary> | undefined, b: AvailablePackageSummary | PlainMessage<AvailablePackageSummary> | undefined): boolean {
     return proto3.util.equals(AvailablePackageSummary, a, b);
   }
 }
@@ -1626,13 +1409,7 @@ export class AvailablePackageDetail extends Message<AvailablePackageDetail> {
     { no: 9, name: "long_description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 10, name: "readme", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 11, name: "default_values", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    {
-      no: 17,
-      name: "additional_default_values",
-      kind: "map",
-      K: 9 /* ScalarType.STRING */,
-      V: { kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    },
+    { no: 17, name: "additional_default_values", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
     { no: 12, name: "values_schema", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 13, name: "source_urls", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 14, name: "maintainers", kind: "message", T: Maintainer, repeated: true },
@@ -1640,31 +1417,19 @@ export class AvailablePackageDetail extends Message<AvailablePackageDetail> {
     { no: 16, name: "custom_detail", kind: "message", T: Any },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): AvailablePackageDetail {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AvailablePackageDetail {
     return new AvailablePackageDetail().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): AvailablePackageDetail {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): AvailablePackageDetail {
     return new AvailablePackageDetail().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): AvailablePackageDetail {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): AvailablePackageDetail {
     return new AvailablePackageDetail().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: AvailablePackageDetail | PlainMessage<AvailablePackageDetail> | undefined,
-    b: AvailablePackageDetail | PlainMessage<AvailablePackageDetail> | undefined,
-  ): boolean {
+  static equals(a: AvailablePackageDetail | PlainMessage<AvailablePackageDetail> | undefined, b: AvailablePackageDetail | PlainMessage<AvailablePackageDetail> | undefined): boolean {
     return proto3.util.equals(AvailablePackageDetail, a, b);
   }
 }
@@ -1802,31 +1567,19 @@ export class InstalledPackageSummary extends Message<InstalledPackageSummary> {
     { no: 10, name: "status", kind: "message", T: InstalledPackageStatus },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): InstalledPackageSummary {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): InstalledPackageSummary {
     return new InstalledPackageSummary().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): InstalledPackageSummary {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): InstalledPackageSummary {
     return new InstalledPackageSummary().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): InstalledPackageSummary {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): InstalledPackageSummary {
     return new InstalledPackageSummary().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: InstalledPackageSummary | PlainMessage<InstalledPackageSummary> | undefined,
-    b: InstalledPackageSummary | PlainMessage<InstalledPackageSummary> | undefined,
-  ): boolean {
+  static equals(a: InstalledPackageSummary | PlainMessage<InstalledPackageSummary> | undefined, b: InstalledPackageSummary | PlainMessage<InstalledPackageSummary> | undefined): boolean {
     return proto3.util.equals(InstalledPackageSummary, a, b);
   }
 }
@@ -1982,31 +1735,19 @@ export class InstalledPackageDetail extends Message<InstalledPackageDetail> {
     { no: 14, name: "custom_detail", kind: "message", T: Any },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): InstalledPackageDetail {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): InstalledPackageDetail {
     return new InstalledPackageDetail().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): InstalledPackageDetail {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): InstalledPackageDetail {
     return new InstalledPackageDetail().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): InstalledPackageDetail {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): InstalledPackageDetail {
     return new InstalledPackageDetail().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: InstalledPackageDetail | PlainMessage<InstalledPackageDetail> | undefined,
-    b: InstalledPackageDetail | PlainMessage<InstalledPackageDetail> | undefined,
-  ): boolean {
+  static equals(a: InstalledPackageDetail | PlainMessage<InstalledPackageDetail> | undefined, b: InstalledPackageDetail | PlainMessage<InstalledPackageDetail> | undefined): boolean {
     return proto3.util.equals(InstalledPackageDetail, a, b);
   }
 }
@@ -2072,10 +1813,7 @@ export class Context extends Message<Context> {
     return new Context().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: Context | PlainMessage<Context> | undefined,
-    b: Context | PlainMessage<Context> | undefined,
-  ): boolean {
+  static equals(a: Context | PlainMessage<Context> | undefined, b: Context | PlainMessage<Context> | undefined): boolean {
     return proto3.util.equals(Context, a, b);
   }
 }
@@ -2145,31 +1883,19 @@ export class AvailablePackageReference extends Message<AvailablePackageReference
     { no: 3, name: "plugin", kind: "message", T: Plugin },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): AvailablePackageReference {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AvailablePackageReference {
     return new AvailablePackageReference().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): AvailablePackageReference {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): AvailablePackageReference {
     return new AvailablePackageReference().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): AvailablePackageReference {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): AvailablePackageReference {
     return new AvailablePackageReference().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: AvailablePackageReference | PlainMessage<AvailablePackageReference> | undefined,
-    b: AvailablePackageReference | PlainMessage<AvailablePackageReference> | undefined,
-  ): boolean {
+  static equals(a: AvailablePackageReference | PlainMessage<AvailablePackageReference> | undefined, b: AvailablePackageReference | PlainMessage<AvailablePackageReference> | undefined): boolean {
     return proto3.util.equals(AvailablePackageReference, a, b);
   }
 }
@@ -2229,10 +1955,7 @@ export class Maintainer extends Message<Maintainer> {
     return new Maintainer().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: Maintainer | PlainMessage<Maintainer> | undefined,
-    b: Maintainer | PlainMessage<Maintainer> | undefined,
-  ): boolean {
+  static equals(a: Maintainer | PlainMessage<Maintainer> | undefined, b: Maintainer | PlainMessage<Maintainer> | undefined): boolean {
     return proto3.util.equals(Maintainer, a, b);
   }
 }
@@ -2322,10 +2045,7 @@ export class FilterOptions extends Message<FilterOptions> {
     return new FilterOptions().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: FilterOptions | PlainMessage<FilterOptions> | undefined,
-    b: FilterOptions | PlainMessage<FilterOptions> | undefined,
-  ): boolean {
+  static equals(a: FilterOptions | PlainMessage<FilterOptions> | undefined, b: FilterOptions | PlainMessage<FilterOptions> | undefined): boolean {
     return proto3.util.equals(FilterOptions, a, b);
   }
 }
@@ -2390,10 +2110,7 @@ export class PaginationOptions extends Message<PaginationOptions> {
     return new PaginationOptions().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: PaginationOptions | PlainMessage<PaginationOptions> | undefined,
-    b: PaginationOptions | PlainMessage<PaginationOptions> | undefined,
-  ): boolean {
+  static equals(a: PaginationOptions | PlainMessage<PaginationOptions> | undefined, b: PaginationOptions | PlainMessage<PaginationOptions> | undefined): boolean {
     return proto3.util.equals(PaginationOptions, a, b);
   }
 }
@@ -2450,31 +2167,19 @@ export class InstalledPackageReference extends Message<InstalledPackageReference
     { no: 3, name: "plugin", kind: "message", T: Plugin },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): InstalledPackageReference {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): InstalledPackageReference {
     return new InstalledPackageReference().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): InstalledPackageReference {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): InstalledPackageReference {
     return new InstalledPackageReference().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): InstalledPackageReference {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): InstalledPackageReference {
     return new InstalledPackageReference().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: InstalledPackageReference | PlainMessage<InstalledPackageReference> | undefined,
-    b: InstalledPackageReference | PlainMessage<InstalledPackageReference> | undefined,
-  ): boolean {
+  static equals(a: InstalledPackageReference | PlainMessage<InstalledPackageReference> | undefined, b: InstalledPackageReference | PlainMessage<InstalledPackageReference> | undefined): boolean {
     return proto3.util.equals(InstalledPackageReference, a, b);
   }
 }
@@ -2523,10 +2228,7 @@ export class VersionReference extends Message<VersionReference> {
     return new VersionReference().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: VersionReference | PlainMessage<VersionReference> | undefined,
-    b: VersionReference | PlainMessage<VersionReference> | undefined,
-  ): boolean {
+  static equals(a: VersionReference | PlainMessage<VersionReference> | undefined, b: VersionReference | PlainMessage<VersionReference> | undefined): boolean {
     return proto3.util.equals(VersionReference, a, b);
   }
 }
@@ -2575,40 +2277,23 @@ export class InstalledPackageStatus extends Message<InstalledPackageStatus> {
   static readonly typeName = "kubeappsapis.core.packages.v1alpha1.InstalledPackageStatus";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "ready", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    {
-      no: 2,
-      name: "reason",
-      kind: "enum",
-      T: proto3.getEnumType(InstalledPackageStatus_StatusReason),
-    },
+    { no: 2, name: "reason", kind: "enum", T: proto3.getEnumType(InstalledPackageStatus_StatusReason) },
     { no: 3, name: "user_reason", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): InstalledPackageStatus {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): InstalledPackageStatus {
     return new InstalledPackageStatus().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): InstalledPackageStatus {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): InstalledPackageStatus {
     return new InstalledPackageStatus().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): InstalledPackageStatus {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): InstalledPackageStatus {
     return new InstalledPackageStatus().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: InstalledPackageStatus | PlainMessage<InstalledPackageStatus> | undefined,
-    b: InstalledPackageStatus | PlainMessage<InstalledPackageStatus> | undefined,
-  ): boolean {
+  static equals(a: InstalledPackageStatus | PlainMessage<InstalledPackageStatus> | undefined, b: InstalledPackageStatus | PlainMessage<InstalledPackageStatus> | undefined): boolean {
     return proto3.util.equals(InstalledPackageStatus, a, b);
   }
 }
@@ -2648,17 +2333,13 @@ export enum InstalledPackageStatus_StatusReason {
   PENDING = 4,
 }
 // Retrieve enum metadata with: proto3.getEnumType(InstalledPackageStatus_StatusReason)
-proto3.util.setEnumType(
-  InstalledPackageStatus_StatusReason,
-  "kubeappsapis.core.packages.v1alpha1.InstalledPackageStatus.StatusReason",
-  [
-    { no: 0, name: "STATUS_REASON_UNSPECIFIED" },
-    { no: 1, name: "STATUS_REASON_INSTALLED" },
-    { no: 2, name: "STATUS_REASON_UNINSTALLED" },
-    { no: 3, name: "STATUS_REASON_FAILED" },
-    { no: 4, name: "STATUS_REASON_PENDING" },
-  ],
-);
+proto3.util.setEnumType(InstalledPackageStatus_StatusReason, "kubeappsapis.core.packages.v1alpha1.InstalledPackageStatus.StatusReason", [
+  { no: 0, name: "STATUS_REASON_UNSPECIFIED" },
+  { no: 1, name: "STATUS_REASON_INSTALLED" },
+  { no: 2, name: "STATUS_REASON_UNINSTALLED" },
+  { no: 3, name: "STATUS_REASON_FAILED" },
+  { no: 4, name: "STATUS_REASON_PENDING" },
+]);
 
 /**
  * ReconciliationOptions
@@ -2714,10 +2395,7 @@ export class ReconciliationOptions extends Message<ReconciliationOptions> {
     { no: 3, name: "service_account_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): ReconciliationOptions {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReconciliationOptions {
     return new ReconciliationOptions().fromBinary(bytes, options);
   }
 
@@ -2725,17 +2403,11 @@ export class ReconciliationOptions extends Message<ReconciliationOptions> {
     return new ReconciliationOptions().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): ReconciliationOptions {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ReconciliationOptions {
     return new ReconciliationOptions().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: ReconciliationOptions | PlainMessage<ReconciliationOptions> | undefined,
-    b: ReconciliationOptions | PlainMessage<ReconciliationOptions> | undefined,
-  ): boolean {
+  static equals(a: ReconciliationOptions | PlainMessage<ReconciliationOptions> | undefined, b: ReconciliationOptions | PlainMessage<ReconciliationOptions> | undefined): boolean {
     return proto3.util.equals(ReconciliationOptions, a, b);
   }
 }
@@ -2790,11 +2462,84 @@ export class PackageAppVersion extends Message<PackageAppVersion> {
     return new PackageAppVersion().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: PackageAppVersion | PlainMessage<PackageAppVersion> | undefined,
-    b: PackageAppVersion | PlainMessage<PackageAppVersion> | undefined,
-  ): boolean {
+  static equals(a: PackageAppVersion | PlainMessage<PackageAppVersion> | undefined, b: PackageAppVersion | PlainMessage<PackageAppVersion> | undefined): boolean {
     return proto3.util.equals(PackageAppVersion, a, b);
+  }
+}
+
+/**
+ * Package Metadata
+ *
+ * PackageMetadata contains info to display and fetch SBOMs, scan results
+ * and other linked package metadata.
+ *
+ * @generated from message kubeappsapis.core.packages.v1alpha1.PackageMetadata
+ */
+export class PackageMetadata extends Message<PackageMetadata> {
+  /**
+   * Media type
+   *
+   * Media type of this metadata
+   *
+   * @generated from field: string media_type = 1;
+   */
+  mediaType = "";
+
+  /**
+   * Name
+   *
+   * Human readable name for this metadata.
+   *
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * Description
+   *
+   * Human readable description for this metadata.
+   *
+   * @generated from field: string description = 3;
+   */
+  description = "";
+
+  /**
+   * URL
+   *
+   * The url reference for this metadata.
+   *
+   * @generated from field: string url = 4;
+   */
+  url = "";
+
+  constructor(data?: PartialMessage<PackageMetadata>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "kubeappsapis.core.packages.v1alpha1.PackageMetadata";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "media_type", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PackageMetadata {
+    return new PackageMetadata().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PackageMetadata {
+    return new PackageMetadata().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PackageMetadata {
+    return new PackageMetadata().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: PackageMetadata | PlainMessage<PackageMetadata> | undefined, b: PackageMetadata | PlainMessage<PackageMetadata> | undefined): boolean {
+    return proto3.util.equals(PackageMetadata, a, b);
   }
 }
 
@@ -2867,10 +2612,8 @@ export class ResourceRef extends Message<ResourceRef> {
     return new ResourceRef().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: ResourceRef | PlainMessage<ResourceRef> | undefined,
-    b: ResourceRef | PlainMessage<ResourceRef> | undefined,
-  ): boolean {
+  static equals(a: ResourceRef | PlainMessage<ResourceRef> | undefined, b: ResourceRef | PlainMessage<ResourceRef> | undefined): boolean {
     return proto3.util.equals(ResourceRef, a, b);
   }
 }
+

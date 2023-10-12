@@ -6,20 +6,9 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import type {
-  BinaryReadOptions,
-  FieldList,
-  JsonReadOptions,
-  JsonValue,
-  PartialMessage,
-  PlainMessage,
-} from "@bufbuild/protobuf";
+import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3 } from "@bufbuild/protobuf";
-import {
-  Context,
-  InstalledPackageReference,
-  ResourceRef,
-} from "../../../core/packages/v1alpha1/packages_pb";
+import { Context, InstalledPackageReference, ResourceRef } from "../../../core/packages/v1alpha1/packages_pb";
 
 /**
  * SecretType
@@ -145,17 +134,11 @@ export class GetResourcesRequest extends Message<GetResourcesRequest> {
     return new GetResourcesRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetResourcesRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetResourcesRequest {
     return new GetResourcesRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: GetResourcesRequest | PlainMessage<GetResourcesRequest> | undefined,
-    b: GetResourcesRequest | PlainMessage<GetResourcesRequest> | undefined,
-  ): boolean {
+  static equals(a: GetResourcesRequest | PlainMessage<GetResourcesRequest> | undefined, b: GetResourcesRequest | PlainMessage<GetResourcesRequest> | undefined): boolean {
     return proto3.util.equals(GetResourcesRequest, a, b);
   }
 }
@@ -206,17 +189,11 @@ export class GetResourcesResponse extends Message<GetResourcesResponse> {
     return new GetResourcesResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetResourcesResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetResourcesResponse {
     return new GetResourcesResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: GetResourcesResponse | PlainMessage<GetResourcesResponse> | undefined,
-    b: GetResourcesResponse | PlainMessage<GetResourcesResponse> | undefined,
-  ): boolean {
+  static equals(a: GetResourcesResponse | PlainMessage<GetResourcesResponse> | undefined, b: GetResourcesResponse | PlainMessage<GetResourcesResponse> | undefined): boolean {
     return proto3.util.equals(GetResourcesResponse, a, b);
   }
 }
@@ -244,37 +221,24 @@ export class GetServiceAccountNamesRequest extends Message<GetServiceAccountName
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.plugins.resources.v1alpha1.GetServiceAccountNamesRequest";
+  static readonly typeName = "kubeappsapis.plugins.resources.v1alpha1.GetServiceAccountNamesRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "context", kind: "message", T: Context },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetServiceAccountNamesRequest {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetServiceAccountNamesRequest {
     return new GetServiceAccountNamesRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetServiceAccountNamesRequest {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetServiceAccountNamesRequest {
     return new GetServiceAccountNamesRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetServiceAccountNamesRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetServiceAccountNamesRequest {
     return new GetServiceAccountNamesRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: GetServiceAccountNamesRequest | PlainMessage<GetServiceAccountNamesRequest> | undefined,
-    b: GetServiceAccountNamesRequest | PlainMessage<GetServiceAccountNamesRequest> | undefined,
-  ): boolean {
+  static equals(a: GetServiceAccountNamesRequest | PlainMessage<GetServiceAccountNamesRequest> | undefined, b: GetServiceAccountNamesRequest | PlainMessage<GetServiceAccountNamesRequest> | undefined): boolean {
     return proto3.util.equals(GetServiceAccountNamesRequest, a, b);
   }
 }
@@ -302,43 +266,24 @@ export class GetServiceAccountNamesResponse extends Message<GetServiceAccountNam
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.plugins.resources.v1alpha1.GetServiceAccountNamesResponse";
+  static readonly typeName = "kubeappsapis.plugins.resources.v1alpha1.GetServiceAccountNamesResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {
-      no: 1,
-      name: "serviceaccount_names",
-      kind: "scalar",
-      T: 9 /* ScalarType.STRING */,
-      repeated: true,
-    },
+    { no: 1, name: "serviceaccount_names", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetServiceAccountNamesResponse {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetServiceAccountNamesResponse {
     return new GetServiceAccountNamesResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetServiceAccountNamesResponse {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetServiceAccountNamesResponse {
     return new GetServiceAccountNamesResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetServiceAccountNamesResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetServiceAccountNamesResponse {
     return new GetServiceAccountNamesResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: GetServiceAccountNamesResponse | PlainMessage<GetServiceAccountNamesResponse> | undefined,
-    b: GetServiceAccountNamesResponse | PlainMessage<GetServiceAccountNamesResponse> | undefined,
-  ): boolean {
+  static equals(a: GetServiceAccountNamesResponse | PlainMessage<GetServiceAccountNamesResponse> | undefined, b: GetServiceAccountNamesResponse | PlainMessage<GetServiceAccountNamesResponse> | undefined): boolean {
     return proto3.util.equals(GetServiceAccountNamesResponse, a, b);
   }
 }
@@ -373,31 +318,19 @@ export class GetNamespaceNamesRequest extends Message<GetNamespaceNamesRequest> 
     { no: 1, name: "cluster", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetNamespaceNamesRequest {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetNamespaceNamesRequest {
     return new GetNamespaceNamesRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetNamespaceNamesRequest {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetNamespaceNamesRequest {
     return new GetNamespaceNamesRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetNamespaceNamesRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetNamespaceNamesRequest {
     return new GetNamespaceNamesRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: GetNamespaceNamesRequest | PlainMessage<GetNamespaceNamesRequest> | undefined,
-    b: GetNamespaceNamesRequest | PlainMessage<GetNamespaceNamesRequest> | undefined,
-  ): boolean {
+  static equals(a: GetNamespaceNamesRequest | PlainMessage<GetNamespaceNamesRequest> | undefined, b: GetNamespaceNamesRequest | PlainMessage<GetNamespaceNamesRequest> | undefined): boolean {
     return proto3.util.equals(GetNamespaceNamesRequest, a, b);
   }
 }
@@ -427,40 +360,22 @@ export class GetNamespaceNamesResponse extends Message<GetNamespaceNamesResponse
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "kubeappsapis.plugins.resources.v1alpha1.GetNamespaceNamesResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {
-      no: 1,
-      name: "namespace_names",
-      kind: "scalar",
-      T: 9 /* ScalarType.STRING */,
-      repeated: true,
-    },
+    { no: 1, name: "namespace_names", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetNamespaceNamesResponse {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetNamespaceNamesResponse {
     return new GetNamespaceNamesResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetNamespaceNamesResponse {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetNamespaceNamesResponse {
     return new GetNamespaceNamesResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetNamespaceNamesResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetNamespaceNamesResponse {
     return new GetNamespaceNamesResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: GetNamespaceNamesResponse | PlainMessage<GetNamespaceNamesResponse> | undefined,
-    b: GetNamespaceNamesResponse | PlainMessage<GetNamespaceNamesResponse> | undefined,
-  ): boolean {
+  static equals(a: GetNamespaceNamesResponse | PlainMessage<GetNamespaceNamesResponse> | undefined, b: GetNamespaceNamesResponse | PlainMessage<GetNamespaceNamesResponse> | undefined): boolean {
     return proto3.util.equals(GetNamespaceNamesResponse, a, b);
   }
 }
@@ -500,40 +415,22 @@ export class CreateNamespaceRequest extends Message<CreateNamespaceRequest> {
   static readonly typeName = "kubeappsapis.plugins.resources.v1alpha1.CreateNamespaceRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "context", kind: "message", T: Context },
-    {
-      no: 2,
-      name: "labels",
-      kind: "map",
-      K: 9 /* ScalarType.STRING */,
-      V: { kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    },
+    { no: 2, name: "labels", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): CreateNamespaceRequest {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateNamespaceRequest {
     return new CreateNamespaceRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): CreateNamespaceRequest {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateNamespaceRequest {
     return new CreateNamespaceRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): CreateNamespaceRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateNamespaceRequest {
     return new CreateNamespaceRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: CreateNamespaceRequest | PlainMessage<CreateNamespaceRequest> | undefined,
-    b: CreateNamespaceRequest | PlainMessage<CreateNamespaceRequest> | undefined,
-  ): boolean {
+  static equals(a: CreateNamespaceRequest | PlainMessage<CreateNamespaceRequest> | undefined, b: CreateNamespaceRequest | PlainMessage<CreateNamespaceRequest> | undefined): boolean {
     return proto3.util.equals(CreateNamespaceRequest, a, b);
   }
 }
@@ -553,33 +450,22 @@ export class CreateNamespaceResponse extends Message<CreateNamespaceResponse> {
 
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "kubeappsapis.plugins.resources.v1alpha1.CreateNamespaceResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => []);
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): CreateNamespaceResponse {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateNamespaceResponse {
     return new CreateNamespaceResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): CreateNamespaceResponse {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateNamespaceResponse {
     return new CreateNamespaceResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): CreateNamespaceResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateNamespaceResponse {
     return new CreateNamespaceResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: CreateNamespaceResponse | PlainMessage<CreateNamespaceResponse> | undefined,
-    b: CreateNamespaceResponse | PlainMessage<CreateNamespaceResponse> | undefined,
-  ): boolean {
+  static equals(a: CreateNamespaceResponse | PlainMessage<CreateNamespaceResponse> | undefined, b: CreateNamespaceResponse | PlainMessage<CreateNamespaceResponse> | undefined): boolean {
     return proto3.util.equals(CreateNamespaceResponse, a, b);
   }
 }
@@ -612,31 +498,19 @@ export class CheckNamespaceExistsRequest extends Message<CheckNamespaceExistsReq
     { no: 1, name: "context", kind: "message", T: Context },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): CheckNamespaceExistsRequest {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CheckNamespaceExistsRequest {
     return new CheckNamespaceExistsRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): CheckNamespaceExistsRequest {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CheckNamespaceExistsRequest {
     return new CheckNamespaceExistsRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): CheckNamespaceExistsRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CheckNamespaceExistsRequest {
     return new CheckNamespaceExistsRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: CheckNamespaceExistsRequest | PlainMessage<CheckNamespaceExistsRequest> | undefined,
-    b: CheckNamespaceExistsRequest | PlainMessage<CheckNamespaceExistsRequest> | undefined,
-  ): boolean {
+  static equals(a: CheckNamespaceExistsRequest | PlainMessage<CheckNamespaceExistsRequest> | undefined, b: CheckNamespaceExistsRequest | PlainMessage<CheckNamespaceExistsRequest> | undefined): boolean {
     return proto3.util.equals(CheckNamespaceExistsRequest, a, b);
   }
 }
@@ -665,31 +539,19 @@ export class CheckNamespaceExistsResponse extends Message<CheckNamespaceExistsRe
     { no: 1, name: "exists", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): CheckNamespaceExistsResponse {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CheckNamespaceExistsResponse {
     return new CheckNamespaceExistsResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): CheckNamespaceExistsResponse {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CheckNamespaceExistsResponse {
     return new CheckNamespaceExistsResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): CheckNamespaceExistsResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CheckNamespaceExistsResponse {
     return new CheckNamespaceExistsResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: CheckNamespaceExistsResponse | PlainMessage<CheckNamespaceExistsResponse> | undefined,
-    b: CheckNamespaceExistsResponse | PlainMessage<CheckNamespaceExistsResponse> | undefined,
-  ): boolean {
+  static equals(a: CheckNamespaceExistsResponse | PlainMessage<CheckNamespaceExistsResponse> | undefined, b: CheckNamespaceExistsResponse | PlainMessage<CheckNamespaceExistsResponse> | undefined): boolean {
     return proto3.util.equals(CheckNamespaceExistsResponse, a, b);
   }
 }
@@ -751,13 +613,7 @@ export class CreateSecretRequest extends Message<CreateSecretRequest> {
     { no: 1, name: "context", kind: "message", T: Context },
     { no: 2, name: "type", kind: "enum", T: proto3.getEnumType(SecretType) },
     { no: 3, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    {
-      no: 4,
-      name: "string_data",
-      kind: "map",
-      K: 9 /* ScalarType.STRING */,
-      V: { kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    },
+    { no: 4, name: "string_data", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateSecretRequest {
@@ -768,17 +624,11 @@ export class CreateSecretRequest extends Message<CreateSecretRequest> {
     return new CreateSecretRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): CreateSecretRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateSecretRequest {
     return new CreateSecretRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: CreateSecretRequest | PlainMessage<CreateSecretRequest> | undefined,
-    b: CreateSecretRequest | PlainMessage<CreateSecretRequest> | undefined,
-  ): boolean {
+  static equals(a: CreateSecretRequest | PlainMessage<CreateSecretRequest> | undefined, b: CreateSecretRequest | PlainMessage<CreateSecretRequest> | undefined): boolean {
     return proto3.util.equals(CreateSecretRequest, a, b);
   }
 }
@@ -798,7 +648,8 @@ export class CreateSecretResponse extends Message<CreateSecretResponse> {
 
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "kubeappsapis.plugins.resources.v1alpha1.CreateSecretResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => []);
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateSecretResponse {
     return new CreateSecretResponse().fromBinary(bytes, options);
@@ -808,17 +659,11 @@ export class CreateSecretResponse extends Message<CreateSecretResponse> {
     return new CreateSecretResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): CreateSecretResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateSecretResponse {
     return new CreateSecretResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: CreateSecretResponse | PlainMessage<CreateSecretResponse> | undefined,
-    b: CreateSecretResponse | PlainMessage<CreateSecretResponse> | undefined,
-  ): boolean {
+  static equals(a: CreateSecretResponse | PlainMessage<CreateSecretResponse> | undefined, b: CreateSecretResponse | PlainMessage<CreateSecretResponse> | undefined): boolean {
     return proto3.util.equals(CreateSecretResponse, a, b);
   }
 }
@@ -851,10 +696,7 @@ export class GetSecretNamesRequest extends Message<GetSecretNamesRequest> {
     { no: 1, name: "context", kind: "message", T: Context },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetSecretNamesRequest {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetSecretNamesRequest {
     return new GetSecretNamesRequest().fromBinary(bytes, options);
   }
 
@@ -862,17 +704,11 @@ export class GetSecretNamesRequest extends Message<GetSecretNamesRequest> {
     return new GetSecretNamesRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetSecretNamesRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetSecretNamesRequest {
     return new GetSecretNamesRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: GetSecretNamesRequest | PlainMessage<GetSecretNamesRequest> | undefined,
-    b: GetSecretNamesRequest | PlainMessage<GetSecretNamesRequest> | undefined,
-  ): boolean {
+  static equals(a: GetSecretNamesRequest | PlainMessage<GetSecretNamesRequest> | undefined, b: GetSecretNamesRequest | PlainMessage<GetSecretNamesRequest> | undefined): boolean {
     return proto3.util.equals(GetSecretNamesRequest, a, b);
   }
 }
@@ -902,40 +738,22 @@ export class GetSecretNamesResponse extends Message<GetSecretNamesResponse> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "kubeappsapis.plugins.resources.v1alpha1.GetSecretNamesResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {
-      no: 1,
-      name: "secret_names",
-      kind: "map",
-      K: 9 /* ScalarType.STRING */,
-      V: { kind: "enum", T: proto3.getEnumType(SecretType) },
-    },
+    { no: 1, name: "secret_names", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "enum", T: proto3.getEnumType(SecretType)} },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetSecretNamesResponse {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetSecretNamesResponse {
     return new GetSecretNamesResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetSecretNamesResponse {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetSecretNamesResponse {
     return new GetSecretNamesResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetSecretNamesResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetSecretNamesResponse {
     return new GetSecretNamesResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: GetSecretNamesResponse | PlainMessage<GetSecretNamesResponse> | undefined,
-    b: GetSecretNamesResponse | PlainMessage<GetSecretNamesResponse> | undefined,
-  ): boolean {
+  static equals(a: GetSecretNamesResponse | PlainMessage<GetSecretNamesResponse> | undefined, b: GetSecretNamesResponse | PlainMessage<GetSecretNamesResponse> | undefined): boolean {
     return proto3.util.equals(GetSecretNamesResponse, a, b);
   }
 }
@@ -1006,10 +824,7 @@ export class CanIRequest extends Message<CanIRequest> {
     return new CanIRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: CanIRequest | PlainMessage<CanIRequest> | undefined,
-    b: CanIRequest | PlainMessage<CanIRequest> | undefined,
-  ): boolean {
+  static equals(a: CanIRequest | PlainMessage<CanIRequest> | undefined, b: CanIRequest | PlainMessage<CanIRequest> | undefined): boolean {
     return proto3.util.equals(CanIRequest, a, b);
   }
 }
@@ -1054,10 +869,8 @@ export class CanIResponse extends Message<CanIResponse> {
     return new CanIResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: CanIResponse | PlainMessage<CanIResponse> | undefined,
-    b: CanIResponse | PlainMessage<CanIResponse> | undefined,
-  ): boolean {
+  static equals(a: CanIResponse | PlainMessage<CanIResponse> | undefined, b: CanIResponse | PlainMessage<CanIResponse> | undefined): boolean {
     return proto3.util.equals(CanIResponse, a, b);
   }
 }
+

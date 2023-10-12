@@ -6,14 +6,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import type {
-  BinaryReadOptions,
-  FieldList,
-  JsonReadOptions,
-  JsonValue,
-  PartialMessage,
-  PlainMessage,
-} from "@bufbuild/protobuf";
+import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3 } from "@bufbuild/protobuf";
 
 /**
@@ -37,43 +30,24 @@ export class KappControllerPackageRepositoryCustomDetail extends Message<KappCon
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackageRepositoryCustomDetail";
+  static readonly typeName = "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackageRepositoryCustomDetail";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "fetch", kind: "message", T: PackageRepositoryFetch },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): KappControllerPackageRepositoryCustomDetail {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): KappControllerPackageRepositoryCustomDetail {
     return new KappControllerPackageRepositoryCustomDetail().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): KappControllerPackageRepositoryCustomDetail {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): KappControllerPackageRepositoryCustomDetail {
     return new KappControllerPackageRepositoryCustomDetail().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): KappControllerPackageRepositoryCustomDetail {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): KappControllerPackageRepositoryCustomDetail {
     return new KappControllerPackageRepositoryCustomDetail().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a:
-      | KappControllerPackageRepositoryCustomDetail
-      | PlainMessage<KappControllerPackageRepositoryCustomDetail>
-      | undefined,
-    b:
-      | KappControllerPackageRepositoryCustomDetail
-      | PlainMessage<KappControllerPackageRepositoryCustomDetail>
-      | undefined,
-  ): boolean {
+  static equals(a: KappControllerPackageRepositoryCustomDetail | PlainMessage<KappControllerPackageRepositoryCustomDetail> | undefined, b: KappControllerPackageRepositoryCustomDetail | PlainMessage<KappControllerPackageRepositoryCustomDetail> | undefined): boolean {
     return proto3.util.equals(KappControllerPackageRepositoryCustomDetail, a, b);
   }
 }
@@ -113,8 +87,7 @@ export class PackageRepositoryFetch extends Message<PackageRepositoryFetch> {
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.PackageRepositoryFetch";
+  static readonly typeName = "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.PackageRepositoryFetch";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "imgpkg_bundle", kind: "message", T: PackageRepositoryImgpkg },
     { no: 2, name: "image", kind: "message", T: PackageRepositoryImage },
@@ -123,31 +96,19 @@ export class PackageRepositoryFetch extends Message<PackageRepositoryFetch> {
     { no: 5, name: "inline", kind: "message", T: PackageRepositoryInline },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): PackageRepositoryFetch {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PackageRepositoryFetch {
     return new PackageRepositoryFetch().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryFetch {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PackageRepositoryFetch {
     return new PackageRepositoryFetch().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryFetch {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PackageRepositoryFetch {
     return new PackageRepositoryFetch().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: PackageRepositoryFetch | PlainMessage<PackageRepositoryFetch> | undefined,
-    b: PackageRepositoryFetch | PlainMessage<PackageRepositoryFetch> | undefined,
-  ): boolean {
+  static equals(a: PackageRepositoryFetch | PlainMessage<PackageRepositoryFetch> | undefined, b: PackageRepositoryFetch | PlainMessage<PackageRepositoryFetch> | undefined): boolean {
     return proto3.util.equals(PackageRepositoryFetch, a, b);
   }
 }
@@ -167,37 +128,24 @@ export class PackageRepositoryImgpkg extends Message<PackageRepositoryImgpkg> {
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.PackageRepositoryImgpkg";
+  static readonly typeName = "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.PackageRepositoryImgpkg";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "tag_selection", kind: "message", T: VersionSelection },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): PackageRepositoryImgpkg {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PackageRepositoryImgpkg {
     return new PackageRepositoryImgpkg().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryImgpkg {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PackageRepositoryImgpkg {
     return new PackageRepositoryImgpkg().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryImgpkg {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PackageRepositoryImgpkg {
     return new PackageRepositoryImgpkg().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: PackageRepositoryImgpkg | PlainMessage<PackageRepositoryImgpkg> | undefined,
-    b: PackageRepositoryImgpkg | PlainMessage<PackageRepositoryImgpkg> | undefined,
-  ): boolean {
+  static equals(a: PackageRepositoryImgpkg | PlainMessage<PackageRepositoryImgpkg> | undefined, b: PackageRepositoryImgpkg | PlainMessage<PackageRepositoryImgpkg> | undefined): boolean {
     return proto3.util.equals(PackageRepositoryImgpkg, a, b);
   }
 }
@@ -222,38 +170,25 @@ export class PackageRepositoryImage extends Message<PackageRepositoryImage> {
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.PackageRepositoryImage";
+  static readonly typeName = "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.PackageRepositoryImage";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "tag_selection", kind: "message", T: VersionSelection },
     { no: 2, name: "sub_path", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): PackageRepositoryImage {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PackageRepositoryImage {
     return new PackageRepositoryImage().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryImage {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PackageRepositoryImage {
     return new PackageRepositoryImage().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryImage {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PackageRepositoryImage {
     return new PackageRepositoryImage().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: PackageRepositoryImage | PlainMessage<PackageRepositoryImage> | undefined,
-    b: PackageRepositoryImage | PlainMessage<PackageRepositoryImage> | undefined,
-  ): boolean {
+  static equals(a: PackageRepositoryImage | PlainMessage<PackageRepositoryImage> | undefined, b: PackageRepositoryImage | PlainMessage<PackageRepositoryImage> | undefined): boolean {
     return proto3.util.equals(PackageRepositoryImage, a, b);
   }
 }
@@ -288,8 +223,7 @@ export class PackageRepositoryGit extends Message<PackageRepositoryGit> {
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.PackageRepositoryGit";
+  static readonly typeName = "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.PackageRepositoryGit";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "ref", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "ref_selection", kind: "message", T: VersionSelection },
@@ -305,17 +239,11 @@ export class PackageRepositoryGit extends Message<PackageRepositoryGit> {
     return new PackageRepositoryGit().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryGit {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PackageRepositoryGit {
     return new PackageRepositoryGit().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: PackageRepositoryGit | PlainMessage<PackageRepositoryGit> | undefined,
-    b: PackageRepositoryGit | PlainMessage<PackageRepositoryGit> | undefined,
-  ): boolean {
+  static equals(a: PackageRepositoryGit | PlainMessage<PackageRepositoryGit> | undefined, b: PackageRepositoryGit | PlainMessage<PackageRepositoryGit> | undefined): boolean {
     return proto3.util.equals(PackageRepositoryGit, a, b);
   }
 }
@@ -340,17 +268,13 @@ export class PackageRepositoryHttp extends Message<PackageRepositoryHttp> {
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.PackageRepositoryHttp";
+  static readonly typeName = "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.PackageRepositoryHttp";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "sub_path", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "sha256", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): PackageRepositoryHttp {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PackageRepositoryHttp {
     return new PackageRepositoryHttp().fromBinary(bytes, options);
   }
 
@@ -358,17 +282,11 @@ export class PackageRepositoryHttp extends Message<PackageRepositoryHttp> {
     return new PackageRepositoryHttp().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryHttp {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PackageRepositoryHttp {
     return new PackageRepositoryHttp().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: PackageRepositoryHttp | PlainMessage<PackageRepositoryHttp> | undefined,
-    b: PackageRepositoryHttp | PlainMessage<PackageRepositoryHttp> | undefined,
-  ): boolean {
+  static equals(a: PackageRepositoryHttp | PlainMessage<PackageRepositoryHttp> | undefined, b: PackageRepositoryHttp | PlainMessage<PackageRepositoryHttp> | undefined): boolean {
     return proto3.util.equals(PackageRepositoryHttp, a, b);
   }
 }
@@ -393,50 +311,25 @@ export class PackageRepositoryInline extends Message<PackageRepositoryInline> {
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.PackageRepositoryInline";
+  static readonly typeName = "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.PackageRepositoryInline";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {
-      no: 1,
-      name: "paths",
-      kind: "map",
-      K: 9 /* ScalarType.STRING */,
-      V: { kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    },
-    {
-      no: 2,
-      name: "paths_from",
-      kind: "message",
-      T: PackageRepositoryInline_Source,
-      repeated: true,
-    },
+    { no: 1, name: "paths", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
+    { no: 2, name: "paths_from", kind: "message", T: PackageRepositoryInline_Source, repeated: true },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): PackageRepositoryInline {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PackageRepositoryInline {
     return new PackageRepositoryInline().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryInline {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PackageRepositoryInline {
     return new PackageRepositoryInline().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryInline {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PackageRepositoryInline {
     return new PackageRepositoryInline().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: PackageRepositoryInline | PlainMessage<PackageRepositoryInline> | undefined,
-    b: PackageRepositoryInline | PlainMessage<PackageRepositoryInline> | undefined,
-  ): boolean {
+  static equals(a: PackageRepositoryInline | PlainMessage<PackageRepositoryInline> | undefined, b: PackageRepositoryInline | PlainMessage<PackageRepositoryInline> | undefined): boolean {
     return proto3.util.equals(PackageRepositoryInline, a, b);
   }
 }
@@ -461,44 +354,25 @@ export class PackageRepositoryInline_SourceRef extends Message<PackageRepository
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.PackageRepositoryInline.SourceRef";
+  static readonly typeName = "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.PackageRepositoryInline.SourceRef";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "directory_path", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): PackageRepositoryInline_SourceRef {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PackageRepositoryInline_SourceRef {
     return new PackageRepositoryInline_SourceRef().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryInline_SourceRef {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PackageRepositoryInline_SourceRef {
     return new PackageRepositoryInline_SourceRef().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryInline_SourceRef {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PackageRepositoryInline_SourceRef {
     return new PackageRepositoryInline_SourceRef().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a:
-      | PackageRepositoryInline_SourceRef
-      | PlainMessage<PackageRepositoryInline_SourceRef>
-      | undefined,
-    b:
-      | PackageRepositoryInline_SourceRef
-      | PlainMessage<PackageRepositoryInline_SourceRef>
-      | undefined,
-  ): boolean {
+  static equals(a: PackageRepositoryInline_SourceRef | PlainMessage<PackageRepositoryInline_SourceRef> | undefined, b: PackageRepositoryInline_SourceRef | PlainMessage<PackageRepositoryInline_SourceRef> | undefined): boolean {
     return proto3.util.equals(PackageRepositoryInline_SourceRef, a, b);
   }
 }
@@ -523,38 +397,25 @@ export class PackageRepositoryInline_Source extends Message<PackageRepositoryInl
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.PackageRepositoryInline.Source";
+  static readonly typeName = "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.PackageRepositoryInline.Source";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "secret_ref", kind: "message", T: PackageRepositoryInline_SourceRef },
     { no: 2, name: "config_map_ref", kind: "message", T: PackageRepositoryInline_SourceRef },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): PackageRepositoryInline_Source {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PackageRepositoryInline_Source {
     return new PackageRepositoryInline_Source().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryInline_Source {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PackageRepositoryInline_Source {
     return new PackageRepositoryInline_Source().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryInline_Source {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PackageRepositoryInline_Source {
     return new PackageRepositoryInline_Source().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: PackageRepositoryInline_Source | PlainMessage<PackageRepositoryInline_Source> | undefined,
-    b: PackageRepositoryInline_Source | PlainMessage<PackageRepositoryInline_Source> | undefined,
-  ): boolean {
+  static equals(a: PackageRepositoryInline_Source | PlainMessage<PackageRepositoryInline_Source> | undefined, b: PackageRepositoryInline_Source | PlainMessage<PackageRepositoryInline_Source> | undefined): boolean {
     return proto3.util.equals(PackageRepositoryInline_Source, a, b);
   }
 }
@@ -574,8 +435,7 @@ export class VersionSelection extends Message<VersionSelection> {
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.VersionSelection";
+  static readonly typeName = "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.VersionSelection";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "semver", kind: "message", T: VersionSelectionSemver },
   ]);
@@ -592,10 +452,7 @@ export class VersionSelection extends Message<VersionSelection> {
     return new VersionSelection().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: VersionSelection | PlainMessage<VersionSelection> | undefined,
-    b: VersionSelection | PlainMessage<VersionSelection> | undefined,
-  ): boolean {
+  static equals(a: VersionSelection | PlainMessage<VersionSelection> | undefined, b: VersionSelection | PlainMessage<VersionSelection> | undefined): boolean {
     return proto3.util.equals(VersionSelection, a, b);
   }
 }
@@ -620,38 +477,25 @@ export class VersionSelectionSemver extends Message<VersionSelectionSemver> {
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.VersionSelectionSemver";
+  static readonly typeName = "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.VersionSelectionSemver";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "constraints", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "prereleases", kind: "message", T: VersionSelectionSemverPrereleases },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): VersionSelectionSemver {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): VersionSelectionSemver {
     return new VersionSelectionSemver().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): VersionSelectionSemver {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): VersionSelectionSemver {
     return new VersionSelectionSemver().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): VersionSelectionSemver {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): VersionSelectionSemver {
     return new VersionSelectionSemver().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: VersionSelectionSemver | PlainMessage<VersionSelectionSemver> | undefined,
-    b: VersionSelectionSemver | PlainMessage<VersionSelectionSemver> | undefined,
-  ): boolean {
+  static equals(a: VersionSelectionSemver | PlainMessage<VersionSelectionSemver> | undefined, b: VersionSelectionSemver | PlainMessage<VersionSelectionSemver> | undefined): boolean {
     return proto3.util.equals(VersionSelectionSemver, a, b);
   }
 }
@@ -671,43 +515,25 @@ export class VersionSelectionSemverPrereleases extends Message<VersionSelectionS
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.VersionSelectionSemverPrereleases";
+  static readonly typeName = "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.VersionSelectionSemverPrereleases";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "identifiers", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): VersionSelectionSemverPrereleases {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): VersionSelectionSemverPrereleases {
     return new VersionSelectionSemverPrereleases().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): VersionSelectionSemverPrereleases {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): VersionSelectionSemverPrereleases {
     return new VersionSelectionSemverPrereleases().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): VersionSelectionSemverPrereleases {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): VersionSelectionSemverPrereleases {
     return new VersionSelectionSemverPrereleases().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a:
-      | VersionSelectionSemverPrereleases
-      | PlainMessage<VersionSelectionSemverPrereleases>
-      | undefined,
-    b:
-      | VersionSelectionSemverPrereleases
-      | PlainMessage<VersionSelectionSemverPrereleases>
-      | undefined,
-  ): boolean {
+  static equals(a: VersionSelectionSemverPrereleases | PlainMessage<VersionSelectionSemverPrereleases> | undefined, b: VersionSelectionSemverPrereleases | PlainMessage<VersionSelectionSemverPrereleases> | undefined): boolean {
     return proto3.util.equals(VersionSelectionSemverPrereleases, a, b);
   }
 }
+

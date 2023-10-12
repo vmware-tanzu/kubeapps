@@ -6,26 +6,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import {
-  CreateInstalledPackageRequest,
-  CreateInstalledPackageResponse,
-  DeleteInstalledPackageRequest,
-  DeleteInstalledPackageResponse,
-  GetAvailablePackageDetailRequest,
-  GetAvailablePackageDetailResponse,
-  GetAvailablePackageSummariesRequest,
-  GetAvailablePackageSummariesResponse,
-  GetAvailablePackageVersionsRequest,
-  GetAvailablePackageVersionsResponse,
-  GetInstalledPackageDetailRequest,
-  GetInstalledPackageDetailResponse,
-  GetInstalledPackageResourceRefsRequest,
-  GetInstalledPackageResourceRefsResponse,
-  GetInstalledPackageSummariesRequest,
-  GetInstalledPackageSummariesResponse,
-  UpdateInstalledPackageRequest,
-  UpdateInstalledPackageResponse,
-} from "./packages_pb";
+import { CreateInstalledPackageRequest, CreateInstalledPackageResponse, DeleteInstalledPackageRequest, DeleteInstalledPackageResponse, GetAvailablePackageDetailRequest, GetAvailablePackageDetailResponse, GetAvailablePackageMetadatasRequest, GetAvailablePackageMetadatasResponse, GetAvailablePackageSummariesRequest, GetAvailablePackageSummariesResponse, GetAvailablePackageVersionsRequest, GetAvailablePackageVersionsResponse, GetInstalledPackageDetailRequest, GetInstalledPackageDetailResponse, GetInstalledPackageResourceRefsRequest, GetInstalledPackageResourceRefsResponse, GetInstalledPackageSummariesRequest, GetInstalledPackageSummariesResponse, UpdateInstalledPackageRequest, UpdateInstalledPackageResponse } from "./packages_pb";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -62,6 +43,15 @@ export const PackagesService = {
       name: "GetAvailablePackageVersions",
       I: GetAvailablePackageVersionsRequest,
       O: GetAvailablePackageVersionsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc kubeappsapis.core.packages.v1alpha1.PackagesService.GetAvailablePackageMetadatas
+     */
+    getAvailablePackageMetadatas: {
+      name: "GetAvailablePackageMetadatas",
+      I: GetAvailablePackageMetadatasRequest,
+      O: GetAvailablePackageMetadatasResponse,
       kind: MethodKind.Unary,
     },
     /**
@@ -118,5 +108,6 @@ export const PackagesService = {
       O: GetInstalledPackageResourceRefsResponse,
       kind: MethodKind.Unary,
     },
-  },
+  }
 } as const;
+

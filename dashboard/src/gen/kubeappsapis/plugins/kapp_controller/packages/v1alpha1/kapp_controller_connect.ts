@@ -6,41 +6,9 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import {
-  CreateInstalledPackageRequest,
-  CreateInstalledPackageResponse,
-  DeleteInstalledPackageRequest,
-  DeleteInstalledPackageResponse,
-  GetAvailablePackageDetailRequest,
-  GetAvailablePackageDetailResponse,
-  GetAvailablePackageSummariesRequest,
-  GetAvailablePackageSummariesResponse,
-  GetAvailablePackageVersionsRequest,
-  GetAvailablePackageVersionsResponse,
-  GetInstalledPackageDetailRequest,
-  GetInstalledPackageDetailResponse,
-  GetInstalledPackageResourceRefsRequest,
-  GetInstalledPackageResourceRefsResponse,
-  GetInstalledPackageSummariesRequest,
-  GetInstalledPackageSummariesResponse,
-  UpdateInstalledPackageRequest,
-  UpdateInstalledPackageResponse,
-} from "../../../../core/packages/v1alpha1/packages_pb";
+import { CreateInstalledPackageRequest, CreateInstalledPackageResponse, DeleteInstalledPackageRequest, DeleteInstalledPackageResponse, GetAvailablePackageDetailRequest, GetAvailablePackageDetailResponse, GetAvailablePackageSummariesRequest, GetAvailablePackageSummariesResponse, GetAvailablePackageVersionsRequest, GetAvailablePackageVersionsResponse, GetInstalledPackageDetailRequest, GetInstalledPackageDetailResponse, GetInstalledPackageResourceRefsRequest, GetInstalledPackageResourceRefsResponse, GetInstalledPackageSummariesRequest, GetInstalledPackageSummariesResponse, UpdateInstalledPackageRequest, UpdateInstalledPackageResponse } from "../../../../core/packages/v1alpha1/packages_pb";
 import { MethodKind } from "@bufbuild/protobuf";
-import {
-  AddPackageRepositoryRequest,
-  AddPackageRepositoryResponse,
-  DeletePackageRepositoryRequest,
-  DeletePackageRepositoryResponse,
-  GetPackageRepositoryDetailRequest,
-  GetPackageRepositoryDetailResponse,
-  GetPackageRepositoryPermissionsRequest,
-  GetPackageRepositoryPermissionsResponse,
-  GetPackageRepositorySummariesRequest,
-  GetPackageRepositorySummariesResponse,
-  UpdatePackageRepositoryRequest,
-  UpdatePackageRepositoryResponse,
-} from "../../../../core/packages/v1alpha1/repositories_pb";
+import { AddPackageRepositoryRequest, AddPackageRepositoryResponse, DeletePackageRepositoryRequest, DeletePackageRepositoryResponse, GetPackageRepositoryDetailRequest, GetPackageRepositoryDetailResponse, GetPackageRepositoryPermissionsRequest, GetPackageRepositoryPermissionsResponse, GetPackageRepositorySummariesRequest, GetPackageRepositorySummariesResponse, UpdatePackageRepositoryRequest, UpdatePackageRepositoryResponse } from "../../../../core/packages/v1alpha1/repositories_pb";
 
 /**
  * @generated from service kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService
@@ -148,15 +116,14 @@ export const KappControllerPackagesService = {
       O: GetInstalledPackageResourceRefsResponse,
       kind: MethodKind.Unary,
     },
-  },
+  }
 } as const;
 
 /**
  * @generated from service kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService
  */
 export const KappControllerRepositoriesService = {
-  typeName:
-    "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService",
+  typeName: "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService",
   methods: {
     /**
      * AddPackageRepository add an existing package repository to the set of ones already managed by the 'kapp_controller' plugin
@@ -214,5 +181,6 @@ export const KappControllerRepositoriesService = {
       O: GetPackageRepositoryPermissionsResponse,
       kind: MethodKind.Unary,
     },
-  },
+  }
 } as const;
+

@@ -6,14 +6,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import type {
-  BinaryReadOptions,
-  FieldList,
-  JsonReadOptions,
-  JsonValue,
-  PartialMessage,
-  PlainMessage,
-} from "@bufbuild/protobuf";
+import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Any, Message, proto3 } from "@bufbuild/protobuf";
 import { Context } from "./packages_pb";
 import { Plugin } from "../../plugins/v1alpha1/plugins_pb";
@@ -150,31 +143,19 @@ export class AddPackageRepositoryRequest extends Message<AddPackageRepositoryReq
     { no: 11, name: "custom_detail", kind: "message", T: Any },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): AddPackageRepositoryRequest {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AddPackageRepositoryRequest {
     return new AddPackageRepositoryRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): AddPackageRepositoryRequest {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): AddPackageRepositoryRequest {
     return new AddPackageRepositoryRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): AddPackageRepositoryRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): AddPackageRepositoryRequest {
     return new AddPackageRepositoryRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: AddPackageRepositoryRequest | PlainMessage<AddPackageRepositoryRequest> | undefined,
-    b: AddPackageRepositoryRequest | PlainMessage<AddPackageRepositoryRequest> | undefined,
-  ): boolean {
+  static equals(a: AddPackageRepositoryRequest | PlainMessage<AddPackageRepositoryRequest> | undefined, b: AddPackageRepositoryRequest | PlainMessage<AddPackageRepositoryRequest> | undefined): boolean {
     return proto3.util.equals(AddPackageRepositoryRequest, a, b);
   }
 }
@@ -198,26 +179,23 @@ export class PackageRepositoryTlsConfig extends Message<PackageRepositoryTlsConf
   /**
    * @generated from oneof kubeappsapis.core.packages.v1alpha1.PackageRepositoryTlsConfig.package_repo_tls_config_one_of
    */
-  packageRepoTlsConfigOneOf:
-    | {
-        /**
-         * certificate authority. Optional
-         *
-         * @generated from field: string cert_authority = 2;
-         */
-        value: string;
-        case: "certAuthority";
-      }
-    | {
-        /**
-         * a reference to an existing secret that contains custom CA
-         *
-         * @generated from field: kubeappsapis.core.packages.v1alpha1.SecretKeyReference secret_ref = 3;
-         */
-        value: SecretKeyReference;
-        case: "secretRef";
-      }
-    | { case: undefined; value?: undefined } = { case: undefined };
+  packageRepoTlsConfigOneOf: {
+    /**
+     * certificate authority. Optional
+     *
+     * @generated from field: string cert_authority = 2;
+     */
+    value: string;
+    case: "certAuthority";
+  } | {
+    /**
+     * a reference to an existing secret that contains custom CA
+     *
+     * @generated from field: kubeappsapis.core.packages.v1alpha1.SecretKeyReference secret_ref = 3;
+     */
+    value: SecretKeyReference;
+    case: "secretRef";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   constructor(data?: PartialMessage<PackageRepositoryTlsConfig>) {
     super();
@@ -228,47 +206,23 @@ export class PackageRepositoryTlsConfig extends Message<PackageRepositoryTlsConf
   static readonly typeName = "kubeappsapis.core.packages.v1alpha1.PackageRepositoryTlsConfig";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "insecure_skip_verify", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    {
-      no: 2,
-      name: "cert_authority",
-      kind: "scalar",
-      T: 9 /* ScalarType.STRING */,
-      oneof: "package_repo_tls_config_one_of",
-    },
-    {
-      no: 3,
-      name: "secret_ref",
-      kind: "message",
-      T: SecretKeyReference,
-      oneof: "package_repo_tls_config_one_of",
-    },
+    { no: 2, name: "cert_authority", kind: "scalar", T: 9 /* ScalarType.STRING */, oneof: "package_repo_tls_config_one_of" },
+    { no: 3, name: "secret_ref", kind: "message", T: SecretKeyReference, oneof: "package_repo_tls_config_one_of" },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): PackageRepositoryTlsConfig {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PackageRepositoryTlsConfig {
     return new PackageRepositoryTlsConfig().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryTlsConfig {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PackageRepositoryTlsConfig {
     return new PackageRepositoryTlsConfig().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryTlsConfig {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PackageRepositoryTlsConfig {
     return new PackageRepositoryTlsConfig().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: PackageRepositoryTlsConfig | PlainMessage<PackageRepositoryTlsConfig> | undefined,
-    b: PackageRepositoryTlsConfig | PlainMessage<PackageRepositoryTlsConfig> | undefined,
-  ): boolean {
+  static equals(a: PackageRepositoryTlsConfig | PlainMessage<PackageRepositoryTlsConfig> | undefined, b: PackageRepositoryTlsConfig | PlainMessage<PackageRepositoryTlsConfig> | undefined): boolean {
     return proto3.util.equals(PackageRepositoryTlsConfig, a, b);
   }
 }
@@ -306,72 +260,64 @@ export class PackageRepositoryAuth extends Message<PackageRepositoryAuth> {
   /**
    * @generated from oneof kubeappsapis.core.packages.v1alpha1.PackageRepositoryAuth.package_repo_auth_one_of
    */
-  packageRepoAuthOneOf:
-    | {
-        /**
-         * username and plain text password
-         *
-         * @generated from field: kubeappsapis.core.packages.v1alpha1.UsernamePassword username_password = 2;
-         */
-        value: UsernamePassword;
-        case: "usernamePassword";
-      }
-    | {
-        /**
-         * certificate and key for TLS-based authentication
-         *
-         * @generated from field: kubeappsapis.core.packages.v1alpha1.TlsCertKey tls_cert_key = 3;
-         */
-        value: TlsCertKey;
-        case: "tlsCertKey";
-      }
-    | {
-        /**
-         * docker credentials
-         *
-         * @generated from field: kubeappsapis.core.packages.v1alpha1.DockerCredentials docker_creds = 4;
-         */
-        value: DockerCredentials;
-        case: "dockerCreds";
-      }
-    | {
-        /**
-         * for Bearer Auth token value
-         * for Custom Auth, complete value of "Authorization" header
-         *
-         * @generated from field: string header = 5;
-         */
-        value: string;
-        case: "header";
-      }
-    | {
-        /**
-         * a reference to an existing secret
-         *
-         * @generated from field: kubeappsapis.core.packages.v1alpha1.SecretKeyReference secret_ref = 6;
-         */
-        value: SecretKeyReference;
-        case: "secretRef";
-      }
-    | {
-        /**
-         * SSH credentials
-         *
-         * @generated from field: kubeappsapis.core.packages.v1alpha1.SshCredentials ssh_creds = 8;
-         */
-        value: SshCredentials;
-        case: "sshCreds";
-      }
-    | {
-        /**
-         * opaque credentials
-         *
-         * @generated from field: kubeappsapis.core.packages.v1alpha1.OpaqueCredentials opaque_creds = 9;
-         */
-        value: OpaqueCredentials;
-        case: "opaqueCreds";
-      }
-    | { case: undefined; value?: undefined } = { case: undefined };
+  packageRepoAuthOneOf: {
+    /**
+     * username and plain text password
+     *
+     * @generated from field: kubeappsapis.core.packages.v1alpha1.UsernamePassword username_password = 2;
+     */
+    value: UsernamePassword;
+    case: "usernamePassword";
+  } | {
+    /**
+     * certificate and key for TLS-based authentication
+     *
+     * @generated from field: kubeappsapis.core.packages.v1alpha1.TlsCertKey tls_cert_key = 3;
+     */
+    value: TlsCertKey;
+    case: "tlsCertKey";
+  } | {
+    /**
+     * docker credentials
+     *
+     * @generated from field: kubeappsapis.core.packages.v1alpha1.DockerCredentials docker_creds = 4;
+     */
+    value: DockerCredentials;
+    case: "dockerCreds";
+  } | {
+    /**
+     * for Bearer Auth token value
+     * for Custom Auth, complete value of "Authorization" header
+     *
+     * @generated from field: string header = 5;
+     */
+    value: string;
+    case: "header";
+  } | {
+    /**
+     * a reference to an existing secret
+     *
+     * @generated from field: kubeappsapis.core.packages.v1alpha1.SecretKeyReference secret_ref = 6;
+     */
+    value: SecretKeyReference;
+    case: "secretRef";
+  } | {
+    /**
+     * SSH credentials
+     *
+     * @generated from field: kubeappsapis.core.packages.v1alpha1.SshCredentials ssh_creds = 8;
+     */
+    value: SshCredentials;
+    case: "sshCreds";
+  } | {
+    /**
+     * opaque credentials
+     *
+     * @generated from field: kubeappsapis.core.packages.v1alpha1.OpaqueCredentials opaque_creds = 9;
+     */
+    value: OpaqueCredentials;
+    case: "opaqueCreds";
+  } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
    * pass_credentials allows the credentials from the SecretRef to be passed
@@ -393,68 +339,18 @@ export class PackageRepositoryAuth extends Message<PackageRepositoryAuth> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "kubeappsapis.core.packages.v1alpha1.PackageRepositoryAuth";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {
-      no: 1,
-      name: "type",
-      kind: "enum",
-      T: proto3.getEnumType(PackageRepositoryAuth_PackageRepositoryAuthType),
-    },
-    {
-      no: 2,
-      name: "username_password",
-      kind: "message",
-      T: UsernamePassword,
-      oneof: "package_repo_auth_one_of",
-    },
-    {
-      no: 3,
-      name: "tls_cert_key",
-      kind: "message",
-      T: TlsCertKey,
-      oneof: "package_repo_auth_one_of",
-    },
-    {
-      no: 4,
-      name: "docker_creds",
-      kind: "message",
-      T: DockerCredentials,
-      oneof: "package_repo_auth_one_of",
-    },
-    {
-      no: 5,
-      name: "header",
-      kind: "scalar",
-      T: 9 /* ScalarType.STRING */,
-      oneof: "package_repo_auth_one_of",
-    },
-    {
-      no: 6,
-      name: "secret_ref",
-      kind: "message",
-      T: SecretKeyReference,
-      oneof: "package_repo_auth_one_of",
-    },
-    {
-      no: 8,
-      name: "ssh_creds",
-      kind: "message",
-      T: SshCredentials,
-      oneof: "package_repo_auth_one_of",
-    },
-    {
-      no: 9,
-      name: "opaque_creds",
-      kind: "message",
-      T: OpaqueCredentials,
-      oneof: "package_repo_auth_one_of",
-    },
+    { no: 1, name: "type", kind: "enum", T: proto3.getEnumType(PackageRepositoryAuth_PackageRepositoryAuthType) },
+    { no: 2, name: "username_password", kind: "message", T: UsernamePassword, oneof: "package_repo_auth_one_of" },
+    { no: 3, name: "tls_cert_key", kind: "message", T: TlsCertKey, oneof: "package_repo_auth_one_of" },
+    { no: 4, name: "docker_creds", kind: "message", T: DockerCredentials, oneof: "package_repo_auth_one_of" },
+    { no: 5, name: "header", kind: "scalar", T: 9 /* ScalarType.STRING */, oneof: "package_repo_auth_one_of" },
+    { no: 6, name: "secret_ref", kind: "message", T: SecretKeyReference, oneof: "package_repo_auth_one_of" },
+    { no: 8, name: "ssh_creds", kind: "message", T: SshCredentials, oneof: "package_repo_auth_one_of" },
+    { no: 9, name: "opaque_creds", kind: "message", T: OpaqueCredentials, oneof: "package_repo_auth_one_of" },
     { no: 7, name: "pass_credentials", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): PackageRepositoryAuth {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PackageRepositoryAuth {
     return new PackageRepositoryAuth().fromBinary(bytes, options);
   }
 
@@ -462,17 +358,11 @@ export class PackageRepositoryAuth extends Message<PackageRepositoryAuth> {
     return new PackageRepositoryAuth().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryAuth {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PackageRepositoryAuth {
     return new PackageRepositoryAuth().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: PackageRepositoryAuth | PlainMessage<PackageRepositoryAuth> | undefined,
-    b: PackageRepositoryAuth | PlainMessage<PackageRepositoryAuth> | undefined,
-  ): boolean {
+  static equals(a: PackageRepositoryAuth | PlainMessage<PackageRepositoryAuth> | undefined, b: PackageRepositoryAuth | PlainMessage<PackageRepositoryAuth> | undefined): boolean {
     return proto3.util.equals(PackageRepositoryAuth, a, b);
   }
 }
@@ -536,20 +426,16 @@ export enum PackageRepositoryAuth_PackageRepositoryAuthType {
   OPAQUE = 7,
 }
 // Retrieve enum metadata with: proto3.getEnumType(PackageRepositoryAuth_PackageRepositoryAuthType)
-proto3.util.setEnumType(
-  PackageRepositoryAuth_PackageRepositoryAuthType,
-  "kubeappsapis.core.packages.v1alpha1.PackageRepositoryAuth.PackageRepositoryAuthType",
-  [
-    { no: 0, name: "PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED" },
-    { no: 1, name: "PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH" },
-    { no: 2, name: "PACKAGE_REPOSITORY_AUTH_TYPE_TLS" },
-    { no: 3, name: "PACKAGE_REPOSITORY_AUTH_TYPE_BEARER" },
-    { no: 4, name: "PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER" },
-    { no: 5, name: "PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON" },
-    { no: 6, name: "PACKAGE_REPOSITORY_AUTH_TYPE_SSH" },
-    { no: 7, name: "PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE" },
-  ],
-);
+proto3.util.setEnumType(PackageRepositoryAuth_PackageRepositoryAuthType, "kubeappsapis.core.packages.v1alpha1.PackageRepositoryAuth.PackageRepositoryAuthType", [
+  { no: 0, name: "PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED" },
+  { no: 1, name: "PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH" },
+  { no: 2, name: "PACKAGE_REPOSITORY_AUTH_TYPE_TLS" },
+  { no: 3, name: "PACKAGE_REPOSITORY_AUTH_TYPE_BEARER" },
+  { no: 4, name: "PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER" },
+  { no: 5, name: "PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON" },
+  { no: 6, name: "PACKAGE_REPOSITORY_AUTH_TYPE_SSH" },
+  { no: 7, name: "PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE" },
+]);
 
 /**
  * UsernamePassword
@@ -596,10 +482,7 @@ export class UsernamePassword extends Message<UsernamePassword> {
     return new UsernamePassword().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: UsernamePassword | PlainMessage<UsernamePassword> | undefined,
-    b: UsernamePassword | PlainMessage<UsernamePassword> | undefined,
-  ): boolean {
+  static equals(a: UsernamePassword | PlainMessage<UsernamePassword> | undefined, b: UsernamePassword | PlainMessage<UsernamePassword> | undefined): boolean {
     return proto3.util.equals(UsernamePassword, a, b);
   }
 }
@@ -649,10 +532,7 @@ export class TlsCertKey extends Message<TlsCertKey> {
     return new TlsCertKey().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: TlsCertKey | PlainMessage<TlsCertKey> | undefined,
-    b: TlsCertKey | PlainMessage<TlsCertKey> | undefined,
-  ): boolean {
+  static equals(a: TlsCertKey | PlainMessage<TlsCertKey> | undefined, b: TlsCertKey | PlainMessage<TlsCertKey> | undefined): boolean {
     return proto3.util.equals(TlsCertKey, a, b);
   }
 }
@@ -718,10 +598,7 @@ export class DockerCredentials extends Message<DockerCredentials> {
     return new DockerCredentials().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: DockerCredentials | PlainMessage<DockerCredentials> | undefined,
-    b: DockerCredentials | PlainMessage<DockerCredentials> | undefined,
-  ): boolean {
+  static equals(a: DockerCredentials | PlainMessage<DockerCredentials> | undefined, b: DockerCredentials | PlainMessage<DockerCredentials> | undefined): boolean {
     return proto3.util.equals(DockerCredentials, a, b);
   }
 }
@@ -771,10 +648,7 @@ export class SshCredentials extends Message<SshCredentials> {
     return new SshCredentials().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: SshCredentials | PlainMessage<SshCredentials> | undefined,
-    b: SshCredentials | PlainMessage<SshCredentials> | undefined,
-  ): boolean {
+  static equals(a: SshCredentials | PlainMessage<SshCredentials> | undefined, b: SshCredentials | PlainMessage<SshCredentials> | undefined): boolean {
     return proto3.util.equals(SshCredentials, a, b);
   }
 }
@@ -801,13 +675,7 @@ export class OpaqueCredentials extends Message<OpaqueCredentials> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "kubeappsapis.core.packages.v1alpha1.OpaqueCredentials";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {
-      no: 1,
-      name: "data",
-      kind: "map",
-      K: 9 /* ScalarType.STRING */,
-      V: { kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    },
+    { no: 1, name: "data", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OpaqueCredentials {
@@ -822,10 +690,7 @@ export class OpaqueCredentials extends Message<OpaqueCredentials> {
     return new OpaqueCredentials().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: OpaqueCredentials | PlainMessage<OpaqueCredentials> | undefined,
-    b: OpaqueCredentials | PlainMessage<OpaqueCredentials> | undefined,
-  ): boolean {
+  static equals(a: OpaqueCredentials | PlainMessage<OpaqueCredentials> | undefined, b: OpaqueCredentials | PlainMessage<OpaqueCredentials> | undefined): boolean {
     return proto3.util.equals(OpaqueCredentials, a, b);
   }
 }
@@ -885,17 +750,11 @@ export class SecretKeyReference extends Message<SecretKeyReference> {
     return new SecretKeyReference().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): SecretKeyReference {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SecretKeyReference {
     return new SecretKeyReference().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: SecretKeyReference | PlainMessage<SecretKeyReference> | undefined,
-    b: SecretKeyReference | PlainMessage<SecretKeyReference> | undefined,
-  ): boolean {
+  static equals(a: SecretKeyReference | PlainMessage<SecretKeyReference> | undefined, b: SecretKeyReference | PlainMessage<SecretKeyReference> | undefined): boolean {
     return proto3.util.equals(SecretKeyReference, a, b);
   }
 }
@@ -919,43 +778,24 @@ export class GetPackageRepositoryDetailRequest extends Message<GetPackageReposit
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailRequest";
+  static readonly typeName = "kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "package_repo_ref", kind: "message", T: PackageRepositoryReference },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetPackageRepositoryDetailRequest {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetPackageRepositoryDetailRequest {
     return new GetPackageRepositoryDetailRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetPackageRepositoryDetailRequest {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetPackageRepositoryDetailRequest {
     return new GetPackageRepositoryDetailRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetPackageRepositoryDetailRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetPackageRepositoryDetailRequest {
     return new GetPackageRepositoryDetailRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a:
-      | GetPackageRepositoryDetailRequest
-      | PlainMessage<GetPackageRepositoryDetailRequest>
-      | undefined,
-    b:
-      | GetPackageRepositoryDetailRequest
-      | PlainMessage<GetPackageRepositoryDetailRequest>
-      | undefined,
-  ): boolean {
+  static equals(a: GetPackageRepositoryDetailRequest | PlainMessage<GetPackageRepositoryDetailRequest> | undefined, b: GetPackageRepositoryDetailRequest | PlainMessage<GetPackageRepositoryDetailRequest> | undefined): boolean {
     return proto3.util.equals(GetPackageRepositoryDetailRequest, a, b);
   }
 }
@@ -981,43 +821,24 @@ export class GetPackageRepositorySummariesRequest extends Message<GetPackageRepo
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesRequest";
+  static readonly typeName = "kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "context", kind: "message", T: Context },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetPackageRepositorySummariesRequest {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetPackageRepositorySummariesRequest {
     return new GetPackageRepositorySummariesRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetPackageRepositorySummariesRequest {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetPackageRepositorySummariesRequest {
     return new GetPackageRepositorySummariesRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetPackageRepositorySummariesRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetPackageRepositorySummariesRequest {
     return new GetPackageRepositorySummariesRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a:
-      | GetPackageRepositorySummariesRequest
-      | PlainMessage<GetPackageRepositorySummariesRequest>
-      | undefined,
-    b:
-      | GetPackageRepositorySummariesRequest
-      | PlainMessage<GetPackageRepositorySummariesRequest>
-      | undefined,
-  ): boolean {
+  static equals(a: GetPackageRepositorySummariesRequest | PlainMessage<GetPackageRepositorySummariesRequest> | undefined, b: GetPackageRepositorySummariesRequest | PlainMessage<GetPackageRepositorySummariesRequest> | undefined): boolean {
     return proto3.util.equals(GetPackageRepositorySummariesRequest, a, b);
   }
 }
@@ -1114,31 +935,19 @@ export class UpdatePackageRepositoryRequest extends Message<UpdatePackageReposit
     { no: 11, name: "custom_detail", kind: "message", T: Any },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): UpdatePackageRepositoryRequest {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdatePackageRepositoryRequest {
     return new UpdatePackageRepositoryRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): UpdatePackageRepositoryRequest {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdatePackageRepositoryRequest {
     return new UpdatePackageRepositoryRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): UpdatePackageRepositoryRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdatePackageRepositoryRequest {
     return new UpdatePackageRepositoryRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: UpdatePackageRepositoryRequest | PlainMessage<UpdatePackageRepositoryRequest> | undefined,
-    b: UpdatePackageRepositoryRequest | PlainMessage<UpdatePackageRepositoryRequest> | undefined,
-  ): boolean {
+  static equals(a: UpdatePackageRepositoryRequest | PlainMessage<UpdatePackageRepositoryRequest> | undefined, b: UpdatePackageRepositoryRequest | PlainMessage<UpdatePackageRepositoryRequest> | undefined): boolean {
     return proto3.util.equals(UpdatePackageRepositoryRequest, a, b);
   }
 }
@@ -1167,31 +976,19 @@ export class DeletePackageRepositoryRequest extends Message<DeletePackageReposit
     { no: 1, name: "package_repo_ref", kind: "message", T: PackageRepositoryReference },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): DeletePackageRepositoryRequest {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeletePackageRepositoryRequest {
     return new DeletePackageRepositoryRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): DeletePackageRepositoryRequest {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeletePackageRepositoryRequest {
     return new DeletePackageRepositoryRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): DeletePackageRepositoryRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeletePackageRepositoryRequest {
     return new DeletePackageRepositoryRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: DeletePackageRepositoryRequest | PlainMessage<DeletePackageRepositoryRequest> | undefined,
-    b: DeletePackageRepositoryRequest | PlainMessage<DeletePackageRepositoryRequest> | undefined,
-  ): boolean {
+  static equals(a: DeletePackageRepositoryRequest | PlainMessage<DeletePackageRepositoryRequest> | undefined, b: DeletePackageRepositoryRequest | PlainMessage<DeletePackageRepositoryRequest> | undefined): boolean {
     return proto3.util.equals(DeletePackageRepositoryRequest, a, b);
   }
 }
@@ -1242,31 +1039,19 @@ export class PackageRepositoryReference extends Message<PackageRepositoryReferen
     { no: 3, name: "plugin", kind: "message", T: Plugin },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): PackageRepositoryReference {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PackageRepositoryReference {
     return new PackageRepositoryReference().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryReference {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PackageRepositoryReference {
     return new PackageRepositoryReference().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryReference {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PackageRepositoryReference {
     return new PackageRepositoryReference().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: PackageRepositoryReference | PlainMessage<PackageRepositoryReference> | undefined,
-    b: PackageRepositoryReference | PlainMessage<PackageRepositoryReference> | undefined,
-  ): boolean {
+  static equals(a: PackageRepositoryReference | PlainMessage<PackageRepositoryReference> | undefined, b: PackageRepositoryReference | PlainMessage<PackageRepositoryReference> | undefined): boolean {
     return proto3.util.equals(PackageRepositoryReference, a, b);
   }
 }
@@ -1300,31 +1085,19 @@ export class AddPackageRepositoryResponse extends Message<AddPackageRepositoryRe
     { no: 1, name: "package_repo_ref", kind: "message", T: PackageRepositoryReference },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): AddPackageRepositoryResponse {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AddPackageRepositoryResponse {
     return new AddPackageRepositoryResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): AddPackageRepositoryResponse {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): AddPackageRepositoryResponse {
     return new AddPackageRepositoryResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): AddPackageRepositoryResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): AddPackageRepositoryResponse {
     return new AddPackageRepositoryResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: AddPackageRepositoryResponse | PlainMessage<AddPackageRepositoryResponse> | undefined,
-    b: AddPackageRepositoryResponse | PlainMessage<AddPackageRepositoryResponse> | undefined,
-  ): boolean {
+  static equals(a: AddPackageRepositoryResponse | PlainMessage<AddPackageRepositoryResponse> | undefined, b: AddPackageRepositoryResponse | PlainMessage<AddPackageRepositoryResponse> | undefined): boolean {
     return proto3.util.equals(AddPackageRepositoryResponse, a, b);
   }
 }
@@ -1373,40 +1146,23 @@ export class PackageRepositoryStatus extends Message<PackageRepositoryStatus> {
   static readonly typeName = "kubeappsapis.core.packages.v1alpha1.PackageRepositoryStatus";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "ready", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    {
-      no: 2,
-      name: "reason",
-      kind: "enum",
-      T: proto3.getEnumType(PackageRepositoryStatus_StatusReason),
-    },
+    { no: 2, name: "reason", kind: "enum", T: proto3.getEnumType(PackageRepositoryStatus_StatusReason) },
     { no: 3, name: "user_reason", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): PackageRepositoryStatus {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PackageRepositoryStatus {
     return new PackageRepositoryStatus().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryStatus {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PackageRepositoryStatus {
     return new PackageRepositoryStatus().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryStatus {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PackageRepositoryStatus {
     return new PackageRepositoryStatus().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: PackageRepositoryStatus | PlainMessage<PackageRepositoryStatus> | undefined,
-    b: PackageRepositoryStatus | PlainMessage<PackageRepositoryStatus> | undefined,
-  ): boolean {
+  static equals(a: PackageRepositoryStatus | PlainMessage<PackageRepositoryStatus> | undefined, b: PackageRepositoryStatus | PlainMessage<PackageRepositoryStatus> | undefined): boolean {
     return proto3.util.equals(PackageRepositoryStatus, a, b);
   }
 }
@@ -1441,16 +1197,12 @@ export enum PackageRepositoryStatus_StatusReason {
   PENDING = 3,
 }
 // Retrieve enum metadata with: proto3.getEnumType(PackageRepositoryStatus_StatusReason)
-proto3.util.setEnumType(
-  PackageRepositoryStatus_StatusReason,
-  "kubeappsapis.core.packages.v1alpha1.PackageRepositoryStatus.StatusReason",
-  [
-    { no: 0, name: "STATUS_REASON_UNSPECIFIED" },
-    { no: 1, name: "STATUS_REASON_SUCCESS" },
-    { no: 2, name: "STATUS_REASON_FAILED" },
-    { no: 3, name: "STATUS_REASON_PENDING" },
-  ],
-);
+proto3.util.setEnumType(PackageRepositoryStatus_StatusReason, "kubeappsapis.core.packages.v1alpha1.PackageRepositoryStatus.StatusReason", [
+  { no: 0, name: "STATUS_REASON_UNSPECIFIED" },
+  { no: 1, name: "STATUS_REASON_SUCCESS" },
+  { no: 2, name: "STATUS_REASON_FAILED" },
+  { no: 3, name: "STATUS_REASON_PENDING" },
+]);
 
 /**
  * PackageRepositoryDetail
@@ -1569,31 +1321,19 @@ export class PackageRepositoryDetail extends Message<PackageRepositoryDetail> {
     { no: 11, name: "status", kind: "message", T: PackageRepositoryStatus },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): PackageRepositoryDetail {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PackageRepositoryDetail {
     return new PackageRepositoryDetail().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryDetail {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PackageRepositoryDetail {
     return new PackageRepositoryDetail().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoryDetail {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PackageRepositoryDetail {
     return new PackageRepositoryDetail().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: PackageRepositoryDetail | PlainMessage<PackageRepositoryDetail> | undefined,
-    b: PackageRepositoryDetail | PlainMessage<PackageRepositoryDetail> | undefined,
-  ): boolean {
+  static equals(a: PackageRepositoryDetail | PlainMessage<PackageRepositoryDetail> | undefined, b: PackageRepositoryDetail | PlainMessage<PackageRepositoryDetail> | undefined): boolean {
     return proto3.util.equals(PackageRepositoryDetail, a, b);
   }
 }
@@ -1619,43 +1359,24 @@ export class GetPackageRepositoryDetailResponse extends Message<GetPackageReposi
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse";
+  static readonly typeName = "kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "detail", kind: "message", T: PackageRepositoryDetail },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetPackageRepositoryDetailResponse {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetPackageRepositoryDetailResponse {
     return new GetPackageRepositoryDetailResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetPackageRepositoryDetailResponse {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetPackageRepositoryDetailResponse {
     return new GetPackageRepositoryDetailResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetPackageRepositoryDetailResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetPackageRepositoryDetailResponse {
     return new GetPackageRepositoryDetailResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a:
-      | GetPackageRepositoryDetailResponse
-      | PlainMessage<GetPackageRepositoryDetailResponse>
-      | undefined,
-    b:
-      | GetPackageRepositoryDetailResponse
-      | PlainMessage<GetPackageRepositoryDetailResponse>
-      | undefined,
-  ): boolean {
+  static equals(a: GetPackageRepositoryDetailResponse | PlainMessage<GetPackageRepositoryDetailResponse> | undefined, b: GetPackageRepositoryDetailResponse | PlainMessage<GetPackageRepositoryDetailResponse> | undefined): boolean {
     return proto3.util.equals(GetPackageRepositoryDetailResponse, a, b);
   }
 }
@@ -1742,31 +1463,19 @@ export class PackageRepositorySummary extends Message<PackageRepositorySummary> 
     { no: 8, name: "requires_auth", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): PackageRepositorySummary {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PackageRepositorySummary {
     return new PackageRepositorySummary().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositorySummary {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PackageRepositorySummary {
     return new PackageRepositorySummary().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositorySummary {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PackageRepositorySummary {
     return new PackageRepositorySummary().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: PackageRepositorySummary | PlainMessage<PackageRepositorySummary> | undefined,
-    b: PackageRepositorySummary | PlainMessage<PackageRepositorySummary> | undefined,
-  ): boolean {
+  static equals(a: PackageRepositorySummary | PlainMessage<PackageRepositorySummary> | undefined, b: PackageRepositorySummary | PlainMessage<PackageRepositorySummary> | undefined): boolean {
     return proto3.util.equals(PackageRepositorySummary, a, b);
   }
 }
@@ -1792,49 +1501,24 @@ export class GetPackageRepositorySummariesResponse extends Message<GetPackageRep
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse";
+  static readonly typeName = "kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {
-      no: 1,
-      name: "package_repository_summaries",
-      kind: "message",
-      T: PackageRepositorySummary,
-      repeated: true,
-    },
+    { no: 1, name: "package_repository_summaries", kind: "message", T: PackageRepositorySummary, repeated: true },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetPackageRepositorySummariesResponse {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetPackageRepositorySummariesResponse {
     return new GetPackageRepositorySummariesResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetPackageRepositorySummariesResponse {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetPackageRepositorySummariesResponse {
     return new GetPackageRepositorySummariesResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetPackageRepositorySummariesResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetPackageRepositorySummariesResponse {
     return new GetPackageRepositorySummariesResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a:
-      | GetPackageRepositorySummariesResponse
-      | PlainMessage<GetPackageRepositorySummariesResponse>
-      | undefined,
-    b:
-      | GetPackageRepositorySummariesResponse
-      | PlainMessage<GetPackageRepositorySummariesResponse>
-      | undefined,
-  ): boolean {
+  static equals(a: GetPackageRepositorySummariesResponse | PlainMessage<GetPackageRepositorySummariesResponse> | undefined, b: GetPackageRepositorySummariesResponse | PlainMessage<GetPackageRepositorySummariesResponse> | undefined): boolean {
     return proto3.util.equals(GetPackageRepositorySummariesResponse, a, b);
   }
 }
@@ -1863,31 +1547,19 @@ export class UpdatePackageRepositoryResponse extends Message<UpdatePackageReposi
     { no: 1, name: "package_repo_ref", kind: "message", T: PackageRepositoryReference },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): UpdatePackageRepositoryResponse {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdatePackageRepositoryResponse {
     return new UpdatePackageRepositoryResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): UpdatePackageRepositoryResponse {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdatePackageRepositoryResponse {
     return new UpdatePackageRepositoryResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): UpdatePackageRepositoryResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdatePackageRepositoryResponse {
     return new UpdatePackageRepositoryResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: UpdatePackageRepositoryResponse | PlainMessage<UpdatePackageRepositoryResponse> | undefined,
-    b: UpdatePackageRepositoryResponse | PlainMessage<UpdatePackageRepositoryResponse> | undefined,
-  ): boolean {
+  static equals(a: UpdatePackageRepositoryResponse | PlainMessage<UpdatePackageRepositoryResponse> | undefined, b: UpdatePackageRepositoryResponse | PlainMessage<UpdatePackageRepositoryResponse> | undefined): boolean {
     return proto3.util.equals(UpdatePackageRepositoryResponse, a, b);
   }
 }
@@ -1909,33 +1581,22 @@ export class DeletePackageRepositoryResponse extends Message<DeletePackageReposi
 
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => []);
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): DeletePackageRepositoryResponse {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeletePackageRepositoryResponse {
     return new DeletePackageRepositoryResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): DeletePackageRepositoryResponse {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeletePackageRepositoryResponse {
     return new DeletePackageRepositoryResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): DeletePackageRepositoryResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeletePackageRepositoryResponse {
     return new DeletePackageRepositoryResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: DeletePackageRepositoryResponse | PlainMessage<DeletePackageRepositoryResponse> | undefined,
-    b: DeletePackageRepositoryResponse | PlainMessage<DeletePackageRepositoryResponse> | undefined,
-  ): boolean {
+  static equals(a: DeletePackageRepositoryResponse | PlainMessage<DeletePackageRepositoryResponse> | undefined, b: DeletePackageRepositoryResponse | PlainMessage<DeletePackageRepositoryResponse> | undefined): boolean {
     return proto3.util.equals(DeletePackageRepositoryResponse, a, b);
   }
 }
@@ -1957,43 +1618,24 @@ export class GetPackageRepositoryPermissionsRequest extends Message<GetPackageRe
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsRequest";
+  static readonly typeName = "kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "context", kind: "message", T: Context },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetPackageRepositoryPermissionsRequest {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetPackageRepositoryPermissionsRequest {
     return new GetPackageRepositoryPermissionsRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetPackageRepositoryPermissionsRequest {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetPackageRepositoryPermissionsRequest {
     return new GetPackageRepositoryPermissionsRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetPackageRepositoryPermissionsRequest {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetPackageRepositoryPermissionsRequest {
     return new GetPackageRepositoryPermissionsRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a:
-      | GetPackageRepositoryPermissionsRequest
-      | PlainMessage<GetPackageRepositoryPermissionsRequest>
-      | undefined,
-    b:
-      | GetPackageRepositoryPermissionsRequest
-      | PlainMessage<GetPackageRepositoryPermissionsRequest>
-      | undefined,
-  ): boolean {
+  static equals(a: GetPackageRepositoryPermissionsRequest | PlainMessage<GetPackageRepositoryPermissionsRequest> | undefined, b: GetPackageRepositoryPermissionsRequest | PlainMessage<GetPackageRepositoryPermissionsRequest> | undefined): boolean {
     return proto3.util.equals(GetPackageRepositoryPermissionsRequest, a, b);
   }
 }
@@ -2030,47 +1672,23 @@ export class PackageRepositoriesPermissions extends Message<PackageRepositoriesP
   static readonly typeName = "kubeappsapis.core.packages.v1alpha1.PackageRepositoriesPermissions";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "plugin", kind: "message", T: Plugin },
-    {
-      no: 2,
-      name: "global",
-      kind: "map",
-      K: 9 /* ScalarType.STRING */,
-      V: { kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    },
-    {
-      no: 3,
-      name: "namespace",
-      kind: "map",
-      K: 9 /* ScalarType.STRING */,
-      V: { kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    },
+    { no: 2, name: "global", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 8 /* ScalarType.BOOL */} },
+    { no: 3, name: "namespace", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 8 /* ScalarType.BOOL */} },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): PackageRepositoriesPermissions {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PackageRepositoriesPermissions {
     return new PackageRepositoriesPermissions().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoriesPermissions {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PackageRepositoriesPermissions {
     return new PackageRepositoriesPermissions().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): PackageRepositoriesPermissions {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PackageRepositoriesPermissions {
     return new PackageRepositoriesPermissions().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a: PackageRepositoriesPermissions | PlainMessage<PackageRepositoriesPermissions> | undefined,
-    b: PackageRepositoriesPermissions | PlainMessage<PackageRepositoriesPermissions> | undefined,
-  ): boolean {
+  static equals(a: PackageRepositoriesPermissions | PlainMessage<PackageRepositoriesPermissions> | undefined, b: PackageRepositoriesPermissions | PlainMessage<PackageRepositoriesPermissions> | undefined): boolean {
     return proto3.util.equals(PackageRepositoriesPermissions, a, b);
   }
 }
@@ -2090,49 +1708,25 @@ export class GetPackageRepositoryPermissionsResponse extends Message<GetPackageR
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName =
-    "kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsResponse";
+  static readonly typeName = "kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {
-      no: 1,
-      name: "permissions",
-      kind: "message",
-      T: PackageRepositoriesPermissions,
-      repeated: true,
-    },
+    { no: 1, name: "permissions", kind: "message", T: PackageRepositoriesPermissions, repeated: true },
   ]);
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>,
-  ): GetPackageRepositoryPermissionsResponse {
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetPackageRepositoryPermissionsResponse {
     return new GetPackageRepositoryPermissionsResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>,
-  ): GetPackageRepositoryPermissionsResponse {
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetPackageRepositoryPermissionsResponse {
     return new GetPackageRepositoryPermissionsResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>,
-  ): GetPackageRepositoryPermissionsResponse {
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetPackageRepositoryPermissionsResponse {
     return new GetPackageRepositoryPermissionsResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(
-    a:
-      | GetPackageRepositoryPermissionsResponse
-      | PlainMessage<GetPackageRepositoryPermissionsResponse>
-      | undefined,
-    b:
-      | GetPackageRepositoryPermissionsResponse
-      | PlainMessage<GetPackageRepositoryPermissionsResponse>
-      | undefined,
-  ): boolean {
+  static equals(a: GetPackageRepositoryPermissionsResponse | PlainMessage<GetPackageRepositoryPermissionsResponse> | undefined, b: GetPackageRepositoryPermissionsResponse | PlainMessage<GetPackageRepositoryPermissionsResponse> | undefined): boolean {
     return proto3.util.equals(GetPackageRepositoryPermissionsResponse, a, b);
   }
 }
+

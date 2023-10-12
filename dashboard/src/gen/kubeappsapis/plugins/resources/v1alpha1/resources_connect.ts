@@ -6,24 +6,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import {
-  CanIRequest,
-  CanIResponse,
-  CheckNamespaceExistsRequest,
-  CheckNamespaceExistsResponse,
-  CreateNamespaceRequest,
-  CreateNamespaceResponse,
-  CreateSecretRequest,
-  CreateSecretResponse,
-  GetNamespaceNamesRequest,
-  GetNamespaceNamesResponse,
-  GetResourcesRequest,
-  GetResourcesResponse,
-  GetSecretNamesRequest,
-  GetSecretNamesResponse,
-  GetServiceAccountNamesRequest,
-  GetServiceAccountNamesResponse,
-} from "./resources_pb";
+import { CanIRequest, CanIResponse, CheckNamespaceExistsRequest, CheckNamespaceExistsResponse, CreateNamespaceRequest, CreateNamespaceResponse, CreateSecretRequest, CreateSecretResponse, GetNamespaceNamesRequest, GetNamespaceNamesResponse, GetResourcesRequest, GetResourcesResponse, GetSecretNamesRequest, GetSecretNamesResponse, GetServiceAccountNamesRequest, GetServiceAccountNamesResponse } from "./resources_pb";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -109,5 +92,6 @@ export const ResourcesService = {
       O: CanIResponse,
       kind: MethodKind.Unary,
     },
-  },
+  }
 } as const;
+

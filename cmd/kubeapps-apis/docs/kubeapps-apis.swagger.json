@@ -226,6 +226,77 @@
         ]
       }
     },
+    "/core/packages/v1alpha1/availablepackages/plugin/{availablePackageRef.plugin.name}/{availablePackageRef.plugin.version}/c/{availablePackageRef.context.cluster}/ns/{availablePackageRef.context.namespace}/{availablePackageRef.identifier}/metadata": {
+      "get": {
+        "operationId": "PackagesService_GetAvailablePackageMetadatas",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetAvailablePackageMetadatasResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "availablePackageRef.plugin.name",
+            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.plugin.version",
+            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.context.cluster",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.context.namespace",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "availablePackageRef.identifier",
+            "description": "Available package identifier\n\nThe fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": ".+"
+          },
+          {
+            "name": "pkgVersion",
+            "description": "Package Version\n\nVersion reference for which metadata is requested.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PackagesService"
+        ]
+      }
+    },
     "/core/packages/v1alpha1/availablepackages/plugin/{availablePackageRef.plugin.name}/{availablePackageRef.plugin.version}/c/{availablePackageRef.context.cluster}/ns/{availablePackageRef.context.namespace}/{availablePackageRef.identifier}/versions": {
       "get": {
         "operationId": "PackagesService_GetAvailablePackageVersions",
@@ -4910,6 +4981,27 @@
       "description": "Response for GetAvailablePackageDetail\n\nTODO: add example for API docs\n option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n   example: '{\"available_package_detail\": [{}]}'\n };",
       "title": "GetAvailablePackageDetailResponse"
     },
+    "v1alpha1GetAvailablePackageMetadatasResponse": {
+      "type": "object",
+      "properties": {
+        "availablePackageRef": {
+          "$ref": "#/definitions/v1alpha1AvailablePackageReference",
+          "description": "The reference to the available package related to this metadata.",
+          "title": "Available Package Reference"
+        },
+        "packageMetadata": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1alpha1PackageMetadata"
+          },
+          "description": "A list of metadata associated with this available package.",
+          "title": "Package Metadata"
+        }
+      },
+      "description": "Response for GetAvailablePackageMetadatas",
+      "title": "GetAvailablePackageMetadatasResponse"
+    },
     "v1alpha1GetAvailablePackageSummariesResponse": {
       "type": "object",
       "properties": {
@@ -5352,6 +5444,33 @@
       },
       "description": "PackageAppVersion conveys both the package version and the packaged app version.",
       "title": "Package AppVersion"
+    },
+    "v1alpha1PackageMetadata": {
+      "type": "object",
+      "properties": {
+        "mediaType": {
+          "type": "string",
+          "description": "Media type of this metadata",
+          "title": "Media type"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human readable name for this metadata.",
+          "title": "Name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human readable description for this metadata.",
+          "title": "Description"
+        },
+        "url": {
+          "type": "string",
+          "description": "The url reference for this metadata.",
+          "title": "URL"
+        }
+      },
+      "description": "PackageMetadata contains info to display and fetch SBOMs, scan results\nand other linked package metadata.",
+      "title": "Package Metadata"
     },
     "v1alpha1PackageRepositoriesPermissions": {
       "type": "object",
