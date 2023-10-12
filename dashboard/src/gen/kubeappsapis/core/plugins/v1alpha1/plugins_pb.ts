@@ -6,7 +6,14 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
+import type {
+  BinaryReadOptions,
+  FieldList,
+  JsonReadOptions,
+  JsonValue,
+  PartialMessage,
+  PlainMessage,
+} from "@bufbuild/protobuf";
 import { Message, proto3 } from "@bufbuild/protobuf";
 
 /**
@@ -24,22 +31,33 @@ export class GetConfiguredPluginsRequest extends Message<GetConfiguredPluginsReq
 
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "kubeappsapis.core.plugins.v1alpha1.GetConfiguredPluginsRequest";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-  ]);
+  static readonly fields: FieldList = proto3.util.newFieldList(() => []);
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetConfiguredPluginsRequest {
+  static fromBinary(
+    bytes: Uint8Array,
+    options?: Partial<BinaryReadOptions>,
+  ): GetConfiguredPluginsRequest {
     return new GetConfiguredPluginsRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetConfiguredPluginsRequest {
+  static fromJson(
+    jsonValue: JsonValue,
+    options?: Partial<JsonReadOptions>,
+  ): GetConfiguredPluginsRequest {
     return new GetConfiguredPluginsRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetConfiguredPluginsRequest {
+  static fromJsonString(
+    jsonString: string,
+    options?: Partial<JsonReadOptions>,
+  ): GetConfiguredPluginsRequest {
     return new GetConfiguredPluginsRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(a: GetConfiguredPluginsRequest | PlainMessage<GetConfiguredPluginsRequest> | undefined, b: GetConfiguredPluginsRequest | PlainMessage<GetConfiguredPluginsRequest> | undefined): boolean {
+  static equals(
+    a: GetConfiguredPluginsRequest | PlainMessage<GetConfiguredPluginsRequest> | undefined,
+    b: GetConfiguredPluginsRequest | PlainMessage<GetConfiguredPluginsRequest> | undefined,
+  ): boolean {
     return proto3.util.equals(GetConfiguredPluginsRequest, a, b);
   }
 }
@@ -72,19 +90,31 @@ export class GetConfiguredPluginsResponse extends Message<GetConfiguredPluginsRe
     { no: 1, name: "plugins", kind: "message", T: Plugin, repeated: true },
   ]);
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetConfiguredPluginsResponse {
+  static fromBinary(
+    bytes: Uint8Array,
+    options?: Partial<BinaryReadOptions>,
+  ): GetConfiguredPluginsResponse {
     return new GetConfiguredPluginsResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetConfiguredPluginsResponse {
+  static fromJson(
+    jsonValue: JsonValue,
+    options?: Partial<JsonReadOptions>,
+  ): GetConfiguredPluginsResponse {
     return new GetConfiguredPluginsResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetConfiguredPluginsResponse {
+  static fromJsonString(
+    jsonString: string,
+    options?: Partial<JsonReadOptions>,
+  ): GetConfiguredPluginsResponse {
     return new GetConfiguredPluginsResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(a: GetConfiguredPluginsResponse | PlainMessage<GetConfiguredPluginsResponse> | undefined, b: GetConfiguredPluginsResponse | PlainMessage<GetConfiguredPluginsResponse> | undefined): boolean {
+  static equals(
+    a: GetConfiguredPluginsResponse | PlainMessage<GetConfiguredPluginsResponse> | undefined,
+    b: GetConfiguredPluginsResponse | PlainMessage<GetConfiguredPluginsResponse> | undefined,
+  ): boolean {
     return proto3.util.equals(GetConfiguredPluginsResponse, a, b);
   }
 }
@@ -139,8 +169,10 @@ export class Plugin extends Message<Plugin> {
     return new Plugin().fromJsonString(jsonString, options);
   }
 
-  static equals(a: Plugin | PlainMessage<Plugin> | undefined, b: Plugin | PlainMessage<Plugin> | undefined): boolean {
+  static equals(
+    a: Plugin | PlainMessage<Plugin> | undefined,
+    b: Plugin | PlainMessage<Plugin> | undefined,
+  ): boolean {
     return proto3.util.equals(Plugin, a, b);
   }
 }
-

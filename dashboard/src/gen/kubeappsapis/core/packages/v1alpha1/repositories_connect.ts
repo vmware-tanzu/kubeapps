@@ -6,7 +6,20 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { AddPackageRepositoryRequest, AddPackageRepositoryResponse, DeletePackageRepositoryRequest, DeletePackageRepositoryResponse, GetPackageRepositoryDetailRequest, GetPackageRepositoryDetailResponse, GetPackageRepositoryPermissionsRequest, GetPackageRepositoryPermissionsResponse, GetPackageRepositorySummariesRequest, GetPackageRepositorySummariesResponse, UpdatePackageRepositoryRequest, UpdatePackageRepositoryResponse } from "./repositories_pb";
+import {
+  AddPackageRepositoryRequest,
+  AddPackageRepositoryResponse,
+  DeletePackageRepositoryRequest,
+  DeletePackageRepositoryResponse,
+  GetPackageRepositoryDetailRequest,
+  GetPackageRepositoryDetailResponse,
+  GetPackageRepositoryPermissionsRequest,
+  GetPackageRepositoryPermissionsResponse,
+  GetPackageRepositorySummariesRequest,
+  GetPackageRepositorySummariesResponse,
+  UpdatePackageRepositoryRequest,
+  UpdatePackageRepositoryResponse,
+} from "./repositories_pb";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -72,6 +85,5 @@ export const RepositoriesService = {
       O: GetPackageRepositoryPermissionsResponse,
       kind: MethodKind.Unary,
     },
-  }
+  },
 } as const;
-

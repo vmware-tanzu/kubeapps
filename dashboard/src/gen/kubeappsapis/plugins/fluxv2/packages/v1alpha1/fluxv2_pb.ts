@@ -6,7 +6,14 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
+import type {
+  BinaryReadOptions,
+  FieldList,
+  JsonReadOptions,
+  JsonValue,
+  PartialMessage,
+  PlainMessage,
+} from "@bufbuild/protobuf";
 import { Message, proto3 } from "@bufbuild/protobuf";
 
 /**
@@ -38,25 +45,43 @@ export class FluxPackageRepositoryCustomDetail extends Message<FluxPackageReposi
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxPackageRepositoryCustomDetail";
+  static readonly typeName =
+    "kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxPackageRepositoryCustomDetail";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "provider", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FluxPackageRepositoryCustomDetail {
+  static fromBinary(
+    bytes: Uint8Array,
+    options?: Partial<BinaryReadOptions>,
+  ): FluxPackageRepositoryCustomDetail {
     return new FluxPackageRepositoryCustomDetail().fromBinary(bytes, options);
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FluxPackageRepositoryCustomDetail {
+  static fromJson(
+    jsonValue: JsonValue,
+    options?: Partial<JsonReadOptions>,
+  ): FluxPackageRepositoryCustomDetail {
     return new FluxPackageRepositoryCustomDetail().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FluxPackageRepositoryCustomDetail {
+  static fromJsonString(
+    jsonString: string,
+    options?: Partial<JsonReadOptions>,
+  ): FluxPackageRepositoryCustomDetail {
     return new FluxPackageRepositoryCustomDetail().fromJsonString(jsonString, options);
   }
 
-  static equals(a: FluxPackageRepositoryCustomDetail | PlainMessage<FluxPackageRepositoryCustomDetail> | undefined, b: FluxPackageRepositoryCustomDetail | PlainMessage<FluxPackageRepositoryCustomDetail> | undefined): boolean {
+  static equals(
+    a:
+      | FluxPackageRepositoryCustomDetail
+      | PlainMessage<FluxPackageRepositoryCustomDetail>
+      | undefined,
+    b:
+      | FluxPackageRepositoryCustomDetail
+      | PlainMessage<FluxPackageRepositoryCustomDetail>
+      | undefined,
+  ): boolean {
     return proto3.util.equals(FluxPackageRepositoryCustomDetail, a, b);
   }
 }
-

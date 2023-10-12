@@ -6,7 +6,28 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateInstalledPackageRequest, CreateInstalledPackageResponse, DeleteInstalledPackageRequest, DeleteInstalledPackageResponse, GetAvailablePackageDetailRequest, GetAvailablePackageDetailResponse, GetAvailablePackageMetadatasRequest, GetAvailablePackageMetadatasResponse, GetAvailablePackageSummariesRequest, GetAvailablePackageSummariesResponse, GetAvailablePackageVersionsRequest, GetAvailablePackageVersionsResponse, GetInstalledPackageDetailRequest, GetInstalledPackageDetailResponse, GetInstalledPackageResourceRefsRequest, GetInstalledPackageResourceRefsResponse, GetInstalledPackageSummariesRequest, GetInstalledPackageSummariesResponse, UpdateInstalledPackageRequest, UpdateInstalledPackageResponse } from "./packages_pb";
+import {
+  CreateInstalledPackageRequest,
+  CreateInstalledPackageResponse,
+  DeleteInstalledPackageRequest,
+  DeleteInstalledPackageResponse,
+  GetAvailablePackageDetailRequest,
+  GetAvailablePackageDetailResponse,
+  GetAvailablePackageMetadatasRequest,
+  GetAvailablePackageMetadatasResponse,
+  GetAvailablePackageSummariesRequest,
+  GetAvailablePackageSummariesResponse,
+  GetAvailablePackageVersionsRequest,
+  GetAvailablePackageVersionsResponse,
+  GetInstalledPackageDetailRequest,
+  GetInstalledPackageDetailResponse,
+  GetInstalledPackageResourceRefsRequest,
+  GetInstalledPackageResourceRefsResponse,
+  GetInstalledPackageSummariesRequest,
+  GetInstalledPackageSummariesResponse,
+  UpdateInstalledPackageRequest,
+  UpdateInstalledPackageResponse,
+} from "./packages_pb";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -108,6 +129,5 @@ export const PackagesService = {
       O: GetInstalledPackageResourceRefsResponse,
       kind: MethodKind.Unary,
     },
-  }
+  },
 } as const;
-

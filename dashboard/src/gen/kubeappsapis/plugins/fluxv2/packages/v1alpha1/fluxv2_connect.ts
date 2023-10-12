@@ -6,9 +6,41 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateInstalledPackageRequest, CreateInstalledPackageResponse, DeleteInstalledPackageRequest, DeleteInstalledPackageResponse, GetAvailablePackageDetailRequest, GetAvailablePackageDetailResponse, GetAvailablePackageSummariesRequest, GetAvailablePackageSummariesResponse, GetAvailablePackageVersionsRequest, GetAvailablePackageVersionsResponse, GetInstalledPackageDetailRequest, GetInstalledPackageDetailResponse, GetInstalledPackageResourceRefsRequest, GetInstalledPackageResourceRefsResponse, GetInstalledPackageSummariesRequest, GetInstalledPackageSummariesResponse, UpdateInstalledPackageRequest, UpdateInstalledPackageResponse } from "../../../../core/packages/v1alpha1/packages_pb";
+import {
+  CreateInstalledPackageRequest,
+  CreateInstalledPackageResponse,
+  DeleteInstalledPackageRequest,
+  DeleteInstalledPackageResponse,
+  GetAvailablePackageDetailRequest,
+  GetAvailablePackageDetailResponse,
+  GetAvailablePackageSummariesRequest,
+  GetAvailablePackageSummariesResponse,
+  GetAvailablePackageVersionsRequest,
+  GetAvailablePackageVersionsResponse,
+  GetInstalledPackageDetailRequest,
+  GetInstalledPackageDetailResponse,
+  GetInstalledPackageResourceRefsRequest,
+  GetInstalledPackageResourceRefsResponse,
+  GetInstalledPackageSummariesRequest,
+  GetInstalledPackageSummariesResponse,
+  UpdateInstalledPackageRequest,
+  UpdateInstalledPackageResponse,
+} from "../../../../core/packages/v1alpha1/packages_pb";
 import { MethodKind } from "@bufbuild/protobuf";
-import { AddPackageRepositoryRequest, AddPackageRepositoryResponse, DeletePackageRepositoryRequest, DeletePackageRepositoryResponse, GetPackageRepositoryDetailRequest, GetPackageRepositoryDetailResponse, GetPackageRepositoryPermissionsRequest, GetPackageRepositoryPermissionsResponse, GetPackageRepositorySummariesRequest, GetPackageRepositorySummariesResponse, UpdatePackageRepositoryRequest, UpdatePackageRepositoryResponse } from "../../../../core/packages/v1alpha1/repositories_pb";
+import {
+  AddPackageRepositoryRequest,
+  AddPackageRepositoryResponse,
+  DeletePackageRepositoryRequest,
+  DeletePackageRepositoryResponse,
+  GetPackageRepositoryDetailRequest,
+  GetPackageRepositoryDetailResponse,
+  GetPackageRepositoryPermissionsRequest,
+  GetPackageRepositoryPermissionsResponse,
+  GetPackageRepositorySummariesRequest,
+  GetPackageRepositorySummariesResponse,
+  UpdatePackageRepositoryRequest,
+  UpdatePackageRepositoryResponse,
+} from "../../../../core/packages/v1alpha1/repositories_pb";
 
 /**
  * @generated from service kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2PackagesService
@@ -116,7 +148,7 @@ export const FluxV2PackagesService = {
       O: GetInstalledPackageResourceRefsResponse,
       kind: MethodKind.Unary,
     },
-  }
+  },
 } as const;
 
 /**
@@ -182,6 +214,5 @@ export const FluxV2RepositoriesService = {
       O: GetPackageRepositoryPermissionsResponse,
       kind: MethodKind.Unary,
     },
-  }
+  },
 } as const;
-

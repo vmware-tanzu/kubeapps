@@ -26,6 +26,5 @@ export const PluginsService = {
       O: GetConfiguredPluginsResponse,
       kind: MethodKind.Unary,
     },
-  }
+  },
 } as const;
-

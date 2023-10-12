@@ -6,10 +6,42 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateInstalledPackageRequest, CreateInstalledPackageResponse, DeleteInstalledPackageRequest, DeleteInstalledPackageResponse, GetAvailablePackageDetailRequest, GetAvailablePackageDetailResponse, GetAvailablePackageSummariesRequest, GetAvailablePackageSummariesResponse, GetAvailablePackageVersionsRequest, GetAvailablePackageVersionsResponse, GetInstalledPackageDetailRequest, GetInstalledPackageDetailResponse, GetInstalledPackageResourceRefsRequest, GetInstalledPackageResourceRefsResponse, GetInstalledPackageSummariesRequest, GetInstalledPackageSummariesResponse, UpdateInstalledPackageRequest, UpdateInstalledPackageResponse } from "../../../../core/packages/v1alpha1/packages_pb";
+import {
+  CreateInstalledPackageRequest,
+  CreateInstalledPackageResponse,
+  DeleteInstalledPackageRequest,
+  DeleteInstalledPackageResponse,
+  GetAvailablePackageDetailRequest,
+  GetAvailablePackageDetailResponse,
+  GetAvailablePackageSummariesRequest,
+  GetAvailablePackageSummariesResponse,
+  GetAvailablePackageVersionsRequest,
+  GetAvailablePackageVersionsResponse,
+  GetInstalledPackageDetailRequest,
+  GetInstalledPackageDetailResponse,
+  GetInstalledPackageResourceRefsRequest,
+  GetInstalledPackageResourceRefsResponse,
+  GetInstalledPackageSummariesRequest,
+  GetInstalledPackageSummariesResponse,
+  UpdateInstalledPackageRequest,
+  UpdateInstalledPackageResponse,
+} from "../../../../core/packages/v1alpha1/packages_pb";
 import { MethodKind } from "@bufbuild/protobuf";
 import { RollbackInstalledPackageRequest, RollbackInstalledPackageResponse } from "./helm_pb";
-import { AddPackageRepositoryRequest, AddPackageRepositoryResponse, DeletePackageRepositoryRequest, DeletePackageRepositoryResponse, GetPackageRepositoryDetailRequest, GetPackageRepositoryDetailResponse, GetPackageRepositoryPermissionsRequest, GetPackageRepositoryPermissionsResponse, GetPackageRepositorySummariesRequest, GetPackageRepositorySummariesResponse, UpdatePackageRepositoryRequest, UpdatePackageRepositoryResponse } from "../../../../core/packages/v1alpha1/repositories_pb";
+import {
+  AddPackageRepositoryRequest,
+  AddPackageRepositoryResponse,
+  DeletePackageRepositoryRequest,
+  DeletePackageRepositoryResponse,
+  GetPackageRepositoryDetailRequest,
+  GetPackageRepositoryDetailResponse,
+  GetPackageRepositoryPermissionsRequest,
+  GetPackageRepositoryPermissionsResponse,
+  GetPackageRepositorySummariesRequest,
+  GetPackageRepositorySummariesResponse,
+  UpdatePackageRepositoryRequest,
+  UpdatePackageRepositoryResponse,
+} from "../../../../core/packages/v1alpha1/repositories_pb";
 
 /**
  * @generated from service kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService
@@ -128,7 +160,7 @@ export const HelmPackagesService = {
       O: GetInstalledPackageResourceRefsResponse,
       kind: MethodKind.Unary,
     },
-  }
+  },
 } as const;
 
 /**
@@ -193,6 +225,5 @@ export const HelmRepositoriesService = {
       O: GetPackageRepositoryPermissionsResponse,
       kind: MethodKind.Unary,
     },
-  }
+  },
 } as const;
-
