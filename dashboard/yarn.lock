@@ -1501,10 +1501,10 @@
   resolved "https://registry.yarnpkg.com/@floating-ui/utils/-/utils-0.1.4.tgz#19654d1026cc410975d46445180e70a5089b3e7d"
   integrity sha512-qprfWkn82Iw821mcKofJ5Pk9wgioHicxcQMxx+5zt5GSKoqdWvgG5AxVmpmUUjzTLPVSH5auBrhI93Deayn/DA==
 
-"@formatjs/cli@^6.2.0":
-  version "6.2.0"
-  resolved "https://registry.yarnpkg.com/@formatjs/cli/-/cli-6.2.0.tgz#17fbd40753eeb1f6e79c3caf25845c3a9c044d90"
-  integrity sha512-sP04UpocRHYwSovUnunAZHYvCTVbNcaLtWKnr1lETGRUnRRQqnXy/3d2Ce271ELXmNUSde2eHRdu4rv2XaVaiQ==
+"@formatjs/cli@^6.2.1":
+  version "6.2.1"
+  resolved "https://registry.yarnpkg.com/@formatjs/cli/-/cli-6.2.1.tgz#cb5a737e9d2768c9fe81f0aac6c50c206ebea4fe"
+  integrity sha512-+INAFMLD+bofdFldBnkMorMQq7M+kaKf0xo9fg5ECV2JhNVziPuAWOJR3O8s6aWSfc4bvzeQ1b+1oaMwxrNRHw==
 
 "@formatjs/ecma402-abstract@1.17.2":
   version "1.17.2"
