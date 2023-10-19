@@ -55,6 +55,7 @@ RUN /tmp/buf lint ./cmd/kubeapps-apis
 # Build the main grpc server
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
+    GOPROXY="https://proxy.golang.org,direct" \
     go build \
     -ldflags "-X github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/cmd.version=$VERSION" \
     ./cmd/kubeapps-apis
