@@ -3204,10 +3204,10 @@
   resolved "https://registry.yarnpkg.com/@types/svg-path-parser/-/svg-path-parser-1.1.3.tgz#659aca2e886071e5c593e06206b6254bcb811202"
   integrity sha512-F1Y6lQIto5b2sKCseVUsFfY5J+8PIhhX4jrDVxpth4m7hwM2OdySh3iTLeR35lEhl/K4ZMEF+GDAwTl7yJcO5Q==
 
-"@types/swagger-ui-react@^4.18.1":
-  version "4.18.1"
-  resolved "https://registry.yarnpkg.com/@types/swagger-ui-react/-/swagger-ui-react-4.18.1.tgz#5b1d061adfba8c5e30233c49f39742cb01b73bce"
-  integrity sha512-nYhNi+cyN78vve1/QY5PNKYzHYlDKETtXj+gQAhuoCRB+GxGT3MVJUj8WCdwYj4vF0s1j68qkLv/66DGe5ZlnA==
+"@types/swagger-ui-react@^4.18.2":
+  version "4.18.2"
+  resolved "https://registry.yarnpkg.com/@types/swagger-ui-react/-/swagger-ui-react-4.18.2.tgz#009a7469b48457b349e0ec7501b21f11c0fc4ca0"
+  integrity sha512-uLiHyNGFdgQINNSq3hgca+TNnNMS7/X59M02EbmDfARgvh7KcB6wU+FVfkVY13qE4Zk9opKvjGqygwjjP7+u6w==
   dependencies:
     "@types/react" "*"
 
