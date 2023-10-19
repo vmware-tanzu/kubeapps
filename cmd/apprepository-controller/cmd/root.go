@@ -90,6 +90,7 @@ func setFlags(c *cobra.Command) {
 	c.Flags().StringVar(&serveOpts.UserAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
 	c.Flags().StringVar(&serveOpts.Crontab, "crontab", "*/10 * * * *", "CronTab to specify schedule")
 	c.Flags().StringVar(&serveOpts.TTLSecondsAfterFinished, "ttl-lifetime-afterfinished-job", "3600", "Lifetime limit after which the resource Jobs are deleted expressed in seconds by default is 3600 (1h)")
+	c.Flags().StringVar(&serveOpts.ActiveDeadlineSeconds, "active-deadline-seconds", "", "Seconds after which running pods of the resource Jobs will be terminated.")
 	c.Flags().Int32Var(&serveOpts.SuccessfulJobsHistoryLimit, "successful-jobs-history-limit", 3, "Number of successful finished jobs to retain")
 	c.Flags().Int32Var(&serveOpts.FailedJobsHistoryLimit, "failed-jobs-history-limit", 1, "Number of failed finished jobs to retain")
 	c.Flags().StringVar(&serveOpts.ConcurrencyPolicy, "concurrency-policy", "Replace", "How to treat concurrent executions of a Job. Valid values are: 'Allow', 'Forbid' and 'Replace'")
