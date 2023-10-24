@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
 	"regexp"
@@ -2239,4 +2240,58 @@ type releaseStub struct {
 	notes          string
 	status         release.Status
 	manifest       string
+}
+
+func newFakeServer(t *testing.T, responses map[string]*http.Response) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		for path, response := range responses {
+			if path == r.URL.Path {
+				if response.Header != nil {
+					for k, vs := range response.Header {
+						for _, v := range vs {
+							w.Header().Set(k, v)
+						}
+					}
+				}
+				w.WriteHeader(response.StatusCode)
+				body := []byte{}
+				if response.Body != nil {
+					var err error
+					body, err = io.ReadAll(response.Body)
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
+				}
+				_, err := w.Write(body)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				return
+			}
+		}
+		w.WriteHeader(404)
+	}))
+}
+
+func TestGetAvailablePackageMetadatas(t *testing.T) {
+	testCases := []struct {
+		name string
+	}{
+		{
+			name: "it returns the package metadata",
+		},
+	}
+
+	server := newFakeServer(t, map[string]*http.Response{
+		"/v2/chartstest/kubeapps/manifests/13.1.1": &http.Response{
+			StatusCode: 200,
+			// TODO: Update to be manifest with digest.
+			Body: io.NopCloser(strings.NewReader(`{"name":"apache","tags":["7.5.1","8.1.1"]}`)),
+		},
+	})
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Errorf("Bange")
+		})
+	}
 }

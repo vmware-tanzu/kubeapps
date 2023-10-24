@@ -59,6 +59,12 @@ export default function PackageView() {
         packageVersion,
       ),
     );
+    console.log(`packageVersion: ${packageVersion}`);
+    if (packageVersion !== undefined) {
+      dispatch(
+        actions.availablepackages.fetchAvailablePackageMetadatas(packageReference, packageVersion),
+      );
+    }
     return () => {};
   }, [dispatch, packageReference, packageVersion]);
 

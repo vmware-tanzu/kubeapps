@@ -4,6 +4,7 @@
 import {
   AvailablePackageDetail,
   AvailablePackageReference,
+  GetAvailablePackageMetadatasResponse,
   GetAvailablePackageVersionsResponse,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { ThunkAction } from "redux-thunk";
@@ -80,6 +81,19 @@ export const receiveSelectedAvailablePackageVersions = createAction(
   },
 );
 
+// Request action
+export const requestAvailablePackageMetadatas = createAction(
+  "REQUEST_SELECTED_AVAILABLE_PACKAGE_METADATAS",
+);
+
+// Receive action
+export const receiveAvailablePackageMetadatas = createAction(
+  "RECEIVE_SELECTED_AVAILABLE_PACKAGE_METADATAS",
+  resolve => {
+    return (metadatas: GetAvailablePackageMetadatasResponse) => resolve(metadatas);
+  },
+);
+
 // No reset action
 
 // ** Error actions **
@@ -103,6 +117,8 @@ const allActions = [
   resetSelectedAvailablePackageDetail,
   requestSelectedAvailablePackageVersions,
   receiveSelectedAvailablePackageVersions,
+  requestAvailablePackageMetadatas,
+  receiveAvailablePackageMetadatas,
   createErrorPackage,
   clearErrorPackage,
 ];
@@ -171,6 +187,24 @@ export function fetchAndSelectAvailablePackageDetail(
       } else {
         dispatch(createErrorPackage(new FetchError("could not find package version")));
       }
+    } catch (e: any) {
+      dispatch(handleErrorAction(e, createErrorPackage(new FetchError(e.message))));
+    }
+  };
+}
+
+export function fetchAvailablePackageMetadatas(
+  availablePackageReference: AvailablePackageReference,
+  version: string,
+): ThunkAction<Promise<void>, IStoreState, null, PackagesAction> {
+  return async dispatch => {
+    try {
+      dispatch(requestAvailablePackageMetadatas());
+      const response = await PackagesService.getAvailablePackageMetadatas(
+        availablePackageReference,
+        version,
+      );
+      dispatch(receiveAvailablePackageMetadatas(response));
     } catch (e: any) {
       dispatch(handleErrorAction(e, createErrorPackage(new FetchError(e.message))));
     }

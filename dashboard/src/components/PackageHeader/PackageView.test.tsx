@@ -157,6 +157,34 @@ describe("when receiving new props", () => {
       undefined,
     );
   });
+
+  it("requests the package metadatas when version changes", () => {
+    // TODO: should also be called with the first version when a version
+    // hasn't been explicitly chosen.
+    const version = "1.2.3";
+    const routePathParamWithVersion = `${routePathParam}/versions/${version}`;
+    const routePathWithVersion = `${routePath}/versions/:packageVersion`;
+    const spy = jest.fn();
+    actions.availablepackages.fetchAvailablePackageMetadatas = spy;
+    renderWithProviders(
+      <Routes>
+        <Route path={routePathWithVersion} element={<PackageView />} />
+      </Routes>,
+      {
+        store: getStore(defaultState),
+        initialEntries: [routePathParamWithVersion],
+      },
+    );
+
+    expect(spy).toHaveBeenCalledWith(
+      {
+        context: { cluster: defaultProps.cluster, namespace: defaultProps.packageNamespace },
+        identifier: defaultProps.id,
+        plugin: defaultProps.plugin,
+      } as AvailablePackageReference,
+      version,
+    );
+  });
 });
 
 it("behaves as a loading component when fetching is false but no package is available", () => {
