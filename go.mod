@@ -63,7 +63,7 @@ require (
 	oras.land/oras-go v1.2.4
 	oras.land/oras-go/v2 v2.3.1
 	sigs.k8s.io/controller-runtime v0.14.6
-	sigs.k8s.io/yaml v1.3.0
+	sigs.k8s.io/yaml v1.4.0
 )
 
 require (
