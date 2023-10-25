@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -44,6 +45,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
+	"oras.land/oras-go/v2/registry/remote"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -1268,5 +1270,45 @@ func (s *Server) DeletePackageRepository(ctx context.Context, request *connect.R
 }
 
 func (s *Server) GetAvailablePackageMetadatas(ctx context.Context, request *connect.Request[corev1.GetAvailablePackageMetadatasRequest]) (*connect.Response[corev1.GetAvailablePackageMetadatasResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("Unimplemented"))
+	// Get a NewRepository
+	// Need to link/infer the repository...
+	chartID := request.Msg.GetAvailablePackageRef().GetIdentifier()
+	repoNamespace := request.Msg.GetAvailablePackageRef().GetContext().GetNamespace()
+	// TODO: Use the chartName..
+	repoName, chartName, err := pkgutils.SplitPackageIdentifier(chartID)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+
+	// Ignoring secrets for now, just demoing with public OCI repo
+	appRepo, _, _, _, err := s.getAppRepoAndRelatedSecrets(ctx, request.Header(), s.globalPackagingCluster, repoName, repoNamespace)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to fetch app repo %q from namespace %q: %v", repoName, repoNamespace, err))
+	}
+	if appRepo.Spec.Type != OCIRepoType {
+		return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("Unimplemented for non-OCI repositories"))
+	}
+
+	repoURL := appRepo.Spec.URL
+	repoURL = strings.TrimPrefix(repoURL, "oci://")
+	repo, err := remote.NewRepository(path.Join(repoURL, chartName))
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to call NewRepository with %q: %v", path.Join(repoURL, chartName), err))
+	}
+
+	// Create the ocispec.Descriptor, first need to get the manifest of the chart.
+	descriptor, data, err := repo.Manifests().FetchReference(ctx, request.Msg.GetPkgVersion())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to fetch manifest for %v with ref %q: %v", repo, request.Msg.GetPkgVersion(), err))
+	}
+
+	manifest, err := io.ReadAll(data)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to read fetched manifest: %v", err))
+	}
+	log.Errorf("descriptor: %v . manifest: %q", descriptor, string(manifest))
+
+	// Then call referrers
+	// oras.Fetch(ctx, oras.ReadOnlyTarget, "foobar", oras.DefaultFetchOptions)
+	return connect.NewResponse(&corev1.GetAvailablePackageMetadatasResponse{}), nil
 }

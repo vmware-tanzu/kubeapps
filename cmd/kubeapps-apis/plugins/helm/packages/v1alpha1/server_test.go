@@ -2273,25 +2273,26 @@ func newFakeServer(t *testing.T, responses map[string]*http.Response) *httptest.
 	}))
 }
 
-func TestGetAvailablePackageMetadatas(t *testing.T) {
-	testCases := []struct {
-		name string
-	}{
-		{
-			name: "it returns the package metadata",
-		},
-	}
-
-	server := newFakeServer(t, map[string]*http.Response{
-		"/v2/chartstest/kubeapps/manifests/13.1.1": &http.Response{
-			StatusCode: 200,
-			// TODO: Update to be manifest with digest.
-			Body: io.NopCloser(strings.NewReader(`{"name":"apache","tags":["7.5.1","8.1.1"]}`)),
-		},
-	})
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Errorf("Bange")
-		})
-	}
-}
+// TODO
+// func TestGetAvailablePackageMetadatas(t *testing.T) {
+// 	testCases := []struct {
+// 		name string
+// 	}{
+// 		{
+// 			name: "it returns the package metadata",
+// 		},
+// 	}
+//
+// 	server := newFakeServer(t, map[string]*http.Response{
+// 		"/v2/chartstest/kubeapps/manifests/13.1.1": &http.Response{
+// 			StatusCode: 200,
+// 			// TODO: Update to be manifest with digest.
+// 			Body: io.NopCloser(strings.NewReader(`{"name":"apache","tags":["7.5.1","8.1.1"]}`)),
+// 		},
+// 	})
+// 	for _, tc := range testCases {
+// 		t.Run(tc.name, func(t *testing.T) {
+// 			t.Errorf("Bange")
+// 		})
+// 	}
+// }
