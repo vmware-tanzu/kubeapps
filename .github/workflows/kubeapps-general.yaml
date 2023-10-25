@@ -204,7 +204,7 @@ jobs:
       NODE_OPTIONS: "--max-old-space-size=1024"
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Install dashboard dependencies
