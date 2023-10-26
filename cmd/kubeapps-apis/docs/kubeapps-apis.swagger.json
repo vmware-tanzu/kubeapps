@@ -5453,20 +5453,15 @@
           "description": "Media type of this metadata",
           "title": "Media type"
         },
-        "name": {
+        "artifactType": {
           "type": "string",
-          "description": "Human readable name for this metadata.",
-          "title": "Name"
+          "description": "Artifact type of this metadata",
+          "title": "Artifact type"
         },
-        "description": {
+        "digest": {
           "type": "string",
-          "description": "Human readable description for this metadata.",
-          "title": "Description"
-        },
-        "url": {
-          "type": "string",
-          "description": "The url reference for this metadata.",
-          "title": "URL"
+          "description": "Digest of this metadata",
+          "title": "Digest"
         }
       },
       "description": "PackageMetadata contains info to display and fetch SBOMs, scan results\nand other linked package metadata.",

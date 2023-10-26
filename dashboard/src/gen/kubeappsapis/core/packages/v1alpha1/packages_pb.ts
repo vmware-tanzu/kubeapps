@@ -2966,31 +2966,22 @@ export class PackageMetadata extends Message<PackageMetadata> {
   mediaType = "";
 
   /**
-   * Name
+   * Artifact type
    *
-   * Human readable name for this metadata.
+   * Artifact type of this metadata
    *
-   * @generated from field: string name = 2;
+   * @generated from field: string artifact_type = 2;
    */
-  name = "";
+  artifactType = "";
 
   /**
-   * Description
+   * Digest
    *
-   * Human readable description for this metadata.
+   * Digest of this metadata
    *
-   * @generated from field: string description = 3;
+   * @generated from field: string digest = 3;
    */
-  description = "";
-
-  /**
-   * URL
-   *
-   * The url reference for this metadata.
-   *
-   * @generated from field: string url = 4;
-   */
-  url = "";
+  digest = "";
 
   constructor(data?: PartialMessage<PackageMetadata>) {
     super();
@@ -3001,9 +2992,8 @@ export class PackageMetadata extends Message<PackageMetadata> {
   static readonly typeName = "kubeappsapis.core.packages.v1alpha1.PackageMetadata";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "media_type", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 4, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "artifact_type", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "digest", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PackageMetadata {

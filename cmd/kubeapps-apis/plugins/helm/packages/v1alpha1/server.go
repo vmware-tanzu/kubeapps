@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/bufbuild/connect-go"
+	imageSpecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -1270,11 +1270,8 @@ func (s *Server) DeletePackageRepository(ctx context.Context, request *connect.R
 }
 
 func (s *Server) GetAvailablePackageMetadatas(ctx context.Context, request *connect.Request[corev1.GetAvailablePackageMetadatasRequest]) (*connect.Response[corev1.GetAvailablePackageMetadatasResponse], error) {
-	// Get a NewRepository
-	// Need to link/infer the repository...
 	chartID := request.Msg.GetAvailablePackageRef().GetIdentifier()
 	repoNamespace := request.Msg.GetAvailablePackageRef().GetContext().GetNamespace()
-	// TODO: Use the chartName..
 	repoName, chartName, err := pkgutils.SplitPackageIdentifier(chartID)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
@@ -1297,18 +1294,28 @@ func (s *Server) GetAvailablePackageMetadatas(ctx context.Context, request *conn
 	}
 
 	// Create the ocispec.Descriptor, first need to get the manifest of the chart.
-	descriptor, data, err := repo.Manifests().FetchReference(ctx, request.Msg.GetPkgVersion())
+	descriptor, _, err := repo.Manifests().FetchReference(ctx, request.Msg.GetPkgVersion())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to fetch manifest for %v with ref %q: %v", repo, request.Msg.GetPkgVersion(), err))
 	}
 
-	manifest, err := io.ReadAll(data)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to read fetched manifest: %v", err))
-	}
-	log.Errorf("descriptor: %v . manifest: %q", descriptor, string(manifest))
+	referrers := []imageSpecv1.Descriptor{}
+	repo.Referrers(ctx, descriptor, "", func(r []imageSpecv1.Descriptor) error {
+		referrers = append(referrers, r...)
+		return nil
+	})
 
-	// Then call referrers
-	// oras.Fetch(ctx, oras.ReadOnlyTarget, "foobar", oras.DefaultFetchOptions)
-	return connect.NewResponse(&corev1.GetAvailablePackageMetadatasResponse{}), nil
+	package_metadatas := []*corev1.PackageMetadata{}
+	for _, referrer := range referrers {
+		package_metadatas = append(package_metadatas, &corev1.PackageMetadata{
+			MediaType:    referrer.MediaType,
+			ArtifactType: referrer.ArtifactType,
+			Digest:       referrer.Digest.String(),
+		})
+	}
+
+	return connect.NewResponse(&corev1.GetAvailablePackageMetadatasResponse{
+		AvailablePackageRef: request.Msg.AvailablePackageRef,
+		PackageMetadata:     package_metadatas,
+	}), nil
 }

@@ -109,7 +109,6 @@ type repoManifest struct {
 	Config repoConfig `json:"config"`
 }
 
-// UPDATE this to filter by expected media type?
 // getOCIAppRepositoryTag Gets a tag for the given repo URL & name
 func getOCIAppRepositoryTag(cli *http.Client, repoURL string, repoName string) (string, error) {
 	// This function is the implementation of below curl command
@@ -164,15 +163,6 @@ func getOCIAppRepositoryTag(cli *http.Client, repoURL string, repoName string) (
 		err = fmt.Errorf("OCI Repo tag at %q could not be parsed: %w", parsedURL.String(), err)
 		return "", err
 	}
-
-	// Need to filter tags to return one that is with the correct media type,
-	// or instead, return all (check call-sites) and have call-site check.
-	// Actualaly, already filtered above with the Accept header... so why
-	// is this returning the tag v1 rather than the correct chart tag?
-	// Curl returns the same:
-	// curl https://demo.goharbor.io/v2/kubeapps-test/simplechart/tags/list -u "${DEMO_USERNAME}:${DEMO_PASSWORD}"
-	// {"name":"kubeapps-test/simplechart","tags":["v1"]}
-	log.Errorf("repoTagsData: %+v", repoTagsData)
 
 	tagVersion := repoTagsData.Tags[0]
 	return tagVersion, nil

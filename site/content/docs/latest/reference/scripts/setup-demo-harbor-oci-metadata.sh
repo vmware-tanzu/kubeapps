@@ -14,7 +14,8 @@ GREEN='\033[38;5;2m'
 RED='\033[38;5;1m'
 YELLOW='\033[38;5;3m'
 
-IMAGE="demo.goharbor.io/kubeapps-test/simplechart:v1"
+VERSION="0.1.0"
+IMAGE="demo.goharbor.io/kubeapps-test/simplechart:${VERSION}"
 
 # shellcheck disable=SC1090
 . "${ROOT_DIR}/script/lib/liblog.sh"
@@ -57,14 +58,14 @@ helm package ./integration/charts/simplechart
 echo ${DEMO_PASSWORD} | oras login --username ${DEMO_USERNAME} --password-stdin demo.goharbor.io
 
 # oras push --artifact-type "application/vnd.cncf.helm.config.v1" --export-manifest "./chart-manifest.json" ${IMAGE} "simplechart-0.1.0.tgz:application/vnd.oci.image.manifest.v1"
-helm push ./simplechart-0.1.0.tgz oci://demo.goharbor.io/kubeapps-test
+helm push ./simplechart-${VERSION}.tgz oci://demo.goharbor.io/kubeapps-test
 
 info "Attaching super-important-meta with chart..."
 echo '{"artifact": "'${IMAGE}'", "signature": "trust me"}' > signature.json
-oras attach --export-manifest "./signature-manifest.json" --artifact-type "application/vnd.example.signature.v1" demo.goharbor.io/kubeapps-test/simplechart:0.1.0 "signature.json:application/vnd.oci.image.manifest.v1"
+oras attach --export-manifest "./signature-manifest.json" --artifact-type "application/vnd.example.signature.v1" ${IMAGE} "signature.json:application/vnd.oci.image.manifest.v1"
 
 echo '{"artifact": "'${IMAGE}'", "sbom": "lots of materials"}' > sbom.json
-oras attach --export-manifest "./sbom-manifest.json" --artifact-type "application/vnd.example.sbom.v1" demo.goharbor.io/kubeapps-test/simplechart:0.1.0 "sbom.json:application/vnd.oci.image.manifest.v1"
+oras attach --export-manifest "./sbom-manifest.json" --artifact-type "application/vnd.example.sbom.v1" ${IMAGE} "sbom.json:application/vnd.oci.image.manifest.v1"
 
 
 info "Listing referrers of chart..."
