@@ -62,7 +62,7 @@ helm push ./simplechart-${VERSION}.tgz oci://demo.goharbor.io/kubeapps-test
 
 info "Attaching super-important-meta with chart..."
 echo '{"artifact": "'${IMAGE}'", "signature": "trust me"}' > signature.json
-oras attach --export-manifest "./signature-manifest.json" --artifact-type "application/vnd.example.signature.v1" ${IMAGE} "signature.json:application/vnd.oci.image.manifest.v1"
+oras attach --export-manifest "./signature-manifest.json" ${IMAGE} --artifact-type "application/vnd.example.signature.v1" "signature.json:application/json"
 
 echo '{"artifact": "'${IMAGE}'", "sbom": "lots of materials"}' > sbom.json
 oras attach --export-manifest "./sbom-manifest.json" --artifact-type "application/vnd.example.sbom.v1" ${IMAGE} "sbom.json:application/vnd.oci.image.manifest.v1"
