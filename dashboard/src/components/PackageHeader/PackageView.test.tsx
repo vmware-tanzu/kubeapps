@@ -25,7 +25,7 @@ const defaultProps = {
   isFetching: false,
   namespace: "test",
   cluster: "default",
-  selected: { versions: [] } as IPackageState["selected"],
+  selected: { versions: [], metadatas: [] } as IPackageState["selected"],
   version: undefined,
   kubeappsNamespace: "kubeapps",
   id: "test",

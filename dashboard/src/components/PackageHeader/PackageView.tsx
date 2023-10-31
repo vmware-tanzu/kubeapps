@@ -59,7 +59,6 @@ export default function PackageView() {
         packageVersion,
       ),
     );
-    console.log(`packageVersion: ${packageVersion}`);
     if (packageVersion !== undefined) {
       dispatch(
         actions.availablepackages.fetchAvailablePackageMetadatas(packageReference, packageVersion),
@@ -147,7 +146,10 @@ export default function PackageView() {
       <section>
         <Row>
           <Column span={3}>
-            <AvailablePackageDetailExcerpt pkg={selectedPackage.availablePackageDetail} />
+            <AvailablePackageDetailExcerpt
+              pkg={selectedPackage.availablePackageDetail}
+              metadatas={selectedPackage.metadatas}
+            />
           </Column>
           <Column span={9}>
             <PackageReadme
