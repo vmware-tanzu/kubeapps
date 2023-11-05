@@ -557,7 +557,7 @@ type repoCacheEntryValue struct {
 
 // onAddRepo essentially tells the cache whether to and what to store for a given key
 func (s *repoEventSink) onAddRepo(key string, obj ctrlclient.Object) (interface{}, bool, error) {
-	log.V(4).Info("+onAddRepo(%s)", key)
+	log.V(4).Infof("+onAddRepo(%s)", key)
 	defer log.V(4).Info("-onAddRepo()")
 
 	if repo, ok := obj.(*sourcev1.HelmRepository); !ok {
