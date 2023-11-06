@@ -634,7 +634,7 @@ func (c *NamespacedResourceWatcherCache) onAddOrModify(obj ctrlclient.Object) (e
 
 // this is effectively a cache DEL operation
 func (c *NamespacedResourceWatcherCache) onDelete(key string) error {
-	log.V(4).Infof("+onDelete(%s, %s)")
+	log.V(4).Infof("+onDelete(%s)", key)
 	defer log.V(4).Infof("-onDelete")
 
 	delete, err := c.config.OnDeleteFunc(key)

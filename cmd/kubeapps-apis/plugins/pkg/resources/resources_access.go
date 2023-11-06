@@ -41,7 +41,7 @@ func GetPermissionsOnResource(ctx context.Context, client kubernetes.Interface, 
 
 			response, err := doResourceAccessReview(ctx, client, gr, verb, namespace)
 			if err != nil {
-				log.Errorf("Error finding permissions for %s/%s - %s in namespace %s", gr.Group, gr.Resource, verb, namespace, err)
+				log.Errorf("Error finding permissions for %s/%s - %s in namespace %s: %v", gr.Group, gr.Resource, verb, namespace, err)
 				return
 			}
 			accessReviewChan <- accessReviewResult{
