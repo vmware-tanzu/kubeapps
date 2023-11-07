@@ -45,7 +45,7 @@
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
     "modern-normalize": "^2.0.0",
-    "monaco-editor": "^0.43.0",
+    "monaco-editor": "^0.44.0",
     "prop-types": "^15.8.1",
     "protobufjs": "^7.2.5",
     "qs": "^6.11.2",
