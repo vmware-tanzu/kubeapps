@@ -76,7 +76,7 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@bufbuild/buf": "^1.27.2",
     "@bufbuild/protoc-gen-connect-es": "^0.13.0",
-    "@bufbuild/protoc-gen-es": "^1.4.1",
+    "@bufbuild/protoc-gen-es": "^1.4.2",
     "@craco/craco": "^7.1.0",
     "@formatjs/cli": "^6.2.1",
     "@reduxjs/toolkit": "^1.9.7",
