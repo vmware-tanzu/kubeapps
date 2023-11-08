@@ -96,7 +96,7 @@
     "@types/react-router-hash-link": "^2.4.8",
     "@types/react-transition-group": "^4.4.8",
     "@types/redux-mock-store": "^1.0.5",
-    "@types/swagger-ui-react": "^4.18.2",
+    "@types/swagger-ui-react": "^4.18.3",
     "@wojtekmaj/enzyme-adapter-react-17": "^0.8.0",
     "axios-mock-adapter": "^1.22.0",
     "cross-env": "^7.0.3",
