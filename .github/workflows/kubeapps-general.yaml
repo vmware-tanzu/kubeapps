@@ -592,20 +592,6 @@ jobs:
             docker push $prod_image
           done
 
-  srp_report:
-    needs:
-      - setup
-      - push_images
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/srp-source-provenance
-        with:
-          SRP_CLI_VERSION: ${{env.SRP_CLI_VERSION}}
-          SRP_CLIENT_ID: ${{secrets.SRP_CLIENT_ID}}
-          SRP_CLIENT_SECRET: ${{secrets.SRP_CLIENT_SECRET}}
-          VERSION: ${{needs.setup.outputs.version}}
-
   sync_chart_from_bitnami:
     needs:
       - setup
