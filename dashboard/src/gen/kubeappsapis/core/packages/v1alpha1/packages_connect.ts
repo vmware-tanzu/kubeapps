@@ -13,6 +13,8 @@ import {
   DeleteInstalledPackageResponse,
   GetAvailablePackageDetailRequest,
   GetAvailablePackageDetailResponse,
+  GetAvailablePackageMetadatasRequest,
+  GetAvailablePackageMetadatasResponse,
   GetAvailablePackageSummariesRequest,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageVersionsRequest,
@@ -62,6 +64,15 @@ export const PackagesService = {
       name: "GetAvailablePackageVersions",
       I: GetAvailablePackageVersionsRequest,
       O: GetAvailablePackageVersionsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc kubeappsapis.core.packages.v1alpha1.PackagesService.GetAvailablePackageMetadatas
+     */
+    getAvailablePackageMetadatas: {
+      name: "GetAvailablePackageMetadatas",
+      I: GetAvailablePackageMetadatasRequest,
+      O: GetAvailablePackageMetadatasResponse,
       kind: MethodKind.Unary,
     },
     /**

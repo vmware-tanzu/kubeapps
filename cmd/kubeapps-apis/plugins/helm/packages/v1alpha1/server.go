@@ -1266,3 +1266,7 @@ func (s *Server) DeletePackageRepository(ctx context.Context, request *connect.R
 		return connect.NewResponse(&corev1.DeletePackageRepositoryResponse{}), nil
 	}
 }
+
+func (s *Server) GetAvailablePackageMetadatas(ctx context.Context, request *connect.Request[corev1.GetAvailablePackageMetadatasRequest]) (*connect.Response[corev1.GetAvailablePackageMetadatasResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("Unimplemented"))
+}

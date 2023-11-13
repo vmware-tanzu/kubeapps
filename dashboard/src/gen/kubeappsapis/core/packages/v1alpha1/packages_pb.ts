@@ -242,6 +242,81 @@ export class GetAvailablePackageVersionsRequest extends Message<GetAvailablePack
 }
 
 /**
+ * GetAvailablePackageMetadatasRequest
+ *
+ * Request for GetAvailablePackageMetadatas
+ *
+ * @generated from message kubeappsapis.core.packages.v1alpha1.GetAvailablePackageMetadatasRequest
+ */
+export class GetAvailablePackageMetadatasRequest extends Message<GetAvailablePackageMetadatasRequest> {
+  /**
+   * Available Package Reference
+   *
+   * Identifies the available package for which we are requesting
+   * the metadata.
+   *
+   * @generated from field: kubeappsapis.core.packages.v1alpha1.AvailablePackageReference available_package_ref = 1;
+   */
+  availablePackageRef?: AvailablePackageReference;
+
+  /**
+   * Package Version
+   *
+   * Version reference for which metadata is requested.
+   *
+   * @generated from field: string pkg_version = 2;
+   */
+  pkgVersion = "";
+
+  constructor(data?: PartialMessage<GetAvailablePackageMetadatasRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName =
+    "kubeappsapis.core.packages.v1alpha1.GetAvailablePackageMetadatasRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "available_package_ref", kind: "message", T: AvailablePackageReference },
+    { no: 2, name: "pkg_version", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(
+    bytes: Uint8Array,
+    options?: Partial<BinaryReadOptions>,
+  ): GetAvailablePackageMetadatasRequest {
+    return new GetAvailablePackageMetadatasRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(
+    jsonValue: JsonValue,
+    options?: Partial<JsonReadOptions>,
+  ): GetAvailablePackageMetadatasRequest {
+    return new GetAvailablePackageMetadatasRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(
+    jsonString: string,
+    options?: Partial<JsonReadOptions>,
+  ): GetAvailablePackageMetadatasRequest {
+    return new GetAvailablePackageMetadatasRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(
+    a:
+      | GetAvailablePackageMetadatasRequest
+      | PlainMessage<GetAvailablePackageMetadatasRequest>
+      | undefined,
+    b:
+      | GetAvailablePackageMetadatasRequest
+      | PlainMessage<GetAvailablePackageMetadatasRequest>
+      | undefined,
+  ): boolean {
+    return proto3.util.equals(GetAvailablePackageMetadatasRequest, a, b);
+  }
+}
+
+/**
  * GetInstalledPackageSummariesRequest
  *
  * Request for GetInstalledPackageSummaries
@@ -935,6 +1010,80 @@ export class GetAvailablePackageVersionsResponse extends Message<GetAvailablePac
       | undefined,
   ): boolean {
     return proto3.util.equals(GetAvailablePackageVersionsResponse, a, b);
+  }
+}
+
+/**
+ * GetAvailablePackageMetadatasResponse
+ *
+ * Response for GetAvailablePackageMetadatas
+ *
+ * @generated from message kubeappsapis.core.packages.v1alpha1.GetAvailablePackageMetadatasResponse
+ */
+export class GetAvailablePackageMetadatasResponse extends Message<GetAvailablePackageMetadatasResponse> {
+  /**
+   * Available Package Reference
+   *
+   * The reference to the available package related to this metadata.
+   *
+   * @generated from field: kubeappsapis.core.packages.v1alpha1.AvailablePackageReference available_package_ref = 1;
+   */
+  availablePackageRef?: AvailablePackageReference;
+
+  /**
+   * Package Metadata
+   *
+   * A list of metadata associated with this available package.
+   *
+   * @generated from field: repeated kubeappsapis.core.packages.v1alpha1.PackageMetadata package_metadata = 2;
+   */
+  packageMetadata: PackageMetadata[] = [];
+
+  constructor(data?: PartialMessage<GetAvailablePackageMetadatasResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName =
+    "kubeappsapis.core.packages.v1alpha1.GetAvailablePackageMetadatasResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "available_package_ref", kind: "message", T: AvailablePackageReference },
+    { no: 2, name: "package_metadata", kind: "message", T: PackageMetadata, repeated: true },
+  ]);
+
+  static fromBinary(
+    bytes: Uint8Array,
+    options?: Partial<BinaryReadOptions>,
+  ): GetAvailablePackageMetadatasResponse {
+    return new GetAvailablePackageMetadatasResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(
+    jsonValue: JsonValue,
+    options?: Partial<JsonReadOptions>,
+  ): GetAvailablePackageMetadatasResponse {
+    return new GetAvailablePackageMetadatasResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(
+    jsonString: string,
+    options?: Partial<JsonReadOptions>,
+  ): GetAvailablePackageMetadatasResponse {
+    return new GetAvailablePackageMetadatasResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(
+    a:
+      | GetAvailablePackageMetadatasResponse
+      | PlainMessage<GetAvailablePackageMetadatasResponse>
+      | undefined,
+    b:
+      | GetAvailablePackageMetadatasResponse
+      | PlainMessage<GetAvailablePackageMetadatasResponse>
+      | undefined,
+  ): boolean {
+    return proto3.util.equals(GetAvailablePackageMetadatasResponse, a, b);
   }
 }
 
@@ -2795,6 +2944,85 @@ export class PackageAppVersion extends Message<PackageAppVersion> {
     b: PackageAppVersion | PlainMessage<PackageAppVersion> | undefined,
   ): boolean {
     return proto3.util.equals(PackageAppVersion, a, b);
+  }
+}
+
+/**
+ * Package Metadata
+ *
+ * PackageMetadata contains info to display and fetch SBOMs, scan results
+ * and other linked package metadata.
+ *
+ * @generated from message kubeappsapis.core.packages.v1alpha1.PackageMetadata
+ */
+export class PackageMetadata extends Message<PackageMetadata> {
+  /**
+   * Media type
+   *
+   * Media type of this metadata
+   *
+   * @generated from field: string media_type = 1;
+   */
+  mediaType = "";
+
+  /**
+   * Name
+   *
+   * Human readable name for this metadata.
+   *
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * Description
+   *
+   * Human readable description for this metadata.
+   *
+   * @generated from field: string description = 3;
+   */
+  description = "";
+
+  /**
+   * URL
+   *
+   * The url reference for this metadata.
+   *
+   * @generated from field: string url = 4;
+   */
+  url = "";
+
+  constructor(data?: PartialMessage<PackageMetadata>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "kubeappsapis.core.packages.v1alpha1.PackageMetadata";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "media_type", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PackageMetadata {
+    return new PackageMetadata().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PackageMetadata {
+    return new PackageMetadata().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PackageMetadata {
+    return new PackageMetadata().fromJsonString(jsonString, options);
+  }
+
+  static equals(
+    a: PackageMetadata | PlainMessage<PackageMetadata> | undefined,
+    b: PackageMetadata | PlainMessage<PackageMetadata> | undefined,
+  ): boolean {
+    return proto3.util.equals(PackageMetadata, a, b);
   }
 }
 
