@@ -38,7 +38,7 @@
     "@tanstack/match-sorter-utils": "^8.8.4",
     "@tanstack/react-table": "^8.10.7",
     "ajv": "^8.12.0",
-    "axios": "^1.6.0",
+    "axios": "^1.6.1",
     "fast-json-patch": "^3.1.1",
     "google-protobuf": "^3.21.2",
     "jsonwebtoken": "^9.0.2",
