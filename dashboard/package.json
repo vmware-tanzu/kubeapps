@@ -27,8 +27,8 @@
   },
   "dependencies": {
     "@babel/parser": "^7.23.0",
-    "@bufbuild/connect": "^0.12.0",
-    "@bufbuild/connect-web": "^0.12.0",
+    "@connectrpc/connect": "^0.13.1",
+    "@connectrpc/connect-web": "^0.13.1",
     "@bufbuild/protobuf": "^1.4.1",
     "@cds/city": "^1.1.0",
     "@cds/core": "^6.5.0",
@@ -75,7 +75,7 @@
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@bufbuild/buf": "^1.27.2",
-    "@bufbuild/protoc-gen-connect-es": "^0.13.0",
+    "@connectrpc/protoc-gen-connect-es": "^0.13.1",
     "@bufbuild/protoc-gen-es": "^1.4.2",
     "@craco/craco": "^7.1.0",
     "@formatjs/cli": "^6.2.2",
@@ -140,7 +140,7 @@
       "!src/**/*.d.ts"
     ],
     "transformIgnorePatterns": [
-      "node_modules/(?!@cds|@clr|@lit|@bufbuild|axios|bail|ccount|cds|character-entities|comma-separated-tokens|decode-named-character-reference|escape-string-regexp|hast-util-whitespace|is-plain-obj|lit|lodash-es|markdown-table|mdast-util-definitions|mdast-util-find-and-replace|mdast-util-from-markdown|mdast-util-gfm-autolink-literal|mdast-util-gfm|mdast-util-newline-to-break|mdast-util-to-hast|mdast-util-to-markdown|mdast-util-to-string|micromark-core-commonmark|monaco-editor|react-monaco-editor|micromark|parse-entities|property-information|ramda|react-markdown|react-syntax-highlighter|remark-breaks|remark-gfm|remark-parse|remark-rehype|space-separated-tokens|swagger-client|swagger-ui-react|trim-lines|trough|unified|unist-builder|unist-util-generated|unist-util-is|unist-util-position|unist-util-stringify-position|unist-util-visit-parents|unist-util-visit|util-find-and-replace|vfile-message|vfile|.*css)"
+      "node_modules/(?!@cds|@clr|@connectrpc|@lit|@bufbuild|axios|bail|ccount|cds|character-entities|comma-separated-tokens|decode-named-character-reference|escape-string-regexp|hast-util-whitespace|is-plain-obj|lit|lodash-es|markdown-table|mdast-util-definitions|mdast-util-find-and-replace|mdast-util-from-markdown|mdast-util-gfm-autolink-literal|mdast-util-gfm|mdast-util-newline-to-break|mdast-util-to-hast|mdast-util-to-markdown|mdast-util-to-string|micromark-core-commonmark|monaco-editor|react-monaco-editor|micromark|parse-entities|property-information|ramda|react-markdown|react-syntax-highlighter|remark-breaks|remark-gfm|remark-parse|remark-rehype|space-separated-tokens|swagger-client|swagger-ui-react|trim-lines|trough|unified|unist-builder|unist-util-generated|unist-util-is|unist-util-position|unist-util-stringify-position|unist-util-visit-parents|unist-util-visit|util-find-and-replace|vfile-message|vfile|.*css)"
     ]
   },
   "browserslist": {
