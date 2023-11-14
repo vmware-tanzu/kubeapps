@@ -118,6 +118,15 @@ func MakeAvailablePackageDetail(name string, plugin *plugins.Plugin) *corev1.Ava
 	}
 }
 
+func MakeAvailablePackageMetadata(media_type, name, description, url string) *corev1.PackageMetadata {
+	return &corev1.PackageMetadata{
+		MediaType:   media_type,
+		Name:        name,
+		Description: description,
+		Url:         url,
+	}
+}
+
 func MakeInstalledPackageDetail(name string, plugin *plugins.Plugin) *corev1.InstalledPackageDetail {
 	return &corev1.InstalledPackageDetail{
 		InstalledPackageRef: &corev1.InstalledPackageReference{

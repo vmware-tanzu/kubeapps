@@ -18,6 +18,7 @@ type TestPackagingPluginServer struct {
 	Plugin                    *plugins.Plugin
 	AvailablePackageSummaries []*corev1.AvailablePackageSummary
 	AvailablePackageDetail    *corev1.AvailablePackageDetail
+	AvailablePackageMetadatas []*corev1.PackageMetadata
 	InstalledPackageSummaries []*corev1.InstalledPackageSummary
 	InstalledPackageDetail    *corev1.InstalledPackageDetail
 	PackageAppVersions        []*corev1.PackageAppVersion
@@ -63,6 +64,16 @@ func (s TestPackagingPluginServer) GetAvailablePackageDetail(ctx context.Context
 	}
 	return connect.NewResponse(&corev1.GetAvailablePackageDetailResponse{
 		AvailablePackageDetail: s.AvailablePackageDetail,
+	}), nil
+}
+
+// GetAvailablePackageMetadatas returns the package metadatas based on the request.
+func (s TestPackagingPluginServer) GetAvailablePackageMetadatas(ctx context.Context, request *connect.Request[corev1.GetAvailablePackageMetadatasRequest]) (*connect.Response[corev1.GetAvailablePackageMetadatasResponse], error) {
+	if s.ErrorCode != 0 {
+		return nil, connect.NewError(s.ErrorCode, fmt.Errorf("Non-OK response"))
+	}
+	return connect.NewResponse(&corev1.GetAvailablePackageMetadatasResponse{
+		PackageMetadata: s.AvailablePackageMetadatas,
 	}), nil
 }
 
@@ -139,10 +150,6 @@ func (s TestPackagingPluginServer) DeleteInstalledPackage(ctx context.Context, r
 		return nil, connect.NewError(s.ErrorCode, fmt.Errorf("Non-OK response"))
 	}
 	return connect.NewResponse(&corev1.DeleteInstalledPackageResponse{}), nil
-}
-
-func (s TestPackagingPluginServer) GetAvailablePackageMetadatas(ctx context.Context, request *connect.Request[corev1.GetAvailablePackageMetadatasRequest]) (*connect.Response[corev1.GetAvailablePackageMetadatasResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("Unimplemented"))
 }
 
 type TestRepositoriesPluginServer struct {

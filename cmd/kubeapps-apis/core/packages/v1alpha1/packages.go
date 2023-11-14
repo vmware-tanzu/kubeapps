@@ -356,7 +356,29 @@ func (s packagesServer) DeleteInstalledPackage(ctx context.Context, request *con
 }
 
 func (s packagesServer) GetAvailablePackageMetadatas(ctx context.Context, request *connect.Request[packages.GetAvailablePackageMetadatasRequest]) (*connect.Response[packages.GetAvailablePackageMetadatasResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("Unimplemented"))
+	log.InfoS("+core GetAvailablePackageVersions", "cluster", request.Msg.GetAvailablePackageRef().GetContext().GetCluster(), "namespace", request.Msg.GetAvailablePackageRef().GetContext().GetNamespace())
+
+	if request.Msg.GetAvailablePackageRef().GetPlugin() == nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Unable to retrieve the plugin (missing AvailablePackageRef.Plugin)"))
+	}
+
+	// Retrieve the plugin with server matching the requested plugin name
+	pluginWithServer := s.getPluginWithServer(request.Msg.AvailablePackageRef.Plugin)
+	if pluginWithServer == nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to get the plugin %v", request.Msg.AvailablePackageRef.Plugin))
+	}
+
+	// Get the response from the requested plugin
+	ctxForPlugin := updateContextWithAuthz(ctx, request.Header())
+	response, err := pluginWithServer.server.GetAvailablePackageMetadatas(ctxForPlugin, request)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeOf(err), fmt.Errorf("Unable to get the available package metadatas for the package %q using the plugin %q: %w", request.Msg.AvailablePackageRef.Identifier, request.Msg.AvailablePackageRef.Plugin.Name, err))
+	}
+
+	// Build the response
+	return connect.NewResponse(&packages.GetAvailablePackageMetadatasResponse{
+		PackageMetadata: response.Msg.PackageMetadata,
+	}), nil
 }
 
 // getPluginWithServer returns the *pkgPluginsWithServer from a given packagesServer
