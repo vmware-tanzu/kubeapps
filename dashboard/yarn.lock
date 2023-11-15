@@ -3176,10 +3176,10 @@
     "@types/scheduler" "*"
     csstype "^3.0.2"
 
-"@types/redux-mock-store@^1.0.5":
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/@types/redux-mock-store/-/redux-mock-store-1.0.5.tgz#1579f50af25c4820ad4ca49883e1ed80aad18501"
-  integrity sha512-RU3IuL6ZVx/Ove0qxPz0Lcaiog2YIVIO2iyEg6xN0EqDGYn60cVqVKjo8mvoIsgjH1SepJoYpDZ2fGzFoY4YlQ==
+"@types/redux-mock-store@^1.0.6":
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/@types/redux-mock-store/-/redux-mock-store-1.0.6.tgz#0a03b2655028b7cf62670d41ac1de5ca1b1f5958"
+  integrity sha512-eg5RDfhJTXuoJjOMyXiJbaDb1B8tfTaJixscmu+jOusj6adGC0Krntz09Tf4gJgXeCqCrM5bBMd+B7ez0izcAQ==
   dependencies:
     redux "^4.0.5"
 
