@@ -2966,11 +2966,29 @@ export class PackageMetadata extends Message<PackageMetadata> {
   mediaType = "";
 
   /**
+   * Artifact type
+   *
+   * Artifact type of this metadata
+   *
+   * @generated from field: string artifact_type = 2;
+   */
+  artifactType = "";
+
+  /**
+   * Digest
+   *
+   * Digest of this metadata
+   *
+   * @generated from field: string digest = 3;
+   */
+  digest = "";
+
+  /**
    * Name
    *
    * Human readable name for this metadata.
    *
-   * @generated from field: string name = 2;
+   * @generated from field: string name = 4;
    */
   name = "";
 
@@ -2979,7 +2997,7 @@ export class PackageMetadata extends Message<PackageMetadata> {
    *
    * Human readable description for this metadata.
    *
-   * @generated from field: string description = 3;
+   * @generated from field: string description = 5;
    */
   description = "";
 
@@ -2988,7 +3006,7 @@ export class PackageMetadata extends Message<PackageMetadata> {
    *
    * The url reference for this metadata.
    *
-   * @generated from field: string url = 4;
+   * @generated from field: string url = 6;
    */
   url = "";
 
@@ -3001,9 +3019,11 @@ export class PackageMetadata extends Message<PackageMetadata> {
   static readonly typeName = "kubeappsapis.core.packages.v1alpha1.PackageMetadata";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "media_type", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 4, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "artifact_type", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "digest", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PackageMetadata {

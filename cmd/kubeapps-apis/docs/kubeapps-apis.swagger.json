@@ -5453,6 +5453,16 @@
           "description": "Media type of this metadata",
           "title": "Media type"
         },
+        "artifactType": {
+          "type": "string",
+          "description": "Artifact type of this metadata",
+          "title": "Artifact type"
+        },
+        "digest": {
+          "type": "string",
+          "description": "Digest of this metadata",
+          "title": "Digest"
+        },
         "name": {
           "type": "string",
           "description": "Human readable name for this metadata.",
