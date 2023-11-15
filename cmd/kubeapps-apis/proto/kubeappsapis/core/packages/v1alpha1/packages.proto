@@ -966,20 +966,15 @@ message PackageMetadata {
   // Media type of this metadata
   string media_type = 1;
 
-  // Name
+  // Artifact type
   //
-  // Human readable name for this metadata.
-  string name = 2;
+  // Artifact type of this metadata
+  string artifact_type = 2;
 
-  // Description
+  // Digest
   //
-  // Human readable description for this metadata.
-  string description = 3;
-
-  // URL
-  //
-  // The url reference for this metadata.
-  string url = 4;
+  // Digest of this metadata
+  string digest = 3;
 }
 
 // Resource reference

@@ -18,6 +18,7 @@ export const initialState: IPackageState = {
   categories: [],
   selected: {
     versions: [],
+    metadatas: [],
   },
   size: 20,
 };
@@ -70,6 +71,12 @@ const selectedPackageReducer = (
         error: undefined,
         versions: action.payload.packageAppVersions,
       };
+    case getType(actions.availablepackages.receiveAvailablePackageMetadatas):
+      return {
+        ...state,
+        error: undefined,
+        metadatas: action.payload.packageMetadata,
+      };
     case getType(actions.availablepackages.createErrorPackage):
       return { ...state, error: action.payload };
     case getType(actions.availablepackages.clearErrorPackage):
@@ -115,6 +122,7 @@ const packageReducer = (
     }
     case getType(actions.availablepackages.receiveSelectedAvailablePackageVersions):
     case getType(actions.availablepackages.receiveSelectedAvailablePackageDetail):
+    case getType(actions.availablepackages.receiveAvailablePackageMetadatas):
       return {
         ...state,
         isFetching: false,

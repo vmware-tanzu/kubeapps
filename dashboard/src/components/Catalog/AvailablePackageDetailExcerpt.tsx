@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import AvailablePackageMaintainers from "components/PackageHeader/AvailablePackageMaintainers";
-import { AvailablePackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
+import {
+  AvailablePackageDetail,
+  PackageMetadata,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 
 interface AvailablePackageDetailExcerptProps {
   pkg?: AvailablePackageDetail;
+  metadatas?: PackageMetadata[];
 }
 
 function isKubernetesPackages(repoURL: string) {
@@ -15,7 +19,10 @@ function isKubernetesPackages(repoURL: string) {
   );
 }
 
-export default function AvailablePackageDetailExcerpt({ pkg }: AvailablePackageDetailExcerptProps) {
+export default function AvailablePackageDetailExcerpt({
+  pkg,
+  metadatas,
+}: AvailablePackageDetailExcerptProps) {
   return (
     <div className="left-menu">
       {pkg?.version?.appVersion && (
@@ -103,6 +110,26 @@ export default function AvailablePackageDetailExcerpt({ pkg }: AvailablePackageD
                   <a href={s} target="_blank" rel="noopener noreferrer">
                     {s}
                   </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
+      {metadatas && metadatas.length > 0 && (
+        <section
+          className="left-menu-subsection"
+          aria-labelledby="availablePackageDetailExcerpt-metadatas"
+        >
+          <h5 className="left-menu-subsection-title" id="availablePackageDetailExcerpt-metadatas">
+            Package Metadata
+          </h5>
+          <div>
+            <ul>
+              {metadatas.map((m, i) => (
+                <li key={i}>
+                  {" "}
+                  {m.artifactType}: <span className="digest">{m.digest.slice(0, 15)}</span>
                 </li>
               ))}
             </ul>

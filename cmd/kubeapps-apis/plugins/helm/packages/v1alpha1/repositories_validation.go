@@ -48,7 +48,7 @@ func (s *Server) ValidateRepository(ctx context.Context, appRepo *apprepov1alpha
 	if err != nil {
 		return err
 	} else if resp.Code >= 400 {
-		log.Errorf("Failed repository validation validation: %+v", resp)
+		log.Errorf("Failed repository validation: %+v", resp)
 		return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Failed repository validation: %v", resp))
 	} else {
 		return nil
