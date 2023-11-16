@@ -1244,15 +1244,10 @@
     "@bufbuild/buf-win32-arm64" "1.27.2"
     "@bufbuild/buf-win32-x64" "1.27.2"
 
-"@bufbuild/protobuf@1.4.2", "@bufbuild/protobuf@^1.4.1", "@bufbuild/protobuf@^1.4.2":
+"@bufbuild/protobuf@1.4.2", "@bufbuild/protobuf@^1.3.3", "@bufbuild/protobuf@^1.4.1", "@bufbuild/protobuf@^1.4.2":
   version "1.4.2"
   resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.4.2.tgz#dc4faf21264a47b71a15806616043cb006e80ac8"
   integrity sha512-JyEH8Z+OD5Sc2opSg86qMHn1EM1Sa+zj/Tc0ovxdwk56ByVNONJSabuCUbLQp+eKN3rWNfrho0X+3SEqEPXIow==
-
-"@bufbuild/protobuf@^1.2.1":
-  version "1.3.1"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.3.1.tgz#c4de66bacbe7ac97fe054e68314aeba6f45177f9"
-  integrity sha512-BUyJWutgP2S8K/1NphOJokuwDckXS4qI2T1pGZAlkFdZchWae3jm6fCdkcGbLlM1QLOcNFFePd+7Feo4BYGrJQ==
 
 "@bufbuild/protoc-gen-es@^1.4.2":
   version "1.4.2"
@@ -1262,7 +1257,7 @@
     "@bufbuild/protobuf" "^1.4.2"
     "@bufbuild/protoplugin" "1.4.2"
 
-"@bufbuild/protoplugin@1.4.2", "@bufbuild/protoplugin@^1.2.1":
+"@bufbuild/protoplugin@1.4.2", "@bufbuild/protoplugin@^1.3.3":
   version "1.4.2"
   resolved "https://registry.yarnpkg.com/@bufbuild/protoplugin/-/protoplugin-1.4.2.tgz#abf9b0e6a3dc8b52b1d6699d7a1ce5219fa82322"
   integrity sha512-5IwGC1ZRD2A+KydGXeaSOErwfILLqVtvMH/RkN+cOoHcQd4EYXFStcF7g7aR+yICRDEEjQVi5tQF/qPGBSr9vg==
@@ -1311,25 +1306,23 @@
     exec-sh "^0.3.2"
     minimist "^1.2.0"
 
-"@connectrpc/connect-web@^0.13.1":
-  version "0.13.2"
-  resolved "https://registry.yarnpkg.com/@connectrpc/connect-web/-/connect-web-0.13.2.tgz#14b8f30458196897578ce773f3ab0ec42d114228"
-  integrity sha512-WkI2MbdWpzRCZf612bOa0JEuOx2Hebv7BW0FcfgDgHwFGBOuAFF7BF7XtNw196nmYoli2kXmtIjCZW01jvzDnw==
-  dependencies:
-    "@connectrpc/connect" "0.13.2"
+"@connectrpc/connect-web@^1.1.3":
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/@connectrpc/connect-web/-/connect-web-1.1.3.tgz#027922b4f1537ecb1eaaa31ec3a59dd471a65320"
+  integrity sha512-WfShOZt91duJngqivYF4wJFRbeRa4bF/fPMfDVN0MAYSX3VuaTMn8o9qgKN7tsg2H2ZClyOVQwMkZx6IdcP7Zw==
 
-"@connectrpc/connect@0.13.2", "@connectrpc/connect@^0.13.1":
-  version "0.13.2"
-  resolved "https://registry.yarnpkg.com/@connectrpc/connect/-/connect-0.13.2.tgz#491147e3021ac544fa109563e9d23adec0282641"
-  integrity sha512-KZg6EH8gYnQZm/d2IXXMVB2mom/A1dCD8+7JScm2tKN9OQyQSeCJOLqtv/M4M5XVS0Y9JM2/VCbiUwfhl9Rqmg==
+"@connectrpc/connect@^1.1.3":
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/@connectrpc/connect/-/connect-1.1.3.tgz#6099789e392bf3d4c3d831f294b1a9ff969703a1"
+  integrity sha512-AXkbsLQe2Nm7VuoN5nqp05GEb9mPa/f5oFzDqTbHME4i8TghTrlY03uefbhuAq4wjsnfDnmuxHZvn6ndlgXmbg==
 
-"@connectrpc/protoc-gen-connect-es@^0.13.1":
-  version "0.13.2"
-  resolved "https://registry.yarnpkg.com/@connectrpc/protoc-gen-connect-es/-/protoc-gen-connect-es-0.13.2.tgz#ee965050860aab7fe8270211d66b8420a52eb55f"
-  integrity sha512-XGV6TN1y36g6RVDzn+YPDE4Q3QCaobwPNo/N93QXEeql/qI4ROTNbIyl0EfAPlsXITMG3k9WBOg49+rF21mMbg==
+"@connectrpc/protoc-gen-connect-es@^1.1.3":
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/@connectrpc/protoc-gen-connect-es/-/protoc-gen-connect-es-1.1.3.tgz#2472133dce58bbe433b4c10076c85d8f4f6833e3"
+  integrity sha512-Irt1WM1o45KL0DNz8D8nraNfRrOyZfn7rzRsOyfrwbNzeVO1JV3rELFpARqGAvtVveYBoO9uwYtQ8TKLXsnrng==
   dependencies:
-    "@bufbuild/protobuf" "^1.2.1"
-    "@bufbuild/protoplugin" "^1.2.1"
+    "@bufbuild/protobuf" "^1.3.3"
+    "@bufbuild/protoplugin" "^1.3.3"
 
 "@craco/craco@^7.1.0":
   version "7.1.0"
