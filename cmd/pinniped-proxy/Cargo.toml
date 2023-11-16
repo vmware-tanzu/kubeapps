@@ -18,7 +18,7 @@ base64 = "0.21"
 # module will be removed in 0.5: https://github.com/chronotope/chrono/issues/876
 chrono = { version = "0.4.31", default-features = false, features = ["clock", "std"] }
 env_logger = "0.10"
-hyper = { version = "0.14", features = ["server"] }
+hyper = { version = "1.0", features = ["server"] }
 hyper-tls = "0.5"
 kube = { version = "0.87.1" }
 kube-derive = { version = "0.87.1"}
