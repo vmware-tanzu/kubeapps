@@ -87,7 +87,7 @@
     "@types/jest": "^29.5.7",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/lodash": "^4.14.201",
-    "@types/qs": "^6.9.9",
+    "@types/qs": "^6.9.10",
     "@types/react": "^17.0.62",
     "@types/react-copy-to-clipboard": "^5.0.7",
     "@types/react-dom": "^17.0.20",
