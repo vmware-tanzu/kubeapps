@@ -1,7 +1,7 @@
 // Copyright 2019-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Code } from "@bufbuild/connect";
+import { Code } from "@connectrpc/connect";
 import { AxiosResponse } from "axios";
 import { CheckNamespaceExistsResponse } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources_pb";
 import jwt from "jsonwebtoken";

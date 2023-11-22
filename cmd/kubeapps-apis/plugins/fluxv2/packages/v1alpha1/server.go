@@ -709,3 +709,7 @@ func (s *Server) hasAccessToNamespace(ctx context.Context, headers http.Header, 
 func GetPluginDetail() *plugins.Plugin {
 	return common.GetPluginDetail()
 }
+
+func (s *Server) GetAvailablePackageMetadatas(ctx context.Context, request *connect.Request[corev1.GetAvailablePackageMetadatasRequest]) (*connect.Response[corev1.GetAvailablePackageMetadatasResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("Unimplemented"))
+}

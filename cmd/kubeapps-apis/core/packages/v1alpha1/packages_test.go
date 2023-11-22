@@ -30,6 +30,7 @@ var ignoreUnexportedOpts = cmpopts.IgnoreUnexported(
 	corev1.AvailablePackageSummary{},
 	corev1.Context{},
 	corev1.GetAvailablePackageDetailResponse{},
+	corev1.GetAvailablePackageMetadatasResponse{},
 	corev1.GetAvailablePackageSummariesResponse{},
 	corev1.GetAvailablePackageVersionsResponse{},
 	corev1.GetInstalledPackageResourceRefsResponse{},
@@ -43,6 +44,7 @@ var ignoreUnexportedOpts = cmpopts.IgnoreUnexported(
 	corev1.InstalledPackageSummary{},
 	corev1.Maintainer{},
 	corev1.PackageAppVersion{},
+	corev1.PackageMetadata{},
 	corev1.VersionReference{},
 	corev1.ResourceRef{},
 	plugins.Plugin{},
@@ -57,6 +59,9 @@ func makeDefaultTestPackagingPlugin(pluginName string) pkgPluginWithServer {
 		plugin_test.MakeAvailablePackageSummary("pkg-2", pluginDetails),
 	}
 	packagingPluginServer.AvailablePackageDetail = plugin_test.MakeAvailablePackageDetail("pkg-1", pluginDetails)
+	packagingPluginServer.AvailablePackageMetadatas = []*corev1.PackageMetadata{
+		plugin_test.MakeAvailablePackageMetadata("media-type-1", "name-1", "description-1", "oci://location-1"),
+	}
 	packagingPluginServer.InstalledPackageSummaries = []*corev1.InstalledPackageSummary{
 		plugin_test.MakeInstalledPackageSummary("pkg-1", pluginDetails),
 		plugin_test.MakeInstalledPackageSummary("pkg-2", pluginDetails),
@@ -359,6 +364,79 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				pluginsWithServers: tc.configuredPlugins,
 			}
 			availablePackageDetail, err := server.GetAvailablePackageDetail(context.Background(), connect.NewRequest(tc.request))
+
+			if got, want := connect.CodeOf(err), tc.errorCode; err != nil && got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if tc.errorCode == 0 {
+				if got, want := availablePackageDetail.Msg, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedOpts) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedOpts))
+				}
+			}
+		})
+	}
+}
+
+func TestGetAvailablePackageMetadatas(t *testing.T) {
+	testCases := []struct {
+		name              string
+		configuredPlugins []pkgPluginWithServer
+		errorCode         connect.Code
+		request           *corev1.GetAvailablePackageMetadatasRequest
+		expectedResponse  *corev1.GetAvailablePackageMetadatasResponse
+	}{
+		{
+			name: "it should successfully call the core GetAvailablePackageMetadatas operation",
+			configuredPlugins: []pkgPluginWithServer{
+				mockedPackagingPlugin1,
+			},
+			request: &corev1.GetAvailablePackageMetadatasRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Cluster:   "",
+						Namespace: globalPackagingNamespace,
+					},
+					Identifier: "pkg-1",
+					Plugin:     mockedPackagingPlugin1.plugin,
+				},
+				PkgVersion: "1.0",
+			},
+
+			expectedResponse: &corev1.GetAvailablePackageMetadatasResponse{
+				PackageMetadata: []*corev1.PackageMetadata{
+					plugin_test.MakeAvailablePackageMetadata("media-type-1", "name-1", "description-1", "oci://location-1"),
+				},
+			},
+		},
+		{
+			name: "it should fail when calling the core GetAvailablePackageMetadatas operation when the package is not present in a plugin",
+			configuredPlugins: []pkgPluginWithServer{
+				mockedNotFoundPackagingPlugin,
+			},
+			request: &corev1.GetAvailablePackageMetadatasRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Cluster:   "",
+						Namespace: globalPackagingNamespace,
+					},
+					Identifier: "pkg-1",
+					Plugin:     mockedNotFoundPackagingPlugin.plugin,
+				},
+				PkgVersion: "",
+			},
+
+			expectedResponse: &corev1.GetAvailablePackageMetadatasResponse{},
+			errorCode:        connect.CodeNotFound,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			server := &packagesServer{
+				pluginsWithServers: tc.configuredPlugins,
+			}
+			availablePackageDetail, err := server.GetAvailablePackageMetadatas(context.Background(), connect.NewRequest(tc.request))
 
 			if got, want := connect.CodeOf(err), tc.errorCode; err != nil && got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)

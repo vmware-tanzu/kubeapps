@@ -879,3 +879,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 		ResourceRefs: refs,
 	}), nil
 }
+
+func (s *Server) GetAvailablePackageMetadatas(ctx context.Context, request *connect.Request[corev1.GetAvailablePackageMetadatasRequest]) (*connect.Response[corev1.GetAvailablePackageMetadatasResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("Unimplemented"))
+}
