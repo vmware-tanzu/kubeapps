@@ -86,7 +86,7 @@
     "@types/enzyme": "^3.10.16",
     "@types/jest": "^29.5.8",
     "@types/jsonwebtoken": "^9.0.5",
-    "@types/lodash": "^4.14.201",
+    "@types/lodash": "^4.14.202",
     "@types/qs": "^6.9.10",
     "@types/react": "^17.0.62",
     "@types/react-copy-to-clipboard": "^5.0.7",
