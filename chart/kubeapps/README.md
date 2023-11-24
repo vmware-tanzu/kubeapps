@@ -1,4 +1,3 @@
-<!--- app-name: Kubeapps -->
 
 # Bitnami package for Kubeapps
 
