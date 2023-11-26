@@ -579,9 +579,9 @@ func (s *repoEventSink) onAddRepo(key string, obj ctrlclient.Object) (interface{
 // ref https://fluxcd.io/docs/components/source/helmrepositories/#status
 func (s *repoEventSink) onAddHttpRepo(repo sourcev1.HelmRepository) ([]byte, bool, error) {
 	if artifact := repo.GetArtifact(); artifact != nil {
-		if checksum := artifact.Checksum; checksum == "" {
+		if checksum := artifact.Digest; checksum == "" {
 			return nil, false, connect.NewError(connect.CodeInternal,
-				fmt.Errorf("expected field status.artifact.checksum not found on HelmRepository\n[%s]",
+				fmt.Errorf("expected field status.artifact.digest not found on HelmRepository\n[%s]",
 					common.PrettyPrint(repo)))
 		} else {
 			return s.indexAndEncode(checksum, repo)
@@ -721,9 +721,9 @@ func (s *repoEventSink) onModifyHttpRepo(key string, oldValue interface{}, repo 
 	// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
 	var newChecksum string
 	if artifact := repo.GetArtifact(); artifact != nil {
-		if newChecksum = artifact.Checksum; newChecksum == "" {
+		if newChecksum = artifact.Digest; newChecksum == "" {
 			return nil, false, connect.NewError(connect.CodeInternal,
-				fmt.Errorf("expected field status.artifact.checksum not found on HelmRepository\n[%s]",
+				fmt.Errorf("expected field status.artifact.digest not found on HelmRepository\n[%s]",
 					common.PrettyPrint(repo)))
 		}
 	} else {
