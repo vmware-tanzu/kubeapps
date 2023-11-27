@@ -808,7 +808,7 @@ func TestAddPackageRepository(t *testing.T) {
 			if tc.existingDockerSecret != nil {
 				secrets = append(secrets, tc.existingDockerSecret)
 			}
-			s := newServerWithSecretsAndRepos(t, secrets, nil, nil)
+			s := newServerWithSecretsAndRepos(t, secrets, nil)
 			if tc.testRepoServer != nil {
 				defer tc.testRepoServer.Close()
 				s.repoClientGetter = func(_ *appRepov1.AppRepository, _ *apiv1.Secret) (*http.Client, error) {
@@ -1194,22 +1194,12 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var unstructuredObjects []k8sruntime.Object
-			for _, obj := range []*appRepov1alpha1.AppRepository{repo1, repo2, repo3, repo4, repo5} {
-				repository := obj
-				if tc.repositoryCustomizer != nil {
-					repository = tc.repositoryCustomizer(obj)
-				}
-				unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(repository)
-				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
-			}
-
 			var secrets []k8sruntime.Object
 			if tc.existingSecret != nil {
 				secrets = append(secrets, tc.existingSecret)
 			}
 
-			s := newServerWithSecretsAndRepos(t, secrets, unstructuredObjects, nil)
+			s := newServerWithSecretsAndRepos(t, secrets, []*appRepov1alpha1.AppRepository{repo1, repo2, repo3, repo4, repo5})
 
 			actualResponse, err := s.GetPackageRepositoryDetail(context.Background(), connect.NewRequest(tc.request))
 
@@ -1935,12 +1925,6 @@ func TestUpdatePackageRepository(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var unstructuredObjects []k8sruntime.Object
-			for _, obj := range repos {
-				unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
-				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
-			}
-
 			var secrets []k8sruntime.Object
 			if tc.existingAuthSecret != nil {
 				secrets = append(secrets, tc.existingAuthSecret)
@@ -1949,7 +1933,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				secrets = append(secrets, tc.existingDockerSecret)
 			}
 
-			s := newServerWithSecretsAndRepos(t, secrets, unstructuredObjects, repos)
+			s := newServerWithSecretsAndRepos(t, secrets, repos)
 
 			request := tc.requestCustomizer(commonRequest())
 			response, err := s.UpdatePackageRepository(context.Background(), connect.NewRequest(request))
@@ -2067,13 +2051,7 @@ func TestDeletePackageRepository(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var unstructuredObjects []k8sruntime.Object
-			for _, obj := range repos {
-				unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
-				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
-			}
-
-			s := newServerWithSecretsAndRepos(t, nil, unstructuredObjects, repos)
+			s := newServerWithSecretsAndRepos(t, nil, repos)
 
 			_, err := s.DeletePackageRepository(context.Background(), connect.NewRequest(tc.request))
 

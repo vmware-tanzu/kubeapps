@@ -9,8 +9,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
+	"path"
 	"regexp"
 	"runtime"
 	"sort"
@@ -25,6 +27,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	appRepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	helmv1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
@@ -49,6 +52,7 @@ import (
 	authorizationv1 "k8s.io/api/authorization/v1"
 	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/storage/names"
@@ -268,8 +272,14 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 	}, mock, cleanup
 }
 
-func newServerWithSecretsAndRepos(t *testing.T, secrets []k8sruntime.Object, unstructuredObjs []k8sruntime.Object, repos []*v1alpha1.AppRepository) *Server {
+func newServerWithSecretsAndRepos(t *testing.T, secrets []k8sruntime.Object, repos []*v1alpha1.AppRepository) *Server {
 	typedClient := typfake.NewSimpleClientset(secrets...)
+
+	var unstructuredObjs []k8sruntime.Object
+	for _, obj := range repos {
+		unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
+		unstructuredObjs = append(unstructuredObjs, &unstructured.Unstructured{Object: unstructuredContent})
+	}
 
 	// ref https://stackoverflow.com/questions/68794562/kubernetes-fake-client-doesnt-handle-generatename-in-objectmeta/68794563#68794563
 	typedClient.PrependReactor(
@@ -2239,4 +2249,205 @@ type releaseStub struct {
 	notes          string
 	status         release.Status
 	manifest       string
+}
+
+func newFakeOCIServer(t *testing.T, responses map[string]*http.Response) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		for path, response := range responses {
+			if path == r.URL.Path {
+				if response.Header != nil {
+					for k, vs := range response.Header {
+						for _, v := range vs {
+							w.Header().Set(k, v)
+						}
+					}
+				}
+				w.WriteHeader(response.StatusCode)
+				body := []byte{}
+				if response.Body != nil {
+					var err error
+					body, err = io.ReadAll(response.Body)
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
+				}
+				_, err := w.Write(body)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				return
+			}
+		}
+		t.Errorf("unhandled request: %+v", r)
+		w.WriteHeader(404)
+	}))
+}
+
+const CHART_MANIFEST = `{"schemaVersion":2,"mediaType":"application/vnd.oci.image.manifest.v1+json","artifactType":"application/vnd.cncf.helm.config.v1","config":{"mediaType":"application/vnd.oci.empty.v1+json","digest":"sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a","size":2,"data":"e30="},"layers":[{"mediaType":"application/vnd.oci.image.manifest.v1","digest":"sha256:04e8ea5960143960a55e3cdaf968689593069d726cd1c4bc22e3cc0c40e6a20f","size":1790,"annotations":{"org.opencontainers.image.title":"simplechart-0.1.0.tgz"}}],"annotations":{"org.opencontainers.image.created":"2023-11-24T00:22:24Z"}}`
+
+const CHART_MANIFEST_SHA256 = "sha256:d7e6636cbed61ef760c404e089d21e766b519355b5cb20bd3bd888d2719e5943"
+
+const CHART_REFERERRS_CONTENT = `{"schemaVersion":2,"mediaType":"application/vnd.oci.image.index.v1+json","manifests":[{"mediaType":"application/vnd.oci.image.manifest.v1+json","digest":"sha256:c3d036b5b676fc150a7f079030aa7aa4b0a4ed218354dbf1236e792f9e56e6af","size":827,"annotations":{"org.opencontainers.image.created":"2023-11-24T00:22:30Z","org.opencontainers.image.description":"A description of the scan results"},"artifactType":"application/vnd.oci.empty.v1+json"},{"mediaType":"application/vnd.oci.image.manifest.v1+json","digest":"sha256:07b56b5474aebda7af44d379d5c61123906efb2faa62e4ac173abdab8be019bc","size":842,"annotations":{"org.opencontainers.image.created":"2023-11-24T00:22:35Z","org.opencontainers.image.title":"SBOM stuff"},"artifactType":"application/vnd.oci.empty.v1+json"}]}`
+
+func TestGetAvailablePackageMetadatas(t *testing.T) {
+	fakeServer := newFakeOCIServer(t, map[string]*http.Response{
+		// The ORAS client needs to be able to get the manifest
+		// based on the (version) tag:
+		"/v2/chart-name/manifests/1.2.3": {
+			StatusCode: 200,
+			Body:       io.NopCloser(strings.NewReader(CHART_MANIFEST)),
+		},
+		// The ORAS client also needs to get the referrers based
+		// on the manifest's sha256
+		path.Join("/v2/chart-name/referrers", CHART_MANIFEST_SHA256): {
+			StatusCode: 200,
+			Body:       io.NopCloser(strings.NewReader(CHART_REFERERRS_CONTENT)),
+		},
+	})
+	defer fakeServer.Close()
+
+	var repoNonOCI = &appRepov1alpha1.AppRepository{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: appReposAPIVersion,
+			Kind:       AppRepositoryKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "repo-non-oci",
+			Namespace:       "kubeapps",
+			ResourceVersion: "1",
+		},
+		Spec: appRepov1alpha1.AppRepositorySpec{
+			URL:         "https://test-repo",
+			Type:        "helm",
+			Description: "description 1",
+		},
+	}
+	var repoOCI = &appRepov1alpha1.AppRepository{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: appReposAPIVersion,
+			Kind:       AppRepositoryKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "repo-oci",
+			Namespace:       "kubeapps",
+			ResourceVersion: "1",
+		},
+		Spec: appRepov1alpha1.AppRepositorySpec{
+			URL:         fakeServer.URL,
+			Type:        "oci",
+			Description: "description 1",
+		},
+	}
+
+	opts := cmpopts.IgnoreUnexported(
+		corev1.Context{},
+		corev1.GetAvailablePackageMetadatasResponse{},
+		corev1.AvailablePackageReference{},
+		corev1.PackageMetadata{},
+	)
+
+	testCases := []struct {
+		name                 string
+		repos                []*appRepov1alpha1.AppRepository
+		request              *corev1.GetAvailablePackageMetadatasRequest
+		expectedResponse     *corev1.GetAvailablePackageMetadatasResponse
+		expectedResponseCode connect.Code
+	}{
+		{
+			name: "it returns invalid for an invalid identifier",
+			repos: []*appRepov1alpha1.AppRepository{
+				repoNonOCI,
+			},
+			request: &corev1.GetAvailablePackageMetadatasRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Cluster:   "default",
+						Namespace: "kubeapps",
+					},
+					Identifier: "not-a-valid-identifier",
+				},
+			},
+			expectedResponseCode: connect.CodeInvalidArgument,
+			expectedResponse:     nil,
+		},
+		{
+			name: "it returns unimplemented for non-OCI repositories",
+			repos: []*appRepov1alpha1.AppRepository{
+				repoNonOCI,
+			},
+			request: &corev1.GetAvailablePackageMetadatasRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Cluster:   "default",
+						Namespace: "kubeapps",
+					},
+					Identifier: "repo-non-oci/chart-name",
+				},
+			},
+			expectedResponseCode: connect.CodeUnimplemented,
+			expectedResponse:     nil,
+		},
+		{
+			name: "it returns metadata for OCI repositories",
+			repos: []*appRepov1alpha1.AppRepository{
+				repoOCI,
+			},
+			request: &corev1.GetAvailablePackageMetadatasRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Cluster:   "default",
+						Namespace: "kubeapps",
+					},
+					Identifier: "repo-oci/chart-name",
+				},
+				PkgVersion: "1.2.3",
+			},
+			expectedResponseCode: 0,
+			expectedResponse: &corev1.GetAvailablePackageMetadatasResponse{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Cluster:   "default",
+						Namespace: "kubeapps",
+					},
+					Identifier: "repo-oci/chart-name",
+				},
+				PackageMetadata: []*corev1.PackageMetadata{
+					{
+						MediaType:    "application/vnd.oci.image.manifest.v1+json",
+						ArtifactType: "application/vnd.oci.empty.v1+json",
+						Digest:       "sha256:c3d036b5b676fc150a7f079030aa7aa4b0a4ed218354dbf1236e792f9e56e6af",
+						Description:  "A description of the scan results",
+					},
+					{
+						Name:         "SBOM stuff",
+						MediaType:    "application/vnd.oci.image.manifest.v1+json",
+						ArtifactType: "application/vnd.oci.empty.v1+json",
+						Digest:       "sha256:07b56b5474aebda7af44d379d5c61123906efb2faa62e4ac173abdab8be019bc",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			server := newServerWithSecretsAndRepos(t, nil, tc.repos)
+
+			response, err := server.GetAvailablePackageMetadatas(context.Background(), connect.NewRequest(tc.request))
+
+			if tc.expectedResponseCode != 0 {
+				if got, want := connect.CodeOf(err), tc.expectedResponseCode; got != want {
+					t.Fatalf("got: %+v, want: %+v. Err: %+v", got, want, err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("got: %+v, want: nil", err)
+			}
+
+			if got, want := response.Msg, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("response mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+		})
+	}
 }
