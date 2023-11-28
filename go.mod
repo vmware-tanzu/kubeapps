@@ -40,7 +40,7 @@ require (
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/stretchr/testify v1.8.4
-	github.com/vmware-tanzu/carvel-kapp v0.56.0
+	github.com/vmware-tanzu/carvel-kapp v0.59.1
 	github.com/vmware-tanzu/carvel-kapp-controller v0.48.2
 	github.com/vmware-tanzu/carvel-vendir v0.35.2
 	golang.org/x/net v0.19.0
@@ -51,12 +51,12 @@ require (
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.11.3
-	k8s.io/api v0.26.7
+	k8s.io/api v0.28.2
 	k8s.io/apiextensions-apiserver v0.26.3
-	k8s.io/apimachinery v0.26.7
+	k8s.io/apimachinery v0.28.2
 	k8s.io/apiserver v0.26.7
 	k8s.io/cli-runtime v0.26.7
-	k8s.io/client-go v0.26.7
+	k8s.io/client-go v0.28.2
 	k8s.io/klog/v2 v2.110.1
 	k8s.io/kubectl v0.26.7
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
@@ -120,7 +120,6 @@ require (
 	github.com/fluxcd/pkg/apis/kustomize v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/fvbommel/sortorder v1.1.0 // indirect
-	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-gorp/gorp/v3 v3.1.0 // indirect
 	github.com/go-logr/logr v1.3.0 // indirect
@@ -135,6 +134,7 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/gnostic v0.6.9 // indirect
+	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.3.1 // indirect
@@ -228,7 +228,7 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/component-base v0.26.7 // indirect
-	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
+	k8s.io/kube-openapi v0.0.0-20230717233707-2695361300d9 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/kustomize/api v0.12.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.13.9 // indirect
