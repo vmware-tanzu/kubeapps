@@ -58,7 +58,7 @@
     "react-minimal-pie-chart": "^8.4.0",
     "react-monaco-editor": "^0.54.0",
     "react-redux": "^7.2.9",
-    "react-router-dom": "^6.19.0",
+    "react-router-dom": "^6.20.0",
     "react-router-hash-link": "^2.4.3",
     "react-tooltip": "^5.24.0",
     "react-transition-group": "^4.4.5",
@@ -68,7 +68,7 @@
     "remark-breaks": "^3.0.3",
     "remark-gfm": "^3.0.1",
     "rxjs": "^7.8.1",
-    "swagger-ui-react": "^5.10.0",
+    "swagger-ui-react": "^5.10.3",
     "typesafe-actions": "^5.1.0",
     "yaml": "^2.3.4"
   },
@@ -113,7 +113,7 @@
     "npm-run-all": "^4.1.5",
     "postcss": "^8.4.31",
     "postcss-scss": "^4.0.9",
-    "prettier": "^3.0.3",
+    "prettier": "^3.1.0",
     "react-dom": "^17.0.2",
     "react-scripts": "^5.0.1",
     "react-test-renderer": "^17.0.2",
@@ -127,7 +127,7 @@
     "stylelint-config-standard-scss": "^11.1.0",
     "stylelint-scss": "^5.3.1",
     "ts-jest": "^29.1.1",
-    "ts-proto": "^1.164.0",
+    "ts-proto": "^1.164.1",
     "typescript": "^5.3.2"
   },
   "resolutions": {
