@@ -521,7 +521,7 @@ describe("fetchAndSelectAvailablePackageDetail", () => {
 });
 
 describe("fetchAvailablePackageMetadatas", () => {
-  let packageMetadatas: PackageMetadata[] = [
+  const packageMetadatas: PackageMetadata[] = [
     new PackageMetadata({
       mediaType: "mediaType 1",
       description: "description 1",
