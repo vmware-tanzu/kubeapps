@@ -4,6 +4,7 @@
 import {
   AvailablePackageReference,
   GetAvailablePackageDetailResponse,
+  GetAvailablePackageMetadatasResponse,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageVersionsResponse,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
@@ -62,5 +63,15 @@ export default class PackagesService {
       .catch((e: any) => {
         throw convertGrpcAuthError(e);
       });
+  }
+
+  public static async getAvailablePackageMetadatas(
+    availablePackageReference: AvailablePackageReference,
+    pkgVersion: string,
+  ): Promise<GetAvailablePackageMetadatasResponse> {
+    return await this.packagesServiceClient().getAvailablePackageMetadatas({
+      availablePackageRef: availablePackageReference,
+      pkgVersion,
+    });
   }
 }

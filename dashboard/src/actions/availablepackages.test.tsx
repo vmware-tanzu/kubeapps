@@ -7,9 +7,11 @@ import {
   AvailablePackageSummary,
   Context,
   GetAvailablePackageDetailResponse,
+  GetAvailablePackageMetadatasResponse,
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageVersionsResponse,
   PackageAppVersion,
+  PackageMetadata,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_pb";
 import configureMockStore from "redux-mock-store";
@@ -506,6 +508,84 @@ describe("fetchAndSelectAvailablePackageDetail", () => {
     ];
     await store.dispatch(
       actions.availablepackages.fetchAndSelectAvailablePackageDetail(
+        {
+          context: { cluster: cluster, namespace: namespace },
+          identifier: "foo",
+          plugin: plugin,
+        } as AvailablePackageReference,
+        "1.0.0",
+      ),
+    );
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+describe("fetchAvailablePackageMetadatas", () => {
+  let packageMetadatas: PackageMetadata[] = [
+    new PackageMetadata({
+      mediaType: "mediaType 1",
+      description: "description 1",
+    }),
+    new PackageMetadata({
+      description: "description 2",
+      mediaType: "mediaType 2",
+    }),
+  ];
+  let mockGetAvailablePackageMetadatas: jest.Mock;
+  beforeEach(() => {
+    const response = new GetAvailablePackageMetadatasResponse({
+      packageMetadata: packageMetadatas,
+    });
+    mockGetAvailablePackageMetadatas = jest
+      .fn()
+      .mockImplementation(() => Promise.resolve(response));
+    jest
+      .spyOn(PackagesService, "getAvailablePackageMetadatas")
+      .mockImplementation(mockGetAvailablePackageMetadatas);
+  });
+
+  it("gets the package metadata", async () => {
+    const expectedActions = [
+      { type: getType(actions.availablepackages.requestAvailablePackageMetadatas) },
+      {
+        type: getType(actions.availablepackages.receiveAvailablePackageMetadatas),
+        payload: {
+          packageMetadata: packageMetadatas,
+        },
+      },
+    ];
+    await store.dispatch(
+      actions.availablepackages.fetchAvailablePackageMetadatas(
+        {
+          context: { cluster: cluster, namespace: namespace },
+          identifier: "foo",
+          plugin: plugin,
+        } as AvailablePackageReference,
+        "1.0.0",
+      ),
+    );
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(mockGetAvailablePackageMetadatas.mock.calls[0]).toEqual([
+      {
+        context: { cluster: cluster, namespace: namespace },
+        identifier: "foo",
+        plugin: plugin,
+      } as AvailablePackageReference,
+      "1.0.0",
+    ]);
+  });
+
+  it("dispatches an error if it's unexpected", async () => {
+    jest.spyOn(PackagesService, "getAvailablePackageMetadatas").mockImplementation(() => {
+      throw new Error("Boom!");
+    });
+
+    const expectedActions = [
+      { type: getType(actions.availablepackages.requestAvailablePackageMetadatas) },
+      { type: getType(actions.availablepackages.createErrorPackage), payload: new Error("Boom!") },
+    ];
+    await store.dispatch(
+      actions.availablepackages.fetchAvailablePackageMetadatas(
         {
           context: { cluster: cluster, namespace: namespace },
           identifier: "foo",
