@@ -1244,25 +1244,25 @@
     "@bufbuild/buf-win32-arm64" "1.28.1"
     "@bufbuild/buf-win32-x64" "1.28.1"
 
-"@bufbuild/protobuf@1.4.2", "@bufbuild/protobuf@^1.3.3", "@bufbuild/protobuf@^1.4.1", "@bufbuild/protobuf@^1.4.2":
-  version "1.4.2"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.4.2.tgz#dc4faf21264a47b71a15806616043cb006e80ac8"
-  integrity sha512-JyEH8Z+OD5Sc2opSg86qMHn1EM1Sa+zj/Tc0ovxdwk56ByVNONJSabuCUbLQp+eKN3rWNfrho0X+3SEqEPXIow==
+"@bufbuild/protobuf@1.5.0", "@bufbuild/protobuf@^1.3.3", "@bufbuild/protobuf@^1.4.1", "@bufbuild/protobuf@^1.5.0":
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.5.0.tgz#6d119e2a562da48aa8cd93f1c0297b9bb32a9c93"
+  integrity sha512-0Jg+B7Vl8YGCi7c3iZ8/38iTbZrwdU7or6QZlsA9lhSrhumaXOTMsGO8gqwDuus/THEkTiY3Uxn+PEJwgsLt0w==
 
-"@bufbuild/protoc-gen-es@^1.4.2":
-  version "1.4.2"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-es/-/protoc-gen-es-1.4.2.tgz#00c8b09430dd1154e626da7c247fd6425a1cd41d"
-  integrity sha512-/It7M2s8H1zTDvUMJu6vhBmtnzeFL2VS6e78RYIY38602pNXDK/vbteKUo4KrG0O07lOPFu87hHZ0Y+w5Ib6iw==
+"@bufbuild/protoc-gen-es@^1.5.0":
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-es/-/protoc-gen-es-1.5.0.tgz#cadf0ea2a43b356533c359d2571c147e6ff5e736"
+  integrity sha512-6dPFlw7jhKPNoJUb5+0MPDTMEEbym4AAQZP2sCo4/0J+T2SlAzq5kbuNx92x+SFkOI5V7/iNoPHrxr0TZZ9b2g==
   dependencies:
-    "@bufbuild/protobuf" "^1.4.2"
-    "@bufbuild/protoplugin" "1.4.2"
+    "@bufbuild/protobuf" "^1.5.0"
+    "@bufbuild/protoplugin" "1.5.0"
 
-"@bufbuild/protoplugin@1.4.2", "@bufbuild/protoplugin@^1.3.3":
-  version "1.4.2"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protoplugin/-/protoplugin-1.4.2.tgz#abf9b0e6a3dc8b52b1d6699d7a1ce5219fa82322"
-  integrity sha512-5IwGC1ZRD2A+KydGXeaSOErwfILLqVtvMH/RkN+cOoHcQd4EYXFStcF7g7aR+yICRDEEjQVi5tQF/qPGBSr9vg==
+"@bufbuild/protoplugin@1.5.0", "@bufbuild/protoplugin@^1.3.3":
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoplugin/-/protoplugin-1.5.0.tgz#5cee6c3071519a239f2f049ae4d8b99d73d0a426"
+  integrity sha512-b07uxUfWUHm91PrN7dMMSmO+2RH21kPo+EhczGDR3PDh2t80e4XCZhf3Z/6SM/+ajhVpbl/WNK+z645jsSnGPg==
   dependencies:
-    "@bufbuild/protobuf" "1.4.2"
+    "@bufbuild/protobuf" "1.5.0"
     "@typescript/vfs" "^1.4.0"
     typescript "4.5.2"
 
