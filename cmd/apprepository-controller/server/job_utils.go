@@ -274,6 +274,7 @@ func generateJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config, rest
 
 	return batchv1.JobSpec{
 		TTLSecondsAfterFinished: ttlLifetimeJobs(config),
+		ActiveDeadlineSeconds: activeDeadlineSeconds(config),
 		Template:                podTemplateSpec,
 	}
 }
@@ -325,6 +326,18 @@ func ttlLifetimeJobs(config Config) *int32 {
 		configTTL, err := strconv.ParseInt(config.TTLSecondsAfterFinished, 10, 32)
 		if err == nil {
 			result := int32(configTTL)
+			return &result
+		}
+	}
+	return nil
+}
+
+// activeDeadlineSeconds return active deadline seconds set by user otherwise return nil
+func activeDeadlineSeconds(config Config) *int64 {
+	if config.ActiveDeadlineSeconds != "" {
+		configDeadline, err := strconv.ParseInt(config.ActiveDeadlineSeconds, 10, 64)
+		if err == nil {
+			result := int64(configDeadline)
 			return &result
 		}
 	}

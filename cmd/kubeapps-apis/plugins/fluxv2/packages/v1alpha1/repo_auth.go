@@ -134,7 +134,7 @@ func (s *Server) handleRepoSecretForUpdate(
 			// secret has changed, we try to delete any existing secret
 			if existingSecret != nil {
 				if err = secretInterface.Delete(ctx, existingSecret.Name, metav1.DeleteOptions{}); err != nil {
-					log.Errorf("Error deleting existing secret: [%s] due to %v", err)
+					log.Errorf("Error deleting existing secret: [%s] due to %v", existingSecret.Name, err)
 				}
 			}
 			// and we recreate the updated one
@@ -150,7 +150,7 @@ func (s *Server) handleRepoSecretForUpdate(
 		// no auth, delete existing secret if necessary
 		if existingSecret != nil {
 			if err = secretInterface.Delete(ctx, existingSecret.Name, metav1.DeleteOptions{}); err != nil {
-				log.Errorf("Error deleting existing secret: [%s] due to %v", err)
+				log.Errorf("Error deleting existing secret: [%s] due to %v", existingSecret.Name, err)
 			}
 		}
 		return nil, false, true, nil
@@ -503,7 +503,7 @@ func getRepoTlsConfigAndAuthWithUserManagedSecrets(secret *apiv1.Secret) (*corev
 			}
 		}
 	} else {
-		log.Warning("Unrecognized type of secret [%s]", secret.Name)
+		log.Warningf("Unrecognized type of secret [%s]", secret.Name)
 	}
 	return tlsConfig, auth, nil
 }
@@ -561,7 +561,7 @@ func getRepoTlsConfigAndAuthWithKubeappsManagedSecrets(secret *apiv1.Secret) (*c
 			},
 		}
 	} else {
-		log.Warning("Unrecognized type of secret: [%s]", secret.Name)
+		log.Warningf("Unrecognized type of secret: [%s]", secret.Name)
 	}
 	return tlsConfig, auth, nil
 }

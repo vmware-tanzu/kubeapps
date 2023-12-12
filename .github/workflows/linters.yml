@@ -29,7 +29,7 @@ jobs:
   golang-linter:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: ${{ inputs.golang_version }}
       - uses: actions/checkout@v4
@@ -41,7 +41,7 @@ jobs:
   license-headers-linter:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: ${{ inputs.golang_version }}
       - uses: actions/checkout@v4

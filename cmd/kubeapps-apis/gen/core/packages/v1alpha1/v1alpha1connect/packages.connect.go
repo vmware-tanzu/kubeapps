@@ -45,6 +45,9 @@ const (
 	// PackagesServiceGetAvailablePackageVersionsProcedure is the fully-qualified name of the
 	// PackagesService's GetAvailablePackageVersions RPC.
 	PackagesServiceGetAvailablePackageVersionsProcedure = "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageVersions"
+	// PackagesServiceGetAvailablePackageMetadatasProcedure is the fully-qualified name of the
+	// PackagesService's GetAvailablePackageMetadatas RPC.
+	PackagesServiceGetAvailablePackageMetadatasProcedure = "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageMetadatas"
 	// PackagesServiceGetInstalledPackageSummariesProcedure is the fully-qualified name of the
 	// PackagesService's GetInstalledPackageSummaries RPC.
 	PackagesServiceGetInstalledPackageSummariesProcedure = "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetInstalledPackageSummaries"
@@ -71,6 +74,7 @@ type PackagesServiceClient interface {
 	GetAvailablePackageSummaries(context.Context, *connect_go.Request[v1alpha1.GetAvailablePackageSummariesRequest]) (*connect_go.Response[v1alpha1.GetAvailablePackageSummariesResponse], error)
 	GetAvailablePackageDetail(context.Context, *connect_go.Request[v1alpha1.GetAvailablePackageDetailRequest]) (*connect_go.Response[v1alpha1.GetAvailablePackageDetailResponse], error)
 	GetAvailablePackageVersions(context.Context, *connect_go.Request[v1alpha1.GetAvailablePackageVersionsRequest]) (*connect_go.Response[v1alpha1.GetAvailablePackageVersionsResponse], error)
+	GetAvailablePackageMetadatas(context.Context, *connect_go.Request[v1alpha1.GetAvailablePackageMetadatasRequest]) (*connect_go.Response[v1alpha1.GetAvailablePackageMetadatasResponse], error)
 	GetInstalledPackageSummaries(context.Context, *connect_go.Request[v1alpha1.GetInstalledPackageSummariesRequest]) (*connect_go.Response[v1alpha1.GetInstalledPackageSummariesResponse], error)
 	GetInstalledPackageDetail(context.Context, *connect_go.Request[v1alpha1.GetInstalledPackageDetailRequest]) (*connect_go.Response[v1alpha1.GetInstalledPackageDetailResponse], error)
 	CreateInstalledPackage(context.Context, *connect_go.Request[v1alpha1.CreateInstalledPackageRequest]) (*connect_go.Response[v1alpha1.CreateInstalledPackageResponse], error)
@@ -103,6 +107,11 @@ func NewPackagesServiceClient(httpClient connect_go.HTTPClient, baseURL string, 
 		getAvailablePackageVersions: connect_go.NewClient[v1alpha1.GetAvailablePackageVersionsRequest, v1alpha1.GetAvailablePackageVersionsResponse](
 			httpClient,
 			baseURL+PackagesServiceGetAvailablePackageVersionsProcedure,
+			opts...,
+		),
+		getAvailablePackageMetadatas: connect_go.NewClient[v1alpha1.GetAvailablePackageMetadatasRequest, v1alpha1.GetAvailablePackageMetadatasResponse](
+			httpClient,
+			baseURL+PackagesServiceGetAvailablePackageMetadatasProcedure,
 			opts...,
 		),
 		getInstalledPackageSummaries: connect_go.NewClient[v1alpha1.GetInstalledPackageSummariesRequest, v1alpha1.GetInstalledPackageSummariesResponse](
@@ -143,6 +152,7 @@ type packagesServiceClient struct {
 	getAvailablePackageSummaries    *connect_go.Client[v1alpha1.GetAvailablePackageSummariesRequest, v1alpha1.GetAvailablePackageSummariesResponse]
 	getAvailablePackageDetail       *connect_go.Client[v1alpha1.GetAvailablePackageDetailRequest, v1alpha1.GetAvailablePackageDetailResponse]
 	getAvailablePackageVersions     *connect_go.Client[v1alpha1.GetAvailablePackageVersionsRequest, v1alpha1.GetAvailablePackageVersionsResponse]
+	getAvailablePackageMetadatas    *connect_go.Client[v1alpha1.GetAvailablePackageMetadatasRequest, v1alpha1.GetAvailablePackageMetadatasResponse]
 	getInstalledPackageSummaries    *connect_go.Client[v1alpha1.GetInstalledPackageSummariesRequest, v1alpha1.GetInstalledPackageSummariesResponse]
 	getInstalledPackageDetail       *connect_go.Client[v1alpha1.GetInstalledPackageDetailRequest, v1alpha1.GetInstalledPackageDetailResponse]
 	createInstalledPackage          *connect_go.Client[v1alpha1.CreateInstalledPackageRequest, v1alpha1.CreateInstalledPackageResponse]
@@ -167,6 +177,12 @@ func (c *packagesServiceClient) GetAvailablePackageDetail(ctx context.Context, r
 // kubeappsapis.core.packages.v1alpha1.PackagesService.GetAvailablePackageVersions.
 func (c *packagesServiceClient) GetAvailablePackageVersions(ctx context.Context, req *connect_go.Request[v1alpha1.GetAvailablePackageVersionsRequest]) (*connect_go.Response[v1alpha1.GetAvailablePackageVersionsResponse], error) {
 	return c.getAvailablePackageVersions.CallUnary(ctx, req)
+}
+
+// GetAvailablePackageMetadatas calls
+// kubeappsapis.core.packages.v1alpha1.PackagesService.GetAvailablePackageMetadatas.
+func (c *packagesServiceClient) GetAvailablePackageMetadatas(ctx context.Context, req *connect_go.Request[v1alpha1.GetAvailablePackageMetadatasRequest]) (*connect_go.Response[v1alpha1.GetAvailablePackageMetadatasResponse], error) {
+	return c.getAvailablePackageMetadatas.CallUnary(ctx, req)
 }
 
 // GetInstalledPackageSummaries calls
@@ -211,6 +227,7 @@ type PackagesServiceHandler interface {
 	GetAvailablePackageSummaries(context.Context, *connect_go.Request[v1alpha1.GetAvailablePackageSummariesRequest]) (*connect_go.Response[v1alpha1.GetAvailablePackageSummariesResponse], error)
 	GetAvailablePackageDetail(context.Context, *connect_go.Request[v1alpha1.GetAvailablePackageDetailRequest]) (*connect_go.Response[v1alpha1.GetAvailablePackageDetailResponse], error)
 	GetAvailablePackageVersions(context.Context, *connect_go.Request[v1alpha1.GetAvailablePackageVersionsRequest]) (*connect_go.Response[v1alpha1.GetAvailablePackageVersionsResponse], error)
+	GetAvailablePackageMetadatas(context.Context, *connect_go.Request[v1alpha1.GetAvailablePackageMetadatasRequest]) (*connect_go.Response[v1alpha1.GetAvailablePackageMetadatasResponse], error)
 	GetInstalledPackageSummaries(context.Context, *connect_go.Request[v1alpha1.GetInstalledPackageSummariesRequest]) (*connect_go.Response[v1alpha1.GetInstalledPackageSummariesResponse], error)
 	GetInstalledPackageDetail(context.Context, *connect_go.Request[v1alpha1.GetInstalledPackageDetailRequest]) (*connect_go.Response[v1alpha1.GetInstalledPackageDetailResponse], error)
 	CreateInstalledPackage(context.Context, *connect_go.Request[v1alpha1.CreateInstalledPackageRequest]) (*connect_go.Response[v1alpha1.CreateInstalledPackageResponse], error)
@@ -238,6 +255,11 @@ func NewPackagesServiceHandler(svc PackagesServiceHandler, opts ...connect_go.Ha
 	packagesServiceGetAvailablePackageVersionsHandler := connect_go.NewUnaryHandler(
 		PackagesServiceGetAvailablePackageVersionsProcedure,
 		svc.GetAvailablePackageVersions,
+		opts...,
+	)
+	packagesServiceGetAvailablePackageMetadatasHandler := connect_go.NewUnaryHandler(
+		PackagesServiceGetAvailablePackageMetadatasProcedure,
+		svc.GetAvailablePackageMetadatas,
 		opts...,
 	)
 	packagesServiceGetInstalledPackageSummariesHandler := connect_go.NewUnaryHandler(
@@ -278,6 +300,8 @@ func NewPackagesServiceHandler(svc PackagesServiceHandler, opts ...connect_go.Ha
 			packagesServiceGetAvailablePackageDetailHandler.ServeHTTP(w, r)
 		case PackagesServiceGetAvailablePackageVersionsProcedure:
 			packagesServiceGetAvailablePackageVersionsHandler.ServeHTTP(w, r)
+		case PackagesServiceGetAvailablePackageMetadatasProcedure:
+			packagesServiceGetAvailablePackageMetadatasHandler.ServeHTTP(w, r)
 		case PackagesServiceGetInstalledPackageSummariesProcedure:
 			packagesServiceGetInstalledPackageSummariesHandler.ServeHTTP(w, r)
 		case PackagesServiceGetInstalledPackageDetailProcedure:
@@ -309,6 +333,10 @@ func (UnimplementedPackagesServiceHandler) GetAvailablePackageDetail(context.Con
 
 func (UnimplementedPackagesServiceHandler) GetAvailablePackageVersions(context.Context, *connect_go.Request[v1alpha1.GetAvailablePackageVersionsRequest]) (*connect_go.Response[v1alpha1.GetAvailablePackageVersionsResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("kubeappsapis.core.packages.v1alpha1.PackagesService.GetAvailablePackageVersions is not implemented"))
+}
+
+func (UnimplementedPackagesServiceHandler) GetAvailablePackageMetadatas(context.Context, *connect_go.Request[v1alpha1.GetAvailablePackageMetadatasRequest]) (*connect_go.Response[v1alpha1.GetAvailablePackageMetadatasResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("kubeappsapis.core.packages.v1alpha1.PackagesService.GetAvailablePackageMetadatas is not implemented"))
 }
 
 func (UnimplementedPackagesServiceHandler) GetInstalledPackageSummaries(context.Context, *connect_go.Request[v1alpha1.GetInstalledPackageSummariesRequest]) (*connect_go.Response[v1alpha1.GetInstalledPackageSummariesResponse], error) {

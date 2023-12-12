@@ -66,7 +66,6 @@ env:
   GKE_ZONE: "us-east1-c"
   GKE_PROJECT: "vmware-kubeapps-ci"
   GKE_CLUSTER: "kubeapps-test"
-  SRP_CLI_VERSION: "0.9.9-20230724044630-61ef470-169"
 
 jobs:
   setup:
@@ -185,7 +184,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GOLANG_VERSION }}
       - name: Run go unit tests
@@ -204,7 +203,7 @@ jobs:
       NODE_OPTIONS: "--max-old-space-size=1024"
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Install dashboard dependencies
@@ -246,7 +245,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GOLANG_VERSION }}
       - name: "Install helm (minimum and stable)"
@@ -591,20 +590,6 @@ jobs:
             echo "::notice ::Pushing image ${prod_image}"
             docker push $prod_image
           done
-
-  srp_report:
-    needs:
-      - setup
-      - push_images
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/srp-source-provenance
-        with:
-          SRP_CLI_VERSION: ${{env.SRP_CLI_VERSION}}
-          SRP_CLIENT_ID: ${{secrets.SRP_CLIENT_ID}}
-          SRP_CLIENT_SECRET: ${{secrets.SRP_CLIENT_SECRET}}
-          VERSION: ${{needs.setup.outputs.version}}
 
   sync_chart_from_bitnami:
     needs:

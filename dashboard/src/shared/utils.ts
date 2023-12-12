@@ -1,7 +1,7 @@
 // Copyright 2018-2023 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Code } from "@bufbuild/connect";
+import { Code } from "@connectrpc/connect";
 import { proto3 } from "@bufbuild/protobuf";
 import { InstalledPackageStatus_StatusReason } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import { PackageRepositoryAuth_PackageRepositoryAuthType } from "gen/kubeappsapis/core/packages/v1alpha1/repositories_pb";

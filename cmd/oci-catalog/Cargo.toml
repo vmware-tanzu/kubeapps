@@ -15,11 +15,11 @@ prost = "0.12"
 reqwest = { version = "0.11", default-features = false, features = ["rustls-tls"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tokio = { version = "1.33", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.34", features = ["macros", "rt-multi-thread"] }
 tokio-stream = "0.1"
 tonic = "0.10"
 tonic-health = "0.10"
-url = "2.4"
+url = "2.5"
 
 [build-dependencies]
 tonic-build = "0.10"

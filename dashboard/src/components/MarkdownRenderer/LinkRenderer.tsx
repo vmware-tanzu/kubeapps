@@ -9,7 +9,11 @@ const LinkRenderer: React.FunctionComponent<{}> = (props: any) => {
   }
   // If it's not a hash link it's an external link since it's rendering
   // the package README. Because of that, render it as a normal anchor
-  return <a href={props.href}>{props.children}</a>;
+  return (
+    <a href={props.href} target="_blank" rel="noreferrer">
+      {props.children}
+    </a>
+  );
 };
 
 export default LinkRenderer;

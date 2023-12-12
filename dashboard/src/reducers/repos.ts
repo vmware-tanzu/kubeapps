@@ -140,8 +140,8 @@ const reposReducer = (
           a.name.toLowerCase() > b.name.toLowerCase()
             ? 1
             : b.name.toLowerCase() > a.name.toLowerCase()
-            ? -1
-            : 0,
+              ? -1
+              : 0,
         ),
       };
     case getType(actions.repos.repoUpdated): {

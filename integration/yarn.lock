@@ -2,22 +2,22 @@
 # yarn lockfile v1
 
 
-"@playwright/test@^1.38.1":
-  version "1.38.1"
-  resolved "https://registry.yarnpkg.com/@playwright/test/-/test-1.38.1.tgz#8ef4263e355cd1d8ad7905d471d268e8acb82ed6"
-  integrity sha512-NqRp8XMwj3AK+zKLbZShl0r/9wKgzqI/527bkptKXomtuo+dOjU9NdMASQ8DNC9z9zLOMbG53T4eihYr3XR+BQ==
+"@playwright/test@^1.40.1":
+  version "1.40.1"
+  resolved "https://registry.yarnpkg.com/@playwright/test/-/test-1.40.1.tgz#9e66322d97b1d74b9f8718bacab15080f24cde65"
+  integrity sha512-EaaawMTOeEItCRvfmkI9v6rBkF1svM8wjl/YPRrg2N2Wmp+4qJYkWtJsbew1szfKKDm6fPLy4YAanBhIlf9dWw==
   dependencies:
-    playwright "1.38.1"
+    playwright "1.40.1"
 
 asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
   integrity sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==
 
-axios@^1.5.1:
-  version "1.5.1"
-  resolved "https://registry.yarnpkg.com/axios/-/axios-1.5.1.tgz#11fbaa11fc35f431193a9564109c88c1f27b585f"
-  integrity sha512-Q28iYCWzNHjAm+yEAot5QaAMxhMghWLFVf7rRdwhUI+c2jix2DUXjAHXVi+s1ibs3mjPO/cCgbA++3BjD0vP/A==
+axios@^1.6.2:
+  version "1.6.2"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-1.6.2.tgz#de67d42c755b571d3e698df1b6504cde9b0ee9f2"
+  integrity sha512-7i24Ri4pmDRfJTR7LDBhsOTtcm+9kjX5WiY1X3wIisx6G9So3pfMkEiU7emUBe46oceVImccTEM3k6C5dbVW8A==
   dependencies:
     follow-redirects "^1.15.0"
     form-data "^4.0.0"
@@ -66,24 +66,24 @@ mime-types@^2.1.12:
   dependencies:
     mime-db "1.52.0"
 
-playwright-core@1.38.1:
-  version "1.38.1"
-  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.38.1.tgz#75a3c470aa9576b7d7c4e274de3d79977448ba08"
-  integrity sha512-tQqNFUKa3OfMf4b2jQ7aGLB8o9bS3bOY0yMEtldtC2+spf8QXG9zvXLTXUeRsoNuxEYMgLYR+NXfAa1rjKRcrg==
+playwright-core@1.40.1:
+  version "1.40.1"
+  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.40.1.tgz#442d15e86866a87d90d07af528e0afabe4c75c05"
+  integrity sha512-+hkOycxPiV534c4HhpfX6yrlawqVUzITRKwHAmYfmsVreltEl6fAZJ3DPfLMOODw0H3s1Itd6MDCWmP1fl/QvQ==
 
-playwright@1.38.1:
-  version "1.38.1"
-  resolved "https://registry.yarnpkg.com/playwright/-/playwright-1.38.1.tgz#82ecd9bc4f4f64dbeee8a11c31793748e2528130"
-  integrity sha512-oRMSJmZrOu1FP5iu3UrCx8JEFRIMxLDM0c/3o4bpzU5Tz97BypefWf7TuTNPWeCe279TPal5RtPPZ+9lW/Qkow==
+playwright@1.40.1:
+  version "1.40.1"
+  resolved "https://registry.yarnpkg.com/playwright/-/playwright-1.40.1.tgz#a11bf8dca15be5a194851dbbf3df235b9f53d7ae"
+  integrity sha512-2eHI7IioIpQ0bS1Ovg/HszsN/XKNwEG1kbzSDDmADpclKc7CyqkHw7Mg2JCz/bbCxg25QUPcjksoMW7JcIFQmw==
   dependencies:
-    playwright-core "1.38.1"
+    playwright-core "1.40.1"
   optionalDependencies:
     fsevents "2.3.2"
 
-prettier@^3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/prettier/-/prettier-3.0.3.tgz#432a51f7ba422d1469096c0fdc28e235db8f9643"
-  integrity sha512-L/4pUDMxcNa8R/EthV08Zt42WBO4h1rarVtK0K+QJG0X187OLo7l699jWw0GKuwzkPQ//jMFA/8Xm6Fh3J/DAg==
+prettier@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/prettier/-/prettier-3.1.0.tgz#c6d16474a5f764ea1a4a373c593b779697744d5e"
+  integrity sha512-TQLvXjq5IAibjh8EpBIkNKxO749UEWABoiIZehEPiY4GNpVdhaFKqSTu+QrlU6D2dPAfubRmtJTi4K4YkQ5eXw==
 
 proxy-from-env@^1.1.0:
   version "1.1.0"

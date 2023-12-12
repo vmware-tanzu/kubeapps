@@ -25,6 +25,7 @@ const (
 	PackagesService_GetAvailablePackageSummaries_FullMethodName    = "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageSummaries"
 	PackagesService_GetAvailablePackageDetail_FullMethodName       = "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageDetail"
 	PackagesService_GetAvailablePackageVersions_FullMethodName     = "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageVersions"
+	PackagesService_GetAvailablePackageMetadatas_FullMethodName    = "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageMetadatas"
 	PackagesService_GetInstalledPackageSummaries_FullMethodName    = "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetInstalledPackageSummaries"
 	PackagesService_GetInstalledPackageDetail_FullMethodName       = "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetInstalledPackageDetail"
 	PackagesService_CreateInstalledPackage_FullMethodName          = "/kubeappsapis.core.packages.v1alpha1.PackagesService/CreateInstalledPackage"
@@ -40,6 +41,7 @@ type PackagesServiceClient interface {
 	GetAvailablePackageSummaries(ctx context.Context, in *GetAvailablePackageSummariesRequest, opts ...grpc.CallOption) (*GetAvailablePackageSummariesResponse, error)
 	GetAvailablePackageDetail(ctx context.Context, in *GetAvailablePackageDetailRequest, opts ...grpc.CallOption) (*GetAvailablePackageDetailResponse, error)
 	GetAvailablePackageVersions(ctx context.Context, in *GetAvailablePackageVersionsRequest, opts ...grpc.CallOption) (*GetAvailablePackageVersionsResponse, error)
+	GetAvailablePackageMetadatas(ctx context.Context, in *GetAvailablePackageMetadatasRequest, opts ...grpc.CallOption) (*GetAvailablePackageMetadatasResponse, error)
 	GetInstalledPackageSummaries(ctx context.Context, in *GetInstalledPackageSummariesRequest, opts ...grpc.CallOption) (*GetInstalledPackageSummariesResponse, error)
 	GetInstalledPackageDetail(ctx context.Context, in *GetInstalledPackageDetailRequest, opts ...grpc.CallOption) (*GetInstalledPackageDetailResponse, error)
 	CreateInstalledPackage(ctx context.Context, in *CreateInstalledPackageRequest, opts ...grpc.CallOption) (*CreateInstalledPackageResponse, error)
@@ -77,6 +79,15 @@ func (c *packagesServiceClient) GetAvailablePackageDetail(ctx context.Context, i
 func (c *packagesServiceClient) GetAvailablePackageVersions(ctx context.Context, in *GetAvailablePackageVersionsRequest, opts ...grpc.CallOption) (*GetAvailablePackageVersionsResponse, error) {
 	out := new(GetAvailablePackageVersionsResponse)
 	err := c.cc.Invoke(ctx, PackagesService_GetAvailablePackageVersions_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *packagesServiceClient) GetAvailablePackageMetadatas(ctx context.Context, in *GetAvailablePackageMetadatasRequest, opts ...grpc.CallOption) (*GetAvailablePackageMetadatasResponse, error) {
+	out := new(GetAvailablePackageMetadatasResponse)
+	err := c.cc.Invoke(ctx, PackagesService_GetAvailablePackageMetadatas_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -144,6 +155,7 @@ type PackagesServiceServer interface {
 	GetAvailablePackageSummaries(context.Context, *GetAvailablePackageSummariesRequest) (*GetAvailablePackageSummariesResponse, error)
 	GetAvailablePackageDetail(context.Context, *GetAvailablePackageDetailRequest) (*GetAvailablePackageDetailResponse, error)
 	GetAvailablePackageVersions(context.Context, *GetAvailablePackageVersionsRequest) (*GetAvailablePackageVersionsResponse, error)
+	GetAvailablePackageMetadatas(context.Context, *GetAvailablePackageMetadatasRequest) (*GetAvailablePackageMetadatasResponse, error)
 	GetInstalledPackageSummaries(context.Context, *GetInstalledPackageSummariesRequest) (*GetInstalledPackageSummariesResponse, error)
 	GetInstalledPackageDetail(context.Context, *GetInstalledPackageDetailRequest) (*GetInstalledPackageDetailResponse, error)
 	CreateInstalledPackage(context.Context, *CreateInstalledPackageRequest) (*CreateInstalledPackageResponse, error)
@@ -164,6 +176,9 @@ func (UnimplementedPackagesServiceServer) GetAvailablePackageDetail(context.Cont
 }
 func (UnimplementedPackagesServiceServer) GetAvailablePackageVersions(context.Context, *GetAvailablePackageVersionsRequest) (*GetAvailablePackageVersionsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAvailablePackageVersions not implemented")
+}
+func (UnimplementedPackagesServiceServer) GetAvailablePackageMetadatas(context.Context, *GetAvailablePackageMetadatasRequest) (*GetAvailablePackageMetadatasResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAvailablePackageMetadatas not implemented")
 }
 func (UnimplementedPackagesServiceServer) GetInstalledPackageSummaries(context.Context, *GetInstalledPackageSummariesRequest) (*GetInstalledPackageSummariesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetInstalledPackageSummaries not implemented")
@@ -245,6 +260,24 @@ func _PackagesService_GetAvailablePackageVersions_Handler(srv interface{}, ctx c
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PackagesServiceServer).GetAvailablePackageVersions(ctx, req.(*GetAvailablePackageVersionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PackagesService_GetAvailablePackageMetadatas_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAvailablePackageMetadatasRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PackagesServiceServer).GetAvailablePackageMetadatas(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PackagesService_GetAvailablePackageMetadatas_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PackagesServiceServer).GetAvailablePackageMetadatas(ctx, req.(*GetAvailablePackageMetadatasRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -375,6 +408,10 @@ var PackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAvailablePackageVersions",
 			Handler:    _PackagesService_GetAvailablePackageVersions_Handler,
+		},
+		{
+			MethodName: "GetAvailablePackageMetadatas",
+			Handler:    _PackagesService_GetAvailablePackageMetadatas_Handler,
 		},
 		{
 			MethodName: "GetInstalledPackageSummaries",
