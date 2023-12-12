@@ -1244,30 +1244,25 @@
     "@bufbuild/buf-win32-arm64" "1.28.1"
     "@bufbuild/buf-win32-x64" "1.28.1"
 
-"@bufbuild/protobuf@1.4.2":
-  version "1.4.2"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.4.2.tgz#dc4faf21264a47b71a15806616043cb006e80ac8"
-  integrity sha512-JyEH8Z+OD5Sc2opSg86qMHn1EM1Sa+zj/Tc0ovxdwk56ByVNONJSabuCUbLQp+eKN3rWNfrho0X+3SEqEPXIow==
-
-"@bufbuild/protobuf@^1.3.3", "@bufbuild/protobuf@^1.4.2", "@bufbuild/protobuf@^1.5.1":
+"@bufbuild/protobuf@1.5.1", "@bufbuild/protobuf@^1.3.3", "@bufbuild/protobuf@^1.5.1":
   version "1.5.1"
   resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.5.1.tgz#5cecbb7d8bc9a5daaff9b8b4d0ef9bbc64c80e73"
   integrity sha512-LX+MeB1AzlbqgJXkq83lilQpLGnPvsAMj7SH8KtJAmQfBc55ee78Stxuff/HMw0xLMYJN3P1FBh5TENgjJof1w==
 
-"@bufbuild/protoc-gen-es@^1.4.2":
-  version "1.4.2"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-es/-/protoc-gen-es-1.4.2.tgz#00c8b09430dd1154e626da7c247fd6425a1cd41d"
-  integrity sha512-/It7M2s8H1zTDvUMJu6vhBmtnzeFL2VS6e78RYIY38602pNXDK/vbteKUo4KrG0O07lOPFu87hHZ0Y+w5Ib6iw==
+"@bufbuild/protoc-gen-es@^1.5.1":
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-es/-/protoc-gen-es-1.5.1.tgz#02397cf23d5f05f956a0d42906583909462ac1bd"
+  integrity sha512-o4NNOf49QEjowhpQxm3fq/yv+LstO9aMmNlEE3fz4WlD5fBE8OZ7q38O+WMUVoB4Y41joxk24v7IIm61trwRyg==
   dependencies:
-    "@bufbuild/protobuf" "^1.4.2"
-    "@bufbuild/protoplugin" "1.4.2"
+    "@bufbuild/protobuf" "^1.5.1"
+    "@bufbuild/protoplugin" "1.5.1"
 
-"@bufbuild/protoplugin@1.4.2", "@bufbuild/protoplugin@^1.3.3":
-  version "1.4.2"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protoplugin/-/protoplugin-1.4.2.tgz#abf9b0e6a3dc8b52b1d6699d7a1ce5219fa82322"
-  integrity sha512-5IwGC1ZRD2A+KydGXeaSOErwfILLqVtvMH/RkN+cOoHcQd4EYXFStcF7g7aR+yICRDEEjQVi5tQF/qPGBSr9vg==
+"@bufbuild/protoplugin@1.5.1", "@bufbuild/protoplugin@^1.3.3":
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoplugin/-/protoplugin-1.5.1.tgz#5b4b280d73189f10cbc3ae3772aa9f1f0d0de74d"
+  integrity sha512-4qQD3UIEXflPYCEPZxyvi9yoQiX3ONWgLw24uLJrw9AnbY7Pw1xT5v8yIMXIVccBEZNSpvIF6qD/JXfIapjRtw==
   dependencies:
-    "@bufbuild/protobuf" "1.4.2"
+    "@bufbuild/protobuf" "1.5.1"
     "@typescript/vfs" "^1.4.0"
     typescript "4.5.2"
 
