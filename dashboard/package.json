@@ -121,7 +121,7 @@
     "resize-observer-polyfill": "^1.5.1",
     "sass": "^1.69.5",
     "shx": "^0.3.4",
-    "stylelint": "^15.10.3",
+    "stylelint": "^15.11.0",
     "stylelint-config-idiomatic-order": "^9.0.0",
     "stylelint-config-prettier": "^9.0.5",
     "stylelint-config-standard-scss": "^11.1.0",
