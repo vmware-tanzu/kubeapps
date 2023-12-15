@@ -1134,10 +1134,10 @@
   resolved "https://registry.yarnpkg.com/@babel/regjsgen/-/regjsgen-0.8.0.tgz#f0ba69b075e1f05fb2825b7fad991e7adbb18310"
   integrity sha512-x/rqGMdzj+fWZvCOYForTghzbtqPDZ5gPwaoNGHdgDfF2QA/XZbCBp4Moo5scrkAMPhB7z26XM/AaHuIJdgauA==
 
-"@babel/runtime-corejs3@^7.20.7", "@babel/runtime-corejs3@^7.22.15", "@babel/runtime-corejs3@^7.23.2":
-  version "7.23.2"
-  resolved "https://registry.yarnpkg.com/@babel/runtime-corejs3/-/runtime-corejs3-7.23.2.tgz#a5cd9d8b408fb946b2f074b21ea40c04e516795c"
-  integrity sha512-54cIh74Z1rp4oIjsHjqN+WM4fMyCBYe+LpZ9jWm51CZ1fbH3SkAzQD/3XLoNkjbJ7YEmjobLXyvQrFypRHOrXw==
+"@babel/runtime-corejs3@^7.20.7", "@babel/runtime-corejs3@^7.22.15", "@babel/runtime-corejs3@^7.23.5":
+  version "7.23.6"
+  resolved "https://registry.yarnpkg.com/@babel/runtime-corejs3/-/runtime-corejs3-7.23.6.tgz#c25dd662fc205a03fdaefd122066eb9d4533ccf9"
+  integrity sha512-Djs/ZTAnpyj0nyg7p1J6oiE/tZ9G2stqAFlLGZynrW+F3k2w2jGK2mLOBxzYIOcZYA89+c3d3wXKpYLcpwcU6w==
   dependencies:
     core-js-pure "^3.30.2"
     regenerator-runtime "^0.14.0"
@@ -5041,10 +5041,15 @@ cookie-signature@1.0.6:
   resolved "https://registry.yarnpkg.com/cookie-signature/-/cookie-signature-1.0.6.tgz#e303a882b342cc3ee8ca513a79999734dab3ae2c"
   integrity sha512-QADzlaHc8icV8I7vbaJXJwod9HWYp8uCqf1xa4OfNu1T7JVxQIrUgOWtHdNDtPiywmFbiS12VjotIXLrKM3orQ==
 
-cookie@0.5.0, cookie@~0.5.0:
+cookie@0.5.0:
   version "0.5.0"
   resolved "https://registry.yarnpkg.com/cookie/-/cookie-0.5.0.tgz#d1f5d71adec6558c58f389987c366aa47e994f8b"
   integrity sha512-YZ3GUyn/o8gfKJlnlX7g7xq4gyO6OSuhGPKaaGssGB2qgDUS0gPgtTvoyZLTt9Ab6dC4hfc9dV5arkvc/OCmrw==
+
+cookie@~0.6.0:
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/cookie/-/cookie-0.6.0.tgz#2798b04b071b0ecbff0dbb62a505a8efa4e19051"
+  integrity sha512-U71cyTamuh1CRNCfpGY6to28lxvNwPG4Guz/EVjgf3Jmzv0vlDp1atT9eS5dDjMYHucpHbWns6Lwf3BKz6svdw==
 
 copy-descriptor@^0.1.0:
   version "0.1.1"
@@ -14127,10 +14132,10 @@ svgo@^2.7.0:
     picocolors "^1.0.0"
     stable "^0.1.8"
 
-swagger-client@^3.24.5:
-  version "3.24.5"
-  resolved "https://registry.yarnpkg.com/swagger-client/-/swagger-client-3.24.5.tgz#a43f866bdcfdb2584032a865b7fe36e3483cbe14"
-  integrity sha512-qb4Rr9LpWs7o2AO4KdiIK+dz0GbrRLyD+UyN24h6AcNcDUnwfkb6LgFE4e6bXwVXWJzMp27w1QvSQ4hQNMPnoQ==
+swagger-client@^3.24.6:
+  version "3.24.6"
+  resolved "https://registry.yarnpkg.com/swagger-client/-/swagger-client-3.24.6.tgz#7e255bb802b694e53e966406918be47f75a1c559"
+  integrity sha512-vgolnwLjsLCLe3mA9yOuXqmslVzxRpjz0fTBWwPtDGvYSU8FMVra0FGevw+N2OQ80UE1rOqgv4Te0AfvzMyR8g==
   dependencies:
     "@babel/runtime-corejs3" "^7.22.15"
     "@swagger-api/apidom-core" ">=0.83.0 <1.0.0"
@@ -14138,7 +14143,7 @@ swagger-client@^3.24.5:
     "@swagger-api/apidom-json-pointer" ">=0.83.0 <1.0.0"
     "@swagger-api/apidom-ns-openapi-3-1" ">=0.83.0 <1.0.0"
     "@swagger-api/apidom-reference" ">=0.83.0 <1.0.0"
-    cookie "~0.5.0"
+    cookie "~0.6.0"
     deepmerge "~4.3.0"
     fast-json-patch "^3.0.0-1"
     is-plain-object "^5.0.0"
@@ -14149,12 +14154,12 @@ swagger-client@^3.24.5:
     traverse "~0.6.6"
     undici "^5.24.0"
 
-swagger-ui-react@^5.10.3:
-  version "5.10.3"
-  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-5.10.3.tgz#35db9855d18c36674d585837ba0c653db8cd0eb0"
-  integrity sha512-AB/ko3xD76wyCFbfb5zihy8Gacg7Lz62umzcmBLC/+VN8twib4ayWNZ48lTRh6Kb9vitvEQCDM/4VS2uTwwy0w==
+swagger-ui-react@^5.10.5:
+  version "5.10.5"
+  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-5.10.5.tgz#a9da3c452599530b1df4e1c7860c2888f683c617"
+  integrity sha512-uBQLku4j3L1NC4/xE3HTgz1EcFisBphh8AnGqbj9LMxeGGcpKOlx/ZDigRAeVXWr9jOnZZbeGBzMe4NVHxPZrQ==
   dependencies:
-    "@babel/runtime-corejs3" "^7.23.2"
+    "@babel/runtime-corejs3" "^7.23.5"
     "@braintree/sanitize-url" "=6.0.4"
     base64-js "^1.5.1"
     classnames "^2.3.1"
@@ -14183,7 +14188,7 @@ swagger-ui-react@^5.10.3:
     reselect "^4.1.8"
     serialize-error "^8.1.0"
     sha.js "^2.4.11"
-    swagger-client "^3.24.5"
+    swagger-client "^3.24.6"
     url-parse "^1.5.10"
     xml "=1.0.1"
     xml-but-prettier "^1.0.1"
