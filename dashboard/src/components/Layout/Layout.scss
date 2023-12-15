@@ -88,11 +88,10 @@
   flex: 1 1 auto;
 
   .content-area {
+    overflow: hidden auto;
     flex: 1 1 auto;
     padding: 0 0.6rem;
     -webkit-overflow-scrolling: touch;
-    overflow-x: hidden;
-    overflow-y: auto;
   }
 }
 
