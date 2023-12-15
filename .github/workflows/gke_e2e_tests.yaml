@@ -106,7 +106,7 @@ jobs:
         run: ./script/run_e2e_tests.sh
       - name: 'Upload Artifacts'
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: gke_${{ inputs.GKE_RELEASE_CHANNEL }}_e2e_tests_reports
           path: integration/reports
