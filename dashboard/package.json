@@ -122,7 +122,7 @@
     "sass": "^1.69.5",
     "shx": "^0.3.4",
     "stylelint": "^15.11.0",
-    "stylelint-config-idiomatic-order": "^9.0.0",
+    "stylelint-config-idiomatic-order": "^10.0.0",
     "stylelint-config-prettier": "^9.0.5",
     "stylelint-config-standard-scss": "^11.1.0",
     "stylelint-scss": "^5.3.1",
