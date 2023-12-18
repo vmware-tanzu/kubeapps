@@ -20,7 +20,7 @@ jobs:
         with:
           config_file: .yamllint.yml
       - run: echo ${{ steps.yaml-lint.outputs.logfile }}
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: yamllint-logfile

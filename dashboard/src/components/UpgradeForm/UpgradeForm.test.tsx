@@ -161,6 +161,15 @@ beforeEach(() => {
   spyOnUseNavigate = jest.spyOn(ReactRouter, "useNavigate").mockReturnValue(mockNavigate);
 });
 
+// Mocking react-monaco-editor to a simple empty <div> to prevent issues with Jest
+// otherwise, an error with while registering the diff webworker is thrown
+// rel: https://github.com/microsoft/vscode/pull/192151
+jest.mock("react-monaco-editor", () => {
+  return {
+    MonacoDiffEditor: () => <div />,
+  };
+});
+
 afterEach(() => {
   jest.restoreAllMocks();
   spyOnUseNavigate.mockRestore();
