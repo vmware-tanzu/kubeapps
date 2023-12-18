@@ -295,7 +295,7 @@ jobs:
           cache-to: type=gha,mode=max
           outputs: type=docker,dest=${{ steps.setup.outputs.img_file }}
       - name: Upload image
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{matrix.image}}-image
           path: ${{ steps.setup.outputs.img_file }}
@@ -332,7 +332,7 @@ jobs:
           cache-to: type=gha,mode=max
           outputs: type=docker,dest=${{ steps.setup.outputs.img_file }}
       - name: Upload image
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.setup.outputs.img_name }}-image
           path: ${{ steps.setup.outputs.img_file }}
@@ -367,7 +367,7 @@ jobs:
           build-args: ${{ needs.setup.outputs.version }}
           outputs: type=docker,dest=${{ steps.setup.outputs.img_file }}
       - name: Upload image
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{steps.setup.outputs.img_name}}-image
           path: ${{ steps.setup.outputs.img_file }}
@@ -529,7 +529,7 @@ jobs:
         continue-on-error: true
       - name: 'Upload Artifacts'
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: e2e_tests_${{ matrix.tests_group }}_reports
           path: integration/reports
