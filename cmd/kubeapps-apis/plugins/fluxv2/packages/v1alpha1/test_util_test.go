@@ -51,6 +51,14 @@ type withWatchWrapper struct {
 	watcher  *watch.RaceFreeFakeWatcher
 }
 
+func (w *withWatchWrapper) GroupVersionKindFor(obj runtime.Object) (schema.GroupVersionKind, error) {
+	return w.delegate.GroupVersionKindFor(obj)
+}
+
+func (w *withWatchWrapper) IsObjectNamespaced(obj runtime.Object) (bool, error) {
+	return w.delegate.IsObjectNamespaced(obj)
+}
+
 var _ client.WithWatch = &withWatchWrapper{}
 
 func (w *withWatchWrapper) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {

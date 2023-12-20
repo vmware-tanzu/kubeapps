@@ -14,7 +14,8 @@ import (
 	"github.com/bufbuild/connect-go"
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	sourcev1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -636,7 +637,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			}
 			defer ts.Close()
 
-			s, mock, err := newSimpleServerWithRepos(t, []sourcev1.HelmRepository{*repo})
+			s, mock, err := newSimpleServerWithRepos(t, []sourcev1beta2.HelmRepository{*repo})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -1120,14 +1121,14 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 	}
 }
 
-func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPackages) (charts []sourcev1.HelmChart, releases []helmv2.HelmRelease, cleanup func()) {
+func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPackages) (charts []sourcev1beta2.HelmChart, releases []helmv2.HelmRelease, cleanup func()) {
 	httpServers := []*httptest.Server{}
 	cleanup = func() {
 		for _, ts := range httpServers {
 			ts.Close()
 		}
 	}
-	charts = []sourcev1.HelmChart{}
+	charts = []sourcev1beta2.HelmChart{}
 	releases = []helmv2.HelmRelease{}
 
 	for _, existing := range existingK8sObjs {
@@ -1146,24 +1147,24 @@ func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPa
 		}))
 		httpServers = append(httpServers, ts)
 
-		chartSpec := &sourcev1.HelmChartSpec{
+		chartSpec := &sourcev1beta2.HelmChartSpec{
 			Chart: existing.chartName,
-			SourceRef: sourcev1.LocalHelmChartSourceReference{
+			SourceRef: sourcev1beta2.LocalHelmChartSourceReference{
 				Name: existing.repoName,
-				Kind: sourcev1.HelmRepositoryKind,
+				Kind: sourcev1beta2.HelmRepositoryKind,
 			},
 			Version:  existing.chartSpecVersion,
 			Interval: metav1.Duration{Duration: 1 * time.Minute},
 		}
 
-		chartStatus := &sourcev1.HelmChartStatus{
+		chartStatus := &sourcev1beta2.HelmChartStatus{
 			Conditions: []metav1.Condition{
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
 					Message:            "Fetched revision: " + existing.chartSpecVersion,
 					Type:               fluxmeta.ReadyCondition,
 					Status:             metav1.ConditionTrue,
-					Reason:             sourcev1.ChartPullSucceededReason,
+					Reason:             sourcev1beta2.ChartPullSucceededReason,
 				},
 			},
 			Artifact: &sourcev1.Artifact{
@@ -1181,7 +1182,7 @@ func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPa
 					Version: existing.chartSpecVersion,
 					SourceRef: helmv2.CrossNamespaceObjectReference{
 						Name:      existing.repoName,
-						Kind:      sourcev1.HelmRepositoryKind,
+						Kind:      sourcev1beta2.HelmRepositoryKind,
 						Namespace: existing.repoNamespace,
 					},
 				},

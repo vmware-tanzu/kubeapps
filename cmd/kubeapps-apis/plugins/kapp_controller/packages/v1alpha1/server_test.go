@@ -6464,11 +6464,11 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 						ScopeToFallbackAllowedNamespaces: true,
 					}
 					failingAPIServicesPolicy := resourceTypesFlags.FailingAPIServicePolicy()
-					supportingNsObjs, err := kappcmdapp.FactoryClients(depsFactory, kappcmdcore.NamespaceFlags{Name: namespace}, resourceTypesFlags, logger.NewNoopLogger())
+					supportingNsObjs, err := kappcmdapp.FactoryClients(depsFactory, kappcmdcore.NamespaceFlags{Name: namespace}, namespace, resourceTypesFlags, logger.NewNoopLogger())
 					if err != nil {
 						return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get config due to: %w", err))
 					}
-					supportingObjs, err := kappcmdapp.FactoryClients(depsFactory, kappcmdcore.NamespaceFlags{Name: ""}, resourceTypesFlags, logger.NewNoopLogger())
+					supportingObjs, err := kappcmdapp.FactoryClients(depsFactory, kappcmdcore.NamespaceFlags{Name: ""}, "", resourceTypesFlags, logger.NewNoopLogger())
 					if err != nil {
 						return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("unable to get config due to: %w", err))
 					}

@@ -15,7 +15,8 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1"
+	sourcev1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
 	redismock "github.com/go-redis/redismock/v8"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
@@ -186,7 +187,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 			defer ts2.Close()
 
-			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, secretObjs)
+			s, mock, err := newServerWithRepos(t, []sourcev1beta2.HelmRepository{*repo}, charts, secretObjs)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -290,7 +291,7 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 		}
 		defer ts2.Close()
 
-		s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
+		s, mock, err := newServerWithRepos(t, []sourcev1beta2.HelmRepository{*repo}, charts, nil)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -467,7 +468,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			}
 			defer ts2.Close()
 
-			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
+			s, mock, err := newServerWithRepos(t, []sourcev1beta2.HelmRepository{*repo}, charts, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -648,7 +649,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			}
 			defer ts.Close()
 
-			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
+			s, mock, err := newServerWithRepos(t, []sourcev1beta2.HelmRepository{*repo}, charts, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -735,7 +736,7 @@ func TestGetOciAvailablePackageVersions(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, tc.charts, nil)
+			s, mock, err := newServerWithRepos(t, []sourcev1beta2.HelmRepository{*repo}, tc.charts, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -978,14 +979,14 @@ func TestChartWithRelativeURL(t *testing.T) {
 		}
 	}))
 
-	repoSpec := &sourcev1.HelmRepositorySpec{
+	repoSpec := &sourcev1beta2.HelmRepositorySpec{
 		URL:      ts.URL,
 		Interval: metav1.Duration{Duration: 1 * time.Minute},
 	}
 
-	repoStatus := &sourcev1.HelmRepositoryStatus{
+	repoStatus := &sourcev1beta2.HelmRepositoryStatus{
 		Artifact: &sourcev1.Artifact{
-			Checksum:       "651f952130ea96823711d08345b85e82be011dc6",
+			Digest:         "651f952130ea96823711d08345b85e82be011dc6",
 			LastUpdateTime: metav1.Time{Time: lastUpdateTime},
 			Revision:       "651f952130ea96823711d08345b85e82be011dc6",
 		},
@@ -1002,7 +1003,7 @@ func TestChartWithRelativeURL(t *testing.T) {
 	defer ts.Close()
 
 	s, mock, err := newServerWithRepos(t,
-		[]sourcev1.HelmRepository{repo},
+		[]sourcev1beta2.HelmRepository{repo},
 		[]testSpecChartWithUrl{
 			{
 				chartID:       fmt.Sprintf("%s/airflow", repoName),
@@ -1072,7 +1073,7 @@ func TestGetOciAvailablePackageDetail(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, tc.charts, nil)
+			s, mock, err := newServerWithRepos(t, []sourcev1beta2.HelmRepository{*repo}, tc.charts, nil)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -1128,8 +1129,8 @@ func TestGetOciAvailablePackageDetail(t *testing.T) {
 	}
 }
 
-func newChart(name, namespace string, spec *sourcev1.HelmChartSpec, status *sourcev1.HelmChartStatus) sourcev1.HelmChart {
-	helmChart := sourcev1.HelmChart{
+func newChart(name, namespace string, spec *sourcev1beta2.HelmChartSpec, status *sourcev1beta2.HelmChartStatus) sourcev1beta2.HelmChart {
+	helmChart := sourcev1beta2.HelmChart{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       name,
 			Generation: int64(1),

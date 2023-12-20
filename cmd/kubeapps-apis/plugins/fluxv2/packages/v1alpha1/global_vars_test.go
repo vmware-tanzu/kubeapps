@@ -5,13 +5,15 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
 	"os"
 	"time"
 
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
+
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1"
+	sourcev1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -1004,67 +1006,67 @@ var (
 		},
 	}
 
-	add_repo_1 = sourcev1.HelmRepository{
+	add_repo_1 = sourcev1beta2.HelmRepository{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.HelmRepositoryKind,
-			APIVersion: sourcev1.GroupVersion.String(),
+			Kind:       sourcev1beta2.HelmRepositoryKind,
+			APIVersion: sourcev1beta2.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            "bar",
 			Namespace:       "foo",
 			ResourceVersion: "1",
 		},
-		Spec: sourcev1.HelmRepositorySpec{
+		Spec: sourcev1beta2.HelmRepositorySpec{
 			URL:      "http://example.com",
 			Interval: metav1.Duration{Duration: 10 * time.Minute},
 		},
 	}
 
-	add_repo_2 = sourcev1.HelmRepository{
+	add_repo_2 = sourcev1beta2.HelmRepository{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.HelmRepositoryKind,
-			APIVersion: sourcev1.GroupVersion.String(),
+			Kind:       sourcev1beta2.HelmRepositoryKind,
+			APIVersion: sourcev1beta2.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            "bar",
 			Namespace:       "foo",
 			ResourceVersion: "1",
 		},
-		Spec: sourcev1.HelmRepositorySpec{
+		Spec: sourcev1beta2.HelmRepositorySpec{
 			URL:       "http://example.com",
 			Interval:  metav1.Duration{Duration: 10 * time.Minute},
 			SecretRef: &fluxmeta.LocalObjectReference{Name: "bar-"},
 		},
 	}
 
-	add_repo_3 = sourcev1.HelmRepository{
+	add_repo_3 = sourcev1beta2.HelmRepository{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.HelmRepositoryKind,
-			APIVersion: sourcev1.GroupVersion.String(),
+			Kind:       sourcev1beta2.HelmRepositoryKind,
+			APIVersion: sourcev1beta2.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            "bar",
 			Namespace:       "foo",
 			ResourceVersion: "1",
 		},
-		Spec: sourcev1.HelmRepositorySpec{
+		Spec: sourcev1beta2.HelmRepositorySpec{
 			URL:       "http://example.com",
 			Interval:  metav1.Duration{Duration: 10 * time.Minute},
 			SecretRef: &fluxmeta.LocalObjectReference{Name: "secret-1"},
 		},
 	}
 
-	add_repo_4 = sourcev1.HelmRepository{
+	add_repo_4 = sourcev1beta2.HelmRepository{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.HelmRepositoryKind,
-			APIVersion: sourcev1.GroupVersion.String(),
+			Kind:       sourcev1beta2.HelmRepositoryKind,
+			APIVersion: sourcev1beta2.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            "bar",
 			Namespace:       "foo",
 			ResourceVersion: "1",
 		},
-		Spec: sourcev1.HelmRepositorySpec{
+		Spec: sourcev1beta2.HelmRepositorySpec{
 			URL:             "http://example.com",
 			Interval:        metav1.Duration{Duration: 10 * time.Minute},
 			SecretRef:       &fluxmeta.LocalObjectReference{Name: "bar-"},
@@ -1072,51 +1074,51 @@ var (
 		},
 	}
 
-	add_repo_5 = sourcev1.HelmRepository{
+	add_repo_5 = sourcev1beta2.HelmRepository{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.HelmRepositoryKind,
-			APIVersion: sourcev1.GroupVersion.String(),
+			Kind:       sourcev1beta2.HelmRepositoryKind,
+			APIVersion: sourcev1beta2.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            "bar",
 			Namespace:       "foo",
 			ResourceVersion: "1",
 		},
-		Spec: sourcev1.HelmRepositorySpec{
+		Spec: sourcev1beta2.HelmRepositorySpec{
 			URL:             "http://example.com",
 			Interval:        metav1.Duration{Duration: 10 * time.Minute},
 			PassCredentials: true,
 		},
 	}
 
-	add_repo_6 = sourcev1.HelmRepository{
+	add_repo_6 = sourcev1beta2.HelmRepository{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.HelmRepositoryKind,
-			APIVersion: sourcev1.GroupVersion.String(),
+			Kind:       sourcev1beta2.HelmRepositoryKind,
+			APIVersion: sourcev1beta2.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            "bar",
 			Namespace:       "foo",
 			ResourceVersion: "1",
 		},
-		Spec: sourcev1.HelmRepositorySpec{
+		Spec: sourcev1beta2.HelmRepositorySpec{
 			URL:      github_stefanprodan_podinfo_oci_registry_url,
 			Interval: metav1.Duration{Duration: 10 * time.Minute},
 			Type:     "oci",
 		},
 	}
 
-	add_repo_7 = sourcev1.HelmRepository{
+	add_repo_7 = sourcev1beta2.HelmRepository{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.HelmRepositoryKind,
-			APIVersion: sourcev1.GroupVersion.String(),
+			Kind:       sourcev1beta2.HelmRepositoryKind,
+			APIVersion: sourcev1beta2.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            "bar",
 			Namespace:       "foo",
 			ResourceVersion: "1",
 		},
-		Spec: sourcev1.HelmRepositorySpec{
+		Spec: sourcev1beta2.HelmRepositorySpec{
 			URL:      github_stefanprodan_podinfo_oci_registry_url,
 			Interval: metav1.Duration{Duration: 10 * time.Minute},
 			Type:     "oci",
@@ -1124,10 +1126,10 @@ var (
 		},
 	}
 
-	add_repo_8 = sourcev1.HelmRepository{
+	add_repo_8 = sourcev1beta2.HelmRepository{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.HelmRepositoryKind,
-			APIVersion: sourcev1.GroupVersion.String(),
+			Kind:       sourcev1beta2.HelmRepositoryKind,
+			APIVersion: sourcev1beta2.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            "bar",
@@ -1135,7 +1137,7 @@ var (
 			ResourceVersion: "1",
 			Annotations:     map[string]string{k8sutils.AnnotationDescriptionKey: "repo desc"},
 		},
-		Spec: sourcev1.HelmRepositorySpec{
+		Spec: sourcev1beta2.HelmRepositorySpec{
 			URL:      "http://example.com",
 			Interval: metav1.Duration{Duration: 10 * time.Minute},
 		},
@@ -2273,7 +2275,7 @@ var (
 	flux_helm_release_basic = newFluxHelmRelease(helmv2.HelmChartTemplateSpec{
 		Chart: "podinfo",
 		SourceRef: helmv2.CrossNamespaceObjectReference{
-			Kind:      sourcev1.HelmRepositoryKind,
+			Kind:      sourcev1beta2.HelmRepositoryKind,
 			Name:      "podinfo",
 			Namespace: "namespace-1",
 		},
@@ -2282,7 +2284,7 @@ var (
 	flux_helm_release_semver_constraint = newFluxHelmRelease(helmv2.HelmChartTemplateSpec{
 		Chart: "podinfo",
 		SourceRef: helmv2.CrossNamespaceObjectReference{
-			Kind:      sourcev1.HelmRepositoryKind,
+			Kind:      sourcev1beta2.HelmRepositoryKind,
 			Name:      "podinfo",
 			Namespace: "namespace-1",
 		},
@@ -2304,7 +2306,7 @@ var (
 				Spec: helmv2.HelmChartTemplateSpec{
 					Chart: "podinfo",
 					SourceRef: helmv2.CrossNamespaceObjectReference{
-						Kind:      sourcev1.HelmRepositoryKind,
+						Kind:      sourcev1beta2.HelmRepositoryKind,
 						Name:      "podinfo",
 						Namespace: "namespace-1",
 					},
@@ -2337,7 +2339,7 @@ var (
 				Spec: helmv2.HelmChartTemplateSpec{
 					Chart: "podinfo",
 					SourceRef: helmv2.CrossNamespaceObjectReference{
-						Kind:      sourcev1.HelmRepositoryKind,
+						Kind:      sourcev1beta2.HelmRepositoryKind,
 						Name:      "podinfo",
 						Namespace: "namespace-1",
 					},
@@ -2368,7 +2370,7 @@ var (
 				Spec: helmv2.HelmChartTemplateSpec{
 					Chart: "redis",
 					SourceRef: helmv2.CrossNamespaceObjectReference{
-						Kind:      sourcev1.HelmRepositoryKind,
+						Kind:      sourcev1beta2.HelmRepositoryKind,
 						Name:      "bitnami-1",
 						Namespace: "default",
 					},
@@ -2395,7 +2397,7 @@ var (
 				Spec: helmv2.HelmChartTemplateSpec{
 					Chart: "redis",
 					SourceRef: helmv2.CrossNamespaceObjectReference{
-						Kind:      sourcev1.HelmRepositoryKind,
+						Kind:      sourcev1beta2.HelmRepositoryKind,
 						Name:      "bitnami-1",
 						Namespace: "default",
 					},
@@ -2468,7 +2470,7 @@ var (
 				Spec: helmv2.HelmChartTemplateSpec{
 					Chart: "redis",
 					SourceRef: helmv2.CrossNamespaceObjectReference{
-						Kind:      sourcev1.HelmRepositoryKind,
+						Kind:      sourcev1beta2.HelmRepositoryKind,
 						Name:      "bitnami-1",
 						Namespace: "default",
 					},
@@ -2660,7 +2662,7 @@ var (
 		Chart:   "podinfo",
 		Version: "5.2.1",
 		SourceRef: helmv2.CrossNamespaceObjectReference{
-			Kind:      sourcev1.HelmRepositoryKind,
+			Kind:      sourcev1beta2.HelmRepositoryKind,
 			Name:      "podinfo",
 			Namespace: "namespace-1",
 		},
@@ -2670,7 +2672,7 @@ var (
 		Chart:   "podinfo",
 		Version: ">=5.2.1",
 		SourceRef: helmv2.CrossNamespaceObjectReference{
-			Kind:      sourcev1.HelmRepositoryKind,
+			Kind:      sourcev1beta2.HelmRepositoryKind,
 			Name:      "podinfo",
 			Namespace: "namespace-1",
 		},
@@ -2680,7 +2682,7 @@ var (
 		Chart:   "podinfo",
 		Version: ">=5.2.1 <6.0.0",
 		SourceRef: helmv2.CrossNamespaceObjectReference{
-			Kind:      sourcev1.HelmRepositoryKind,
+			Kind:      sourcev1beta2.HelmRepositoryKind,
 			Name:      "podinfo",
 			Namespace: "namespace-1",
 		},
@@ -2690,7 +2692,7 @@ var (
 		Chart:   "podinfo",
 		Version: ">=5.2.1 <5.3.0",
 		SourceRef: helmv2.CrossNamespaceObjectReference{
-			Kind:      sourcev1.HelmRepositoryKind,
+			Kind:      sourcev1beta2.HelmRepositoryKind,
 			Name:      "podinfo",
 			Namespace: "namespace-1",
 		},
@@ -2713,7 +2715,7 @@ var (
 					Version: ">=14.4.0",
 					Chart:   "redis",
 					SourceRef: helmv2.CrossNamespaceObjectReference{
-						Kind:      sourcev1.HelmRepositoryKind,
+						Kind:      sourcev1beta2.HelmRepositoryKind,
 						Name:      "bitnami-1",
 						Namespace: "default",
 					},
@@ -2740,7 +2742,7 @@ var (
 					Version: ">=14.4.0 <15.0.0",
 					Chart:   "redis",
 					SourceRef: helmv2.CrossNamespaceObjectReference{
-						Kind:      sourcev1.HelmRepositoryKind,
+						Kind:      sourcev1beta2.HelmRepositoryKind,
 						Name:      "bitnami-1",
 						Namespace: "default",
 					},
@@ -2767,7 +2769,7 @@ var (
 					Version: ">=14.4.0 <14.5.0",
 					Chart:   "redis",
 					SourceRef: helmv2.CrossNamespaceObjectReference{
-						Kind:      sourcev1.HelmRepositoryKind,
+						Kind:      sourcev1beta2.HelmRepositoryKind,
 						Name:      "bitnami-1",
 						Namespace: "default",
 					},
@@ -3225,14 +3227,14 @@ var (
 	}
 
 	get_summaries_repo_1 = newRepo("bar", "foo",
-		&sourcev1.HelmRepositorySpec{
+		&sourcev1beta2.HelmRepositorySpec{
 			URL:       "http://example.com",
 			Interval:  metav1.Duration{Duration: 10 * time.Minute},
 			SecretRef: &fluxmeta.LocalObjectReference{},
 		},
-		&sourcev1.HelmRepositoryStatus{
+		&sourcev1beta2.HelmRepositoryStatus{
 			Artifact: &sourcev1.Artifact{
-				Checksum:       "651f952130ea96823711d08345b85e82be011dc6",
+				Digest:         "651f952130ea96823711d08345b85e82be011dc6",
 				LastUpdateTime: metav1.Time{Time: lastUpdateTime},
 				Path:           "helmrepository/default/bitnami/index-651f952130ea96823711d08345b85e82be011dc6.yaml",
 				Revision:       "651f952130ea96823711d08345b85e82be011dc6",
@@ -3251,13 +3253,13 @@ var (
 		})
 
 	get_summaries_repo_2 = newRepo("zot", "xyz",
-		&sourcev1.HelmRepositorySpec{
+		&sourcev1beta2.HelmRepositorySpec{
 			URL:      "http://example.com",
 			Interval: metav1.Duration{Duration: 10 * time.Minute},
 		},
-		&sourcev1.HelmRepositoryStatus{
+		&sourcev1beta2.HelmRepositoryStatus{
 			Artifact: &sourcev1.Artifact{
-				Checksum:       "651f952130ea96823711d08345b85e82be011dc6",
+				Digest:         "651f952130ea96823711d08345b85e82be011dc6",
 				LastUpdateTime: metav1.Time{Time: lastUpdateTime},
 				Path:           "helmrepository/default/bitnami/index-651f952130ea96823711d08345b85e82be011dc6.yaml",
 				Revision:       "651f952130ea96823711d08345b85e82be011dc6",
@@ -3276,19 +3278,19 @@ var (
 		})
 
 	get_summaries_repo_3 = newRepo("pending", "xyz",
-		&sourcev1.HelmRepositorySpec{
+		&sourcev1beta2.HelmRepositorySpec{
 			URL:      "http://example.com",
 			Interval: metav1.Duration{Duration: 10 * time.Minute},
 		},
-		&sourcev1.HelmRepositoryStatus{ObservedGeneration: -1},
+		&sourcev1beta2.HelmRepositoryStatus{ObservedGeneration: -1},
 	)
 
 	get_summaries_repo_4 = newRepo("failed", "xyz",
-		&sourcev1.HelmRepositorySpec{
+		&sourcev1beta2.HelmRepositorySpec{
 			URL:      "http://example.com",
 			Interval: metav1.Duration{Duration: 10 * time.Minute},
 		},
-		&sourcev1.HelmRepositoryStatus{
+		&sourcev1beta2.HelmRepositoryStatus{
 			Conditions: []metav1.Condition{
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},

@@ -151,13 +151,13 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 			failingAPIServicesPolicy := resourceTypesFlags.FailingAPIServicePolicy()
 
 			// Getting namespaced clients (e.g., for fetching an App)
-			supportingNsObjs, err := kappcmdapp.FactoryClients(depsFactory, kappcmdcore.NamespaceFlags{Name: namespace}, resourceTypesFlags, logger.NewNoopLogger())
+			supportingNsObjs, err := kappcmdapp.FactoryClients(depsFactory, kappcmdcore.NamespaceFlags{Name: namespace}, namespace, resourceTypesFlags, logger.NewNoopLogger())
 			if err != nil {
 				return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to get config due to: %w", err))
 			}
 
 			// Getting non-namespaced clients (e.g., for fetching every k8s object in the cluster)
-			supportingObjs, err := kappcmdapp.FactoryClients(depsFactory, kappcmdcore.NamespaceFlags{Name: ""}, resourceTypesFlags, logger.NewNoopLogger())
+			supportingObjs, err := kappcmdapp.FactoryClients(depsFactory, kappcmdcore.NamespaceFlags{Name: ""}, "", resourceTypesFlags, logger.NewNoopLogger())
 			if err != nil {
 				return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Unable to get config due to: %w", err))
 			}
