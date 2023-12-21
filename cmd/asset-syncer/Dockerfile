@@ -8,7 +8,7 @@ WORKDIR /go/src/github.com/vmware-tanzu/kubeapps
 COPY go.mod go.sum ./
 COPY pkg pkg
 COPY cmd cmd
-ARG VERSION
+ARG VERSION=""
 
 # If true, run golangci-lint to detect issues
 ARG lint=""

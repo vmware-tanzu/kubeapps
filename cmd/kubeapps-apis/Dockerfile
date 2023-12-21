@@ -7,7 +7,7 @@ FROM bitnami/golang:1.21.5 as builder
 WORKDIR /go/src/github.com/vmware-tanzu/kubeapps
 COPY go.mod go.sum ./
 ARG VERSION="devel"
-ARG TARGETARCH
+ARG TARGETARCH=""
 
 # If true, run golangci-lint to detect issues
 ARG lint=""

@@ -7,7 +7,7 @@ FROM rust:1.74.1 as builder
 
 WORKDIR /oci-catalog
 ARG VERSION="devel"
-ARG TARGETARCH
+ARG TARGETARCH=""
 
 # https://github.com/grpc-ecosystem/grpc-health-probe/releases/
 ARG GRPC_HEALTH_PROBE_VERSION="0.4.24"

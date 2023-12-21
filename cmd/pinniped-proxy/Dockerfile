@@ -6,7 +6,7 @@
 FROM rust:1.74.1 as builder
 
 WORKDIR /pinniped-proxy
-ARG VERSION
+ARG VERSION=""
 
 # Create a release build of pinniped-proxy itself.
 COPY ./cmd/pinniped-proxy ./
