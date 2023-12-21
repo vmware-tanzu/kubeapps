@@ -1033,8 +1033,9 @@ var (
 			ResourceVersion: "1",
 		},
 		Spec: sourcev1beta2.HelmRepositorySpec{
-			URL:       "http://example.com",
-			Interval:  metav1.Duration{Duration: 10 * time.Minute},
+			URL:      "http://example.com",
+			Interval: metav1.Duration{Duration: 10 * time.Minute},
+			// TODO(agamez): flux upgrade - migrate to CertSecretRef, seehttps://github.com/fluxcd/flux2/releases/tag/v2.1.0
 			SecretRef: &fluxmeta.LocalObjectReference{Name: "bar-"},
 		},
 	}
@@ -1050,8 +1051,9 @@ var (
 			ResourceVersion: "1",
 		},
 		Spec: sourcev1beta2.HelmRepositorySpec{
-			URL:       "http://example.com",
-			Interval:  metav1.Duration{Duration: 10 * time.Minute},
+			URL:      "http://example.com",
+			Interval: metav1.Duration{Duration: 10 * time.Minute},
+			// TODO(agamez): flux upgrade - migrate to CertSecretRef, seehttps://github.com/fluxcd/flux2/releases/tag/v2.1.0
 			SecretRef: &fluxmeta.LocalObjectReference{Name: "secret-1"},
 		},
 	}
@@ -1067,8 +1069,9 @@ var (
 			ResourceVersion: "1",
 		},
 		Spec: sourcev1beta2.HelmRepositorySpec{
-			URL:             "http://example.com",
-			Interval:        metav1.Duration{Duration: 10 * time.Minute},
+			URL:      "http://example.com",
+			Interval: metav1.Duration{Duration: 10 * time.Minute},
+			// TODO(agamez): flux upgrade - migrate to CertSecretRef, seehttps://github.com/fluxcd/flux2/releases/tag/v2.1.0
 			SecretRef:       &fluxmeta.LocalObjectReference{Name: "bar-"},
 			PassCredentials: true,
 		},
@@ -3228,8 +3231,9 @@ var (
 
 	get_summaries_repo_1 = newRepo("bar", "foo",
 		&sourcev1beta2.HelmRepositorySpec{
-			URL:       "http://example.com",
-			Interval:  metav1.Duration{Duration: 10 * time.Minute},
+			URL:      "http://example.com",
+			Interval: metav1.Duration{Duration: 10 * time.Minute},
+			// TODO(agamez): flux upgrade - migrate to CertSecretRef, seehttps://github.com/fluxcd/flux2/releases/tag/v2.1.0
 			SecretRef: &fluxmeta.LocalObjectReference{},
 		},
 		&sourcev1beta2.HelmRepositoryStatus{

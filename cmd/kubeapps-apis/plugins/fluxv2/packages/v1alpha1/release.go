@@ -235,6 +235,7 @@ func (s *Server) installedPackageDetail(ctx context.Context, headers http.Header
 	// ValuesReference maybe a config map or a secret
 
 	// this will only be present if install/upgrade succeeded
+	// TODO(agamez): flux upgrade - migrate to Status.History, see https://github.com/fluxcd/flux2/releases/tag/v2.2.0
 	pkgVersion := rel.Status.LastAppliedRevision
 	if pkgVersion == "" {
 		// this is the back-up option: will be there if the reconciliation is in progress or has failed
