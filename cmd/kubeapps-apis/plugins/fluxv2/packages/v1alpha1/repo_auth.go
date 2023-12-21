@@ -10,7 +10,7 @@ import (
 	"net/http"
 
 	"github.com/bufbuild/connect-go"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	sourcev1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/connecterror"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
@@ -79,7 +79,7 @@ func (s *Server) handleRepoSecretForCreate(
 func (s *Server) handleRepoSecretForUpdate(
 	ctx context.Context,
 	headers http.Header,
-	repo *sourcev1.HelmRepository,
+	repo *sourcev1beta2.HelmRepository,
 	newTlsConfig *corev1.PackageRepositoryTlsConfig,
 	newAuth *corev1.PackageRepositoryAuth) (updatedSecret *apiv1.Secret, isKubeappsManagedSecret bool, isSecretUpdated bool, err error) {
 
@@ -207,7 +207,7 @@ func (s *Server) validateUserManagedRepoSecret(
 						return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Specified secret [%s] missing fields 'username' and/or 'password'", secretRef))
 					}
 				case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS:
-					if repoType == sourcev1.HelmRepositoryTypeOCI {
+					if repoType == sourcev1beta2.HelmRepositoryTypeOCI {
 						// ref https://fluxcd.io/flux/components/source/helmrepositories/#tls-authentication
 						// Note: TLS authentication is not yet supported by OCI Helm repositories.
 						return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Package repository authentication type %q is not supported for OCI repositories", auth.Type))
@@ -217,7 +217,7 @@ func (s *Server) validateUserManagedRepoSecret(
 						}
 					}
 				case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
-					if repoType == sourcev1.HelmRepositoryTypeOCI {
+					if repoType == sourcev1beta2.HelmRepositoryTypeOCI {
 						if secret.Data[apiv1.DockerConfigJsonKey] == nil {
 							return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Specified secret [%s] missing field '%s'", secretRef, apiv1.DockerConfigJsonKey))
 						}
@@ -250,7 +250,7 @@ func (s *Server) setOwnerReferencesForRepoSecret(
 	ctx context.Context,
 	headers http.Header,
 	secret *apiv1.Secret,
-	repo *sourcev1.HelmRepository) error {
+	repo *sourcev1beta2.HelmRepository) error {
 
 	if repo.Spec.SecretRef != nil && secret != nil {
 		if typedClient, err := s.clientGetter.Typed(headers, s.kubeappsCluster); err != nil {
@@ -261,9 +261,9 @@ func (s *Server) setOwnerReferencesForRepoSecret(
 				*metav1.NewControllerRef(
 					repo,
 					schema.GroupVersionKind{
-						Group:   sourcev1.GroupVersion.Group,
-						Version: sourcev1.GroupVersion.Version,
-						Kind:    sourcev1.HelmRepositoryKind,
+						Group:   sourcev1beta2.GroupVersion.Group,
+						Version: sourcev1beta2.GroupVersion.Version,
+						Kind:    sourcev1beta2.HelmRepositoryKind,
 					}),
 			}
 			if _, err := secretsInterface.Update(ctx, secret, metav1.UpdateOptions{}); err != nil {
@@ -274,7 +274,7 @@ func (s *Server) setOwnerReferencesForRepoSecret(
 	return nil
 }
 
-func (s *Server) getRepoTlsConfigAndAuth(ctx context.Context, headers http.Header, repo sourcev1.HelmRepository) (*corev1.PackageRepositoryTlsConfig, *corev1.PackageRepositoryAuth, error) {
+func (s *Server) getRepoTlsConfigAndAuth(ctx context.Context, headers http.Header, repo sourcev1beta2.HelmRepository) (*corev1.PackageRepositoryTlsConfig, *corev1.PackageRepositoryAuth, error) {
 	var tlsConfig *corev1.PackageRepositoryTlsConfig
 	var auth *corev1.PackageRepositoryAuth
 
@@ -382,7 +382,7 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 				}
 			}
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS:
-			if repoType == sourcev1.HelmRepositoryTypeOCI {
+			if repoType == sourcev1beta2.HelmRepositoryTypeOCI {
 				// ref https://fluxcd.io/flux/components/source/helmrepositories/#tls-authentication
 				// Note: TLS authentication is not yet supported by OCI Helm repositories.
 				return nil, false, connect.NewError(connect.CodeInternal, fmt.Errorf("Package repository authentication type %q is not supported for OCI repositories", auth.Type))
@@ -410,7 +410,7 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 				}
 			}
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
-			if repoType != sourcev1.HelmRepositoryTypeOCI {
+			if repoType != sourcev1beta2.HelmRepositoryTypeOCI {
 				return nil, false, connect.NewError(connect.CodeInternal, fmt.Errorf("Unsupported package repository authentication type: %q", auth.Type))
 			}
 
@@ -566,7 +566,7 @@ func getRepoTlsConfigAndAuthWithKubeappsManagedSecrets(secret *apiv1.Secret) (*c
 	return tlsConfig, auth, nil
 }
 
-func isSecretKubeappsManaged(secret *apiv1.Secret, repo *sourcev1.HelmRepository) bool {
+func isSecretKubeappsManaged(secret *apiv1.Secret, repo *sourcev1beta2.HelmRepository) bool {
 	if !metav1.IsControlledBy(secret, repo) {
 		return false
 	}

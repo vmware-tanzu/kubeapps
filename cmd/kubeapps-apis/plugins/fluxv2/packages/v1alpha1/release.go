@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/bufbuild/connect-go"
-	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
+	helmv2beta2 "github.com/fluxcd/helm-controller/api/v2beta2"
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	sourcev1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/connecterror"
@@ -40,7 +40,7 @@ var (
 )
 
 // namespace maybe "", in which case releases from all namespaces are returned
-func (s *Server) listReleasesInCluster(ctx context.Context, headers http.Header, namespace string) ([]helmv2.HelmRelease, error) {
+func (s *Server) listReleasesInCluster(ctx context.Context, headers http.Header, namespace string) ([]helmv2beta2.HelmRelease, error) {
 	client, err := s.getClient(headers, namespace)
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func (s *Server) listReleasesInCluster(ctx context.Context, headers http.Header,
 	// 2) there is a "consistent snapshot" problem, where the client doesn't want to
 	// see any results created/updated/deleted after the first request is issued
 	// To fix this, we must make use of resourceVersion := relList.GetResourceVersion()
-	var relList helmv2.HelmReleaseList
+	var relList helmv2beta2.HelmReleaseList
 	if err = client.List(ctx, &relList); err != nil {
 		return nil, connecterror.FromK8sError("list", "HelmRelease", namespace+"/*", err)
 	} else {
@@ -61,13 +61,13 @@ func (s *Server) listReleasesInCluster(ctx context.Context, headers http.Header,
 	}
 }
 
-func (s *Server) getReleaseInCluster(ctx context.Context, headers http.Header, key types.NamespacedName) (*helmv2.HelmRelease, error) {
+func (s *Server) getReleaseInCluster(ctx context.Context, headers http.Header, key types.NamespacedName) (*helmv2beta2.HelmRelease, error) {
 	client, err := s.getClient(headers, key.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	var rel helmv2.HelmRelease
+	var rel helmv2beta2.HelmRelease
 	if err = client.Get(ctx, key, &rel); err != nil {
 		return nil, connecterror.FromK8sError("get", "HelmRelease", key.String(), err)
 	}
@@ -106,7 +106,7 @@ func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, headers htt
 	return installedPkgSummaries, nil
 }
 
-func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, headers http.Header, rel helmv2.HelmRelease) (*corev1.InstalledPackageSummary, error) {
+func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, headers http.Header, rel helmv2beta2.HelmRelease) (*corev1.InstalledPackageSummary, error) {
 	name, err := common.NamespacedName(&rel)
 	if err != nil {
 		return nil, err
@@ -287,7 +287,7 @@ func (s *Server) installedPackageDetail(ctx context.Context, headers http.Header
 	}, nil
 }
 
-func (s *Server) getReleaseViaHelmApi(headers http.Header, key types.NamespacedName, rel *helmv2.HelmRelease) (*release.Release, error) {
+func (s *Server) getReleaseViaHelmApi(headers http.Header, key types.NamespacedName, rel *helmv2beta2.HelmRelease) (*release.Release, error) {
 	// post installation notes can only be retrieved via helm APIs, flux doesn't do it
 	// see discussion in https://cloud-native.slack.com/archives/CLAJ40HV3/p1629244025187100
 	if s.actionConfigGetter == nil {
@@ -457,7 +457,7 @@ func (s *Server) updateRelease(ctx context.Context, headers http.Header, package
 	// process and the current status no longer applies. metadata and spec I want
 	// to keep, as they may have had added labels and/or annotations and/or
 	// even other changes made by the user.
-	rel.Status = helmv2.HelmReleaseStatus{}
+	rel.Status = helmv2beta2.HelmReleaseStatus{}
 
 	client, err := s.getClient(headers, packageRef.Context.Namespace)
 	if err != nil {
@@ -488,7 +488,7 @@ func (s *Server) deleteRelease(ctx context.Context, headers http.Header, package
 
 	log.V(4).Infof("Deleting release: [%s]", packageRef.Identifier)
 
-	rel := &helmv2.HelmRelease{
+	rel := &helmv2beta2.HelmRelease{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      packageRef.Identifier,
 			Namespace: packageRef.Context.Namespace,
@@ -506,19 +506,19 @@ func (s *Server) deleteRelease(ctx context.Context, headers http.Header, package
 //  2. metadata.namespace, where this HelmRelease CRD will exist, same as (3) below
 //     per https://github.com/vmware-tanzu/kubeapps/pull/3640#issuecomment-949315105
 //  3. spec.targetNamespace, where flux will install any artifacts from the release
-func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.NamespacedName, versionExpr string, reconcile *corev1.ReconciliationOptions, values map[string]interface{}) (*helmv2.HelmRelease, error) {
-	fluxRelease := &helmv2.HelmRelease{
+func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.NamespacedName, versionExpr string, reconcile *corev1.ReconciliationOptions, values map[string]interface{}) (*helmv2beta2.HelmRelease, error) {
+	fluxRelease := &helmv2beta2.HelmRelease{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      targetName.Name,
 			Namespace: targetName.Namespace,
 		},
-		Spec: helmv2.HelmReleaseSpec{
-			Chart: helmv2.HelmChartTemplate{
-				Spec: helmv2.HelmChartTemplateSpec{
+		Spec: helmv2beta2.HelmReleaseSpec{
+			Chart: helmv2beta2.HelmChartTemplate{
+				Spec: helmv2beta2.HelmChartTemplateSpec{
 					Chart: chart.Name,
-					SourceRef: helmv2.CrossNamespaceObjectReference{
+					SourceRef: helmv2beta2.CrossNamespaceObjectReference{
 						Name:      chart.Repo.Name,
-						Kind:      sourcev1.HelmRepositoryKind,
+						Kind:      sourcev1beta2.HelmRepositoryKind,
 						Namespace: chart.Repo.Namespace,
 					},
 				},
@@ -580,7 +580,7 @@ func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.Namesp
 //     when install completes with success
 //   - "reason" field: failure only when flux returns "InstallFailed" reason
 //     otherwise pending or unspecified when there are no status conditions to go by
-func isHelmReleaseReady(rel helmv2.HelmRelease) (ready bool, status corev1.InstalledPackageStatus_StatusReason, userReason string) {
+func isHelmReleaseReady(rel helmv2beta2.HelmRelease) (ready bool, status corev1.InstalledPackageStatus_StatusReason, userReason string) {
 	if !checkReleaseGeneration(rel) {
 		// according to https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
 		// observedGeneration represents the .metadata.generation that the condition was set based upon.
@@ -600,9 +600,9 @@ func isHelmReleaseReady(rel helmv2.HelmRelease) (ready bool, status corev1.Insta
 			//   "reason": "InstallFailed"
 			// i.e. not super useful
 			userReason = readyCond.Reason
-			if userReason == helmv2.InstallFailedReason ||
-				userReason == helmv2.UpgradeFailedReason ||
-				userReason == helmv2.GetLastReleaseFailedReason {
+			if userReason == helmv2beta2.InstallFailedReason ||
+				userReason == helmv2beta2.UpgradeFailedReason ||
+				userReason == helmv2beta2.GetLastReleaseFailedReason {
 				isInstallFailed = true
 			}
 		}
@@ -626,7 +626,7 @@ func isHelmReleaseReady(rel helmv2.HelmRelease) (ready bool, status corev1.Insta
 	return false, corev1.InstalledPackageStatus_STATUS_REASON_PENDING, userReason
 }
 
-func installedPackageStatus(rel helmv2.HelmRelease) *corev1.InstalledPackageStatus {
+func installedPackageStatus(rel helmv2beta2.HelmRelease) *corev1.InstalledPackageStatus {
 	ready, reason, userReason := isHelmReleaseReady(rel)
 	return &corev1.InstalledPackageStatus{
 		Ready:      ready,
@@ -635,7 +635,7 @@ func installedPackageStatus(rel helmv2.HelmRelease) *corev1.InstalledPackageStat
 	}
 }
 
-func installedPackageReconciliationOptions(rel *helmv2.HelmRelease) *corev1.ReconciliationOptions {
+func installedPackageReconciliationOptions(rel *helmv2beta2.HelmRelease) *corev1.ReconciliationOptions {
 	reconciliationOptions := &corev1.ReconciliationOptions{}
 	reconciliationOptions.Interval = pkgutils.FromDuration(&rel.Spec.Interval)
 	reconciliationOptions.Suspend = rel.Spec.Suspend
@@ -643,7 +643,7 @@ func installedPackageReconciliationOptions(rel *helmv2.HelmRelease) *corev1.Reco
 	return reconciliationOptions
 }
 
-func installedPackageAvailablePackageRef(rel *helmv2.HelmRelease) (*corev1.AvailablePackageReference, error) {
+func installedPackageAvailablePackageRef(rel *helmv2beta2.HelmRelease) (*corev1.AvailablePackageReference, error) {
 	repoName := rel.Spec.Chart.Spec.SourceRef.Name
 	if repoName == "" {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Missing required field spec.chart.spec.sourceRef.name"))
@@ -669,7 +669,7 @@ func installedPackageAvailablePackageRef(rel *helmv2.HelmRelease) (*corev1.Avail
 }
 
 // ref https://fluxcd.io/docs/components/helm/helmreleases/
-func helmReleaseName(key types.NamespacedName, rel *helmv2.HelmRelease) types.NamespacedName {
+func helmReleaseName(key types.NamespacedName, rel *helmv2beta2.HelmRelease) types.NamespacedName {
 	helmReleaseName := rel.Spec.ReleaseName
 	// according to docs ReleaseName is optional and defaults to a composition of
 	// '[TargetNamespace-]Name'.
@@ -690,7 +690,7 @@ func helmReleaseName(key types.NamespacedName, rel *helmv2.HelmRelease) types.Na
 	return types.NamespacedName{Name: helmReleaseName, Namespace: helmReleaseNamespace}
 }
 
-func checkReleaseGeneration(rel helmv2.HelmRelease) bool {
+func checkReleaseGeneration(rel helmv2beta2.HelmRelease) bool {
 	generation := rel.GetGeneration()
 	observedGeneration := rel.Status.ObservedGeneration
 	return generation > 0 && generation == observedGeneration
