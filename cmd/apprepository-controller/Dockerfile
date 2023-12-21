@@ -11,7 +11,7 @@ COPY cmd cmd
 ARG VERSION
 
 # If true, run golangci-lint to detect issues
-ARG lint
+ARG lint=""
 
 # https://github.com/golangci/golangci-lint/releases
 ARG GOLANGCILINT_VERSION="1.55.2"

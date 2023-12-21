@@ -10,7 +10,7 @@ ARG VERSION="devel"
 ARG TARGETARCH
 
 # If true, run golangci-lint to detect issues
-ARG lint
+ARG lint=""
 
 # https://github.com/bufbuild/buf/releases/
 ARG BUF_VERSION="1.28.1"
