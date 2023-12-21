@@ -4,6 +4,7 @@
 package cache
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -109,7 +110,7 @@ func (q *rateLimitingType) WaitUntilForgotten(item string) {
 	// a call to .Forget(item).
 	// TODO: (gfichtenholt) don't do wait.PollInfinite() here, use some sensible
 	// timeout instead, and then this func will need to return an error
-	err := wait.PollInfinite(10*time.Millisecond, func() (bool, error) {
+	err := wait.PollUntilContextCancel(context.Background(), 10*time.Millisecond, true, func(ctx context.Context) (bool, error) {
 		return q.rateLimiter.NumRequeues(item) == 0, nil
 	})
 	if err != nil {
