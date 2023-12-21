@@ -52,6 +52,7 @@ env:
   # Currently, we only build the images for linux/amd64 because building cross-platform images is extremely slow...
   IMG_PLATFORMS: "linux/amd64"
   KAPP_CONTROLLER_VERSION: "v0.47.0"
+  FLUX_VERSION: "v0.37.0"
   K8S_KIND_VERSION: "v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72"
   KIND_VERSION: "v0.20.0"
   KUBECTL_VERSION: "v1.27.3"
@@ -753,6 +754,7 @@ jobs:
       IMG_MODIFIER: ${{ steps.set-outputs.outputs.IMG_MODIFIER }}
       IMG_PREFIX: ${{ steps.set-outputs.outputs.IMG_PREFIX }}
       KAPP_CONTROLLER_VERSION: ${{ steps.set-outputs.outputs.KAPP_CONTROLLER_VERSION }}
+      FLUX_VERSION: ${{ steps.set-outputs.outputs.FLUX_VERSION }}
       KUBECTL_VERSION: ${{ steps.set-outputs.outputs.KUBECTL_VERSION }}
       OLM_VERSION: ${{ steps.set-outputs.outputs.OLM_VERSION }}
     steps:
@@ -771,6 +773,7 @@ jobs:
           echo "IMG_MODIFIER=${{ needs.setup.outputs.img_modifier }}" >> $GITHUB_OUTPUT
           echo "IMG_PREFIX=${{ needs.setup.outputs.img_prefix }}" >> $GITHUB_OUTPUT
           echo "KAPP_CONTROLLER_VERSION=${KAPP_CONTROLLER_VERSION}" >> $GITHUB_OUTPUT
+          echo "FLUX_VERSION=${FLUX_VERSION}" >> $GITHUB_OUTPUT
           echo "KUBECTL_VERSION=${KUBECTL_VERSION}" >> $GITHUB_OUTPUT
           echo "OLM_VERSION=${OLM_VERSION}" >> $GITHUB_OUTPUT
 
@@ -792,6 +795,7 @@ jobs:
       IMG_MODIFIER: ${{ needs.gke_setup.outputs.IMG_MODIFIER }}
       IMG_PREFIX: ${{ needs.gke_setup.outputs.IMG_PREFIX }}
       KAPP_CONTROLLER_VERSION: ${{ needs.gke_setup.outputs.KAPP_CONTROLLER_VERSION }}
+      FLUX_VERSION: ${{ needs.gke_setup.outputs.FLUX_VERSION }}
       KUBECTL_VERSION: ${{ needs.gke_setup.outputs.KUBECTL_VERSION }}
       OLM_VERSION: ${{ needs.gke_setup.outputs.OLM_VERSION }}
     secrets:
@@ -816,6 +820,7 @@ jobs:
       IMG_MODIFIER: ${{ needs.gke_setup.outputs.IMG_MODIFIER }}
       IMG_PREFIX: ${{ needs.gke_setup.outputs.IMG_PREFIX }}
       KAPP_CONTROLLER_VERSION: ${{ needs.gke_setup.outputs.KAPP_CONTROLLER_VERSION }}
+      FLUX_VERSION: ${{ needs.gke_setup.outputs.FLUX_VERSION }}
       KUBECTL_VERSION: ${{ needs.gke_setup.outputs.KUBECTL_VERSION }}
       OLM_VERSION: ${{ needs.gke_setup.outputs.OLM_VERSION }}
     secrets:
