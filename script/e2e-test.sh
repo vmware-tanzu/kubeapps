@@ -32,7 +32,6 @@ DEX_IP=${DEX_IP:-"172.18.0.2"}
 ADDITIONAL_CLUSTER_IP=${ADDITIONAL_CLUSTER_IP:-"172.18.0.3"}
 KAPP_CONTROLLER_VERSION=${KAPP_CONTROLLER_VERSION:-"v0.42.0"}
 CHARTMUSEUM_VERSION=${CHARTMUSEUM_VERSION:-"3.9.1"}
-# check latest flux releases at https://github.com/fluxcd/flux2/releases
 FLUX_VERSION=${FLUX_VERSION:-"v2.2.2"}
 GKE_VERSION=${GKE_VERSION:-}
 IMG_PREFIX=${IMG_PREFIX:-"kubeapps/"}
@@ -281,8 +280,8 @@ generateAdditionalValuesFile() {
   hostname: localhost
   tls: true
   selfSigned: true
+  ingressClassName: nginx
   annotations:
-    kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/proxy-buffer-size: \"8k\"
     nginx.ingress.kubernetes.io/proxy-buffers: \"4.0\"
     nginx.ingress.kubernetes.io/proxy-read-timeout: \"600.0\"" > "${valuesFile}"
