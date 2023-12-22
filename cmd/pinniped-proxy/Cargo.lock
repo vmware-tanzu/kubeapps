@@ -960,9 +960,9 @@ dependencies = [
 
 [[package]]
 name = "kube-derive"
-version = "0.87.1"
+version = "0.87.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d54591e1f37fc329d412c0fdaced010cc1305b546a39f283fc51700f8fb49421"
+checksum = "91e98dd5e5767c7b894c1f0e41fd628b145f808e981feb8b08ed66455d47f1a4"
 dependencies = [
  "darling",
  "proc-macro2",
