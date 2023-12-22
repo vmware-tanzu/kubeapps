@@ -17,9 +17,9 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/reference v0.5.0
 	github.com/docker/cli v24.0.7+incompatible
-	github.com/fluxcd/helm-controller/api v0.37.1
+	github.com/fluxcd/helm-controller/api v0.37.2
 	github.com/fluxcd/pkg/apis/meta v1.2.0
-	github.com/fluxcd/pkg/oci v0.33.3
+	github.com/fluxcd/pkg/oci v0.34.0
 	github.com/fluxcd/pkg/version v0.2.2
 	github.com/fluxcd/source-controller/api v1.2.3
 	github.com/go-redis/redis/v8 v8.11.5
@@ -36,7 +36,7 @@ require (
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/cobra-cli v1.3.0
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.18.1
+	github.com/spf13/viper v1.18.2
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/stretchr/testify v1.8.4
@@ -46,19 +46,19 @@ require (
 	golang.org/x/net v0.19.0
 	golang.org/x/sync v0.5.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20231212172506-995d672761c0
-	google.golang.org/grpc v1.60.0
+	google.golang.org/grpc v1.60.1
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.13.3
-	k8s.io/api v0.28.4
-	k8s.io/apiextensions-apiserver v0.28.4
-	k8s.io/apimachinery v0.28.4
-	k8s.io/apiserver v0.28.4
-	k8s.io/cli-runtime v0.28.4
-	k8s.io/client-go v0.28.4
+	k8s.io/api v0.28.5
+	k8s.io/apiextensions-apiserver v0.28.5
+	k8s.io/apimachinery v0.28.5
+	k8s.io/apiserver v0.28.5
+	k8s.io/cli-runtime v0.28.5
+	k8s.io/client-go v0.28.5
 	k8s.io/klog/v2 v2.110.1
-	k8s.io/kubectl v0.28.4
+	k8s.io/kubectl v0.28.5
 	k8s.io/utils v0.0.0-20231127182322-b307cd553661
 	oras.land/oras-go v1.2.4
 	oras.land/oras-go/v2 v2.3.1
@@ -228,18 +228,10 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/component-base v0.28.4 // indirect
+	k8s.io/component-base v0.28.5 // indirect
 	k8s.io/kube-openapi v0.0.0-20231113174909-778a5567bc1e // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/kustomize/api v0.13.5-0.20230601165947-6ce0bf390ce3 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.14.3-0.20230601165947-6ce0bf390ce3 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 )
-
-// Until we can update to client-go 0.27 / k8s 1.27 (currently we cannot because
-// it causes an error just like
-// https://github.com/operator-framework/operator-sdk/issues/6396 as other upstream k8s libs
-// are not yet switched, which leads to the cause explained at:
-// https://github.com/operator-framework/operator-sdk/issues/6396#issuecomment-1521399563
-// Note that this also stops carvel-kapp from v0.56.0 -> v0.57.1
-// exclude k8s.io/api v0.27.2
