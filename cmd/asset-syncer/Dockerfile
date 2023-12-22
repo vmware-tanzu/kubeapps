@@ -3,18 +3,18 @@
 
 # syntax = docker/dockerfile:1
 
-FROM bitnami/golang:1.21.5 as builder
+FROM bitnami/golang:1.21.1 as builder
 WORKDIR /go/src/github.com/vmware-tanzu/kubeapps
 COPY go.mod go.sum ./
 COPY pkg pkg
 COPY cmd cmd
-ARG VERSION=""
+ARG VERSION
 
 # If true, run golangci-lint to detect issues
-ARG lint=""
+ARG lint
 
 # https://github.com/golangci/golangci-lint/releases
-ARG GOLANGCILINT_VERSION="1.55.2"
+ARG GOLANGCILINT_VERSION="1.53.3"
 
 RUN if [ ! -z "$lint" ]; then \
   go install github.com/golangci/golangci-lint/cmd/golangci-lint@v$GOLANGCILINT_VERSION && \
