@@ -280,8 +280,8 @@ generateAdditionalValuesFile() {
   hostname: localhost
   tls: true
   selfSigned: true
+  ingressClassName: nginx
   annotations:
-    kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/proxy-buffer-size: \"8k\"
     nginx.ingress.kubernetes.io/proxy-buffers: \"4.0\"
     nginx.ingress.kubernetes.io/proxy-read-timeout: \"600.0\"" > "${valuesFile}"
