@@ -16,7 +16,7 @@ ARG lint
 # https://github.com/golangci/golangci-lint/releases
 ARG GOLANGCILINT_VERSION="1.55.2"
 
-RUN if [ ! -z "$lint" ]; then \
+RUN if [ ! -z ${lint:-} ]; then \
   go install github.com/golangci/golangci-lint/cmd/golangci-lint@v$GOLANGCILINT_VERSION && \
   # Run golangci-lint to detect issues
   golangci-lint run --timeout=10m ./cmd/apprepository-controller/... && \
@@ -27,7 +27,7 @@ RUN if [ ! -z "$lint" ]; then \
 # https://github.com/golang/go/issues/27719#issuecomment-514747274
 RUN --mount=type=cache,target=/go/pkg/mod \
   --mount=type=cache,target=/root/.cache/go-build \
-  GOPROXY="https://proxy.golang.org,direct" CGO_ENABLED=0 go build -installsuffix cgo -ldflags "-X github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/cmd.version=$VERSION" ./cmd/apprepository-controller
+  GOPROXY="https://proxy.golang.org,direct" CGO_ENABLED=0 go build -installsuffix cgo -ldflags "-X github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/cmd.version=${VERSION:-}" ./cmd/apprepository-controller
 
 FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/

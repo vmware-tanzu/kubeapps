@@ -22,7 +22,7 @@ ARG GOLANGCILINT_VERSION="1.55.2"
 ARG GRPC_HEALTH_PROBE_VERSION="0.4.24"
 
 # Install lint tools
-RUN if [ ! -z "$lint" ]; then \
+RUN if [ ! -z ${lint:-} ]; then \
     go install github.com/golangci/golangci-lint/cmd/golangci-lint@v$GOLANGCILINT_VERSION; \
     fi
 
@@ -43,7 +43,7 @@ RUN --mount=type=cache,target=/go/pkg/mod  \
 COPY pkg pkg
 COPY cmd cmd
 
-RUN if [ ! -z "$lint" ]; then \
+RUN if [ ! -z ${lint:-} ]; then \
     # Run golangci-lint to detect issues
     golangci-lint run --timeout=10m ./cmd/kubeapps-apis/... && \
     golangci-lint run --timeout=10m ./pkg/...; \
