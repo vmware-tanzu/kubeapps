@@ -56,6 +56,7 @@ The versions used there _must_ match the ones used for building the container im
 - `K8S_KIND_VERSION` _must_ match the Kubernetes minor version used in `GKE_REGULAR_VERSION_XX` and should be updated with one of the available image tags for a given [Kind release](https://github.com/kubernetes-sigs/kind/releases).
 - `POSTGRESQL_VERSION` _must_ match the version used by the [Bitnami PostgreSQL chart](https://github.com/bitnami/charts/blob/main/bitnami/postgresql/Chart.yaml).
 - `FLUX_VERSION` should be updated with the [latest stable version from the Flux releases](https://github.com/fluxcd/flux2/releases).
+- `HUGO_VERSION` should be updated with the [latest stable version from the Hugo releases](https://github.com/gohugoio/hugo/releases).
 
 Besides, the `GKE_STABLE_VERSION` and the `GKE_REGULAR_VERSION` might have to be updated if the _Stable_ and _Regular_ Kubernetes versions in GKE have changed. Check this information on [this GKE release notes website](https://cloud.google.com/kubernetes-engine/docs/release-notes).
 
