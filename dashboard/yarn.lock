@@ -1299,10 +1299,10 @@
   resolved "https://registry.yarnpkg.com/@connectrpc/connect/-/connect-1.2.0.tgz#23e19899b6ad0c3bcf28fe85343f5f0921fa2c99"
   integrity sha512-kHF30xAlXF2Y7S1I7XN/D3psKLfjxitgNRmF093KNP+cE9yAnqDAGop6aby3Z5k4XQw2ebjeX4E41db7R3FzaQ==
 
-"@connectrpc/protoc-gen-connect-es@^1.2.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@connectrpc/protoc-gen-connect-es/-/protoc-gen-connect-es-1.2.0.tgz#f57dd1aae840c473ddc8daaa21eed1a40c75e153"
-  integrity sha512-VJ50wqjLJ4Thk6nOgARALCny+AMxHDS3fxAVEV1oveVXRbrCl5pb8ge/erKYyxuLKyBYe/I00MFa+ns6C3nN7g==
+"@connectrpc/protoc-gen-connect-es@^1.2.1":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@connectrpc/protoc-gen-connect-es/-/protoc-gen-connect-es-1.2.1.tgz#c89d76b0aad7e357508abdbd8b01a6258bfdb674"
+  integrity sha512-N6E+5oUi0juuLta9He9FQSYTfdf7/9ZYF65ntnbCo4xkCPBNe/RFtlhPdnzTSHD03Wfa3VY6KPYdc301UONwLQ==
   dependencies:
     "@bufbuild/protobuf" "^1.6.0"
     "@bufbuild/protoplugin" "^1.6.0"
