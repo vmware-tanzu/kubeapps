@@ -10,7 +10,7 @@ ARG VERSION="devel"
 ARG TARGETARCH
 
 # https://github.com/grpc-ecosystem/grpc-health-probe/releases/
-ARG GRPC_HEALTH_PROBE_VERSION="0.4.19"
+ARG GRPC_HEALTH_PROBE_VERSION="0.4.24"
 
 # Ensure protoc is available for the build.rs step.
 RUN apt-get update && apt-get -y install --no-install-recommends protobuf-compiler && rm -rf /var/lib/apt/lists/*

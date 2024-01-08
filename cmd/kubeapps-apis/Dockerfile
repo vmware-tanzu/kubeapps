@@ -13,13 +13,13 @@ ARG TARGETARCH
 ARG lint
 
 # https://github.com/bufbuild/buf/releases/
-ARG BUF_VERSION="1.26.0"
+ARG BUF_VERSION="1.28.1"
 
 # https://github.com/golangci/golangci-lint/releases
-ARG GOLANGCILINT_VERSION="1.53.3"
+ARG GOLANGCILINT_VERSION="1.55.2"
 
 # https://github.com/grpc-ecosystem/grpc-health-probe/releases/
-ARG GRPC_HEALTH_PROBE_VERSION="0.4.19"
+ARG GRPC_HEALTH_PROBE_VERSION="0.4.24"
 
 # Install lint tools
 RUN if [ ! -z "$lint" ]; then \

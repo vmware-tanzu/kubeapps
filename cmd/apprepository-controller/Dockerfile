@@ -14,7 +14,7 @@ ARG VERSION
 ARG lint
 
 # https://github.com/golangci/golangci-lint/releases
-ARG GOLANGCILINT_VERSION="1.53.3"
+ARG GOLANGCILINT_VERSION="1.55.2"
 
 RUN if [ ! -z "$lint" ]; then \
   go install github.com/golangci/golangci-lint/cmd/golangci-lint@v$GOLANGCILINT_VERSION && \
