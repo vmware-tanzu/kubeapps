@@ -1,9 +1,9 @@
-# Copyright 2020-2023 the Kubeapps contributors.
+# Copyright 2020-2024 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
 # syntax = docker/dockerfile:1
 
-FROM bitnami/golang:1.21.1 as builder
+FROM bitnami/golang:1.21.5 as builder
 WORKDIR /go/src/github.com/vmware-tanzu/kubeapps
 COPY go.mod go.sum ./
 COPY pkg pkg

@@ -1,9 +1,9 @@
-# Copyright 2023 the Kubeapps contributors.
+# Copyright 2023-2024 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
 # syntax = docker/dockerfile:1
 
-FROM rust:1.72.0 as builder
+FROM rust:1.75.0 as builder
 
 WORKDIR /oci-catalog
 ARG VERSION="devel"
