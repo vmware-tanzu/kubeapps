@@ -84,8 +84,8 @@ export default function CatalogItems({
             a.item.name.toLowerCase() > b.item.name.toLowerCase()
               ? 1
               : b.item.name.toLowerCase() > a.item.name.toLowerCase()
-              ? -1
-              : 0,
+                ? -1
+                : 0,
           );
 
   if (hasFinishedFetching && sortedItems.length === 0) {

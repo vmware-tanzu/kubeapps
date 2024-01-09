@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/bufbuild/connect-go"
+	imageSpecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -44,6 +45,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
+	"oras.land/oras-go/v2/registry/remote"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -334,7 +336,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect
 		sortedVersions, err := pkgutils.SortByPackageVersion(chart.ChartVersions)
 		if err != nil {
 			// If there was an error parsing a version as semver, fall back to ChartVersions[0]
-			log.Errorf("Error parsing versions as semver: %w", err)
+			log.Errorf("Error parsing versions as semver: %v", err)
 			version = chart.ChartVersions[0].Version
 		} else {
 			version = sortedVersions[0].Version.String()
@@ -343,6 +345,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *connect
 	fileID := fileIDForChart(unescapedChartID, version)
 	chartFiles, err := s.manager.GetChartFiles(namespace, fileID)
 	if err != nil {
+		log.Errorf("unable to retrieve chart files: %v", err)
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to retrieve chart files: %v", err))
 	}
 
@@ -433,7 +436,7 @@ func AvailablePackageDetailFromChart(chart *models.Chart, chartFiles *models.Cha
 		sortedVersions, err := pkgutils.SortByPackageVersion(chart.ChartVersions)
 		if err != nil {
 			// If there was an error parsing a version as semver, fall back to ChartVersions[0]
-			log.Errorf("Error parsing versions as semver: %w", err)
+			log.Errorf("Error parsing versions as semver: %v", err)
 			version = chart.ChartVersions[0].Version
 			pkg.Version = &corev1.PackageAppVersion{
 				PkgVersion: chart.ChartVersions[0].Version,
@@ -546,7 +549,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *conn
 			sortedVersions, err := pkgutils.SortByPackageVersion(charts[0].ChartVersions)
 			if err != nil {
 				// If there was an error parsing a version as semver, fall back to ChartVersions[0]
-				log.Errorf("Error parsing versions as semver: %w", err)
+				log.Errorf("Error parsing versions as semver: %v", err)
 				installedPkgSummaries[i].LatestVersion = &corev1.PackageAppVersion{
 					PkgVersion: charts[0].ChartVersions[0].Version,
 					AppVersion: charts[0].ChartVersions[0].AppVersion,
@@ -684,7 +687,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *connect
 			sortedVersions, err := pkgutils.SortByPackageVersion(charts[0].ChartVersions)
 			if err != nil {
 				// If there was an error parsing a version as semver, fall back to ChartVersions[0]
-				log.Errorf("Error parsing versions as semver: %w", err)
+				log.Errorf("Error parsing versions as semver: %v", err)
 				installedPkgDetail.LatestVersion = &corev1.PackageAppVersion{
 					PkgVersion: charts[0].ChartVersions[0].Version,
 					AppVersion: charts[0].ChartVersions[0].AppVersion,
@@ -1264,4 +1267,70 @@ func (s *Server) DeletePackageRepository(ctx context.Context, request *connect.R
 	} else {
 		return connect.NewResponse(&corev1.DeletePackageRepositoryResponse{}), nil
 	}
+}
+
+func (s *Server) GetAvailablePackageMetadatas(ctx context.Context, request *connect.Request[corev1.GetAvailablePackageMetadatasRequest]) (*connect.Response[corev1.GetAvailablePackageMetadatasResponse], error) {
+	chartID := request.Msg.GetAvailablePackageRef().GetIdentifier()
+	repoNamespace := request.Msg.GetAvailablePackageRef().GetContext().GetNamespace()
+	repoName, chartName, err := pkgutils.SplitPackageIdentifier(chartID)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+
+	// TODO: Ignoring secrets for now, just demoing with public OCI repo
+	appRepo, _, _, _, err := s.getAppRepoAndRelatedSecrets(ctx, request.Header(), s.globalPackagingCluster, repoName, repoNamespace)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to fetch app repo %q from namespace %q: %v", repoName, repoNamespace, err))
+	}
+	if appRepo.Spec.Type != OCIRepoType {
+		return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("Unimplemented for non-OCI repositories"))
+	}
+
+	repoURL := appRepo.Spec.URL
+	repoURL = strings.TrimPrefix(repoURL, "oci://")
+	repoURL = strings.TrimPrefix(repoURL, "https://")
+	plainHTTP := false
+	if strings.HasPrefix(repoURL, "http://") {
+		plainHTTP = true
+		repoURL = strings.TrimPrefix(repoURL, "http://")
+	}
+
+	tag := path.Join(repoURL, chartName)
+	fmt.Printf("\ntag: %+v", tag)
+	repo, err := remote.NewRepository(tag)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to call NewRepository with %q: %v", tag, err))
+	}
+	repo.PlainHTTP = plainHTTP
+
+	// Create the ocispec.Descriptor, first need to get the manifest of the chart.
+	descriptor, _, err := repo.Manifests().FetchReference(ctx, request.Msg.GetPkgVersion())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to fetch manifest for %v with ref %q: %v", repo, request.Msg.GetPkgVersion(), err))
+	}
+
+	referrers := []imageSpecv1.Descriptor{}
+	err = repo.Referrers(ctx, descriptor, "", func(r []imageSpecv1.Descriptor) error {
+		referrers = append(referrers, r...)
+		return nil
+	})
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to fetch referrers for %v with ref %q: %v", repo, request.Msg.GetPkgVersion(), err))
+	}
+
+	package_metadatas := []*corev1.PackageMetadata{}
+	for _, referrer := range referrers {
+		package_metadatas = append(package_metadatas, &corev1.PackageMetadata{
+			Name:         referrer.Annotations["org.opencontainers.image.title"],
+			Description:  referrer.Annotations["org.opencontainers.image.description"],
+			MediaType:    referrer.MediaType,
+			ArtifactType: referrer.ArtifactType,
+			Digest:       referrer.Digest.String(),
+		})
+	}
+
+	return connect.NewResponse(&corev1.GetAvailablePackageMetadatasResponse{
+		AvailablePackageRef: request.Msg.AvailablePackageRef,
+		PackageMetadata:     package_metadatas,
+	}), nil
 }

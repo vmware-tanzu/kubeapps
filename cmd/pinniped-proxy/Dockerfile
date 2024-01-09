@@ -1,9 +1,9 @@
-# Copyright 2020-2023 the Kubeapps contributors.
+# Copyright 2020-2024 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
 # syntax = docker/dockerfile:1
 
-FROM rust:1.71.1 as builder
+FROM rust:1.75.0 as builder
 
 WORKDIR /pinniped-proxy
 ARG VERSION

@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/distribution/distribution/reference"
+	"github.com/distribution/reference"
 	"gopkg.in/yaml.v3" // The usual "sigs.k8s.io/yaml" is not used because we're dealing with unstructured yaml directly
 	log "k8s.io/klog/v2"
 )

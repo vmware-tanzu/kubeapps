@@ -131,7 +131,7 @@ type NamespacedResourceWatcherCacheConfig struct {
 	OnResyncFunc ResyncFunc
 
 	// These funcs are needed to manipulate API-specific objects, such as flux's
-	// sourcev1.HelmRepository, in a generic fashion
+	// sourcev1beta2.HelmRepository, in a generic fashion
 	NewObjFunc    NewObjectFunc
 	NewListFunc   NewObjectListFunc
 	ListItemsFunc GetListItemsFunc
@@ -634,7 +634,7 @@ func (c *NamespacedResourceWatcherCache) onAddOrModify(obj ctrlclient.Object) (e
 
 // this is effectively a cache DEL operation
 func (c *NamespacedResourceWatcherCache) onDelete(key string) error {
-	log.V(4).Infof("+onDelete(%s, %s)")
+	log.V(4).Infof("+onDelete(%s)", key)
 	defer log.V(4).Infof("-onDelete")
 
 	delete, err := c.config.OnDeleteFunc(key)

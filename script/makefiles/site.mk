@@ -4,7 +4,7 @@
 WORKDIR = $(shell pwd)
 # HUGO_VERSION should be in sync with the one set in ../../site/netlify.toml
 # see https://github.com/gohugoio/hugo/releases
-HUGO_VERSION = 0.104.3
+HUGO_VERSION = 0.121.2
 
 # This file provides targets that helps with the development of the kubeapps.dev site.
 

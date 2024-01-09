@@ -141,7 +141,7 @@ func handleAuthSecretForUpdate(
 			if secret != nil {
 				secretsInterface := typedClient.CoreV1().Secrets(secret.GetNamespace())
 				if err := deleteSecret(ctx, secretsInterface, secret.GetName()); err != nil {
-					log.Errorf("Error deleting existing secret: [%s] due to %v", err)
+					log.Errorf("Error deleting existing secret: [%s] due to %v", secret.GetName(), err)
 				}
 			}
 			return updatedSecret, true, true, nil
@@ -152,7 +152,7 @@ func handleAuthSecretForUpdate(
 		if secret != nil {
 			secretsInterface := typedClient.CoreV1().Secrets(secret.GetNamespace())
 			if err := deleteSecret(ctx, secretsInterface, secret.GetName()); err != nil {
-				log.Errorf("Error deleting existing secret: [%s] due to %v", err)
+				log.Errorf("Error deleting existing secret: [%s] due to %v", secret.GetName(), err)
 			}
 		}
 		return nil, false, true, nil
@@ -202,7 +202,7 @@ func handleImagesPullSecretForUpdate(
 			if secret != nil {
 				secretsInterface := typedClient.CoreV1().Secrets(secret.GetNamespace())
 				if err := deleteSecret(ctx, secretsInterface, secret.GetName()); err != nil {
-					log.Errorf("Error deleting existing secret: [%s] due to %v", err)
+					log.Errorf("Error deleting existing secret: [%s] due to %v", secret.GetName(), err)
 				}
 			}
 			return updatedSecret, true, true, nil
@@ -213,7 +213,7 @@ func handleImagesPullSecretForUpdate(
 		if secret != nil {
 			secretsInterface := typedClient.CoreV1().Secrets(secret.GetNamespace())
 			if err := deleteSecret(ctx, secretsInterface, secret.GetName()); err != nil {
-				log.Errorf("Error deleting existing secret: [%s] due to %v", err)
+				log.Errorf("Error deleting existing secret: [%s] due to %v", secret.GetName(), err)
 			}
 		}
 		return nil, false, true, nil
@@ -724,7 +724,7 @@ func getRepoTlsConfigAndAuth(
 			auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
 		} else {
 			auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
-			log.Warning("Unrecognized type of secret for auth [%s]", authSecret.Name)
+			log.Warningf("Unrecognized type of secret for auth [%s]", authSecret.Name)
 		}
 
 		// create data

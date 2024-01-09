@@ -17,6 +17,7 @@ import (
 const repoSyncImage = "bitnami/kubeapps-asset-syncer:2.0.0-scratch-r2"
 
 var defaultTTL = int32(3600)
+var defaultActiveDeadline = int64(300)
 
 func Test_newCronJob(t *testing.T) {
 	tests := []struct {
@@ -74,6 +75,7 @@ func Test_newCronJob(t *testing.T) {
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
+							ActiveDeadlineSeconds: &defaultActiveDeadline,
 							Template: corev1.PodTemplateSpec{
 								ObjectMeta: metav1.ObjectMeta{
 									Labels: map[string]string{
@@ -158,6 +160,7 @@ func Test_newCronJob(t *testing.T) {
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
+							ActiveDeadlineSeconds: &defaultActiveDeadline,							
 							Template: corev1.PodTemplateSpec{
 								ObjectMeta: metav1.ObjectMeta{
 									Labels: map[string]string{
@@ -255,6 +258,7 @@ func Test_newCronJob(t *testing.T) {
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
+							ActiveDeadlineSeconds: &defaultActiveDeadline,
 							Template: corev1.PodTemplateSpec{
 								ObjectMeta: metav1.ObjectMeta{
 									Labels: map[string]string{
@@ -349,6 +353,7 @@ func Test_newCronJob(t *testing.T) {
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
+							ActiveDeadlineSeconds: &defaultActiveDeadline,
 							Template: corev1.PodTemplateSpec{
 								ObjectMeta: metav1.ObjectMeta{
 									Labels: map[string]string{
@@ -449,6 +454,7 @@ func Test_newCronJob(t *testing.T) {
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
+							ActiveDeadlineSeconds: &defaultActiveDeadline,
 							Template: corev1.PodTemplateSpec{
 								ObjectMeta: metav1.ObjectMeta{
 									Labels: map[string]string{
@@ -543,6 +549,7 @@ func Test_newCronJob(t *testing.T) {
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
+							ActiveDeadlineSeconds: &defaultActiveDeadline,
 							Template: corev1.PodTemplateSpec{
 								ObjectMeta: metav1.ObjectMeta{
 									Labels: map[string]string{
@@ -666,6 +673,7 @@ func Test_newSyncJob(t *testing.T) {
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
+					ActiveDeadlineSeconds: &defaultActiveDeadline,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
@@ -738,6 +746,7 @@ func Test_newSyncJob(t *testing.T) {
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
+					ActiveDeadlineSeconds: &defaultActiveDeadline,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
@@ -810,6 +819,7 @@ func Test_newSyncJob(t *testing.T) {
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
+					ActiveDeadlineSeconds: &defaultActiveDeadline,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
@@ -896,6 +906,7 @@ func Test_newSyncJob(t *testing.T) {
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
+					ActiveDeadlineSeconds: &defaultActiveDeadline,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
@@ -989,6 +1000,7 @@ func Test_newSyncJob(t *testing.T) {
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
+					ActiveDeadlineSeconds: &defaultActiveDeadline,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
@@ -1093,6 +1105,7 @@ func Test_newSyncJob(t *testing.T) {
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
+					ActiveDeadlineSeconds: &defaultActiveDeadline,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
@@ -1199,6 +1212,7 @@ func Test_newSyncJob(t *testing.T) {
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
+					ActiveDeadlineSeconds: &defaultActiveDeadline,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
@@ -1304,6 +1318,7 @@ func Test_newSyncJob(t *testing.T) {
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
+					ActiveDeadlineSeconds: &defaultActiveDeadline,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
@@ -1390,6 +1405,7 @@ func Test_newSyncJob(t *testing.T) {
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
+					ActiveDeadlineSeconds: &defaultActiveDeadline,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
@@ -1476,6 +1492,7 @@ func Test_newSyncJob(t *testing.T) {
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
+					ActiveDeadlineSeconds: &defaultActiveDeadline,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
@@ -1563,6 +1580,7 @@ func Test_newSyncJob(t *testing.T) {
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
+					ActiveDeadlineSeconds: &defaultActiveDeadline,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
@@ -1651,6 +1669,7 @@ func Test_newSyncJob(t *testing.T) {
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
+					ActiveDeadlineSeconds: &defaultActiveDeadline,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
@@ -1733,6 +1752,7 @@ func Test_newCleanupJob(t *testing.T) {
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
+					ActiveDeadlineSeconds: &defaultActiveDeadline,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
@@ -1785,6 +1805,7 @@ func Test_newCleanupJob(t *testing.T) {
 				},
 				Spec: batchv1.JobSpec{
 					TTLSecondsAfterFinished: &defaultTTL,
+					ActiveDeadlineSeconds: &defaultActiveDeadline,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
@@ -2002,6 +2023,7 @@ func makeDefaultConfig() Config {
 		DBSecretKey:                "postgresql-root-password",
 		UserAgentComment:           "",
 		TTLSecondsAfterFinished:    "3600",
+		ActiveDeadlineSeconds:      "300",
 		Crontab:                    "*/10 * * * *",
 		CustomAnnotations:          []string{},
 		CustomLabels:               []string{},

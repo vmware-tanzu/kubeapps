@@ -34,6 +34,7 @@ func Sync(serveOpts Config, version string, args []string) error {
 	if err != nil {
 		return fmt.Errorf("error: %v", err)
 	}
+
 	defer manager.Close()
 
 	netClient, err := httpclient.NewWithCertFile(additionalCAFile, serveOpts.TlsInsecureSkipVerify)
@@ -62,7 +63,7 @@ func Sync(serveOpts Config, version string, args []string) error {
 
 	var repoIface ChartCatalog
 	if args[2] == "helm" {
-		repoIface, err = getHelmRepo(serveOpts.Namespace, args[0], args[1], authorizationHeader, filters, netClient, serveOpts.UserAgent)
+		repoIface, err = getHelmRepo(serveOpts.Namespace, args[0], args[1], authorizationHeader, filters, netClient, serveOpts.UserAgent, manager)
 	} else {
 		var grpcClient ocicatalog.OCICatalogServiceClient
 		if serveOpts.OCICatalogURL != "" {
@@ -73,7 +74,7 @@ func Sync(serveOpts Config, version string, args []string) error {
 			}
 			defer closer()
 		}
-		repoIface, err = getOCIRepo(serveOpts.Namespace, args[0], args[1], authorizationHeader, filters, serveOpts.OciRepositories, netClient, &grpcClient)
+		repoIface, err = getOCIRepo(serveOpts.Namespace, args[0], args[1], authorizationHeader, filters, serveOpts.OciRepositories, netClient, &grpcClient, manager)
 	}
 	if err != nil {
 		return fmt.Errorf("error: %v", err)
@@ -86,14 +87,11 @@ func Sync(serveOpts Config, version string, args []string) error {
 
 	// Check if the repo has been already processed
 	lastChecksum := manager.LastChecksum(models.AppRepository{Namespace: repo.Namespace, Name: repo.Name})
-	log.Infof("Last checksum: %v", lastChecksum)
+	log.V(3).Infof("Current checksum: %q. Previous checksum: %q", checksum, lastChecksum)
 	if lastChecksum == checksum {
-		log.Infof("Skipping repository since there are no updatesrepo.URL= %v", repo.URL)
+		log.V(3).Infof("Skipping repository since checksum has not changed. repo.URL= %q", repo.URL)
 		return nil
 	}
-
-	// First filter the list of charts (still without applying custom filters)
-	repoIface.FilterIndex()
 
 	fetchLatestOnlySlice := []bool{false}
 	if lastChecksum == "" {
@@ -103,23 +101,68 @@ func Sync(serveOpts Config, version string, args []string) error {
 	}
 
 	for _, fetchLatestOnly := range fetchLatestOnlySlice {
-		charts, err := repoIface.Charts(ctx, fetchLatestOnly)
+		// Create the file importer to handle the icon and chart file imports.
+		fImporter := fileImporter{manager, netClient}
+		fileImporterJobs := make(chan models.Chart)
+		fileImportsDone := make(chan bool)
+		go fImporter.fetchFiles(fileImporterJobs, repoIface, serveOpts.UserAgent, serveOpts.PassCredentials, fileImportsDone)
+
+		// We want to receive results per app so that we can sync that app
+		// immediately and have a more responsive UX experience. A channel
+		// gives us a way to pull results as they're generated (like an
+		// iterator).
+		chartResults := make(chan pullChartResult, 2)
+		chartsToDelete, err := repoIface.Charts(ctx, fetchLatestOnly, chartResults)
 		if err != nil {
 			return fmt.Errorf("error: %v", err)
 		}
-		if len(charts) == 0 {
-			log.Infof("No charts in repository to be synced, repo.URL= %v", repo.URL)
-			return nil
-		}
-		if err = manager.Sync(models.AppRepository{Name: repo.Name, Namespace: repo.Namespace}, charts); err != nil {
-			return fmt.Errorf("can't add chart repository to database: %v", err)
+
+		// Also need to collect the apps to be deleted, rather than simply
+		// deleting everything that's not in the set of charts being synced
+		// (as it does today).
+		for chart := range chartResults {
+			if len(chart.Errors) != 0 {
+				chartName := chart.Chart.Name
+
+				log.Infof("There were errors syncing chart %q: %v", chartName, chart.Errors)
+				if len(chart.Chart.ChartVersions) == 0 {
+					continue
+				}
+			}
+
+			matches, err := filterMatches(chart.Chart, repoIface.Filters())
+			if err != nil {
+				return fmt.Errorf("error while applying filter: %w", err)
+			}
+			if !matches {
+				continue
+			}
+
+			if err = manager.Sync(models.AppRepository{Name: repo.Name, Namespace: repo.Namespace}, chart.Chart); err != nil {
+				return fmt.Errorf("can't add chart repository to database: %v", err)
+			}
+
+			// Fetch and store chart icons
+			fileImporterJobs <- chart.Chart
+
+			log.V(4).Infof("Chart %q synced, shallow=%v", chart.Chart.Name, fetchLatestOnly)
 		}
 
-		// Fetch and store chart icons
-		fImporter := fileImporter{manager, netClient}
-		fImporter.fetchFiles(charts, repoIface, serveOpts.UserAgent, serveOpts.PassCredentials)
-		log.Infof("Repository synced, shallow=%v", fetchLatestOnly)
+		close(fileImporterJobs)
 
+		err = manager.RemoveMissingCharts(models.AppRepository{
+			Namespace: repo.Namespace,
+			Name:      repo.Name,
+		}, chartsToDelete)
+		if err != nil {
+			return fmt.Errorf("error while removing missing charts: %w", err)
+		}
+
+		// Wait for file imports to complete.
+		log.V(4).Infof("Chart data syncing complete. Waiting for file imports to complete.")
+		<-fileImportsDone
+
+		log.V(4).Infof("Repository synced, shallow=%v", fetchLatestOnly)
 	}
 
 	// Update cache in the database

@@ -273,7 +273,7 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *connect.R
 			// delete old one
 			if pkgSecret != nil {
 				if err := s.deleteSecret(ctx, request.Header(), cluster, pkgSecret.GetNamespace(), pkgSecret.GetName()); err != nil {
-					log.Errorf("Error deleting existing secret: [%s] due to %v", err)
+					log.Errorf("Error deleting existing secret: [%s] due to %v", pkgSecret.GetName(), err)
 				}
 				pkgSecret = nil
 			}

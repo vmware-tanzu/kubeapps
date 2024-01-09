@@ -5,6 +5,7 @@ package common
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
@@ -23,8 +24,8 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/config/credentials"
-	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	helmv2beta2 "github.com/fluxcd/helm-controller/api/v2beta2"
+	sourcev1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/go-containerregistry/pkg/authn"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
@@ -67,20 +68,20 @@ func init() {
 	}
 
 	repositoriesGvr = schema.GroupVersionResource{
-		Group:    sourcev1.GroupVersion.Group,
-		Version:  sourcev1.GroupVersion.Version,
+		Group:    sourcev1beta2.GroupVersion.Group,
+		Version:  sourcev1beta2.GroupVersion.Version,
 		Resource: "helmrepositories",
 	}
 
 	chartsGvr = schema.GroupVersionResource{
-		Group:    sourcev1.GroupVersion.Group,
-		Version:  sourcev1.GroupVersion.Version,
+		Group:    sourcev1beta2.GroupVersion.Group,
+		Version:  sourcev1beta2.GroupVersion.Version,
 		Resource: "helmcharts",
 	}
 
 	releasesGvr = schema.GroupVersionResource{
-		Group:    helmv2.GroupVersion.Group,
-		Version:  helmv2.GroupVersion.Version,
+		Group:    helmv2beta2.GroupVersion.Group,
+		Version:  helmv2beta2.GroupVersion.Version,
 		Resource: "helmreleases",
 	}
 }
@@ -180,23 +181,22 @@ func NewRedisClientFromEnv(stopCh <-chan struct{}) (*redis.Client, error) {
 
 	// ref https://github.com/vmware-tanzu/kubeapps/pull/4382#discussion_r820386531
 	var redisCli *redis.Client
-	err = wait.PollImmediate(redisInitClientRetryWait, redisInitClientTimeout,
-		func() (bool, error) {
-			redisCli = redis.NewClient(&redis.Options{
-				Addr:     REDIS_ADDR,
-				Password: REDIS_PASSWORD,
-				DB:       REDIS_DB_NUM,
-			})
-
-			// ping redis to make sure client is connected
-			var pong string
-			if pong, err = redisCli.Ping(redisCli.Context()).Result(); err == nil {
-				log.Infof("Redis [PING]: %s", pong)
-				return true, nil
-			}
-			log.Infof("Waiting %s before retrying to due to %v...", redisInitClientRetryWait.String(), err)
-			return false, nil
+	err = wait.PollUntilContextTimeout(context.Background(), redisInitClientRetryWait, redisInitClientTimeout, true, func(ctx context.Context) (bool, error) {
+		redisCli = redis.NewClient(&redis.Options{
+			Addr:     REDIS_ADDR,
+			Password: REDIS_PASSWORD,
+			DB:       REDIS_DB_NUM,
 		})
+
+		// ping redis to make sure client is connected
+		var pong string
+		if pong, err = redisCli.Ping(redisCli.Context()).Result(); err == nil {
+			log.Infof("Redis [PING]: %s", pong)
+			return true, nil
+		}
+		log.Infof("Waiting %s before retrying to due to %v...", redisInitClientRetryWait.String(), err)
+		return false, nil
+	})
 
 	if err != nil {
 		return nil, fmt.Errorf("initializing redis client failed after timeout of %s was reached, error: %v", redisInitClientTimeout.String(), err)

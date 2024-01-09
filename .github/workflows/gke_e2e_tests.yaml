@@ -34,6 +34,8 @@ on:
         type: string
       KAPP_CONTROLLER_VERSION:
         type: string
+      FLUX_VERSION:
+        type: string
       KUBECTL_VERSION:
         type: string
       OLM_VERSION:
@@ -75,6 +77,7 @@ jobs:
       IMG_MODIFIER: ${{ inputs.IMG_MODIFIER }}
       IMG_PREFIX: ${{ inputs.IMG_PREFIX }}
       KAPP_CONTROLLER_VERSION: ${{ inputs.KAPP_CONTROLLER_VERSION }}
+      FLUX_VERSION: ${{ inputs.FLUX_VERSION }}
       KUBECTL_VERSION: ${{ inputs.KUBECTL_VERSION }}
       OLM_VERSION: ${{ inputs.OLM_VERSION }}
       TEST_LATEST_RELEASE: ${{ inputs.TEST_LATEST_RELEASE }}
@@ -106,7 +109,7 @@ jobs:
         run: ./script/run_e2e_tests.sh
       - name: 'Upload Artifacts'
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: gke_${{ inputs.GKE_RELEASE_CHANNEL }}_e2e_tests_reports
           path: integration/reports

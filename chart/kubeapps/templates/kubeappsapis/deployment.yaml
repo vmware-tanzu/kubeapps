@@ -8,7 +8,9 @@ kind: Deployment
 metadata:
   name: {{ template "kubeapps.kubeappsapis.fullname" . }}
   namespace: {{ .Release.Namespace | quote }}
-  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+  {{- $versionLabel := dict "app.kubernetes.io/version" ( include "common.images.version" ( dict "imageRoot" .Values.kubeappsapis.image "chart" .Chart ) ) }}
+  {{- $labels := include "common.tplvalues.merge" ( dict "values" ( list .Values.commonLabels $versionLabel ) "context" . ) }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" $labels "context" $ ) | nindent 4 }}
     app.kubernetes.io/component: kubeappsapis
   {{- if .Values.commonAnnotations }}
   annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
@@ -18,7 +20,7 @@ spec:
   {{- if .Values.kubeappsapis.updateStrategy }}
   strategy: {{- toYaml .Values.kubeappsapis.updateStrategy | nindent 4 }}
   {{- end }}
-  {{- $podLabels := merge .Values.kubeappsapis.podLabels .Values.commonLabels }}
+  {{- $podLabels := include "common.tplvalues.merge" ( dict "values" ( list .Values.kubeappsapis.podLabels .Values.commonLabels $versionLabel ) "context" . ) }}
   selector:
     matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" $podLabels "context" $ ) | nindent 6 }}
       app.kubernetes.io/component: kubeappsapis
@@ -262,6 +264,7 @@ spec:
             {{- if .Values.ociCatalog.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.ociCatalog.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
+          {{- if or .Values.ociCatalog.extraEnvVarsCM .Values.ociCatalog.extraEnvVarsSecret }}
           envFrom:
             {{- if .Values.ociCatalog.extraEnvVarsCM }}
             - configMapRef:
@@ -271,6 +274,7 @@ spec:
             - secretRef:
                 name: {{ include "common.tplvalues.render" (dict "value" .Values.ociCatalog.extraEnvVarsSecret "context" $) }}
             {{- end }}
+          {{- end }}
           ports:
             - name: grpc
               containerPort: {{ .Values.ociCatalog.containerPorts.grpc }}

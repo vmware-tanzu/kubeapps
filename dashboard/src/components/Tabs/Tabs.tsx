@@ -6,19 +6,26 @@ import "./Tabs.css";
 
 interface ITabsProps {
   id: string;
-  columns: Array<string | JSX.Element | JSX.Element[]>;
+  // Columns contains an array of tuples, where the second tuple element is
+  // a function which should be called when the tab is activated. This is
+  // necessary because after an update, the onclick events of passed tab columns
+  // are not being fired.
+  columns: Array<[string | JSX.Element, () => void]>;
   data: Array<string | JSX.Element | JSX.Element[]>;
 }
 
 export default function Tabs({ id, columns, data }: ITabsProps) {
   const [selected, setSelected] = useState(0);
-  const handleClick = (tab: number) => {
-    return () => setSelected(tab);
+  const handleClick = (tab: number, eventHandler: () => void) => {
+    return () => {
+      eventHandler();
+      setSelected(tab);
+    };
   };
   return (
     <div className="tabs">
       <ul className="nav" role="tablist" id={id}>
-        {columns.map((column, index) => {
+        {columns.map(([column, eventHandler], index) => {
           return (
             <li role="presentation" className="nav-item" key={`${column}-${index}`}>
               <button
@@ -26,7 +33,7 @@ export default function Tabs({ id, columns, data }: ITabsProps) {
                 className={`btn btn-link nav-link tab-button ${selected === index ? "active" : ""}`}
                 aria-controls={`${id}-panel${index}`}
                 type="button"
-                onClick={handleClick(index)}
+                onClick={handleClick(index, eventHandler)}
               >
                 {column}
               </button>
