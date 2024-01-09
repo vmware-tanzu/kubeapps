@@ -79,6 +79,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				Config:    map[string]interface{}{"foo": "baz"},
 				Version:   1,
 				Namespace: "default",
+				Labels:    map[string]string{},
 			},
 		},
 		{
@@ -131,6 +132,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				Config:    map[string]interface{}{"foo": "baz"},
 				Version:   1,
 				Namespace: "default",
+				Labels:    map[string]string{},
 			},
 		},
 		{

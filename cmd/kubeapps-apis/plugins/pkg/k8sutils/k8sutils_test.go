@@ -60,7 +60,7 @@ func TestWaitForResource(t *testing.T) {
 					}},
 				},
 			}},
-			expectedErr: fmt.Errorf("timed out waiting for the condition"),
+			expectedErr: fmt.Errorf("context deadline exceeded"),
 		},
 	}
 

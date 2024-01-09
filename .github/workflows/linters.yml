@@ -8,7 +8,7 @@ on:
       golang_version:
         type: string
         required: false
-        default: "1.19"
+        default: "1.21"
 
 jobs:
   yaml-linter:
@@ -20,7 +20,7 @@ jobs:
         with:
           config_file: .yamllint.yml
       - run: echo ${{ steps.yaml-lint.outputs.logfile }}
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: yamllint-logfile
@@ -29,7 +29,7 @@ jobs:
   golang-linter:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: ${{ inputs.golang_version }}
       - uses: actions/checkout@v4
@@ -41,7 +41,7 @@ jobs:
   license-headers-linter:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: ${{ inputs.golang_version }}
       - uses: actions/checkout@v4

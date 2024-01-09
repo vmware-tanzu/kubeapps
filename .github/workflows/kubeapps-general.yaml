@@ -34,11 +34,11 @@ env:
   KUBEAPPS_REPO: "vmware-tanzu/kubeapps"
   BRANCH_KUBEAPPS_REPO: "main"
   README_GENERATOR_REPO: "bitnami-labs/readme-generator-for-helm"
-  DOCKER_REGISTRY_VERSION: "2.8.2"
-  GOLANG_VERSION: "1.21.1"
+  DOCKER_REGISTRY_VERSION: "2.8.3"
+  GOLANG_VERSION: "1.21.5"
   HELM_VERSION_MIN: "v3.8.0"
-  HELM_VERSION_STABLE: "v3.12.2"
-  GITHUB_VERSION: "2.32.1"
+  HELM_VERSION_STABLE: "v3.12.3"
+  GITHUB_VERSION: "2.40.1"
   IMAGES_TO_PUSH: "apprepository-controller dashboard asset-syncer pinniped-proxy kubeapps-apis oci-catalog"
   # IMG_DEV_TAG is the tags used for the Kubeapps docker images. Ideally there should be an IMG_PROD_TAG
   # but its value is dynamic and GitHub actions doesn't support it in the `env` block, so it is generated
@@ -51,18 +51,19 @@ env:
   IMG_PREFIX_FOR_FORKS: "your-dockerhub-username/"
   # Currently, we only build the images for linux/amd64 because building cross-platform images is extremely slow...
   IMG_PLATFORMS: "linux/amd64"
-  KAPP_CONTROLLER_VERSION: "v0.47.0"
+  KAPP_CONTROLLER_VERSION: "v0.49.0"
+  FLUX_VERSION: "v2.2.2"
   K8S_KIND_VERSION: "v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72"
   KIND_VERSION: "v0.20.0"
-  KUBECTL_VERSION: "v1.27.3"
+  KUBECTL_VERSION: "v1.27.9"
   MKCERT_VERSION: "v1.4.4"
-  NODE_VERSION: "18.18.0"
-  OLM_VERSION: "v0.25.0"
-  POSTGRESQL_VERSION: "15.4.0-debian-11-r38"
-  RUST_VERSION: "1.72.0"
+  NODE_VERSION: "20.10.0"
+  OLM_VERSION: "v0.26.0"
+  POSTGRESQL_VERSION: "16.1.0-debian-11-r16"
+  RUST_VERSION: "1.75.0"
   SEMVER_VERSION: "3.4.0"
-  GKE_STABLE_VERSION: "1.27.3"
-  GKE_REGULAR_VERSION: "1.27.3"
+  GKE_STABLE_VERSION: "1.27.9"
+  GKE_REGULAR_VERSION: "1.27.9"
   GKE_ZONE: "us-east1-c"
   GKE_PROJECT: "vmware-kubeapps-ci"
   GKE_CLUSTER: "kubeapps-test"
@@ -184,7 +185,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GOLANG_VERSION }}
       - name: Run go unit tests
@@ -245,7 +246,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GOLANG_VERSION }}
       - name: "Install helm (minimum and stable)"
@@ -295,7 +296,7 @@ jobs:
           cache-to: type=gha,mode=max
           outputs: type=docker,dest=${{ steps.setup.outputs.img_file }}
       - name: Upload image
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{matrix.image}}-image
           path: ${{ steps.setup.outputs.img_file }}
@@ -332,7 +333,7 @@ jobs:
           cache-to: type=gha,mode=max
           outputs: type=docker,dest=${{ steps.setup.outputs.img_file }}
       - name: Upload image
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.setup.outputs.img_name }}-image
           path: ${{ steps.setup.outputs.img_file }}
@@ -367,7 +368,7 @@ jobs:
           build-args: ${{ needs.setup.outputs.version }}
           outputs: type=docker,dest=${{ steps.setup.outputs.img_file }}
       - name: Upload image
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{steps.setup.outputs.img_name}}-image
           path: ${{ steps.setup.outputs.img_file }}
@@ -392,7 +393,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
       - run: |
           set -eu
           for artifact in *; do
@@ -502,7 +503,7 @@ jobs:
           ./script/load-kind-image.sh docker.io/bitnami/apache:2.4.48-debian-10-r75 kubeapps-ci kubeapps-ci-additional &&
           ./script/load-kind-image.sh registry:$DOCKER_REGISTRY_VERSION kubeapps-ci kubeapps-ci-additional
       - name: "Download docker images"
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: /tmp/images
       - name: "Load CI images in the cluster"
@@ -529,7 +530,7 @@ jobs:
         continue-on-error: true
       - name: 'Upload Artifacts'
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: e2e_tests_${{ matrix.tests_group }}_reports
           path: integration/reports
@@ -563,7 +564,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
       - run: |
           set -eu
           for artifact in *; do
@@ -753,6 +754,7 @@ jobs:
       IMG_MODIFIER: ${{ steps.set-outputs.outputs.IMG_MODIFIER }}
       IMG_PREFIX: ${{ steps.set-outputs.outputs.IMG_PREFIX }}
       KAPP_CONTROLLER_VERSION: ${{ steps.set-outputs.outputs.KAPP_CONTROLLER_VERSION }}
+      FLUX_VERSION: ${{ steps.set-outputs.outputs.FLUX_VERSION }}
       KUBECTL_VERSION: ${{ steps.set-outputs.outputs.KUBECTL_VERSION }}
       OLM_VERSION: ${{ steps.set-outputs.outputs.OLM_VERSION }}
     steps:
@@ -771,6 +773,7 @@ jobs:
           echo "IMG_MODIFIER=${{ needs.setup.outputs.img_modifier }}" >> $GITHUB_OUTPUT
           echo "IMG_PREFIX=${{ needs.setup.outputs.img_prefix }}" >> $GITHUB_OUTPUT
           echo "KAPP_CONTROLLER_VERSION=${KAPP_CONTROLLER_VERSION}" >> $GITHUB_OUTPUT
+          echo "FLUX_VERSION=${FLUX_VERSION}" >> $GITHUB_OUTPUT
           echo "KUBECTL_VERSION=${KUBECTL_VERSION}" >> $GITHUB_OUTPUT
           echo "OLM_VERSION=${OLM_VERSION}" >> $GITHUB_OUTPUT
 
@@ -792,6 +795,7 @@ jobs:
       IMG_MODIFIER: ${{ needs.gke_setup.outputs.IMG_MODIFIER }}
       IMG_PREFIX: ${{ needs.gke_setup.outputs.IMG_PREFIX }}
       KAPP_CONTROLLER_VERSION: ${{ needs.gke_setup.outputs.KAPP_CONTROLLER_VERSION }}
+      FLUX_VERSION: ${{ needs.gke_setup.outputs.FLUX_VERSION }}
       KUBECTL_VERSION: ${{ needs.gke_setup.outputs.KUBECTL_VERSION }}
       OLM_VERSION: ${{ needs.gke_setup.outputs.OLM_VERSION }}
     secrets:
@@ -816,6 +820,7 @@ jobs:
       IMG_MODIFIER: ${{ needs.gke_setup.outputs.IMG_MODIFIER }}
       IMG_PREFIX: ${{ needs.gke_setup.outputs.IMG_PREFIX }}
       KAPP_CONTROLLER_VERSION: ${{ needs.gke_setup.outputs.KAPP_CONTROLLER_VERSION }}
+      FLUX_VERSION: ${{ needs.gke_setup.outputs.FLUX_VERSION }}
       KUBECTL_VERSION: ${{ needs.gke_setup.outputs.KUBECTL_VERSION }}
       OLM_VERSION: ${{ needs.gke_setup.outputs.OLM_VERSION }}
     secrets:
