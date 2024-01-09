@@ -4,12 +4,13 @@
 package agent
 
 import (
-	chartFake "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/utils/fake"
+	"errors"
 	"io"
 	"testing"
 	"time"
 
 	kubechart "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/utils"
+	chartFake "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/utils/fake"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -225,7 +226,7 @@ func TestRollbackRelease(t *testing.T) {
 			},
 			release:  "airwatch",
 			revision: targetRevision,
-			err:      driver.ErrReleaseNotFound,
+			err:      errors.New("release has no 1 version"),
 		},
 		{
 			name: "rolls back a release in non-default namespace",
@@ -245,11 +246,13 @@ func TestRollbackRelease(t *testing.T) {
 			makeReleases(t, cfg, tc.releases)
 
 			newRelease, err := RollbackRelease(cfg, tc.release, tc.revision, 0)
-			if got, want := err, tc.err; got != want {
-				t.Errorf("got: %v, want: %v", got, want)
-			}
 			if tc.err != nil {
+				if got, want := err.Error(), tc.err.Error(); got != want {
+					t.Errorf("got: %v, want: %v", got, want)
+				}
 				return
+			} else if err != nil {
+				t.Fatalf("%+v", err)
 			}
 
 			// Previously deployed revision gets superseded

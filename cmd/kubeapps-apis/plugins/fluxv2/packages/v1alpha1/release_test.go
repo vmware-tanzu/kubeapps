@@ -12,9 +12,10 @@ import (
 	"time"
 
 	"github.com/bufbuild/connect-go"
-	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
+	helmv2beta2 "github.com/fluxcd/helm-controller/api/v2beta2"
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1"
+	sourcev1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -42,7 +43,7 @@ type testSpecGetInstalledPackages struct {
 	releaseValues             *v1.JSON
 	releaseSuspend            bool
 	releaseServiceAccountName string
-	releaseStatus             helmv2.HelmReleaseStatus
+	releaseStatus             helmv2beta2.HelmReleaseStatus
 	// only used to test edge cases now, most tests should not set this
 	targetNamespace string
 }
@@ -510,7 +511,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 		existingObjs            testSpecCreateInstalledPackage
 		expectedStatusCode      codes.Code
 		expectedResponse        *corev1.CreateInstalledPackageResponse
-		expectedRelease         *helmv2.HelmRelease
+		expectedRelease         *helmv2beta2.HelmRelease
 		defaultUpgradePolicyStr string
 	}{
 		{
@@ -636,7 +637,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			}
 			defer ts.Close()
 
-			s, mock, err := newSimpleServerWithRepos(t, []sourcev1.HelmRepository{*repo})
+			s, mock, err := newSimpleServerWithRepos(t, []sourcev1beta2.HelmRepository{*repo})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -685,12 +686,12 @@ func TestCreateInstalledPackage(t *testing.T) {
 				t.Fatal(err)
 			} else {
 				key := types.NamespacedName{Namespace: tc.request.TargetContext.Namespace, Name: tc.request.Name}
-				var actualRel helmv2.HelmRelease
+				var actualRel helmv2beta2.HelmRelease
 				if err = ctrlClient.Get(context.Background(), key, &actualRel); err != nil {
 					t.Fatal(err)
 				} else {
 					// Values are JSON string and need to be compared as such
-					opts = cmpopts.IgnoreFields(helmv2.HelmReleaseSpec{}, "Values")
+					opts = cmpopts.IgnoreFields(helmv2beta2.HelmReleaseSpec{}, "Values")
 
 					if got, want := &actualRel, tc.expectedRelease; !cmp.Equal(want, got, opts) {
 						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
@@ -709,7 +710,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 		existingK8sObjs         *testSpecGetInstalledPackages
 		expectedErrorCode       connect.Code
 		expectedResponse        *corev1.UpdateInstalledPackageResponse
-		expectedRelease         *helmv2.HelmRelease
+		expectedRelease         *helmv2beta2.HelmRelease
 		defaultUpgradePolicyStr string
 	}{
 		{
@@ -889,7 +890,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				Name:      tc.expectedResponse.InstalledPackageRef.Identifier,
 			}
 			ctx := context.Background()
-			var actualRel helmv2.HelmRelease
+			var actualRel helmv2beta2.HelmRelease
 			if ctrlClient, err := s.clientGetter.ControllerRuntime(http.Header{}, s.kubeappsCluster); err != nil {
 				t.Fatal(err)
 			} else if err = ctrlClient.Get(ctx, key, &actualRel); err != nil {
@@ -897,7 +898,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			}
 
 			// Values are JSON string and need to be compared as such
-			opts = cmpopts.IgnoreFields(helmv2.HelmReleaseSpec{}, "Values")
+			opts = cmpopts.IgnoreFields(helmv2beta2.HelmReleaseSpec{}, "Values")
 
 			if got, want := &actualRel, tc.expectedRelease; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
@@ -976,7 +977,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 				Name:      tc.request.InstalledPackageRef.Identifier,
 			}
 			ctx := context.Background()
-			var actualRel helmv2.HelmRelease
+			var actualRel helmv2beta2.HelmRelease
 			if ctrlClient, err := s.clientGetter.ControllerRuntime(http.Header{}, s.kubeappsCluster); err != nil {
 				t.Fatal(err)
 			} else if err = ctrlClient.Get(ctx, key, &actualRel); !errors.IsNotFound(err) {
@@ -1120,15 +1121,15 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 	}
 }
 
-func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPackages) (charts []sourcev1.HelmChart, releases []helmv2.HelmRelease, cleanup func()) {
+func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPackages) (charts []sourcev1beta2.HelmChart, releases []helmv2beta2.HelmRelease, cleanup func()) {
 	httpServers := []*httptest.Server{}
 	cleanup = func() {
 		for _, ts := range httpServers {
 			ts.Close()
 		}
 	}
-	charts = []sourcev1.HelmChart{}
-	releases = []helmv2.HelmRelease{}
+	charts = []sourcev1beta2.HelmChart{}
+	releases = []helmv2beta2.HelmRelease{}
 
 	for _, existing := range existingK8sObjs {
 		tarGzBytes, err := os.ReadFile(existing.chartTarGz)
@@ -1146,24 +1147,24 @@ func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPa
 		}))
 		httpServers = append(httpServers, ts)
 
-		chartSpec := &sourcev1.HelmChartSpec{
+		chartSpec := &sourcev1beta2.HelmChartSpec{
 			Chart: existing.chartName,
-			SourceRef: sourcev1.LocalHelmChartSourceReference{
+			SourceRef: sourcev1beta2.LocalHelmChartSourceReference{
 				Name: existing.repoName,
-				Kind: sourcev1.HelmRepositoryKind,
+				Kind: sourcev1beta2.HelmRepositoryKind,
 			},
 			Version:  existing.chartSpecVersion,
 			Interval: metav1.Duration{Duration: 1 * time.Minute},
 		}
 
-		chartStatus := &sourcev1.HelmChartStatus{
+		chartStatus := &sourcev1beta2.HelmChartStatus{
 			Conditions: []metav1.Condition{
 				{
 					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
 					Message:            "Fetched revision: " + existing.chartSpecVersion,
 					Type:               fluxmeta.ReadyCondition,
 					Status:             metav1.ConditionTrue,
-					Reason:             sourcev1.ChartPullSucceededReason,
+					Reason:             sourcev1beta2.ChartPullSucceededReason,
 				},
 			},
 			Artifact: &sourcev1.Artifact{
@@ -1174,14 +1175,14 @@ func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPa
 		chart := newChart(existing.chartName, existing.repoNamespace, chartSpec, chartStatus)
 		charts = append(charts, chart)
 
-		releaseSpec := &helmv2.HelmReleaseSpec{
-			Chart: helmv2.HelmChartTemplate{
-				Spec: helmv2.HelmChartTemplateSpec{
+		releaseSpec := &helmv2beta2.HelmReleaseSpec{
+			Chart: helmv2beta2.HelmChartTemplate{
+				Spec: helmv2beta2.HelmChartTemplateSpec{
 					Chart:   existing.chartName,
 					Version: existing.chartSpecVersion,
-					SourceRef: helmv2.CrossNamespaceObjectReference{
+					SourceRef: helmv2beta2.CrossNamespaceObjectReference{
 						Name:      existing.repoName,
-						Kind:      sourcev1.HelmRepositoryKind,
+						Kind:      sourcev1beta2.HelmRepositoryKind,
 						Namespace: existing.repoNamespace,
 					},
 				},
@@ -1208,8 +1209,8 @@ func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPa
 	return charts, releases, cleanup
 }
 
-func newRelease(meta metav1.ObjectMeta, spec *helmv2.HelmReleaseSpec, status *helmv2.HelmReleaseStatus) helmv2.HelmRelease {
-	helmRelease := helmv2.HelmRelease{
+func newRelease(meta metav1.ObjectMeta, spec *helmv2beta2.HelmReleaseSpec, status *helmv2beta2.HelmReleaseStatus) helmv2beta2.HelmRelease {
+	helmRelease := helmv2beta2.HelmRelease{
 		ObjectMeta: meta,
 	}
 

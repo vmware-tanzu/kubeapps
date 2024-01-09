@@ -1313,6 +1313,7 @@ func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
 		t.Fatal(err)
 	}
 	repoVersionBeforeUpdate := repoBeforeUpdate.ResourceVersion
+	// TODO(agamez): flux upgrade - migrate to CertSecretRef, seehttps://github.com/fluxcd/flux2/releases/tag/v2.1.0
 	secretNameBeforeUpdate := repoBeforeUpdate.Spec.SecretRef.Name
 	secretBeforeUpdate, err := kubeGetSecret(t, types.NamespacedName{
 		Namespace: repoNamespace,
@@ -1362,6 +1363,7 @@ func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
 	if repoVersionBeforeUpdate == repoVersionAfterUpdate {
 		t.Fatalf("Expected repo version be different update")
 	}
+	// TODO(agamez): flux upgrade - migrate to CertSecretRef, seehttps://github.com/fluxcd/flux2/releases/tag/v2.1.0
 	secretNameAfterUpdate := repoAfterUpdate.Spec.SecretRef.Name
 	if secretNameAfterUpdate != secretNameBeforeUpdate {
 		t.Fatalf("Expected secret to be the same after update")
