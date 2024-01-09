@@ -1,9 +1,9 @@
-# Copyright 2021-2023 the Kubeapps contributors.
+# Copyright 2021-2024 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
 # syntax = docker/dockerfile:1
 
-FROM bitnami/golang:1.21.1 as builder
+FROM bitnami/golang:1.21.5 as builder
 WORKDIR /go/src/github.com/vmware-tanzu/kubeapps
 COPY go.mod go.sum ./
 ARG VERSION="devel"
@@ -13,16 +13,16 @@ ARG TARGETARCH
 ARG lint
 
 # https://github.com/bufbuild/buf/releases/
-ARG BUF_VERSION="1.26.0"
+ARG BUF_VERSION="1.28.1"
 
 # https://github.com/golangci/golangci-lint/releases
-ARG GOLANGCILINT_VERSION="1.53.3"
+ARG GOLANGCILINT_VERSION="1.55.2"
 
 # https://github.com/grpc-ecosystem/grpc-health-probe/releases/
-ARG GRPC_HEALTH_PROBE_VERSION="0.4.19"
+ARG GRPC_HEALTH_PROBE_VERSION="0.4.24"
 
 # Install lint tools
-RUN if [ ! -z "$lint" ]; then \
+RUN if [ ! -z ${lint:-} ]; then \
     go install github.com/golangci/golangci-lint/cmd/golangci-lint@v$GOLANGCILINT_VERSION; \
     fi
 
@@ -43,7 +43,7 @@ RUN --mount=type=cache,target=/go/pkg/mod  \
 COPY pkg pkg
 COPY cmd cmd
 
-RUN if [ ! -z "$lint" ]; then \
+RUN if [ ! -z ${lint:-} ]; then \
     # Run golangci-lint to detect issues
     golangci-lint run --timeout=10m ./cmd/kubeapps-apis/... && \
     golangci-lint run --timeout=10m ./pkg/...; \
