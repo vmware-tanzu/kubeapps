@@ -2,10 +2,10 @@
 
 ## Maintainers
 
-| Maintainer         | GitHub ID                                 |                              Affiliation |
-| ------------------ | ----------------------------------------- | ---------------------------------------: |
-| Antonio Gámez Díaz | [antgamdia](https://github.com/antgamdia) | [VMware](https://www.github.com/vmware/) |
-| Pepe Baena         | [ppbaena](https://github.com/ppbaena)     | [VMware](https://www.github.com/vmware/) |
+| Maintainer             | GitHub ID                                 |                              Affiliation |
+| ---------------------- | ----------------------------------------- | ---------------------------------------: |
+| Antonio Gámez Díaz     | [antgamdia](https://github.com/antgamdia) | [VMware](https://www.github.com/vmware/) |
+| Carlos Sánchez Cazorla | [cscazorla](https://github.com/cscazorla) | [VMware](https://www.github.com/vmware/) |
 
 ## Emeritus Maintainers
 
@@ -17,14 +17,15 @@
 - Jesús Benito ([beni0888](https://github.com/beni0888))
 - Michael Nelson ([absoludity](https://github.com/absoludity))
 - Miguel Martínez Triviño ([migmartri](https://github.com/migmartri))
+- Pepe Baena ([ppbaena](https://github.com/ppbaena))
 - Rafa Castelblanque ([castelblanque](https://github.com/castelblanque))
 - Satya Dillikar ([satya-dillikar](https://github.com/satya-dillikar))
 
 ## Kubeapps Core Contributors & Stakeholders
 
-| Feature Area        | Lead                                                           |
-| ------------------- | -------------------------------------------------------------- |
-| Technical Lead      | Antonio Gámez Díaz ([antgamdia](https://github.com/antgamdia)) |
-| Engineering Manager | Pepe Baena ([ppbaena](https://github.com/ppbaena))             |
+| Feature Area        | Lead                                                               |
+| ------------------- | ------------------------------------------------------------------ |
+| Technical Lead      | Antonio Gámez Díaz ([antgamdia](https://github.com/antgamdia))     |
+| Engineering Manager | Carlos Sánchez Cazorla ([cscazorla](https://github.com/cscazorla)) |
 
 Full list of [Kubeapps contributors](https://github.com/vmware-tanzu/kubeapps/graphs/contributors).
