@@ -17,6 +17,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/clientcmd"
+	log "k8s.io/klog/v2"
 )
 
 // configForCluster implements the genericclioptions.RESTClientGetter interface
@@ -81,7 +82,9 @@ func (f *configForCluster) ToRESTMapper() (meta.RESTMapper, error) {
 	}
 
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(discoveryClient)
-	expander := restmapper.NewShortcutExpander(mapper, discoveryClient)
+	expander := restmapper.NewShortcutExpander(mapper, discoveryClient, func(str string) {
+		log.Warningf("Failed during the k8s REST mapper generation: %v", str)
+	})
 	return expander, nil
 }
 
