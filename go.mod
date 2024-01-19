@@ -51,9 +51,9 @@ require (
 	google.golang.org/protobuf v1.32.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.13.3
-	k8s.io/api v0.28.5
+	k8s.io/api v0.29.1
 	k8s.io/apiextensions-apiserver v0.28.5
-	k8s.io/apimachinery v0.28.5
+	k8s.io/apimachinery v0.29.1
 	k8s.io/apiserver v0.28.5
 	k8s.io/cli-runtime v0.28.5
 	k8s.io/client-go v0.28.5
@@ -181,6 +181,7 @@ require (
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
