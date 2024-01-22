@@ -14561,10 +14561,10 @@ ts-proto-descriptors@1.15.0:
     long "^5.2.3"
     protobufjs "^7.2.4"
 
-ts-proto@^1.166.3:
-  version "1.166.3"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.166.3.tgz#ce934560cbf6d47668a7945f7992fec652232fdc"
-  integrity sha512-Ad3TV7wH7m62fKHI55faq403OW9hC5XOGev+bDXHB5lmx1AhiZiH1ISQdk1sk33fRRy8lEBrKRknV41F3d7Nfw==
+ts-proto@^1.166.4:
+  version "1.166.4"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.166.4.tgz#7ecc4e6f27ee726af62526251055ba519f9d8c0c"
+  integrity sha512-TGHYGRg8Q8NHXagdiWrRAbuV59sp4EXcWH7bTuhGook2Sc8qM2T/s66usQCb1YekzOLHJDs7p66svjlqHmOMhg==
   dependencies:
     case-anything "^2.1.13"
     protobufjs "^7.2.4"
