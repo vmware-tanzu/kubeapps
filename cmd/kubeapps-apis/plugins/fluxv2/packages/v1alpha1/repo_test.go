@@ -1426,6 +1426,10 @@ func TestAddPackageRepository(t *testing.T) {
 						// TODO(agamez): flux upgrade - migrate to CertSecretRef, see https://github.com/fluxcd/flux2/releases/tag/v2.1.0
 						opt1 := cmpopts.IgnoreFields(sourcev1beta2.HelmRepositorySpec{}, "SecretRef")
 
+						// Manually setting TypeMeta, as the fakeclient doesn't do it anymore:
+						// https://github.com/kubernetes-sigs/controller-runtime/pull/2633
+						actualRepo.TypeMeta = tc.expectedRepo.TypeMeta
+
 						if got, want := &actualRepo, tc.expectedRepo; !cmp.Equal(want, got, opt1) {
 							t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 						}
