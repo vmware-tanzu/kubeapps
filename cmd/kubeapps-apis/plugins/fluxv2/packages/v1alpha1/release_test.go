@@ -681,7 +681,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				t.Errorf("there were unfulfilled expectations: %s", err)
 			}
 
-			// check expected HelmReleass CRD has been created
+			// check expected HelmReleases CRD has been created
 			if ctrlClient, err := s.clientGetter.ControllerRuntime(http.Header{}, s.kubeappsCluster); err != nil {
 				t.Fatal(err)
 			} else {

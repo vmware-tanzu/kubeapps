@@ -267,7 +267,7 @@ func kubeAddHelmRepository(t *testing.T, name types.NamespacedName, typ, url, se
 	}
 
 	if secretName != "" {
-		// TODO(agamez): flux upgrade - migrate to CertSecretRef, seehttps://github.com/fluxcd/flux2/releases/tag/v2.1.0
+		// TODO(agamez): flux upgrade - migrate to CertSecretRef, see https://github.com/fluxcd/flux2/releases/tag/v2.1.0
 		repo.Spec.SecretRef = &fluxmeta.LocalObjectReference{
 			Name: secretName,
 		}
