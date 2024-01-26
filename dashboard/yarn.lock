@@ -285,10 +285,10 @@
     chalk "^2.4.2"
     js-tokens "^4.0.0"
 
-"@babel/parser@^7.1.0", "@babel/parser@^7.14.7", "@babel/parser@^7.20.7", "@babel/parser@^7.22.15", "@babel/parser@^7.23.6", "@babel/parser@^7.4.3":
-  version "7.23.6"
-  resolved "https://registry.yarnpkg.com/@babel/parser/-/parser-7.23.6.tgz#ba1c9e512bda72a47e285ae42aff9d2a635a9e3b"
-  integrity sha512-Z2uID7YJ7oNvAI20O9X0bblw7Qqs8Q2hFy0R9tAfnfLkp5MW0UH9eUvnDSnFwKZ0AvgS1ucqR4KzvVHgnke1VQ==
+"@babel/parser@^7.1.0", "@babel/parser@^7.14.7", "@babel/parser@^7.20.7", "@babel/parser@^7.22.15", "@babel/parser@^7.23.6", "@babel/parser@^7.23.9", "@babel/parser@^7.4.3":
+  version "7.23.9"
+  resolved "https://registry.yarnpkg.com/@babel/parser/-/parser-7.23.9.tgz#7b903b6149b0f8fa7ad564af646c4c38a77fc44b"
+  integrity sha512-9tcKgqKbs3xGJ+NtKF2ndOBBLVwPjl1SHxPQkd36r3Dlirw3xWUeGaTbqr7uGZcTaxkVNwc+03SVP7aCdWrTlA==
 
 "@babel/plugin-bugfix-safari-id-destructuring-collision-in-function-expression@^7.23.3":
   version "7.23.3"
@@ -1227,25 +1227,25 @@
     "@bufbuild/buf-win32-arm64" "1.29.0"
     "@bufbuild/buf-win32-x64" "1.29.0"
 
-"@bufbuild/protobuf@1.6.0", "@bufbuild/protobuf@^1.6.0":
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.6.0.tgz#c33128f70330312e2bd78fd7e988576595b8f74d"
-  integrity sha512-hp19vSFgNw3wBBcVBx5qo5pufCqjaJ0Cfk5H/pfjNOfNWU+4/w0QVOmfAOZNRrNWRrVuaJWxcN8P2vhOkkzbBQ==
+"@bufbuild/protobuf@1.7.0", "@bufbuild/protobuf@^1.6.0", "@bufbuild/protobuf@^1.7.0":
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.7.0.tgz#cecddc8162a231642b410bc7b99309cd5969733c"
+  integrity sha512-jIsRadRsyxf6ERBU1auY2c1k3doFdqh15F4HRZs4BELVuBtpN+3ipkXqcsWE+rD+EQNigeR29SfQ+ES6UX/jGg==
 
-"@bufbuild/protoc-gen-es@^1.6.0":
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-es/-/protoc-gen-es-1.6.0.tgz#88f89a5ade8ba0a7bc9b05b4b85c853edbc2f2c1"
-  integrity sha512-m0akOPWeD5UBfGdZyudrbnmdjI8l/ZHlP8TyEIcj7qMCR4kh68tMtGvrjRzj5ynIpavrr6G7P06XP9F9f2MDRw==
+"@bufbuild/protoc-gen-es@^1.7.0":
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-es/-/protoc-gen-es-1.7.0.tgz#37244a42c99267c6e818654cd860bc90e7f1d80e"
+  integrity sha512-b9LwP8p+9ywtCM1P1pqQBrJF4RPyWbzhM8mTHvLEtHglogso70kmDmoIcqJ+kS/+65Bc7ilHFVGJF95GceLy1Q==
   dependencies:
-    "@bufbuild/protobuf" "^1.6.0"
-    "@bufbuild/protoplugin" "1.6.0"
+    "@bufbuild/protobuf" "^1.7.0"
+    "@bufbuild/protoplugin" "1.7.0"
 
-"@bufbuild/protoplugin@1.6.0", "@bufbuild/protoplugin@^1.6.0":
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protoplugin/-/protoplugin-1.6.0.tgz#ca1ec8557153f0c54f157e61d9559af4b6febba7"
-  integrity sha512-o53ZsvojHQkAPoC9v5sJifY2OfXdRU8DO3QpPoJ+QuvYcfB9Zb3DZkNMQRyfEbF4TVYiaQ0mZzZl1mESDdyCxA==
+"@bufbuild/protoplugin@1.7.0", "@bufbuild/protoplugin@^1.6.0":
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoplugin/-/protoplugin-1.7.0.tgz#608027e818bb6e8aba43fb87cd4be06a689ac0a8"
+  integrity sha512-NgiGDjef/yijoVxevLLlIWY7RAqNmBEADMgdJ4VKvvlyNnO6xNslFZx/g+jlY2KW+vKjj+2Fcr3n0fSDDN4Asw==
   dependencies:
-    "@bufbuild/protobuf" "1.6.0"
+    "@bufbuild/protobuf" "1.7.0"
     "@typescript/vfs" "^1.4.0"
     typescript "4.5.2"
 
@@ -1515,10 +1515,10 @@
   resolved "https://registry.yarnpkg.com/@floating-ui/utils/-/utils-0.1.6.tgz#22958c042e10b67463997bd6ea7115fe28cbcaf9"
   integrity sha512-OfX7E2oUDYxtBvsuS4e/jSn4Q9Qb6DzgeYtsAdkPZ47znpoNsMgZw0+tVijiv3uGNR6dgNlty6r9rzIzHjtd/A==
 
-"@formatjs/cli@^6.2.6":
-  version "6.2.6"
-  resolved "https://registry.yarnpkg.com/@formatjs/cli/-/cli-6.2.6.tgz#dfb4b3c13ed0f15cd3243a1dd1f9572f333fce24"
-  integrity sha512-EoI2XKi/5D/VAxC5UiIKMg9tTmQMtJZs9rDKWFK9uhMZOIjxakTix5dUi2w50K3+3jqRRjk62V+DwdKLcapLQQ==
+"@formatjs/cli@^6.2.7":
+  version "6.2.7"
+  resolved "https://registry.yarnpkg.com/@formatjs/cli/-/cli-6.2.7.tgz#79a22d41a33f9494b1f95c0156f57ea547901791"
+  integrity sha512-F8sPvXsrjOXKAXpbZo3HObq3TZWNa91cimRukmy/54GRo83V0q2ybj9YXtBfcGlnFhzRFXq8ukkTtHgYeRMJaQ==
 
 "@formatjs/ecma402-abstract@1.18.2":
   version "1.18.2"
@@ -14561,10 +14561,10 @@ ts-proto-descriptors@1.15.0:
     long "^5.2.3"
     protobufjs "^7.2.4"
 
-ts-proto@^1.167.0:
-  version "1.167.0"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.167.0.tgz#3da5f1cbcdda3a1e339b266b02be40131b278a90"
-  integrity sha512-ATJ9bN0JpPhtWVymKpkf7zUYOLBZVOA7rWRRH/U+ML8A2xjcBgcM3H4Mme8T8Yn6S4rW6ttNjRAtLZmusAjIIA==
+ts-proto@^1.167.1:
+  version "1.167.1"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.167.1.tgz#e04d8f1e5c7993da584962d3b99cf903a92168c1"
+  integrity sha512-xsEPKtT0kswVOLbLDwMavf4OZKP8fBasVeX8AozAJ8IxrGC/QgZOMITtEGnryQg0celCbNNzx8qtwpXjvV7AIA==
   dependencies:
     case-anything "^2.1.13"
     protobufjs "^7.2.4"
