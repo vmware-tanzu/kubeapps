@@ -40,7 +40,7 @@ require (
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/stretchr/testify v1.8.4
-	github.com/vmware-tanzu/carvel-kapp v0.59.2
+	github.com/vmware-tanzu/carvel-kapp v0.60.0
 	github.com/vmware-tanzu/carvel-kapp-controller v0.49.0
 	github.com/vmware-tanzu/carvel-vendir v0.36.1
 	golang.org/x/net v0.20.0
@@ -155,7 +155,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.5 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57 // indirect
+	github.com/k14s/difflib v0.0.0-20240118055029-596a7a5585c3 // indirect
 	github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115 // indirect
 	github.com/k14s/starlark-go v0.0.0-20200720175618-3a5c849cc368 // indirect
 	github.com/k14s/ytt v0.39.0 // indirect

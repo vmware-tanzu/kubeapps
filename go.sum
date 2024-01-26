@@ -527,8 +527,8 @@ github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHm
 github.com/jstemmer/go-junit-report v0.0.0-20190106144839-af01ea7f8024/go.mod h1:6v2b51hI/fHJwM22ozAgKL4VKDeJcHhJFhtBdhmNjmU=
 github.com/jstemmer/go-junit-report v0.9.1/go.mod h1:Brl9GWCQeLvo8nXZwPNNblvFj/XSXhF0NWZEnDohbsk=
 github.com/julienschmidt/httprouter v1.2.0/go.mod h1:SYymIcj16QtmaHHD7aYtjjsJG7VTCxuUUipMqKk8s4w=
-github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57 h1:CwBRArr+BWBopnUJhDjJw86rPL/jGbEjfHWKzTasSqE=
-github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57/go.mod h1:B0xN2MiNBGWOWi9CcfAo9LBI8IU4J1utlbOIJCsmKr4=
+github.com/k14s/difflib v0.0.0-20240118055029-596a7a5585c3 h1:q2ikACDbDDbyUcN9JkDcNMGhIx1EBRkctAsPZMr35qM=
+github.com/k14s/difflib v0.0.0-20240118055029-596a7a5585c3/go.mod h1:B0xN2MiNBGWOWi9CcfAo9LBI8IU4J1utlbOIJCsmKr4=
 github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115 h1:wKSifC/VbCaQMqXYn6/gSFqle82OX4bE3KYALDU9FlU=
 github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115/go.mod h1:mGrnmO5qnhJIaSiwMo05cvRL6Ww9ccYbTgNFcm6RHZQ=
 github.com/k14s/starlark-go v0.0.0-20200720175618-3a5c849cc368 h1:4bcRTTSx+LKSxMWibIwzHnDNmaN1x52oEpvnjCy+8vk=
@@ -795,8 +795,8 @@ github.com/subosito/gotenv v1.6.0/go.mod h1:Dk4QP5c2W3ibzajGcXpNraDfq2IrhjMIvMSW
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/vito/go-interact v1.0.1 h1:O8xi8c93bRUv2Tb/v6HdiuGc+WnWt+AQzF74MOOdlBs=
 github.com/vito/go-interact v1.0.1/go.mod h1:HrdHSJXD2yn1MhlTwSIMeFgQ5WftiIorszVGd3S/DAA=
-github.com/vmware-tanzu/carvel-kapp v0.59.2 h1:3S2wG05ZNa6dhnsEepDg7e6N8zl3sLHEse5wvL1YCQM=
-github.com/vmware-tanzu/carvel-kapp v0.59.2/go.mod h1:HAeURGw65eT00APPvnOQ8uDx5yvdrro2vtH5VYF1Zz0=
+github.com/vmware-tanzu/carvel-kapp v0.60.0 h1:UHAtNtiiYkWJuyfkRmctHg8geApbC3KLDblScSt8fa4=
+github.com/vmware-tanzu/carvel-kapp v0.60.0/go.mod h1:ljKb/3GsVn74l1cEpqnZudFU1cwqj4OaLcOeEFjfD7Q=
 github.com/vmware-tanzu/carvel-kapp-controller v0.49.0 h1:qsVvuvhQjoSbrzVTsSsuiXzd2X5oK4H2Il4zAHDMD50=
 github.com/vmware-tanzu/carvel-kapp-controller v0.49.0/go.mod h1:3rpvp98IrVlqZ/Vli9YmFsmtf1Z1A9OrdYyx9Wtl9KM=
 github.com/vmware-tanzu/carvel-vendir v0.36.1 h1:/x93p4cmSSsv7ZqZPxV15VwzsV2VWcDthPPGtLwKEwQ=
