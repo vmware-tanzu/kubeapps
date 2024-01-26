@@ -2744,10 +2744,10 @@
     "@swagger-api/apidom-parser-adapter-workflows-yaml-1" "^0.91.0"
     "@swagger-api/apidom-parser-adapter-yaml-1-2" "^0.91.0"
 
-"@tanstack/match-sorter-utils@^8.11.3":
-  version "8.11.3"
-  resolved "https://registry.yarnpkg.com/@tanstack/match-sorter-utils/-/match-sorter-utils-8.11.3.tgz#904bf4916bac1338751491de0685151126e5c29b"
-  integrity sha512-2XVYTN6fLFyeIPywDL/HGKIQce3V6oUch1FHweGwxruPKEXip6Z9qg+zWZwNE26WG6CktqJh6NqTq90a42jeEw==
+"@tanstack/match-sorter-utils@^8.11.7":
+  version "8.11.7"
+  resolved "https://registry.yarnpkg.com/@tanstack/match-sorter-utils/-/match-sorter-utils-8.11.7.tgz#f23b4bddbc21a83c846c430699410d3398e7c236"
+  integrity sha512-4PUKgaaFpiB7MK406N5VAiLu2VUhDumojGWhEC8kNQ767RGU2vsJDI7Xp4D8lMBzijqswRWz3U8ioa2zUKnFeQ==
   dependencies:
     remove-accents "0.4.2"
 
