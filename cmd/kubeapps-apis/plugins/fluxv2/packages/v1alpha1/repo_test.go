@@ -1419,6 +1419,11 @@ func TestAddPackageRepository(t *testing.T) {
 						if tc.expectedCreatedSecret != nil {
 							t.Fatalf("Error: unexpected state")
 						}
+
+						// Manually setting TypeMeta, as the fakeclient doesn't do it anymore:
+						// https://github.com/kubernetes-sigs/controller-runtime/pull/2633
+						actualRepo.TypeMeta = tc.expectedRepo.TypeMeta
+
 						if got, want := &actualRepo, tc.expectedRepo; !cmp.Equal(want, got) {
 							t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 						}
