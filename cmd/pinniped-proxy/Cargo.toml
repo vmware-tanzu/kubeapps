@@ -39,17 +39,13 @@ http = "0.2.11"
 clap = { version = "4.4", features = ["derive", "env"] }
 
 [features]
-default = ["v1_24"]
+default = ["v1_27"]
 
 # k8s target version when compiling k8s-openapi
 # See https://doc.rust-lang.org/cargo/reference/features.html#dependency-features
-v1_22 = ["k8s-openapi/v1_22"]
-v1_23 = ["k8s-openapi/v1_23"]
-v1_24 = ["k8s-openapi/v1_24"]
-v1_25 = ["k8s-openapi/v1_25"]
-v1_26 = ["k8s-openapi/v1_26"]
 v1_27 = ["k8s-openapi/v1_27"]
 v1_28 = ["k8s-openapi/v1_28"]
+v1_29 = ["k8s-openapi/v1_29"]
 
 [dev-dependencies]
 tokio-test = "0.4"
