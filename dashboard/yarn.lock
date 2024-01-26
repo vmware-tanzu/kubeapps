@@ -12444,10 +12444,10 @@ react-test-renderer@^17.0.0, react-test-renderer@^17.0.2:
     react-shallow-renderer "^16.13.1"
     scheduler "^0.20.2"
 
-react-tooltip@^5.25.2:
-  version "5.25.2"
-  resolved "https://registry.yarnpkg.com/react-tooltip/-/react-tooltip-5.25.2.tgz#efb51845ec2e863045812ad1dc1927573922d629"
-  integrity sha512-MwZ3S9xcHpojZaKqjr5mTs0yp/YBPpKFcayY7MaaIIBr2QskkeeyelpY2YdGLxIMyEj4sxl0rGoK6dQIKvNLlw==
+react-tooltip@^5.26.0:
+  version "5.26.0"
+  resolved "https://registry.yarnpkg.com/react-tooltip/-/react-tooltip-5.26.0.tgz#340d054cf952c43c2442f3af24bfc5c2b81fa80a"
+  integrity sha512-UBbwy3fo1KYDwRCOWwM6AEfQsk9shgVfNkXFqgwS33QHplzg7xao/7mX/6wd+lE6KSZzhUNTkB5TNk9SMaBV/A==
   dependencies:
     "@floating-ui/dom" "^1.0.0"
     classnames "^2.3.0"
