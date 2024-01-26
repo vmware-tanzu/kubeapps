@@ -16,7 +16,7 @@ require (
 	github.com/cppforlife/go-cli-ui v0.0.0-20220622150351-995494831c6c
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/reference v0.5.0
-	github.com/docker/cli v24.0.7+incompatible
+	github.com/docker/cli v25.0.1+incompatible
 	github.com/fluxcd/helm-controller/api v0.37.2
 	github.com/fluxcd/pkg/apis/meta v1.2.0
 	github.com/fluxcd/pkg/oci v0.14.0
@@ -46,7 +46,7 @@ require (
 	golang.org/x/net v0.20.0
 	golang.org/x/sync v0.6.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240102182953-50ed04b92917
-	google.golang.org/grpc v1.60.1
+	google.golang.org/grpc v1.61.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
 	google.golang.org/protobuf v1.32.0
 	gopkg.in/yaml.v3 v3.0.1
