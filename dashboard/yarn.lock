@@ -1227,10 +1227,15 @@
     "@bufbuild/buf-win32-arm64" "1.29.0"
     "@bufbuild/buf-win32-x64" "1.29.0"
 
-"@bufbuild/protobuf@1.7.0", "@bufbuild/protobuf@^1.6.0", "@bufbuild/protobuf@^1.7.0":
+"@bufbuild/protobuf@1.7.0":
   version "1.7.0"
   resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.7.0.tgz#cecddc8162a231642b410bc7b99309cd5969733c"
   integrity sha512-jIsRadRsyxf6ERBU1auY2c1k3doFdqh15F4HRZs4BELVuBtpN+3ipkXqcsWE+rD+EQNigeR29SfQ+ES6UX/jGg==
+
+"@bufbuild/protobuf@^1.6.0", "@bufbuild/protobuf@^1.7.0", "@bufbuild/protobuf@^1.7.1":
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.7.1.tgz#ce295b06d3f2f38c2671ee315c4ad296bbcbb337"
+  integrity sha512-UlI3lKLFBjZQJ0cHf47YUH6DzZxZYWk3sf6dKYyPUaXrfXq4z+zZqNO3q0lPUzyJgh14s6VscjcNFBaQBhYd9Q==
 
 "@bufbuild/protoc-gen-es@^1.7.0":
   version "1.7.0"
