@@ -18,7 +18,7 @@ require (
 	github.com/distribution/reference v0.5.0
 	github.com/docker/cli v25.0.1+incompatible
 	github.com/fluxcd/helm-controller/api v0.37.2
-	github.com/fluxcd/pkg/apis/meta v1.2.0
+	github.com/fluxcd/pkg/apis/meta v1.3.0
 	github.com/fluxcd/pkg/oci v0.34.0
 	github.com/fluxcd/pkg/version v0.2.2
 	github.com/fluxcd/source-controller/api v1.2.3
