@@ -1250,7 +1250,7 @@
   resolved "https://registry.yarnpkg.com/@cds/city/-/city-1.1.0.tgz#5b7323750d3d64671ce2e3a804bcf260fbea1154"
   integrity sha512-S9K+Q39BGOghyLHmR0Wdcmu1i1noSUk8HcvMj+3IaohZw02WFd99aPTQDHJeseXrXZP3CNovaSlePI0R11NcFg==
 
-"@cds/core@^6.9.1":
+"@cds/core@^6.9.2":
   version "6.9.2"
   resolved "https://registry.yarnpkg.com/@cds/core/-/core-6.9.2.tgz#0c5c5e2e9a86f1bddf3f0fba6bc17a73826a00e9"
   integrity sha512-Tx5L8/kLueBoSpu18w9eLonqFk1CVromp9bBXk6FLVVmYghE/lSt/WsYi6c0xyv7rJZpcHoGS/gh5p9Erelk3Q==
@@ -1262,7 +1262,7 @@
     "@cds/city" "^1.1.0"
     modern-normalize "1.1.0"
 
-"@cds/react@^6.9.1":
+"@cds/react@^6.9.2":
   version "6.9.2"
   resolved "https://registry.yarnpkg.com/@cds/react/-/react-6.9.2.tgz#22aa00e99fcf0d4b2fe890c2ff774873968f0aca"
   integrity sha512-Rz0DRFthc+OmOtSHj/FRzLOkseUuSyiBCI+jWX/NzFz1R62Jg4EYwf/PxYbvbKf6aV5m+0b4iAdLY3NHlIz0dg==
