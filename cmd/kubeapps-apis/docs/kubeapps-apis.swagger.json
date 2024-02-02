@@ -644,43 +644,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "installedPackageRef": {
-                  "type": "object",
-                  "properties": {
-                    "context": {
-                      "type": "object",
-                      "description": "The context (cluster/namespace) for the package.",
-                      "title": "Installed package context"
-                    },
-                    "plugin": {
-                      "type": "object",
-                      "example": {
-                        "name": "kapp_controller.packages",
-                        "version": "v1alpha1"
-                      },
-                      "description": "The plugin used to identify and interact with the installed package.\nThis field can be omitted when the request is in the context of a specific plugin.",
-                      "title": "The plugin used to identify and interact with the installed package.\nThis field can be omitted when the request is in the context of a specific plugin."
-                    }
-                  },
-                  "title": "A reference uniquely identifying the installed package being updated.\nRequired"
-                },
-                "pkgVersionReference": {
-                  "$ref": "#/definitions/v1alpha1VersionReference",
-                  "title": "For helm this will be the exact version in VersionReference.version\nFor fluxv2 this could be any semver constraint expression\nFor other plugins we can extend the VersionReference as needed. Optional"
-                },
-                "values": {
-                  "type": "string",
-                  "description": "An optional serialized values string to be included when templating a\npackage in the format expected by the plugin. Included when the backend\nformat doesn't use secrets or configmaps for values or supports both.\nThese values are layered on top of any values refs above, when\nrelevant."
-                },
-                "reconciliationOptions": {
-                  "$ref": "#/definitions/v1alpha1ReconciliationOptions",
-                  "description": "An optional field for specifying data common to systems that reconcile\nthe package on the cluster."
-                }
-              },
-              "description": "Request for UpdateInstalledPackage. The intent is to reach the desired state specified\nby the fields in the request, while leaving other fields intact. This is a whole\nobject \"Update\" semantics rather than \"Patch\" semantics. The caller will provide the\nvalues for the fields below, which will replace, or be overlaid onto, the\ncorresponding fields in the existing resource. For example, with the\nUpdateInstalledPackageRequest, it is not possible to change just the 'package version\nreference' without also specifying 'values' field. As a side effect, not specifying the\n'values' field in the request means there are no values specified in the desired state.\nSo the meaning of each field value is describing the desired state of the corresponding\nfield in the resource after the update operation has completed the renconciliation.",
-              "title": "UpdateInstalledPackageRequest"
+              "$ref": "#/definitions/v1alpha1PackagesServiceUpdateInstalledPackageBody"
             }
           }
         ],
@@ -1058,55 +1022,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "packageRepoRef": {
-                  "type": "object",
-                  "properties": {
-                    "context": {
-                      "type": "object",
-                      "description": "The context (cluster/namespace) for the repository.",
-                      "title": "The context (cluster/namespace) for the repository."
-                    },
-                    "plugin": {
-                      "type": "object",
-                      "example": {
-                        "name": "kapp_controller.packages",
-                        "version": "v1alpha1"
-                      },
-                      "description": "The plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a\nspecific plugin.",
-                      "title": "The plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a\nspecific plugin."
-                    }
-                  },
-                  "title": "A reference uniquely identifying the package repository being updated.\nThe only required field"
-                },
-                "url": {
-                  "type": "string",
-                  "description": "URL identifying the package repository location."
-                },
-                "description": {
-                  "type": "string",
-                  "description": "A user-provided description."
-                },
-                "interval": {
-                  "type": "string",
-                  "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, additionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\"\nOptional. Defaults to 10m if not specified"
-                },
-                "tlsConfig": {
-                  "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
-                  "title": "TLS-specific parameters for connecting to a repository. Optional"
-                },
-                "auth": {
-                  "$ref": "#/definitions/v1alpha1PackageRepositoryAuth",
-                  "title": "authentication parameters for connecting to a repository. Optional"
-                },
-                "customDetail": {
-                  "$ref": "#/definitions/protobufAny",
-                  "title": "Custom data added by the plugin\nA plugin can define custom details for data which is not yet, or\nnever will be specified in the core AddPackageRepositoryRequest\nfields. The use of an `Any` field means that each plugin can define\nthe structure of this message as required, while still satisfying the\ncore interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any\nJust for reference, some of the examples that have been chosen not to\nbe part of the core API but rather plugin-specific details are:\n  direct-helm:\n     - image pull secrets\n     - list of oci repositories\n     - filter rules\n     - sync job pod template"
-                }
-              },
-              "description": "Request for UpdatePackageRepository",
-              "title": "UpdatePackageRepositoryRequest"
+              "$ref": "#/definitions/v1alpha1RepositoriesServiceUpdatePackageRepositoryBody"
             }
           }
         ],
@@ -1654,38 +1570,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "installedPackageRef": {
-                  "type": "object",
-                  "properties": {
-                    "context": {
-                      "type": "object",
-                      "description": "The context (cluster/namespace) for the package.",
-                      "title": "Installed package context"
-                    },
-                    "plugin": {
-                      "$ref": "#/definitions/v1alpha1Plugin",
-                      "description": "The plugin used to identify and interact with the installed package.\nThis field can be omitted when the request is in the context of a specific plugin."
-                    }
-                  },
-                  "title": "A reference uniquely identifying the installed package being updated.\nRequired"
-                },
-                "pkgVersionReference": {
-                  "$ref": "#/definitions/v1alpha1VersionReference",
-                  "title": "For helm this will be the exact version in VersionReference.version\nFor fluxv2 this could be any semver constraint expression\nFor other plugins we can extend the VersionReference as needed. Optional"
-                },
-                "values": {
-                  "type": "string",
-                  "description": "An optional serialized values string to be included when templating a\npackage in the format expected by the plugin. Included when the backend\nformat doesn't use secrets or configmaps for values or supports both.\nThese values are layered on top of any values refs above, when\nrelevant."
-                },
-                "reconciliationOptions": {
-                  "$ref": "#/definitions/v1alpha1ReconciliationOptions",
-                  "description": "An optional field for specifying data common to systems that reconcile\nthe package on the cluster."
-                }
-              },
-              "description": "Request for UpdateInstalledPackage. The intent is to reach the desired state specified\nby the fields in the request, while leaving other fields intact. This is a whole\nobject \"Update\" semantics rather than \"Patch\" semantics. The caller will provide the\nvalues for the fields below, which will replace, or be overlaid onto, the\ncorresponding fields in the existing resource. For example, with the\nUpdateInstalledPackageRequest, it is not possible to change just the 'package version\nreference' without also specifying 'values' field. As a side effect, not specifying the\n'values' field in the request means there are no values specified in the desired state.\nSo the meaning of each field value is describing the desired state of the corresponding\nfield in the resource after the update operation has completed the renconciliation.",
-              "title": "UpdateInstalledPackageRequest"
+              "$ref": "#/definitions/v1alpha1FluxV2PackagesServiceUpdateInstalledPackageBody"
             }
           }
         ],
@@ -2051,50 +1936,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "packageRepoRef": {
-                  "type": "object",
-                  "properties": {
-                    "context": {
-                      "type": "object",
-                      "description": "The context (cluster/namespace) for the repository.",
-                      "title": "The context (cluster/namespace) for the repository."
-                    },
-                    "plugin": {
-                      "$ref": "#/definitions/v1alpha1Plugin",
-                      "description": "The plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a\nspecific plugin."
-                    }
-                  },
-                  "title": "A reference uniquely identifying the package repository being updated.\nThe only required field"
-                },
-                "url": {
-                  "type": "string",
-                  "description": "URL identifying the package repository location."
-                },
-                "description": {
-                  "type": "string",
-                  "description": "A user-provided description."
-                },
-                "interval": {
-                  "type": "string",
-                  "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, additionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\"\nOptional. Defaults to 10m if not specified"
-                },
-                "tlsConfig": {
-                  "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
-                  "title": "TLS-specific parameters for connecting to a repository. Optional"
-                },
-                "auth": {
-                  "$ref": "#/definitions/v1alpha1PackageRepositoryAuth",
-                  "title": "authentication parameters for connecting to a repository. Optional"
-                },
-                "customDetail": {
-                  "$ref": "#/definitions/protobufAny",
-                  "title": "Custom data added by the plugin\nA plugin can define custom details for data which is not yet, or\nnever will be specified in the core AddPackageRepositoryRequest\nfields. The use of an `Any` field means that each plugin can define\nthe structure of this message as required, while still satisfying the\ncore interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any\nJust for reference, some of the examples that have been chosen not to\nbe part of the core API but rather plugin-specific details are:\n  direct-helm:\n     - image pull secrets\n     - list of oci repositories\n     - filter rules\n     - sync job pod template"
-                }
-              },
-              "description": "Request for UpdatePackageRepository",
-              "title": "UpdatePackageRepositoryRequest"
+              "$ref": "#/definitions/v1alpha1FluxV2RepositoriesServiceUpdatePackageRepositoryBody"
             }
           }
         ],
@@ -2615,38 +2457,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "installedPackageRef": {
-                  "type": "object",
-                  "properties": {
-                    "context": {
-                      "type": "object",
-                      "description": "The context (cluster/namespace) for the package.",
-                      "title": "Installed package context"
-                    },
-                    "plugin": {
-                      "$ref": "#/definitions/v1alpha1Plugin",
-                      "description": "The plugin used to identify and interact with the installed package.\nThis field can be omitted when the request is in the context of a specific plugin."
-                    }
-                  },
-                  "title": "A reference uniquely identifying the installed package being updated.\nRequired"
-                },
-                "pkgVersionReference": {
-                  "$ref": "#/definitions/v1alpha1VersionReference",
-                  "title": "For helm this will be the exact version in VersionReference.version\nFor fluxv2 this could be any semver constraint expression\nFor other plugins we can extend the VersionReference as needed. Optional"
-                },
-                "values": {
-                  "type": "string",
-                  "description": "An optional serialized values string to be included when templating a\npackage in the format expected by the plugin. Included when the backend\nformat doesn't use secrets or configmaps for values or supports both.\nThese values are layered on top of any values refs above, when\nrelevant."
-                },
-                "reconciliationOptions": {
-                  "$ref": "#/definitions/v1alpha1ReconciliationOptions",
-                  "description": "An optional field for specifying data common to systems that reconcile\nthe package on the cluster."
-                }
-              },
-              "description": "Request for UpdateInstalledPackage. The intent is to reach the desired state specified\nby the fields in the request, while leaving other fields intact. This is a whole\nobject \"Update\" semantics rather than \"Patch\" semantics. The caller will provide the\nvalues for the fields below, which will replace, or be overlaid onto, the\ncorresponding fields in the existing resource. For example, with the\nUpdateInstalledPackageRequest, it is not possible to change just the 'package version\nreference' without also specifying 'values' field. As a side effect, not specifying the\n'values' field in the request means there are no values specified in the desired state.\nSo the meaning of each field value is describing the desired state of the corresponding\nfield in the resource after the update operation has completed the renconciliation.",
-              "title": "UpdateInstalledPackageRequest"
+              "$ref": "#/definitions/v1alpha1HelmPackagesServiceUpdateInstalledPackageBody"
             }
           }
         ],
@@ -2768,31 +2579,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "installedPackageRef": {
-                  "type": "object",
-                  "properties": {
-                    "context": {
-                      "type": "object",
-                      "description": "The context (cluster/namespace) for the package.",
-                      "title": "Installed package context"
-                    },
-                    "plugin": {
-                      "$ref": "#/definitions/v1alpha1Plugin",
-                      "description": "The plugin used to identify and interact with the installed package.\nThis field can be omitted when the request is in the context of a specific plugin."
-                    }
-                  },
-                  "description": "A reference uniquely identifying the installed package.",
-                  "title": "Installed package reference"
-                },
-                "releaseRevision": {
-                  "type": "integer",
-                  "format": "int32",
-                  "description": "A number identifying the Helm revision to which to rollback.",
-                  "title": "ReleaseRevision"
-                }
-              }
+              "$ref": "#/definitions/HelmPackagesServiceRollbackInstalledPackageBody"
             }
           }
         ],
@@ -3094,50 +2881,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "packageRepoRef": {
-                  "type": "object",
-                  "properties": {
-                    "context": {
-                      "type": "object",
-                      "description": "The context (cluster/namespace) for the repository.",
-                      "title": "The context (cluster/namespace) for the repository."
-                    },
-                    "plugin": {
-                      "$ref": "#/definitions/v1alpha1Plugin",
-                      "description": "The plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a\nspecific plugin."
-                    }
-                  },
-                  "title": "A reference uniquely identifying the package repository being updated.\nThe only required field"
-                },
-                "url": {
-                  "type": "string",
-                  "description": "URL identifying the package repository location."
-                },
-                "description": {
-                  "type": "string",
-                  "description": "A user-provided description."
-                },
-                "interval": {
-                  "type": "string",
-                  "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, additionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\"\nOptional. Defaults to 10m if not specified"
-                },
-                "tlsConfig": {
-                  "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
-                  "title": "TLS-specific parameters for connecting to a repository. Optional"
-                },
-                "auth": {
-                  "$ref": "#/definitions/v1alpha1PackageRepositoryAuth",
-                  "title": "authentication parameters for connecting to a repository. Optional"
-                },
-                "customDetail": {
-                  "$ref": "#/definitions/protobufAny",
-                  "title": "Custom data added by the plugin\nA plugin can define custom details for data which is not yet, or\nnever will be specified in the core AddPackageRepositoryRequest\nfields. The use of an `Any` field means that each plugin can define\nthe structure of this message as required, while still satisfying the\ncore interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any\nJust for reference, some of the examples that have been chosen not to\nbe part of the core API but rather plugin-specific details are:\n  direct-helm:\n     - image pull secrets\n     - list of oci repositories\n     - filter rules\n     - sync job pod template"
-                }
-              },
-              "description": "Request for UpdatePackageRepository",
-              "title": "UpdatePackageRepositoryRequest"
+              "$ref": "#/definitions/v1alpha1HelmRepositoriesServiceUpdatePackageRepositoryBody"
             }
           }
         ],
@@ -3658,38 +3402,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "installedPackageRef": {
-                  "type": "object",
-                  "properties": {
-                    "context": {
-                      "type": "object",
-                      "description": "The context (cluster/namespace) for the package.",
-                      "title": "Installed package context"
-                    },
-                    "plugin": {
-                      "$ref": "#/definitions/v1alpha1Plugin",
-                      "description": "The plugin used to identify and interact with the installed package.\nThis field can be omitted when the request is in the context of a specific plugin."
-                    }
-                  },
-                  "title": "A reference uniquely identifying the installed package being updated.\nRequired"
-                },
-                "pkgVersionReference": {
-                  "$ref": "#/definitions/v1alpha1VersionReference",
-                  "title": "For helm this will be the exact version in VersionReference.version\nFor fluxv2 this could be any semver constraint expression\nFor other plugins we can extend the VersionReference as needed. Optional"
-                },
-                "values": {
-                  "type": "string",
-                  "description": "An optional serialized values string to be included when templating a\npackage in the format expected by the plugin. Included when the backend\nformat doesn't use secrets or configmaps for values or supports both.\nThese values are layered on top of any values refs above, when\nrelevant."
-                },
-                "reconciliationOptions": {
-                  "$ref": "#/definitions/v1alpha1ReconciliationOptions",
-                  "description": "An optional field for specifying data common to systems that reconcile\nthe package on the cluster."
-                }
-              },
-              "description": "Request for UpdateInstalledPackage. The intent is to reach the desired state specified\nby the fields in the request, while leaving other fields intact. This is a whole\nobject \"Update\" semantics rather than \"Patch\" semantics. The caller will provide the\nvalues for the fields below, which will replace, or be overlaid onto, the\ncorresponding fields in the existing resource. For example, with the\nUpdateInstalledPackageRequest, it is not possible to change just the 'package version\nreference' without also specifying 'values' field. As a side effect, not specifying the\n'values' field in the request means there are no values specified in the desired state.\nSo the meaning of each field value is describing the desired state of the corresponding\nfield in the resource after the update operation has completed the renconciliation.",
-              "title": "UpdateInstalledPackageRequest"
+              "$ref": "#/definitions/v1alpha1KappControllerPackagesServiceUpdateInstalledPackageBody"
             }
           }
         ],
@@ -4055,50 +3768,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "packageRepoRef": {
-                  "type": "object",
-                  "properties": {
-                    "context": {
-                      "type": "object",
-                      "description": "The context (cluster/namespace) for the repository.",
-                      "title": "The context (cluster/namespace) for the repository."
-                    },
-                    "plugin": {
-                      "$ref": "#/definitions/v1alpha1Plugin",
-                      "description": "The plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a\nspecific plugin."
-                    }
-                  },
-                  "title": "A reference uniquely identifying the package repository being updated.\nThe only required field"
-                },
-                "url": {
-                  "type": "string",
-                  "description": "URL identifying the package repository location."
-                },
-                "description": {
-                  "type": "string",
-                  "description": "A user-provided description."
-                },
-                "interval": {
-                  "type": "string",
-                  "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, additionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\"\nOptional. Defaults to 10m if not specified"
-                },
-                "tlsConfig": {
-                  "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
-                  "title": "TLS-specific parameters for connecting to a repository. Optional"
-                },
-                "auth": {
-                  "$ref": "#/definitions/v1alpha1PackageRepositoryAuth",
-                  "title": "authentication parameters for connecting to a repository. Optional"
-                },
-                "customDetail": {
-                  "$ref": "#/definitions/protobufAny",
-                  "title": "Custom data added by the plugin\nA plugin can define custom details for data which is not yet, or\nnever will be specified in the core AddPackageRepositoryRequest\nfields. The use of an `Any` field means that each plugin can define\nthe structure of this message as required, while still satisfying the\ncore interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any\nJust for reference, some of the examples that have been chosen not to\nbe part of the core API but rather plugin-specific details are:\n  direct-helm:\n     - image pull secrets\n     - list of oci repositories\n     - filter rules\n     - sync job pod template"
-                }
-              },
-              "description": "Request for UpdatePackageRepository",
-              "title": "UpdatePackageRepositoryRequest"
+              "$ref": "#/definitions/v1alpha1KappControllerRepositoriesServiceUpdatePackageRepositoryBody"
             }
           }
         ],
@@ -4535,6 +4205,33 @@
     }
   },
   "definitions": {
+    "HelmPackagesServiceRollbackInstalledPackageBody": {
+      "type": "object",
+      "properties": {
+        "installedPackageRef": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "object",
+              "description": "The context (cluster/namespace) for the package.",
+              "title": "Installed package context"
+            },
+            "plugin": {
+              "$ref": "#/definitions/v1alpha1Plugin",
+              "description": "The plugin used to identify and interact with the installed package.\nThis field can be omitted when the request is in the context of a specific plugin."
+            }
+          },
+          "description": "A reference uniquely identifying the installed package.",
+          "title": "Installed package reference"
+        },
+        "releaseRevision": {
+          "type": "integer",
+          "format": "int32",
+          "description": "A number identifying the Helm revision to which to rollback.",
+          "title": "ReleaseRevision"
+        }
+      }
+    },
     "PackageRepositoryAuthPackageRepositoryAuthType": {
       "type": "string",
       "enum": [
@@ -4555,11 +4252,11 @@
       "properties": {
         "@type": {
           "type": "string",
-          "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com. As of May 2023, there are no widely used type server\nimplementations and no plans to implement one.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
+          "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
         }
       },
       "additionalProperties": {},
-      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(\u0026foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n    // or ...\n    if (any.isSameTypeAs(Foo.getDefaultInstance())) {\n      foo = any.unpack(Foo.getDefaultInstance());\n    }\n\n Example 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\n Example 4: Pack and unpack a message in Go\n\n     foo := \u0026pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := \u0026pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\nJSON\n====\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": \u003cstring\u003e,\n      \"lastName\": \u003cstring\u003e\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
+      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(\u0026foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n    // or ...\n    if (any.isSameTypeAs(Foo.getDefaultInstance())) {\n      foo = any.unpack(Foo.getDefaultInstance());\n    }\n\nExample 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\nExample 4: Pack and unpack a message in Go\n\n     foo := \u0026pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := \u0026pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\nJSON\n\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": \u003cstring\u003e,\n      \"lastName\": \u003cstring\u003e\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
     },
     "rpcStatus": {
       "type": "object",
@@ -4969,6 +4666,86 @@
       "description": "FilterOptions available when requesting summaries\n\nTODO: add example for API docs\n option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n   example: '{}'\n };",
       "title": "FilterOptions"
     },
+    "v1alpha1FluxV2PackagesServiceUpdateInstalledPackageBody": {
+      "type": "object",
+      "properties": {
+        "installedPackageRef": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "object",
+              "description": "The context (cluster/namespace) for the package.",
+              "title": "Installed package context"
+            },
+            "plugin": {
+              "$ref": "#/definitions/v1alpha1Plugin",
+              "description": "The plugin used to identify and interact with the installed package.\nThis field can be omitted when the request is in the context of a specific plugin."
+            }
+          },
+          "title": "A reference uniquely identifying the installed package being updated.\nRequired"
+        },
+        "pkgVersionReference": {
+          "$ref": "#/definitions/v1alpha1VersionReference",
+          "title": "For helm this will be the exact version in VersionReference.version\nFor fluxv2 this could be any semver constraint expression\nFor other plugins we can extend the VersionReference as needed. Optional"
+        },
+        "values": {
+          "type": "string",
+          "description": "An optional serialized values string to be included when templating a\npackage in the format expected by the plugin. Included when the backend\nformat doesn't use secrets or configmaps for values or supports both.\nThese values are layered on top of any values refs above, when\nrelevant."
+        },
+        "reconciliationOptions": {
+          "$ref": "#/definitions/v1alpha1ReconciliationOptions",
+          "description": "An optional field for specifying data common to systems that reconcile\nthe package on the cluster."
+        }
+      },
+      "description": "Request for UpdateInstalledPackage. The intent is to reach the desired state specified\nby the fields in the request, while leaving other fields intact. This is a whole\nobject \"Update\" semantics rather than \"Patch\" semantics. The caller will provide the\nvalues for the fields below, which will replace, or be overlaid onto, the\ncorresponding fields in the existing resource. For example, with the\nUpdateInstalledPackageRequest, it is not possible to change just the 'package version\nreference' without also specifying 'values' field. As a side effect, not specifying the\n'values' field in the request means there are no values specified in the desired state.\nSo the meaning of each field value is describing the desired state of the corresponding\nfield in the resource after the update operation has completed the renconciliation.",
+      "title": "UpdateInstalledPackageRequest"
+    },
+    "v1alpha1FluxV2RepositoriesServiceUpdatePackageRepositoryBody": {
+      "type": "object",
+      "properties": {
+        "packageRepoRef": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "object",
+              "description": "The context (cluster/namespace) for the repository.",
+              "title": "The context (cluster/namespace) for the repository."
+            },
+            "plugin": {
+              "$ref": "#/definitions/v1alpha1Plugin",
+              "description": "The plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a\nspecific plugin."
+            }
+          },
+          "title": "A reference uniquely identifying the package repository being updated.\nThe only required field"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL identifying the package repository location."
+        },
+        "description": {
+          "type": "string",
+          "description": "A user-provided description."
+        },
+        "interval": {
+          "type": "string",
+          "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, additionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\"\nOptional. Defaults to 10m if not specified"
+        },
+        "tlsConfig": {
+          "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
+          "title": "TLS-specific parameters for connecting to a repository. Optional"
+        },
+        "auth": {
+          "$ref": "#/definitions/v1alpha1PackageRepositoryAuth",
+          "title": "authentication parameters for connecting to a repository. Optional"
+        },
+        "customDetail": {
+          "$ref": "#/definitions/protobufAny",
+          "title": "Custom data added by the plugin\nA plugin can define custom details for data which is not yet, or\nnever will be specified in the core AddPackageRepositoryRequest\nfields. The use of an `Any` field means that each plugin can define\nthe structure of this message as required, while still satisfying the\ncore interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any\nJust for reference, some of the examples that have been chosen not to\nbe part of the core API but rather plugin-specific details are:\n  direct-helm:\n     - image pull secrets\n     - list of oci repositories\n     - filter rules\n     - sync job pod template"
+        }
+      },
+      "description": "Request for UpdatePackageRepository",
+      "title": "UpdatePackageRepositoryRequest"
+    },
     "v1alpha1GetAvailablePackageDetailResponse": {
       "type": "object",
       "properties": {
@@ -5219,6 +4996,86 @@
       "description": "Response for GetServiceAccountNames",
       "title": "GetServiceAccountNamesResponse"
     },
+    "v1alpha1HelmPackagesServiceUpdateInstalledPackageBody": {
+      "type": "object",
+      "properties": {
+        "installedPackageRef": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "object",
+              "description": "The context (cluster/namespace) for the package.",
+              "title": "Installed package context"
+            },
+            "plugin": {
+              "$ref": "#/definitions/v1alpha1Plugin",
+              "description": "The plugin used to identify and interact with the installed package.\nThis field can be omitted when the request is in the context of a specific plugin."
+            }
+          },
+          "title": "A reference uniquely identifying the installed package being updated.\nRequired"
+        },
+        "pkgVersionReference": {
+          "$ref": "#/definitions/v1alpha1VersionReference",
+          "title": "For helm this will be the exact version in VersionReference.version\nFor fluxv2 this could be any semver constraint expression\nFor other plugins we can extend the VersionReference as needed. Optional"
+        },
+        "values": {
+          "type": "string",
+          "description": "An optional serialized values string to be included when templating a\npackage in the format expected by the plugin. Included when the backend\nformat doesn't use secrets or configmaps for values or supports both.\nThese values are layered on top of any values refs above, when\nrelevant."
+        },
+        "reconciliationOptions": {
+          "$ref": "#/definitions/v1alpha1ReconciliationOptions",
+          "description": "An optional field for specifying data common to systems that reconcile\nthe package on the cluster."
+        }
+      },
+      "description": "Request for UpdateInstalledPackage. The intent is to reach the desired state specified\nby the fields in the request, while leaving other fields intact. This is a whole\nobject \"Update\" semantics rather than \"Patch\" semantics. The caller will provide the\nvalues for the fields below, which will replace, or be overlaid onto, the\ncorresponding fields in the existing resource. For example, with the\nUpdateInstalledPackageRequest, it is not possible to change just the 'package version\nreference' without also specifying 'values' field. As a side effect, not specifying the\n'values' field in the request means there are no values specified in the desired state.\nSo the meaning of each field value is describing the desired state of the corresponding\nfield in the resource after the update operation has completed the renconciliation.",
+      "title": "UpdateInstalledPackageRequest"
+    },
+    "v1alpha1HelmRepositoriesServiceUpdatePackageRepositoryBody": {
+      "type": "object",
+      "properties": {
+        "packageRepoRef": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "object",
+              "description": "The context (cluster/namespace) for the repository.",
+              "title": "The context (cluster/namespace) for the repository."
+            },
+            "plugin": {
+              "$ref": "#/definitions/v1alpha1Plugin",
+              "description": "The plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a\nspecific plugin."
+            }
+          },
+          "title": "A reference uniquely identifying the package repository being updated.\nThe only required field"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL identifying the package repository location."
+        },
+        "description": {
+          "type": "string",
+          "description": "A user-provided description."
+        },
+        "interval": {
+          "type": "string",
+          "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, additionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\"\nOptional. Defaults to 10m if not specified"
+        },
+        "tlsConfig": {
+          "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
+          "title": "TLS-specific parameters for connecting to a repository. Optional"
+        },
+        "auth": {
+          "$ref": "#/definitions/v1alpha1PackageRepositoryAuth",
+          "title": "authentication parameters for connecting to a repository. Optional"
+        },
+        "customDetail": {
+          "$ref": "#/definitions/protobufAny",
+          "title": "Custom data added by the plugin\nA plugin can define custom details for data which is not yet, or\nnever will be specified in the core AddPackageRepositoryRequest\nfields. The use of an `Any` field means that each plugin can define\nthe structure of this message as required, while still satisfying the\ncore interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any\nJust for reference, some of the examples that have been chosen not to\nbe part of the core API but rather plugin-specific details are:\n  direct-helm:\n     - image pull secrets\n     - list of oci repositories\n     - filter rules\n     - sync job pod template"
+        }
+      },
+      "description": "Request for UpdatePackageRepository",
+      "title": "UpdatePackageRepositoryRequest"
+    },
     "v1alpha1InstalledPackageDetail": {
       "type": "object",
       "properties": {
@@ -5397,6 +5254,86 @@
       },
       "description": "An InstalledPackageSummary provides a summary of an installed package\nuseful when aggregating many installed packages.\n\nTODO: add example for API docs\n option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n   example: '{}'\n };",
       "title": "InstalledPackageSummary"
+    },
+    "v1alpha1KappControllerPackagesServiceUpdateInstalledPackageBody": {
+      "type": "object",
+      "properties": {
+        "installedPackageRef": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "object",
+              "description": "The context (cluster/namespace) for the package.",
+              "title": "Installed package context"
+            },
+            "plugin": {
+              "$ref": "#/definitions/v1alpha1Plugin",
+              "description": "The plugin used to identify and interact with the installed package.\nThis field can be omitted when the request is in the context of a specific plugin."
+            }
+          },
+          "title": "A reference uniquely identifying the installed package being updated.\nRequired"
+        },
+        "pkgVersionReference": {
+          "$ref": "#/definitions/v1alpha1VersionReference",
+          "title": "For helm this will be the exact version in VersionReference.version\nFor fluxv2 this could be any semver constraint expression\nFor other plugins we can extend the VersionReference as needed. Optional"
+        },
+        "values": {
+          "type": "string",
+          "description": "An optional serialized values string to be included when templating a\npackage in the format expected by the plugin. Included when the backend\nformat doesn't use secrets or configmaps for values or supports both.\nThese values are layered on top of any values refs above, when\nrelevant."
+        },
+        "reconciliationOptions": {
+          "$ref": "#/definitions/v1alpha1ReconciliationOptions",
+          "description": "An optional field for specifying data common to systems that reconcile\nthe package on the cluster."
+        }
+      },
+      "description": "Request for UpdateInstalledPackage. The intent is to reach the desired state specified\nby the fields in the request, while leaving other fields intact. This is a whole\nobject \"Update\" semantics rather than \"Patch\" semantics. The caller will provide the\nvalues for the fields below, which will replace, or be overlaid onto, the\ncorresponding fields in the existing resource. For example, with the\nUpdateInstalledPackageRequest, it is not possible to change just the 'package version\nreference' without also specifying 'values' field. As a side effect, not specifying the\n'values' field in the request means there are no values specified in the desired state.\nSo the meaning of each field value is describing the desired state of the corresponding\nfield in the resource after the update operation has completed the renconciliation.",
+      "title": "UpdateInstalledPackageRequest"
+    },
+    "v1alpha1KappControllerRepositoriesServiceUpdatePackageRepositoryBody": {
+      "type": "object",
+      "properties": {
+        "packageRepoRef": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "object",
+              "description": "The context (cluster/namespace) for the repository.",
+              "title": "The context (cluster/namespace) for the repository."
+            },
+            "plugin": {
+              "$ref": "#/definitions/v1alpha1Plugin",
+              "description": "The plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a\nspecific plugin."
+            }
+          },
+          "title": "A reference uniquely identifying the package repository being updated.\nThe only required field"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL identifying the package repository location."
+        },
+        "description": {
+          "type": "string",
+          "description": "A user-provided description."
+        },
+        "interval": {
+          "type": "string",
+          "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, additionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\"\nOptional. Defaults to 10m if not specified"
+        },
+        "tlsConfig": {
+          "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
+          "title": "TLS-specific parameters for connecting to a repository. Optional"
+        },
+        "auth": {
+          "$ref": "#/definitions/v1alpha1PackageRepositoryAuth",
+          "title": "authentication parameters for connecting to a repository. Optional"
+        },
+        "customDetail": {
+          "$ref": "#/definitions/protobufAny",
+          "title": "Custom data added by the plugin\nA plugin can define custom details for data which is not yet, or\nnever will be specified in the core AddPackageRepositoryRequest\nfields. The use of an `Any` field means that each plugin can define\nthe structure of this message as required, while still satisfying the\ncore interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any\nJust for reference, some of the examples that have been chosen not to\nbe part of the core API but rather plugin-specific details are:\n  direct-helm:\n     - image pull secrets\n     - list of oci repositories\n     - filter rules\n     - sync job pod template"
+        }
+      },
+      "description": "Request for UpdatePackageRepository",
+      "title": "UpdatePackageRepositoryRequest"
     },
     "v1alpha1Maintainer": {
       "type": "object",
@@ -5705,6 +5642,45 @@
       },
       "title": "PackageRepositoryTlsConfig"
     },
+    "v1alpha1PackagesServiceUpdateInstalledPackageBody": {
+      "type": "object",
+      "properties": {
+        "installedPackageRef": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "object",
+              "description": "The context (cluster/namespace) for the package.",
+              "title": "Installed package context"
+            },
+            "plugin": {
+              "type": "object",
+              "example": {
+                "name": "kapp_controller.packages",
+                "version": "v1alpha1"
+              },
+              "description": "The plugin used to identify and interact with the installed package.\nThis field can be omitted when the request is in the context of a specific plugin.",
+              "title": "The plugin used to identify and interact with the installed package.\nThis field can be omitted when the request is in the context of a specific plugin."
+            }
+          },
+          "title": "A reference uniquely identifying the installed package being updated.\nRequired"
+        },
+        "pkgVersionReference": {
+          "$ref": "#/definitions/v1alpha1VersionReference",
+          "title": "For helm this will be the exact version in VersionReference.version\nFor fluxv2 this could be any semver constraint expression\nFor other plugins we can extend the VersionReference as needed. Optional"
+        },
+        "values": {
+          "type": "string",
+          "description": "An optional serialized values string to be included when templating a\npackage in the format expected by the plugin. Included when the backend\nformat doesn't use secrets or configmaps for values or supports both.\nThese values are layered on top of any values refs above, when\nrelevant."
+        },
+        "reconciliationOptions": {
+          "$ref": "#/definitions/v1alpha1ReconciliationOptions",
+          "description": "An optional field for specifying data common to systems that reconcile\nthe package on the cluster."
+        }
+      },
+      "description": "Request for UpdateInstalledPackage. The intent is to reach the desired state specified\nby the fields in the request, while leaving other fields intact. This is a whole\nobject \"Update\" semantics rather than \"Patch\" semantics. The caller will provide the\nvalues for the fields below, which will replace, or be overlaid onto, the\ncorresponding fields in the existing resource. For example, with the\nUpdateInstalledPackageRequest, it is not possible to change just the 'package version\nreference' without also specifying 'values' field. As a side effect, not specifying the\n'values' field in the request means there are no values specified in the desired state.\nSo the meaning of each field value is describing the desired state of the corresponding\nfield in the resource after the update operation has completed the renconciliation.",
+      "title": "UpdateInstalledPackageRequest"
+    },
     "v1alpha1PaginationOptions": {
       "type": "object",
       "properties": {
@@ -5765,6 +5741,57 @@
       },
       "description": "ReconciliationOptions enable specifying standard fields for backends that continuously\nreconcile a package install as new matching versions are released. Most of the naming\nis from the flux HelmReleaseSpec though it maps directly to equivalent fields on Carvel's\nInstalledPackage.",
       "title": "ReconciliationOptions"
+    },
+    "v1alpha1RepositoriesServiceUpdatePackageRepositoryBody": {
+      "type": "object",
+      "properties": {
+        "packageRepoRef": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "object",
+              "description": "The context (cluster/namespace) for the repository.",
+              "title": "The context (cluster/namespace) for the repository."
+            },
+            "plugin": {
+              "type": "object",
+              "example": {
+                "name": "kapp_controller.packages",
+                "version": "v1alpha1"
+              },
+              "description": "The plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a\nspecific plugin.",
+              "title": "The plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a\nspecific plugin."
+            }
+          },
+          "title": "A reference uniquely identifying the package repository being updated.\nThe only required field"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL identifying the package repository location."
+        },
+        "description": {
+          "type": "string",
+          "description": "A user-provided description."
+        },
+        "interval": {
+          "type": "string",
+          "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, additionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\"\nOptional. Defaults to 10m if not specified"
+        },
+        "tlsConfig": {
+          "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
+          "title": "TLS-specific parameters for connecting to a repository. Optional"
+        },
+        "auth": {
+          "$ref": "#/definitions/v1alpha1PackageRepositoryAuth",
+          "title": "authentication parameters for connecting to a repository. Optional"
+        },
+        "customDetail": {
+          "$ref": "#/definitions/protobufAny",
+          "title": "Custom data added by the plugin\nA plugin can define custom details for data which is not yet, or\nnever will be specified in the core AddPackageRepositoryRequest\nfields. The use of an `Any` field means that each plugin can define\nthe structure of this message as required, while still satisfying the\ncore interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any\nJust for reference, some of the examples that have been chosen not to\nbe part of the core API but rather plugin-specific details are:\n  direct-helm:\n     - image pull secrets\n     - list of oci repositories\n     - filter rules\n     - sync job pod template"
+        }
+      },
+      "description": "Request for UpdatePackageRepository",
+      "title": "UpdatePackageRepositoryRequest"
     },
     "v1alpha1ResourceRef": {
       "type": "object",
