@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@babel/parser": "^7.23.9",
-    "@bufbuild/protobuf": "^1.6.0",
+    "@bufbuild/protobuf": "^1.7.2",
     "@cds/city": "^1.1.0",
     "@cds/core": "^6.9.1",
     "@cds/react": "^6.9.1",
