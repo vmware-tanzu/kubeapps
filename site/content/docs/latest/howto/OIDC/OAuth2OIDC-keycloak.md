@@ -22,28 +22,25 @@ The certificate must be a SAN certificate and should be capable of using wildcar
 To create the certificate, it is useful to create a openssl config file, something like the following (_certificate.config_):
 
 ```properties
-[req]
-default_bits        = 2048
-distinguished_name  = req_dn
-x509_extensions     = req_ext
-
-[req_dn]
-countryName                 = Country Name (2 letter code)
-countryName_default         = US
-stateOrProvinceName         = State or Province Name (full name)
-stateOrProvinceName_default = CA
-localityName                = Locality Name (eg, city)
-localityName_default        = Campbell
-organizationName            = Organization Name (eg, company)
-organizationName_default    = vmware.com
-commonName                  = Common Name (e.g. server FQDN or YOUR name)
-commonName_default          = keycloak
-
-[req_ext]
-subjectAltName      = @alt_names
-
-[alt_names]
-DNS.1               = *.us-east-2.elb.amazonaws.com
+[req]=
+default_bits=2048
+distinguished_name=req_dn
+x509_extensions=req_ext
+[req_dn]=
+countryName=Country Name (2 letter code)
+countryName_default=US
+stateOrProvinceName=State or Province Name (full name)
+stateOrProvinceName_default=CA
+localityName=Locality Name (eg, city)
+localityName_default=Campbell
+organizationName=Organization Name (eg, company)
+organizationName_default=vmware.com
+commonName=Common Name (e.g. server FQDN or YOUR name)
+commonName_default=keycloak
+[req_ext]=
+subjectAltName=@alt_names
+[alt_names]=
+DNS.1=*.us-east-2.elb.amazonaws.com
 ```
 
 The important section of the config is the `[req_ext]` extension section with alternate names. As the load balancer URL is created during installation, we use the wildcard mechanism so the final hostname can be verified by the certificates (here `DNS.1` illustrates a cluster on AWS). Other hostnames, e.g. localhost, can also be added following the numbers pattern (`DNS.x`).

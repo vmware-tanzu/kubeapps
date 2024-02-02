@@ -20,7 +20,7 @@ import (
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1"
 	sourcev1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
-	redismock "github.com/go-redis/redismock/v8"
+	"github.com/go-redis/redismock/v8"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -1419,19 +1419,28 @@ func TestAddPackageRepository(t *testing.T) {
 						if tc.expectedCreatedSecret != nil {
 							t.Fatalf("Error: unexpected state")
 						}
+
+						// Manually setting TypeMeta, as the fakeclient doesn't do it anymore:
+						// https://github.com/kubernetes-sigs/controller-runtime/pull/2633
+						actualRepo.TypeMeta = tc.expectedRepo.TypeMeta
+
 						if got, want := &actualRepo, tc.expectedRepo; !cmp.Equal(want, got) {
 							t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 						}
 					} else {
-						// TODO(agamez): flux upgrade - migrate to CertSecretRef, seehttps://github.com/fluxcd/flux2/releases/tag/v2.1.0
+						// TODO(agamez): flux upgrade - migrate to CertSecretRef, see https://github.com/fluxcd/flux2/releases/tag/v2.1.0
 						opt1 := cmpopts.IgnoreFields(sourcev1beta2.HelmRepositorySpec{}, "SecretRef")
+
+						// Manually setting TypeMeta, as the fakeclient doesn't do it anymore:
+						// https://github.com/kubernetes-sigs/controller-runtime/pull/2633
+						actualRepo.TypeMeta = tc.expectedRepo.TypeMeta
 
 						if got, want := &actualRepo, tc.expectedRepo; !cmp.Equal(want, got, opt1) {
 							t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 						}
 
 						if tc.expectedCreatedSecret != nil {
-							// TODO(agamez): flux upgrade - migrate to CertSecretRef, seehttps://github.com/fluxcd/flux2/releases/tag/v2.1.0
+							// TODO(agamez): flux upgrade - migrate to CertSecretRef, see https://github.com/fluxcd/flux2/releases/tag/v2.1.0
 							if !strings.HasPrefix(actualRepo.Spec.SecretRef.Name, tc.expectedRepo.Spec.SecretRef.Name) {
 								t.Errorf("SecretRef [%s] was expected to start with [%s]",
 									actualRepo.Spec.SecretRef.Name, tc.expectedRepo.Spec.SecretRef.Name)
@@ -1440,7 +1449,7 @@ func TestAddPackageRepository(t *testing.T) {
 							// check expected secret has been created
 							if typedClient, err := s.clientGetter.Typed(http.Header{}, s.kubeappsCluster); err != nil {
 								t.Fatal(err)
-								// TODO(agamez): flux upgrade - migrate to CertSecretRef, seehttps://github.com/fluxcd/flux2/releases/tag/v2.1.0
+								// TODO(agamez): flux upgrade - migrate to CertSecretRef, see https://github.com/fluxcd/flux2/releases/tag/v2.1.0
 							} else if secret, err := typedClient.CoreV1().Secrets(nsname.Namespace).Get(ctx, actualRepo.Spec.SecretRef.Name, metav1.GetOptions{}); err != nil {
 								t.Fatal(err)
 							} else if got, want := secret, tc.expectedCreatedSecret; !cmp.Equal(want, got, opt2) {
@@ -1451,7 +1460,7 @@ func TestAddPackageRepository(t *testing.T) {
 							}
 						} else if actualRepo.Spec.SecretRef != nil {
 							t.Fatalf("Expected no secret, but found: [%q]", actualRepo.Spec.SecretRef.Name)
-							// TODO(agamez): flux upgrade - migrate to CertSecretRef, seehttps://github.com/fluxcd/flux2/releases/tag/v2.1.0
+							// TODO(agamez): flux upgrade - migrate to CertSecretRef, see https://github.com/fluxcd/flux2/releases/tag/v2.1.0
 						} else if tc.expectedRepo.Spec.SecretRef != nil {
 							t.Fatalf("Error: unexpected state")
 						}
@@ -2214,13 +2223,13 @@ func TestUpdatePackageRepository(t *testing.T) {
 					if err = ctrlClient.Get(ctx, types.NamespacedName{Namespace: tc.repoNamespace, Name: tc.repoName}, &actualRepo); err != nil {
 						t.Fatal(err)
 					}
-					// TODO(agamez): flux upgrade - migrate to CertSecretRef, seehttps://github.com/fluxcd/flux2/releases/tag/v2.1.0
+					// TODO(agamez): flux upgrade - migrate to CertSecretRef, see https://github.com/fluxcd/flux2/releases/tag/v2.1.0
 					if actualRepo.Spec.SecretRef == nil {
 						t.Fatalf("Expected repo to have a secret ref, none found")
 					}
 
 					opt2 := cmpopts.IgnoreFields(metav1.ObjectMeta{}, "Name", "GenerateName")
-					// TODO(agamez): flux upgrade - migrate to CertSecretRef, seehttps://github.com/fluxcd/flux2/releases/tag/v2.1.0
+					// TODO(agamez): flux upgrade - migrate to CertSecretRef, see https://github.com/fluxcd/flux2/releases/tag/v2.1.0
 					if secret, err := typedClient.CoreV1().Secrets(tc.repoNamespace).Get(ctx, actualRepo.Spec.SecretRef.Name, metav1.GetOptions{}); err != nil {
 						t.Fatal(err)
 					} else if got, want := secret, tc.expectedCreatedSecret; !cmp.Equal(want, got, opt2) {
@@ -2628,7 +2637,7 @@ func newHttpRepoAndServeIndex(repoIndex, repoName, repoNamespace string, replace
 	}
 
 	if secretRef != "" {
-		// TODO(agamez): flux upgrade - migrate to CertSecretRef, seehttps://github.com/fluxcd/flux2/releases/tag/v2.1.0
+		// TODO(agamez): flux upgrade - migrate to CertSecretRef, see https://github.com/fluxcd/flux2/releases/tag/v2.1.0
 		repoSpec.SecretRef = &fluxmeta.LocalObjectReference{Name: secretRef}
 	}
 

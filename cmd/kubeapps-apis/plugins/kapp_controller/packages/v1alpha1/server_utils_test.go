@@ -288,7 +288,7 @@ func TestBuildPostInstallationNotes(t *testing.T) {
 				Name:      "my-installation",
 			},
 			Spec: kappctrlv1alpha1.AppSpec{
-				SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+				SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 			},
 			Status: kappctrlv1alpha1.AppStatus{
 				Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -341,7 +341,7 @@ fetchStderr
 				Name:      "my-installation",
 			},
 			Spec: kappctrlv1alpha1.AppSpec{
-				SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+				SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 			},
 			Status: kappctrlv1alpha1.AppStatus{
 				Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -377,7 +377,7 @@ fetchStdout
 				Name:      "my-installation",
 			},
 			Spec: kappctrlv1alpha1.AppSpec{
-				SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+				SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 			},
 			Status: kappctrlv1alpha1.AppStatus{
 				Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -415,7 +415,7 @@ fetchStderr
 				Name:      "my-installation",
 			},
 			Spec: kappctrlv1alpha1.AppSpec{
-				SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+				SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 			},
 			Status: kappctrlv1alpha1.AppStatus{
 				Fetch: &kappctrlv1alpha1.AppStatusFetch{

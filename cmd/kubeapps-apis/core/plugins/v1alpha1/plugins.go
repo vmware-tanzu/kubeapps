@@ -172,7 +172,7 @@ func (s *PluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plu
 
 	grpcFn, ok := grpcRegFn.(grpcRegisterFunctionType)
 	if !ok {
-		var stubFn grpcRegisterFunctionType = func(GRPCPluginRegistrationOptions) (interface{}, error) {
+		var stubFn = func(GRPCPluginRegistrationOptions) (interface{}, error) {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("unable to use %q in plugin %v due to mismatched signature.\nwant: %T\ngot: %T", grpcRegisterFunction, pluginDetail, stubFn, grpcRegFn)
@@ -225,7 +225,7 @@ func getPluginDetail(p *plugin.Plugin, pluginPath string) (*plugins.Plugin, erro
 
 	fn, ok := pluginDetailFn.(pluginDetailFunctionType)
 	if !ok {
-		var stubFn pluginDetailFunctionType = func() *plugins.Plugin { return &plugins.Plugin{} }
+		var stubFn = func() *plugins.Plugin { return &plugins.Plugin{} }
 		return nil, fmt.Errorf("unable to use %q in plugin %q due to a mismatched signature. \nwant: %T\ngot: %T", pluginDetailFunction, pluginPath, stubFn, pluginDetailFn)
 	}
 
@@ -243,7 +243,7 @@ func registerHTTP(p *plugin.Plugin, pluginDetail *plugins.Plugin, gwArgs core.Ga
 	if !ok {
 		// Create a stubFn only so we can ensure the correct type is shown in case
 		// of an error.
-		var stubFn gatewayRegisterFunctionType = func(context.Context, *runtime.ServeMux, string, []grpc.DialOption) error { return nil }
+		var stubFn = func(context.Context, *runtime.ServeMux, string, []grpc.DialOption) error { return nil }
 		return fmt.Errorf("unable to use %q in plugin %v due to mismatched signature.\nwant: %T\ngot: %T", gatewayRegisterFunction, pluginDetail, stubFn, gwRegFn)
 	}
 	return gwfn(gwArgs.Ctx, gwArgs.Mux, gwArgs.Addr, gwArgs.DialOptions)
