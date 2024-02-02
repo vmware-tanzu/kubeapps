@@ -2251,6 +2251,11 @@ func checkRepoSecrets(s *Server, t *testing.T, userManagedSecrets bool,
 	expectedAuthSecret *apiv1.Secret, expectedDockerSecret *apiv1.Secret,
 	expectedGlobalSecret *apiv1.Secret) {
 	ctx := context.Background()
+
+	// Manually setting TypeMeta, as the fakeclient doesn't do it anymore:
+	// https://github.com/kubernetes-sigs/controller-runtime/pull/2633
+	actualRepo.TypeMeta = expectedRepo.TypeMeta
+
 	if userManagedSecrets {
 		if expectedAuthSecret != nil || expectedDockerSecret != nil {
 			t.Fatalf("Error: unexpected state")

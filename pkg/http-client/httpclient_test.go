@@ -6,7 +6,7 @@ package httpclient
 import (
 	"crypto/tls"
 	"crypto/x509"
-	errors "errors"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"

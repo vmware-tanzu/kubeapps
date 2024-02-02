@@ -1774,7 +1774,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -1908,7 +1908,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -2036,7 +2036,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -2140,7 +2140,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -2272,7 +2272,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -2316,7 +2316,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -2464,7 +2464,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 						NoopDelete: false,
 					},
 				},
@@ -2606,7 +2606,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -2741,7 +2741,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -2945,7 +2945,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -2974,7 +2974,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -3180,7 +3180,7 @@ fetchStderr
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -3209,7 +3209,7 @@ fetchStderr
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -3377,7 +3377,7 @@ fetchStderr
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -3406,7 +3406,7 @@ fetchStderr
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -3621,7 +3621,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -3861,7 +3861,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -4016,7 +4016,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -4081,7 +4081,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 					Paused:     true,
 					Canceled:   false,
-					SyncPeriod: &metav1.Duration{Duration: (time.Second * 99)},
+					SyncPeriod: &metav1.Duration{Duration: time.Second * 99},
 					NoopDelete: false,
 				},
 				Status: packagingv1alpha1.PackageInstallStatus{
@@ -4173,7 +4173,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -4331,7 +4331,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -4443,7 +4443,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -4601,7 +4601,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -4755,7 +4755,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -4912,7 +4912,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -5069,7 +5069,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -5226,7 +5226,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -5383,7 +5383,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -5616,7 +5616,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -5680,7 +5680,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					},
 					Paused:     false,
 					Canceled:   false,
-					SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+					SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 					NoopDelete: false,
 				},
 				Status: packagingv1alpha1.PackageInstallStatus{
@@ -5790,7 +5790,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -5920,7 +5920,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -5989,7 +5989,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -6110,7 +6110,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -6209,7 +6209,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -6308,7 +6308,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: time.Second * 30},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{

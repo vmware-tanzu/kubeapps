@@ -21,7 +21,7 @@ import (
 	"sync"
 	"time"
 
-	semver "github.com/Masterminds/semver/v3"
+	"github.com/Masterminds/semver/v3"
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/disintegration/imaging"
 	"github.com/itchyny/gojq"
