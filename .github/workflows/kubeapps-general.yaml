@@ -19,7 +19,7 @@ on:
         default: false
 
 env:
-  CHARTMUSEUM_VERSION: "3.10.1"
+  CHARTMUSEUM_VERSION: "3.10.2"
   CHARTS_REPO_ORIGINAL: "bitnami/charts"
   BRANCH_CHARTS_REPO_ORIGINAL: "main"
   CHARTS_REPO_FORKED: "kubeapps-bot/charts"
@@ -38,7 +38,7 @@ env:
   GOLANG_VERSION: "1.21.6"
   HELM_VERSION_MIN: "v3.8.0"
   HELM_VERSION_STABLE: "v3.14.0"
-  GITHUB_VERSION: "2.42.1"
+  GITHUB_VERSION: "2.43.1"
   IMAGES_TO_PUSH: "apprepository-controller dashboard asset-syncer pinniped-proxy kubeapps-apis oci-catalog"
   # IMG_DEV_TAG is the tags used for the Kubeapps docker images. Ideally there should be an IMG_PROD_TAG
   # but its value is dynamic and GitHub actions doesn't support it in the `env` block, so it is generated
@@ -51,7 +51,7 @@ env:
   IMG_PREFIX_FOR_FORKS: "your-dockerhub-username/"
   # Currently, we only build the images for linux/amd64 because building cross-platform images is extremely slow...
   IMG_PLATFORMS: "linux/amd64"
-  KAPP_CONTROLLER_VERSION: "v0.49.0"
+  KAPP_CONTROLLER_VERSION: "v0.50.0"
   FLUX_VERSION: "v2.2.2"
   K8S_KIND_VERSION: "v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72"
   KIND_VERSION: "v0.20.0"
@@ -59,7 +59,7 @@ env:
   MKCERT_VERSION: "v1.4.4"
   NODE_VERSION: "20.11.0"
   OLM_VERSION: "v0.26.0"
-  POSTGRESQL_VERSION: "16.1.0-debian-11-r22"
+  POSTGRESQL_VERSION: "16.1.0-debian-11-r25"
   RUST_VERSION: "1.75.0"
   SEMVER_VERSION: "3.4.0"
   GKE_STABLE_VERSION: "1.27.9"
