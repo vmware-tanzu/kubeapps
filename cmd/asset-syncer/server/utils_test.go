@@ -222,8 +222,8 @@ func Test_parseFilters(t *testing.T) {
 
 func Test_fetchRepoIndex(t *testing.T) {
 	fakeServer := newFakeServer(t, map[string]*http.Response{
-		"/index.yaml":         &http.Response{StatusCode: 200},
-		"/subpath/index.yaml": &http.Response{StatusCode: 200},
+		"/index.yaml":         {StatusCode: 200},
+		"/subpath/index.yaml": {StatusCode: 200},
 	})
 	defer fakeServer.Close()
 	addr := fakeServer.URL
@@ -397,19 +397,19 @@ func Test_fetchAndImportIcon(t *testing.T) {
 	svgHeader.Set("Content-Type", "image/svg")
 
 	server := newFakeServer(t, map[string]*http.Response{
-		"/valid_icon.png": &http.Response{
+		"/valid_icon.png": {
 			StatusCode: 200,
 			Body:       io.NopCloser(bytes.NewReader(iconBytes())),
 		},
-		"/valid_svg_icon.svg": &http.Response{
+		"/valid_svg_icon.svg": {
 			StatusCode: 200,
 			Body:       io.NopCloser(bytes.NewReader([]byte("<svg width='100' height='100'></svg>"))),
 			Header:     svgHeader,
 		},
-		"/download_fail.png": &http.Response{
+		"/download_fail.png": {
 			StatusCode: 500,
 		},
-		"/invalid_icon.png": &http.Response{
+		"/invalid_icon.png": {
 			StatusCode: 200,
 			Body:       io.NopCloser(bytes.NewReader([]byte("not a valid png"))),
 		},
@@ -707,7 +707,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 func Test_ociAPICli(t *testing.T) {
 	t.Run("TagList - failed request", func(t *testing.T) {
 		server := newFakeServer(t, map[string]*http.Response{
-			"/v2/apache/tags/list": &http.Response{
+			"/v2/apache/tags/list": {
 				StatusCode: 500,
 			},
 		})
@@ -736,7 +736,7 @@ func Test_ociAPICli(t *testing.T) {
 
 	t.Run("TagList - successful request", func(t *testing.T) {
 		server := newFakeServer(t, map[string]*http.Response{
-			"/v2/apache/tags/list": &http.Response{
+			"/v2/apache/tags/list": {
 				StatusCode: 200,
 				Body:       io.NopCloser(strings.NewReader(`{"name":"apache","tags":["7.5.1","8.1.1"]}`)),
 			},
@@ -760,7 +760,7 @@ func Test_ociAPICli(t *testing.T) {
 
 	t.Run("IsHelmChart - failed request", func(t *testing.T) {
 		server := newFakeServer(t, map[string]*http.Response{
-			"/v2/apache-bad/manifests/7.5.1": &http.Response{
+			"/v2/apache-bad/manifests/7.5.1": {
 				StatusCode: 500,
 			},
 		})
@@ -854,7 +854,7 @@ func Test_ociAPICli(t *testing.T) {
 
 	t.Run("CatalogAvailable - successful request", func(t *testing.T) {
 		server := newFakeServer(t, map[string]*http.Response{
-			"/v2/test/project/charts-index/manifests/latest": &http.Response{
+			"/v2/test/project/charts-index/manifests/latest": {
 				StatusCode: 200,
 				Body:       io.NopCloser(strings.NewReader(chartsIndexManifestJSON)),
 			},
@@ -882,7 +882,7 @@ func Test_ociAPICli(t *testing.T) {
 
 	t.Run("CatalogAvailable - returns false for incorrect media type", func(t *testing.T) {
 		server := newFakeServer(t, map[string]*http.Response{
-			"/v2/test/project/charts-index/manifests/latest": &http.Response{
+			"/v2/test/project/charts-index/manifests/latest": {
 				StatusCode: 200,
 				Body:       io.NopCloser(strings.NewReader(`{"config": {"mediaType": "something-else"}}`)),
 			},
@@ -909,7 +909,7 @@ func Test_ociAPICli(t *testing.T) {
 
 	t.Run("CatalogAvailable - returns false for a 404", func(t *testing.T) {
 		server := newFakeServer(t, map[string]*http.Response{
-			"/v2/test/project/charts-index/manifests/latest": &http.Response{
+			"/v2/test/project/charts-index/manifests/latest": {
 				StatusCode: 200,
 				Body:       io.NopCloser(strings.NewReader(`{"config": {"mediaType": "something-else"}}`)),
 			},
@@ -1029,11 +1029,11 @@ func Test_ociAPICli(t *testing.T) {
 
 	t.Run("Catalog - successful request", func(t *testing.T) {
 		server := newFakeServer(t, map[string]*http.Response{
-			"/v2/test/project/charts-index/manifests/latest": &http.Response{
+			"/v2/test/project/charts-index/manifests/latest": {
 				StatusCode: 200,
 				Body:       io.NopCloser(strings.NewReader(chartsIndexManifestJSON)),
 			},
-			"/v2/test/project/charts-index/blobs/sha256:f9f7df0ae3f50aaf9ff390034cec4286d2aa43f061ce4bc7aa3c9ac862800aba": &http.Response{
+			"/v2/test/project/charts-index/blobs/sha256:f9f7df0ae3f50aaf9ff390034cec4286d2aa43f061ce4bc7aa3c9ac862800aba": {
 				StatusCode: 200,
 				Body:       io.NopCloser(strings.NewReader(chartsIndexMultipleJSON)),
 			},

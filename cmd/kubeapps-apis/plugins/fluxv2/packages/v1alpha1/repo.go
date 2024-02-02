@@ -401,7 +401,7 @@ func (s *Server) repoSummaries(ctx context.Context, headers http.Header, ns stri
 			Type:            typ,
 			Url:             repo.Spec.URL,
 			Status:          repoStatus(repo),
-			// TODO(agamez): flux upgrade - migrate to CertSecretRef, seehttps://github.com/fluxcd/flux2/releases/tag/v2.1.0
+			// TODO(agamez): flux upgrade - migrate to CertSecretRef, see https://github.com/fluxcd/flux2/releases/tag/v2.1.0
 			RequiresAuth: repo.Spec.SecretRef != nil,
 		}
 		summaries = append(summaries, summary)
@@ -455,7 +455,7 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 	}
 
 	if isSecretUpdated {
-		// TODO(agamez): flux upgrade - migrate to CertSecretRef, seehttps://github.com/fluxcd/flux2/releases/tag/v2.1.0
+		// TODO(agamez): flux upgrade - migrate to CertSecretRef, see https://github.com/fluxcd/flux2/releases/tag/v2.1.0
 		if secret != nil {
 			repo.Spec.SecretRef = &fluxmeta.LocalObjectReference{Name: secret.Name}
 		} else {
@@ -800,7 +800,7 @@ func (s *repoEventSink) getRepoSecret(ctx context.Context, repo sourcev1beta2.He
 	if repo.Spec.SecretRef == nil {
 		return nil, nil
 	}
-	// TODO(agamez): flux upgrade - migrate to CertSecretRef, seehttps://github.com/fluxcd/flux2/releases/tag/v2.1.0
+	// TODO(agamez): flux upgrade - migrate to CertSecretRef, see https://github.com/fluxcd/flux2/releases/tag/v2.1.0
 	secretName := repo.Spec.SecretRef.Name
 	if secretName == "" {
 		return nil, nil
@@ -940,7 +940,7 @@ func newFluxHelmRepo(
 		k8sutils.SetDescription(&fluxRepo.ObjectMeta, desc)
 	}
 	if secret != nil {
-		// TODO(agamez): flux upgrade - migrate to CertSecretRef, seehttps://github.com/fluxcd/flux2/releases/tag/v2.1.0
+		// TODO(agamez): flux upgrade - migrate to CertSecretRef, see https://github.com/fluxcd/flux2/releases/tag/v2.1.0
 		fluxRepo.Spec.SecretRef = &fluxmeta.LocalObjectReference{
 			Name: secret.Name,
 		}
