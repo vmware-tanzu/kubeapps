@@ -681,7 +681,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				t.Errorf("there were unfulfilled expectations: %s", err)
 			}
 
-			// check expected HelmReleass CRD has been created
+			// check expected HelmReleases CRD has been created
 			if ctrlClient, err := s.clientGetter.ControllerRuntime(http.Header{}, s.kubeappsCluster); err != nil {
 				t.Fatal(err)
 			} else {
@@ -692,6 +692,10 @@ func TestCreateInstalledPackage(t *testing.T) {
 				} else {
 					// Values are JSON string and need to be compared as such
 					opts = cmpopts.IgnoreFields(helmv2beta2.HelmReleaseSpec{}, "Values")
+
+					// Manually setting TypeMeta, as the fakeclient doesn't do it anymore:
+					// https://github.com/kubernetes-sigs/controller-runtime/pull/2633
+					actualRel.TypeMeta = tc.expectedRelease.TypeMeta
 
 					if got, want := &actualRel, tc.expectedRelease; !cmp.Equal(want, got, opts) {
 						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
@@ -899,6 +903,10 @@ func TestUpdateInstalledPackage(t *testing.T) {
 
 			// Values are JSON string and need to be compared as such
 			opts = cmpopts.IgnoreFields(helmv2beta2.HelmReleaseSpec{}, "Values")
+
+			// Manually setting TypeMeta, as the fakeclient doesn't do it anymore:
+			// https://github.com/kubernetes-sigs/controller-runtime/pull/2633
+			actualRel.TypeMeta = tc.expectedRelease.TypeMeta
 
 			if got, want := &actualRel, tc.expectedRelease; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
