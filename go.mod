@@ -17,7 +17,7 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/reference v0.5.0
 	github.com/docker/cli v25.0.2+incompatible
-	github.com/fluxcd/helm-controller/api v0.37.3
+	github.com/fluxcd/helm-controller/api v0.37.4
 	github.com/fluxcd/pkg/apis/meta v1.3.0
 	github.com/fluxcd/pkg/oci v0.35.0
 	github.com/fluxcd/pkg/version v0.2.2
