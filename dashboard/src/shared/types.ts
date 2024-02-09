@@ -1,4 +1,4 @@
-// Copyright 2018-2023 the Kubeapps contributors.
+// Copyright 2018-2024 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartialMessage } from "@bufbuild/protobuf";
