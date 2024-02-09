@@ -6,9 +6,9 @@ This guide explains how to build Kubeapps.
 
 - [Git](https://git-scm.com/)
 - [Make](https://www.gnu.org/software/make/)
-- [Go programming language](https://golang.org/)
+- [Go programming language](https://go.dev/dl/)
 - [kubecfg](https://github.com/ksonnet/kubecfg)
-- [Docker CE](https://www.docker.com/community-edition)
+- [Docker](https://docs.docker.com/engine/install/)
 
 ## Download kubeapps source code
 

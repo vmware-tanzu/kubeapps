@@ -24,7 +24,7 @@ This guide walks you through the process of deploying Kubeapps for your cluster 
 
 ## Pre-requisites
 
-- Kubeapps assumes a working Kubernetes cluster (v1.21+), as well as the [`helm`](https://helm.sh/docs/intro/install/) (v3.2.0+) and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) command-line interfaces installed and configured to talk to your Kubernetes cluster.
+- Kubeapps assumes a working Kubernetes cluster (v1.21+), as well as the [`helm`](https://helm.sh/docs/intro/install/) (v3.2.0+) and [`kubectl`](https://kubernetes.io/docs/tasks/tools/#kubectl) command-line interfaces installed and configured to talk to your Kubernetes cluster.
 
 - Kubeapps has been tested with Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), kind, minikube and Docker for Desktop Kubernetes.
 
@@ -50,6 +50,10 @@ The above commands deploys Kubeapps into the `kubeapps` namespace in your cluste
 
 For any user-facing installation you should [configure an OAuth2/OIDC provider](./using-an-OIDC-provider.md) to enable secure user authentication with Kubeapps and the cluster, but this is quite an overhead to simply try out Kubeapps. Instead, for a simpler way to try out Kubeapps for personal learning, we can create a Kubernetes service account and use that API token to authenticate with the Kubernetes API server via Kubeapps:
 
+> **NOTE** It's not recommended to assign users the `cluster-admin` role for Kubeapps production usage. Please refer to the [Access Control](../howto/access-control.md) documentation to configure fine-grained access control for users.
+
+### On Linux/macOS
+
 ```bash
 kubectl create --namespace default serviceaccount kubeapps-operator
 kubectl create clusterrolebinding kubeapps-operator --clusterrole=cluster-admin --serviceaccount=default:kubeapps-operator
@@ -65,9 +69,24 @@ type: kubernetes.io/service-account-token
 EOF
 ```
 
-> **NOTE** It's not recommended to assign users the `cluster-admin` role for Kubeapps production usage. Please refer to the [Access Control](../howto/access-control.md) documentation to configure fine-grained access control for users.
+### On Windows
 
-To retrieve the token,
+```powershell
+kubectl create --namespace default serviceaccount kubeapps-operator
+kubectl create clusterrolebinding kubeapps-operator --clusterrole=cluster-admin --serviceaccount=default:kubeapps-operator
+@"
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kubeapps-operator-token
+  namespace: default
+  annotations:
+    kubernetes.io/service-account.name: kubeapps-operator
+type: kubernetes.io/service-account-token
+"@ | kubectl apply -f -
+```
+
+Next, to retrieve the token,
 
 ### On Linux/macOS
 

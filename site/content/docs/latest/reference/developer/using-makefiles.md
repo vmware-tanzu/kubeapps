@@ -21,6 +21,8 @@ make kubeapps/dashboard
 make kubeapps/apprepository-controller
 make kubeapps/kubeapps-apis
 make kubeapps/asset-syncer
+make kubeapps/pinniped-proxy
+make kubeapps/oci-catalog
 ```
 
 > You can set the image tag manually: `IMAGE_TAG=myTag make`

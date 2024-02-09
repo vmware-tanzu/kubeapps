@@ -12,8 +12,9 @@ This guide aims to provide the instructions to easily setup the environment to t
 
 ## Prerequisites
 
-- [Kubernetes cluster (v1.12+)](https://kubernetes.io/docs/setup/).
-- [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/).
+- [Kubernetes cluster](https://kubernetes.io/docs/setup/).
+  - [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/) is recommended.
+- [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl).
 - [Helm client](https://helm.sh/docs/intro/install/).
 
 ## Environment setup
