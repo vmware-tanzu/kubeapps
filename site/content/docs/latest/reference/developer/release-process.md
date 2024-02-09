@@ -60,6 +60,8 @@ The versions used there _must_ match the ones used for building the container im
 
 Besides, the `GKE_STABLE_VERSION` and the `GKE_REGULAR_VERSION` might have to be updated if the _Stable_ and _Regular_ Kubernetes versions in GKE have changed. Check this information on [this GKE release notes website](https://cloud.google.com/kubernetes-engine/docs/release-notes).
 
+When updating the `GOLANG_VERSION`, the Go version used in the [CodeQL Github Action](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/workflows/codeql-analysis.yml) might be updated as well.
+
 > As part of this release process, these variables _must_ be updated accordingly. Other variable changes _should_ be tracked in a separate PR.
 
 #### 0.2.2 - CI integration image and dependencies
