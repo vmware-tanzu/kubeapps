@@ -102,7 +102,7 @@ jobs:
       - name: Start GKE environment
         run: |
           set -euo pipefail
-          ./script/start-gke-env.sh "${ESCAPED_GKE_CLUSTER}" "${GKE_ZONE}" "${GKE_VERSION}" "${GKE_ADMIN}" "${GKE_RELEASE_CHANNEL} "${ALLOW_GKE_VERSION_FALLBACK}"
+          ./script/start-gke-env.sh "${ESCAPED_GKE_CLUSTER}" "${GKE_ZONE}" "${GKE_VERSION}" "${GKE_ADMIN}" "${GKE_RELEASE_CHANNEL}" "${ALLOW_GKE_VERSION_FALLBACK}"
       - # TODO(castelblanque) Unify shared resources with kubeapps-local-dev-users-rbac.yaml that only applies to Kind clusters
         name: Apply customizations to GKE cluster
         run: |
