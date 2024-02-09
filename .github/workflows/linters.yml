@@ -33,7 +33,7 @@ jobs:
         with:
           go-version: ${{ inputs.golang_version }}
       - uses: actions/checkout@v4
-      - uses: golangci/golangci-lint-action@v3
+      - uses: golangci/golangci-lint-action@v4
         with:
           version: latest
           args: --timeout=10m
