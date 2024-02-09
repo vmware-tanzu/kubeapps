@@ -28,10 +28,10 @@ import (
 type kappClientsGetter func(headers http.Header, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error)
 
 const (
-	fallbackGlobalPackagingNamespace                        = "kapp-controller-packaging-global"
-	fallbackDefaultUpgradePolicy     pkgutils.UpgradePolicy = pkgutils.UpgradePolicyNone
-	fallbackDefaultAllowDowngrades                          = false
-	fallbackTimeoutSeconds                                  = 300
+	fallbackGlobalPackagingNamespace = "kapp-controller-packaging-global"
+	fallbackDefaultUpgradePolicy     = pkgutils.UpgradePolicyNone
+	fallbackDefaultAllowDowngrades   = false
+	fallbackTimeoutSeconds           = 300
 )
 
 func fallbackDefaultPrereleasesVersionSelection() []string {

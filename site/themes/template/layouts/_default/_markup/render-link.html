@@ -48,6 +48,6 @@
  {{ $title = printf "%s. This link will open in a new tab" $title }}
 {{- end }}
 <!-- Skip rendering the badges -->
-{{- if not (or (in $link "netlify.com") (in $link "circleci") )}}
+{{- if not (or (in $link "netlify.com") (in $link "circleci") (in $link "/actions/workflows/"))}}
 <a href="{{ $link | safeURL }}" title="{{ $title }}" {{ if $isRemote }} target="_blank" rel="noopener" {{ end }}>{{ .Text | safeHTML }}</a>
 {{- end }}
