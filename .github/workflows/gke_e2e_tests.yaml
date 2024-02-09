@@ -52,6 +52,10 @@ on:
         type: boolean
         required: false
         default: false
+      ALLOW_GKE_VERSION_FALLBACK:
+        type: boolean
+        required: false
+        default: true
     secrets:
       GKE_ADMIN:
         required: true
@@ -83,6 +87,7 @@ jobs:
       TEST_LATEST_RELEASE: ${{ inputs.TEST_LATEST_RELEASE }}
       TEST_TIMEOUT_MINUTES: ${{ inputs.TEST_TIMEOUT_MINUTES }}
       USE_MULTICLUSTER_OIDC_ENV: ${{ inputs.USE_MULTICLUSTER_OIDC_ENV }}
+      ALLOW_GKE_VERSION_FALLBACK: ${{ inputs.ALLOW_GKE_VERSION_FALLBACK }}
     steps:
       - uses: actions/checkout@v4
       - run: |
@@ -97,7 +102,7 @@ jobs:
       - name: Start GKE environment
         run: |
           set -euo pipefail
-          ./script/start-gke-env.sh "${ESCAPED_GKE_CLUSTER}" "${GKE_ZONE}" "${GKE_VERSION}" "${GKE_ADMIN}" > /dev/null
+          ./script/start-gke-env.sh "${ESCAPED_GKE_CLUSTER}" "${GKE_ZONE}" "${GKE_VERSION}" "${GKE_ADMIN}" "${GKE_RELEASE_CHANNEL}" "${ALLOW_GKE_VERSION_FALLBACK}"
       - # TODO(castelblanque) Unify shared resources with kubeapps-local-dev-users-rbac.yaml that only applies to Kind clusters
         name: Apply customizations to GKE cluster
         run: |
