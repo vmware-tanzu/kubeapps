@@ -557,25 +557,38 @@ a.section-link::after {
     }
 
     ul {
-      padding-left: 0;
-      margin-bottom: 35px;
-
       li {
         display: list-item;
-        margin-bottom: 15px;
 
-        a {
-          color: $darkgrey;
-          font-size: 14px;
+        ul {
+          padding-left: 0;
 
-          &.active {
-            color: $indigo;
+          li {
+            margin-bottom: 15px;
+
+            a {
+              color: $darkgrey;
+              font-size: 14px;
+
+              &.active {
+                color: $indigo;
+              }
+            }
+
+            &.heading {
+              color: $black;
+              font-size: 14px;
+            }
+
+            ul {
+              li {
+                a {
+                  padding-left: 1.5em;
+                  font-size: 13px;
+                }
+              }
+            }
           }
-        }
-
-        &.heading {
-          color: $black;
-          font-size: 14px;
         }
       }
     }

@@ -6,7 +6,7 @@ In this tutorial we will be using the [Operator Lifecycle Manager (OLM)](https:/
 
 ## Prerequisites
 
-Kubeapps assumes a working Kubernetes cluster (v1.12+) and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster. Users following this tutorial require to have admin privileges in the cluster in order to install and manage Operators.
+Kubeapps assumes a working Kubernetes cluster (v1.12+) and [`kubectl`](https://kubernetes.io/docs/tasks/tools/#kubectl) installed and configured to talk to your Kubernetes cluster. Users following this tutorial require to have admin privileges in the cluster in order to install and manage Operators.
 
 ## Step 1: Enable Operators support in Kubeapps
 

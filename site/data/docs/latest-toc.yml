@@ -17,6 +17,10 @@ toc:
         page: Managing Carvel packages
       - url: /tutorials/managing-flux-packages
         page: Managing Flux packages
+      - url: /tutorials/managing-package-repositories
+        page: Managing Package Repositories
+      - url: /tutorials/operators
+        page: Managing Operators
       - url: /tutorials/kubeapps-on-tkg
         page: Kubeapps on TKG
         subitems:
@@ -32,23 +36,6 @@ toc:
             suburl: /tutorials/kubeapps-on-tkg/step-4
           - subpage: Conclusion
             suburl: /tutorials/kubeapps-on-tkg/conclusion
-      - url: /tutorials/kubeapps-on-tce
-        page: Kubeapps on TCE
-        subitems:
-          - subpage: Introduction
-            suburl: /tutorials/kubeapps-on-tce/introduction
-          - subpage: "Step 1: Preparing the TCE cluster"
-            suburl: /tutorials/kubeapps-on-tce/01-TCE-cluster-preparation
-          - subpage: "Step 2A: Deploy an unmanaged TCE cluster"
-            suburl: /tutorials/kubeapps-on-tce/02-TCE-unmanaged-cluster
-          - subpage: "Step 2B: Deploy a managed TCE cluster"
-            suburl: /tutorials/kubeapps-on-tce/02-TCE-managed-cluster
-          - subpage: "Step 3: Preparing Kubeapps deployment"
-            suburl: /tutorials/kubeapps-on-tce/03-preparing-kubeapps-deployment
-          - subpage: "Step 4: Deploy Kubeapps"
-            suburl: /tutorials/kubeapps-on-tce/04-deploying-kubeapps
-          - subpage: "Step 5: Managing applications"
-            suburl: /tutorials/kubeapps-on-tce/05-managing-applications
 
   - title: How-to guides
     subfolderitems:
@@ -68,30 +55,61 @@ toc:
         page: Syncing Package Repositories
       - url: /howto/oidc/using-an-oidc-provider-with-pinniped
         page: Using an OIDC provider with Pinniped
+      - url: /howto/OIDC/OAuth2OIDC-debugging
+        page: Debugging OIDC issues
 
   - title: Background
     subfolderitems:
       - url: /background/architecture
         page: Architecture
+      - url: /background/multicluster
+        page: Multicluster mode
       - url: /background/update-api-docs
-        page: Kubeapps API documentation
+        page: Update API documentation
 
   - title: Reference
     subfolderitems:
       - url: /reference/proposals
         page: Proposals
-      - url: /reference/developer
-        page: Developer guides
-      - url: /reference/testing/testing-environment
-        page: Testing environment with Harbor
-      - url: /reference/testing/ci
-        page: CI configuration
-      - url: /reference/testing/end-to-end-tests
-        page: End-to-end testing configuration
-      - url: /reference/developer/release-process
-        page: Release process
       - url: /reference/translations/translate-kubeapps
         page: Translations
+      - url: /reference/testing/
+        page: Testing
+        subitems:
+          - suburl: /reference/testing/testing-environment
+            subpage: Testing environment with Harbor
+          - suburl: /reference/testing/ci
+            subpage: CI configuration
+          - suburl: /reference/testing/end-to-end-tests
+            subpage: End-to-end testing configuration
+      - url: /reference/developer/
+        page: Developer information
+        subitems:
+          - suburl: /reference/developer/release-process
+            subpage: Release process
+          - suburl: /reference/developer/style-guide
+            subpage: Documentation style guide
+          - suburl: /reference/developer/build
+            subpage: Build information
+          - suburl: /reference/developer/using-makefiles
+            subpage: Using makefiles
+          - suburl: /reference/developer/issue-triage-process
+            subpage: Issue triage process
+      - url: /reference/developer/
+        page: Developer guides per component
+        subitems:
+          - subpage: Apprepository Controller
+            suburl: /reference/developer/apprepository-controller
+          - subpage: Asset Syncer
+            suburl: /reference/developer/asset-syncer
+          - subpage: Dashboard
+            suburl: /reference/developer/dashboard
+          - subpage: Kubeapps APIs
+            suburl: /reference/developer/kubeapps-apis
+          - subpage: OCI Catalog
+            suburl: /reference/developer/oci-catalog
+          - subpage: Pinniped Proxy
+            suburl: /reference/developer/pinniped-proxy
 
   - title: About the project
     subfolderitems:

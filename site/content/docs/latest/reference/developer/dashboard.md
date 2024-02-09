@@ -5,11 +5,12 @@ The dashboard is the main UI component of the Kubeapps project. Written in JavaS
 ## Prerequisites
 
 - [Git](https://git-scm.com/)
-- [Node 12.x](https://nodejs.org/)
+- [Node](https://nodejs.org/)
 - [Yarn](https://yarnpkg.com)
-- [Kubernetes cluster (v1.8+)](https://kubernetes.io/docs/setup/)
-- [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-- [Docker CE](https://www.docker.com/community-edition)
+- [Kubernetes cluster](https://kubernetes.io/docs/setup/)
+  - [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/) is recommended.
+- [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
+- [Docker](https://docs.docker.com/engine/install/)
 - [Telepresence](https://telepresence.io)
   - _Telepresence is not a hard requirement, but is recommended for a better developer experience_
 
