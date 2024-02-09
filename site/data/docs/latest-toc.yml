@@ -19,6 +19,8 @@ toc:
         page: Managing Flux packages
       - url: /tutorials/managing-package-repositories
         page: Managing Package Repositories
+      - url: /tutorials/operators
+        page: Managing Operators
       - url: /tutorials/kubeapps-on-tkg
         page: Kubeapps on TKG
         subitems:
@@ -53,6 +55,8 @@ toc:
         page: Syncing Package Repositories
       - url: /howto/oidc/using-an-oidc-provider-with-pinniped
         page: Using an OIDC provider with Pinniped
+      - url: /howto/OIDC/OAuth2OIDC-debugging
+        page: Debugging OIDC issues
 
   - title: Background
     subfolderitems:
@@ -67,26 +71,45 @@ toc:
     subfolderitems:
       - url: /reference/proposals
         page: Proposals
-      - url: /reference/developer
-        page: Developer guides
-      - url: /reference/testing/testing-environment
-        page: Testing environment with Harbor
-      - url: /reference/testing/ci
-        page: CI configuration
-      - url: /reference/testing/end-to-end-tests
-        page: End-to-end testing configuration
-      - url: /reference/developer/release-process
-        page: Release process
-      - url: /reference/developer/style-guide
-        page: Documentation style guide
-      - url: /reference/developer/build
-        page: Build information
-      - url: /reference/developer/using-makefiles
-        page: Using makefiles
-      - url: /reference/developer/issue-triage-process
-        page: Issue triage process
       - url: /reference/translations/translate-kubeapps
         page: Translations
+      - url: /reference/testing/
+        page: Testing
+        subitems:
+          - suburl: /reference/testing/testing-environment
+            subpage: Testing environment with Harbor
+          - suburl: /reference/testing/ci
+            subpage: CI configuration
+          - suburl: /reference/testing/end-to-end-tests
+            subpage: End-to-end testing configuration
+      - url: /reference/developer/
+        page: Developer information
+        subitems:
+          - suburl: /reference/developer/release-process
+            subpage: Release process
+          - suburl: /reference/developer/style-guide
+            subpage: Documentation style guide
+          - suburl: /reference/developer/build
+            subpage: Build information
+          - suburl: /reference/developer/using-makefiles
+            subpage: Using makefiles
+          - suburl: /reference/developer/issue-triage-process
+            subpage: Issue triage process
+      - url: /reference/developer/
+        page: Developer guides per component
+        subitems:
+          - subpage: Apprepository Controller
+            suburl: /reference/developer/apprepository-controller
+          - subpage: Asset Syncer
+            suburl: /reference/developer/asset-syncer
+          - subpage: Dashboard
+            suburl: /reference/developer/dashboard
+          - subpage: Kubeapps APIs
+            suburl: /reference/developer/kubeapps-apis
+          - subpage: OCI Catalog
+            suburl: /reference/developer/oci-catalog
+          - subpage: Pinniped Proxy
+            suburl: /reference/developer/pinniped-proxy
 
   - title: About the project
     subfolderitems:
