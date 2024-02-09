@@ -1,4 +1,4 @@
-// Copyright 2019-2023 the Kubeapps contributors.
+// Copyright 2019-2024 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 module github.com/vmware-tanzu/kubeapps

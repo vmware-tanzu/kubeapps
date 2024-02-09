@@ -1,4 +1,4 @@
-// Copyright 2020-2023 the Kubeapps contributors.
+// Copyright 2020-2024 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import AlertGroup from "components/AlertGroup";
