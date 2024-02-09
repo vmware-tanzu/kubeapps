@@ -100,7 +100,7 @@ func (s *Server) handleRepoSecretForUpdate(
 	secretInterface := typedClient.CoreV1().Secrets(repo.Namespace)
 
 	var existingSecret *apiv1.Secret
-	// TODO(agamez): flux upgrade - migrate to CertSecretRef, seehttps://github.com/fluxcd/flux2/releases/tag/v2.1.0
+	// TODO(agamez): flux upgrade - migrate to CertSecretRef, see https://github.com/fluxcd/flux2/releases/tag/v2.1.0
 	if repo.Spec.SecretRef != nil {
 		if existingSecret, err = secretInterface.Get(ctx, repo.Spec.SecretRef.Name, metav1.GetOptions{}); err != nil {
 			return nil, false, false, connecterror.FromK8sError("get", "secret", repo.Spec.SecretRef.Name, err)
@@ -253,7 +253,7 @@ func (s *Server) setOwnerReferencesForRepoSecret(
 	secret *apiv1.Secret,
 	repo *sourcev1beta2.HelmRepository) error {
 
-	// TODO(agamez): flux upgrade - migrate to CertSecretRef, seehttps://github.com/fluxcd/flux2/releases/tag/v2.1.0
+	// TODO(agamez): flux upgrade - migrate to CertSecretRef, see https://github.com/fluxcd/flux2/releases/tag/v2.1.0
 	if repo.Spec.SecretRef != nil && secret != nil {
 		if typedClient, err := s.clientGetter.Typed(headers, s.kubeappsCluster); err != nil {
 			return err
@@ -280,7 +280,7 @@ func (s *Server) getRepoTlsConfigAndAuth(ctx context.Context, headers http.Heade
 	var tlsConfig *corev1.PackageRepositoryTlsConfig
 	var auth *corev1.PackageRepositoryAuth
 
-	// TODO(agamez): flux upgrade - migrate to CertSecretRef, seehttps://github.com/fluxcd/flux2/releases/tag/v2.1.0
+	// TODO(agamez): flux upgrade - migrate to CertSecretRef, see https://github.com/fluxcd/flux2/releases/tag/v2.1.0
 	if repo.Spec.SecretRef != nil {
 		secretName := repo.Spec.SecretRef.Name
 		if s == nil || s.clientGetter == nil {

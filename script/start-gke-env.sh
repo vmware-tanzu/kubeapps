@@ -11,6 +11,8 @@ CLUSTER=${1:?}
 ZONE=${2:?}
 GKE_VERSION=${3:?}
 ADMIN=${4:?}
+GKE_RELEASE_CHANNEL=${5:?}
+ALLOW_GKE_VERSION_FALLBACK=${6:?}
 DEBUG_MODE=${DEBUG_MODE:-"false"}
 
 [[ "${DEBUG_MODE}" == "true" ]] && set -x
@@ -33,6 +35,31 @@ if [[ $(gcloud container clusters list --filter="name:${CLUSTER}") ]]; then
         gcloud container clusters delete "${CLUSTER}" --zone "${ZONE}" --quiet
     fi
 fi
+
+# Check if the version is allowed in the current channel
+gcloud container get-server-config --location "${ZONE}" >list.yaml
+for i in {0..2}; do
+    channel=$(yq .channels[$i].channel <list.yaml)
+    if [[ "${channel,,}" == "${GKE_RELEASE_CHANNEL,,}" ]]; then
+        defaultVersion=$(yq .channels[$i].defaultVersion <list.yaml)
+        valid_versions=$(yq -o=j -I=0 .channels[$i].validVersions <list.yaml)
+        if [[ $valid_versions =~ $GKE_VERSION ]]; then
+            echo "[INFO] The version '${GKE_VERSION}' is one of the currently allowed versions in GKE channel '${channel}'"
+            echo "[INFO] The default version for GKE channel '${channel}' is: '${defaultVersion}'"
+            break
+        else
+            echo "[WARNING] The version '${GKE_VERSION}' is not allowed in GKE channel '${channel}'"
+            echo "[INFO] The allowed versions for GKE channel '${channel}' (default: ${defaultVersion}) are: ${valid_versions}"
+            if ! ${ALLOW_GKE_VERSION_FALLBACK}; then
+                echo "[ERROR] Please, change the 'GKE_VERSION' variable in the script to one of the allowed versions, or set the 'ALLOW_GKE_VERSION_FALLBACK' variable to 'true'"
+                exit 1
+            else
+                echo "[WARNING] Falling back to default version '${defaultVersion}, to change this behavior, set the 'ALLOW_GKE_VERSION_FALLBACK' variable to 'false'"
+                GKE_VERSION=$defaultVersion
+            fi
+        fi
+    fi
+done
 
 echo "Creating cluster ${CLUSTER} in ${ZONE} (v$GKE_VERSION)"
 

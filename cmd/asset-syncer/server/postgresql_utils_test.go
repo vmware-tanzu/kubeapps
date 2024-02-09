@@ -172,7 +172,7 @@ func Test_PGinsertFiles(t *testing.T) {
 		namespace        = "my-namespace"
 		repoName         = "my-repo"
 		chartID   string = repoName + "/wordpress"
-		filesID   string = chartID + "-2.1.3"
+		filesID          = chartID + "-2.1.3"
 	)
 	files := models.ChartFiles{ID: filesID, Readme: "foo", DefaultValues: "bar", Repo: &models.AppRepository{Namespace: namespace, Name: repoName}}
 	mock.ExpectQuery(`INSERT INTO files \(chart_id, repo_name, repo_namespace, chart_files_ID, info\)*`).

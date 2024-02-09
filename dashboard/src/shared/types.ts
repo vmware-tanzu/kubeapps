@@ -10,6 +10,7 @@ import {
   InstalledPackageDetail,
   InstalledPackageSummary,
   PackageAppVersion,
+  PackageMetadata,
   ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages_pb";
 import {
@@ -114,6 +115,7 @@ export interface IPackageState {
     pkgVersion?: string;
     appVersion?: string;
     versions: PackageAppVersion[];
+    metadatas: PackageMetadata[];
     readme?: string;
     readmeError?: string;
     values?: string;

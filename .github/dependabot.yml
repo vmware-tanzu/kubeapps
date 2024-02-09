@@ -27,7 +27,13 @@ updates:
       interval: "daily"
       time: "02:00"
     open-pull-requests-limit: 10
-
+    groups:
+      kube:
+        patterns:
+          - kube
+          - k8s-openapi
+          - kube-derive
+          - kube-runtime
   - package-ecosystem: "cargo"
     directory: "/cmd/oci-catalog"
     schedule:
