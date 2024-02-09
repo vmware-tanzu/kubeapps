@@ -95,7 +95,7 @@ type OCIChartRepository struct {
 	// (Login/Logout/Tags). I need to be able to query remote OCI repo for ListRepositoryNames(),
 	// which is not in the set and all fields of RegistryClient,
 	//  including repositoryAuthorizer are internal, so this is a workaround
-	registryCredentialFn OCIChartRepositoryCredentialFn
+	registryCredentialFn orasregistryauthv2.CredentialFunc
 
 	orasCache orasregistryauthv2.Cache
 
@@ -105,8 +105,6 @@ type OCIChartRepository struct {
 // OCIChartRepositoryOption is a function that can be passed to newOCIChartRepository()
 // to configure an OCIChartRepository.
 type OCIChartRepositoryOption func(*OCIChartRepository) error
-
-type OCIChartRepositoryCredentialFn func(ctx context.Context, reg string) (orasregistryauthv2.Credential, error)
 
 var (
 	helmProviders = getter.Providers{
@@ -186,7 +184,7 @@ func withHelmGetterOptions(getterOpts []getter.Option) OCIChartRepositoryOption 
 	}
 }
 
-func withRegistryCredentialFn(fn OCIChartRepositoryCredentialFn) OCIChartRepositoryOption {
+func withRegistryCredentialFn(fn orasregistryauthv2.CredentialFunc) OCIChartRepositoryOption {
 	return func(r *OCIChartRepository) error {
 		r.registryCredentialFn = fn
 		return nil

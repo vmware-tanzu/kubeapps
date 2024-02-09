@@ -2296,12 +2296,14 @@ func TestGetAvailablePackageMetadatas(t *testing.T) {
 		"/v2/chart-name/manifests/1.2.3": {
 			StatusCode: 200,
 			Body:       io.NopCloser(strings.NewReader(CHART_MANIFEST)),
+			Header:     http.Header{"Content-Type": []string{"application/vnd.oci.image.index.v1+json"}},
 		},
 		// The ORAS client also needs to get the referrers based
 		// on the manifest's sha256
 		path.Join("/v2/chart-name/referrers", CHART_MANIFEST_SHA256): {
 			StatusCode: 200,
 			Body:       io.NopCloser(strings.NewReader(CHART_REFERERRS_CONTENT)),
+			Header:     http.Header{"Content-Type": []string{"application/vnd.oci.image.index.v1+json"}},
 		},
 	})
 	defer fakeServer.Close()
