@@ -59,6 +59,7 @@ The versions used there _must_ match the ones used for building the container im
 - `HUGO_VERSION` should be updated with the [latest stable version from the Hugo releases](https://github.com/gohugoio/hugo/releases).
 
 Besides, the `GKE_STABLE_VERSION` and the `GKE_REGULAR_VERSION` might have to be updated if the _Stable_ and _Regular_ Kubernetes versions in GKE have changed. Check this information on [this GKE release notes website](https://cloud.google.com/kubernetes-engine/docs/release-notes).
+Note that, if `ALLOW_GKE_VERSION_FALLBACK` is set, when no matching versions are found GKE, it will fall back to the current default one.
 
 When updating the `GOLANG_VERSION`, the Go version used in the [CodeQL Github Action](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/workflows/codeql-analysis.yml) might be updated as well.
 
