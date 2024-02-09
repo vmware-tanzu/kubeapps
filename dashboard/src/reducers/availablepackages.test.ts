@@ -57,6 +57,7 @@ describe("packageReducer", () => {
       categories: [],
       selected: {
         versions: [],
+        metadatas: [],
       },
       nextPageToken: "",
       size: 20,

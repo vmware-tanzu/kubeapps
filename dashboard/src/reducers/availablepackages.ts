@@ -18,6 +18,7 @@ export const initialState: IPackageState = {
   categories: [],
   selected: {
     versions: [],
+    metadatas: [],
   },
   size: 20,
 };
@@ -69,6 +70,12 @@ const selectedPackageReducer = (
         ...state,
         error: undefined,
         versions: action.payload.packageAppVersions,
+      };
+    case getType(actions.availablepackages.receiveAvailablePackageMetadatas):
+      return {
+        ...state,
+        error: undefined,
+        metadatas: action.payload.packageMetadata,
       };
     case getType(actions.availablepackages.createErrorPackage):
       return { ...state, error: action.payload };
