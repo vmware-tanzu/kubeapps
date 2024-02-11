@@ -4,6 +4,8 @@ If you're using Kubeapps and want to add your organization to this list, follow 
 
 ## Organizations using Kubeapps
 
+<a href="https://aenix.io/" border="0" target="_blank"><img alt="Aenix" src="./site/content/docs/latest/img/adopters/aenix.svg" height="90"></a>
+
 <a href="https://www.coreweave.com/" border="0" target="_blank"><img alt="CoreWeave" src="./site/content/docs/latest/img/adopters/coreweave.jpg" height="90"></a>
 
 <a href="https://h8l.io/" border="0" target="_blank"><img alt="h8lio" src="./site/content/docs/latest/img/adopters/h8lio.jpg" height="70"></a>
@@ -23,6 +25,10 @@ If you're using Kubeapps and want to add your organization to this list, follow 
 ## Success Stories
 
 Below is a list of adopters of Kubeapps that have publicly shared the details of how they use it (in alphabetical order).
+
+**[Ænix](https://aenix.io)**
+
+Ænix provides consulting services for cloud providers and uses Kubeapps in combination with FluxCD as the dashboard for free PaaS platform [Cozystack](https://cozystack.io) to run virtual machines, Databases and Kubernetes-as-a-Service.
 
 **[CoreWeave](https://www.coreweave.com/)**
 
