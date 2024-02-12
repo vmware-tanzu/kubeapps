@@ -31,7 +31,7 @@
     "@cds/city": "^1.1.0",
     "@cds/core": "^6.9.2",
     "@cds/react": "^6.9.2",
-    "@clr/ui": "^16.3.2",
+    "@clr/ui": "^16.3.3",
     "@connectrpc/connect": "^1.2.0",
     "@connectrpc/connect-web": "^1.2.0",
     "@paciolan/remote-component": "^2.13.0",
