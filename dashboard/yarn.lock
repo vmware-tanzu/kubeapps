@@ -1122,7 +1122,7 @@
   resolved "https://registry.yarnpkg.com/@babel/regjsgen/-/regjsgen-0.8.0.tgz#f0ba69b075e1f05fb2825b7fad991e7adbb18310"
   integrity sha512-x/rqGMdzj+fWZvCOYForTghzbtqPDZ5gPwaoNGHdgDfF2QA/XZbCBp4Moo5scrkAMPhB7z26XM/AaHuIJdgauA==
 
-"@babel/runtime-corejs3@^7.20.7", "@babel/runtime-corejs3@^7.22.15", "@babel/runtime-corejs3@^7.23.8":
+"@babel/runtime-corejs3@^7.20.7", "@babel/runtime-corejs3@^7.22.15", "@babel/runtime-corejs3@^7.23.9":
   version "7.23.9"
   resolved "https://registry.yarnpkg.com/@babel/runtime-corejs3/-/runtime-corejs3-7.23.9.tgz#1b43062a13ecb60158aecdd81bc3fab4108b7cbc"
   integrity sha512-oeOFTrYWdWXCvXGB5orvMTJ6gCZ9I6FBjR+M38iKNXCsPxr4xT0RTdg5uz1H7QP8pp74IzPtwritEr+JscqHXQ==
@@ -13987,12 +13987,12 @@ swagger-client@^3.25.0:
     traverse "~0.6.6"
     undici "^5.24.0"
 
-swagger-ui-react@^5.11.3:
-  version "5.11.3"
-  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-5.11.3.tgz#193f8bb2031bfe56c555b44db5b887a3c8ea1696"
-  integrity sha512-2hkNNIthFbcz19aNhvKEJTrZfI+uSrC1llPzBVZFBOBYnS3SDqnwRn8Nqk0/pnqTGbM3cYcNW+u1r4fwSEpTxA==
+swagger-ui-react@^5.11.6:
+  version "5.11.6"
+  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-5.11.6.tgz#4e47a635127e66797548e8ce651cb4ab3893f395"
+  integrity sha512-OhmvOQ+k1ndl4fC7at0d1dS4Wr9XnmhE05ViwsYNt5+j2OgqTDNLIOi/5SDm6QMgxwjFiLjchXw5lQPXGF4k7g==
   dependencies:
-    "@babel/runtime-corejs3" "^7.23.8"
+    "@babel/runtime-corejs3" "^7.23.9"
     "@braintree/sanitize-url" "=7.0.0"
     base64-js "^1.5.1"
     classnames "^2.5.1"
