@@ -35,6 +35,7 @@
           padding-top: 0.2rem;
           margin: 0;
           margin-left: 0.6rem;
+          margin-right: 0.6rem;
         }
 
         h3 {
@@ -84,4 +85,8 @@
   & button {
     color: var(--cds-global-typography-color-400, #333);
   }
+}
+
+header .search-box::before, header .search::before, .header .search-box::before, .header .search::before {
+  background-color: transparent;
 }

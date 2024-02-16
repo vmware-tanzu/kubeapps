@@ -42,33 +42,27 @@
 }
 
 .card-block {
-  overflow: hidden;
-  height: 4.5rem;
-
   .info-card-block {
     display: flex;
 
     .card-icon {
       display: flex;
       width: 64px;
-      height: 64px;
       align-items: center;
       text-align: center;
 
       img {
         width: 64px;
-        max-height: 64px;
       }
     }
 
     .card-description-wrapper {
       display: grid;
       width: 100%;
-      height: 64px;
       align-items: center;
+      min-height: 7lh;
 
       .card-description {
-        max-height: 64px;
         padding-left: 0.6rem;
       }
     }
