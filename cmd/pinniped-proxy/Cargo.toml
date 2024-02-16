@@ -49,5 +49,5 @@ v1_29 = ["k8s-openapi/v1_29"]
 
 [dev-dependencies]
 tokio-test = "0.4"
-trycmd = "0.14"
+trycmd = "0.15"
 temp-env = "0.3"
