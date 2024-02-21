@@ -87,6 +87,9 @@
   }
 }
 
-header .search-box::before, header .search::before, .header .search-box::before, .header .search::before {
+header .search-box::before,
+header .search::before,
+.header .search-box::before,
+.header .search::before {
   background-color: transparent;
 }
