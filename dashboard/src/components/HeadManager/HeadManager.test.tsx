@@ -48,6 +48,6 @@ it("should use the dark theme", () => {
   );
   const peek = Helmet.peek();
   expect(
-    (get(peek, "linkTags") as any[]).find(l => l.href === "./clr-ui-dark.min.css"),
+    (get(peek, "linkTags") as any[]).find(l => l.href === "./clr-ui.min.css"),
   ).not.toBeUndefined();
 });
