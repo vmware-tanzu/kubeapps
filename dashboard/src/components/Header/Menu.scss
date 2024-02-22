@@ -119,6 +119,7 @@ div .dropdown-menu .dropdown-divider {
   margin-bottom: 0.5rem;
   font-size: smaller;
   text-align: end;
+  white-space: normal;
 
   & a:link {
     color: var(--cds-global-color-blue-400, #2ec0ff);
