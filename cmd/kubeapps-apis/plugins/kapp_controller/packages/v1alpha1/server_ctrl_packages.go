@@ -1,4 +1,4 @@
-// Copyright 2021-2023 the Kubeapps contributors.
+// Copyright 2021-2024 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 package main
@@ -9,12 +9,12 @@ import (
 	"strings"
 	"time"
 
+	"carvel.dev/vendir/pkg/vendir/versions"
+	vendirversions "carvel.dev/vendir/pkg/vendir/versions/v1alpha1"
 	"github.com/bufbuild/connect-go"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	kappctrlpackageinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
-	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
-	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/connecterror"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"

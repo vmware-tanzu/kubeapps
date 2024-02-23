@@ -25,6 +25,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/anypb"
 
+	vendirversions "carvel.dev/vendir/pkg/vendir/versions/v1alpha1"
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -38,7 +39,6 @@ import (
 	kappcmdtools "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/tools"
 	"github.com/vmware-tanzu/carvel-kapp/pkg/kapp/logger"
 	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
-	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	pluginv1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	kappcorev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
