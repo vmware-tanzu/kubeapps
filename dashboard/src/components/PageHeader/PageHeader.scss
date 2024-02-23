@@ -1,4 +1,4 @@
-// Copyright 2018-2022 the Kubeapps contributors.
+// Copyright 2018-2024 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 .kubeapps-header {
@@ -34,7 +34,9 @@
         h1 {
           padding-top: 0.2rem;
           margin: 0;
+          margin-right: 0.6rem;
           margin-left: 0.6rem;
+          font-size: 1.5rem;
         }
 
         h3 {
@@ -84,4 +86,15 @@
   & button {
     color: var(--cds-global-typography-color-400, #333);
   }
+}
+
+header .search-box::before,
+header .search::before,
+.header .search-box::before,
+.header .search::before {
+  background-color: transparent;
+}
+
+header .search-box cds-icon {
+  color: var(--cds-global-typography-color-400, #333);
 }

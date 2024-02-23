@@ -1,4 +1,4 @@
-// Copyright 2021-2022 the Kubeapps contributors.
+// Copyright 2021-2024 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import actions from "actions";
@@ -48,6 +48,6 @@ it("should use the dark theme", () => {
   );
   const peek = Helmet.peek();
   expect(
-    (get(peek, "linkTags") as any[]).find(l => l.href === "./clr-ui-dark.min.css"),
+    (get(peek, "linkTags") as any[]).find(l => l.href === "./clr-ui.min.css"),
   ).not.toBeUndefined();
 });

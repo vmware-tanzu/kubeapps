@@ -105,7 +105,7 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
             </div>
             <div>
               <div className="dropdown-menu-subtext">
-                Made with <CdsIcon size="sm" shape="heart" solid={true} /> by VMware and{" "}
+                Made with <CdsIcon size="sm" shape="heart" solid={true} /> by VMware by Broadcom and{" "}
                 <a
                   href="https://github.com/vmware-tanzu/kubeapps/graphs/contributors"
                   className="type-color-white"

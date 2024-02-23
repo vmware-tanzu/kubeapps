@@ -1,4 +1,4 @@
-// Copyright 2021-2023 the Kubeapps contributors.
+// Copyright 2021-2024 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 import actions from "actions";
@@ -15,17 +15,10 @@ interface IHeadManagerProps {
   children: React.ReactNode;
 }
 
-export function getThemeFile(theme: SupportedThemes) {
-  const lightThemeFile = "./clr-ui.min.css";
-  const darkThemeFile = "./clr-ui-dark.min.css";
-  switch (theme) {
-    case SupportedThemes.light:
-      return lightThemeFile;
-    case SupportedThemes.dark:
-      return darkThemeFile;
-    default:
-      return lightThemeFile;
-  }
+// Since clr-ui was updated, hot css file switching is no longer required
+// See https://github.com/vmware-tanzu/kubeapps/pull/7483
+export function getThemeFile(_theme: SupportedThemes) {
+  return "./clr-ui.min.css";
 }
 export default function HeadManager({ children }: IHeadManagerProps) {
   const intl = useIntl();
