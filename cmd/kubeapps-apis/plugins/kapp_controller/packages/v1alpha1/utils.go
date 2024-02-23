@@ -13,12 +13,16 @@ import (
 // More details at https://github.com/vmware-tanzu/kubeapps/pull/7515
 
 func toOldVendirVSS(ver *new.VersionSelectionSemver) *old.VersionSelectionSemver {
-	return &old.VersionSelectionSemver{
+	old := &old.VersionSelectionSemver{
 		Constraints: ver.Constraints,
-		Prereleases: &old.VersionSelectionSemverPrereleases{
-			Identifiers: ver.Prereleases.Identifiers,
-		},
+		Prereleases: &old.VersionSelectionSemverPrereleases{},
 	}
+
+	if ver.Prereleases != nil {
+		old.Prereleases.Identifiers = ver.Prereleases.Identifiers
+	}
+
+	return old
 }
 
 func toNewVendirVS(ver *old.VersionSelection) *new.VersionSelection {
@@ -28,12 +32,16 @@ func toNewVendirVS(ver *old.VersionSelection) *new.VersionSelection {
 }
 
 func toNewVendirVSS(ver *old.VersionSelectionSemver) *new.VersionSelectionSemver {
-	return &new.VersionSelectionSemver{
+	new := &new.VersionSelectionSemver{
 		Constraints: ver.Constraints,
-		Prereleases: &new.VersionSelectionSemverPrereleases{
-			Identifiers: ver.Prereleases.Identifiers,
-		},
+		Prereleases: &new.VersionSelectionSemverPrereleases{},
 	}
+
+	if ver.Prereleases != nil {
+		new.Prereleases.Identifiers = ver.Prereleases.Identifiers
+	}
+
+	return new
 }
 
 func toOldVendirVS(ver *new.VersionSelection) *old.VersionSelection {
