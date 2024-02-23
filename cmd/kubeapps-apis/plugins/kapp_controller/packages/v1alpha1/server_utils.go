@@ -1,4 +1,4 @@
-// Copyright 2021-2023 the Kubeapps contributors.
+// Copyright 2021-2024 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 package main
@@ -16,12 +16,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 
+	vendirversions "carvel.dev/vendir/pkg/vendir/versions/v1alpha1"
 	"github.com/Masterminds/semver/v3"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	kappcmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
-	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappcorev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
@@ -350,7 +350,7 @@ func toFetchImgpkg(pkgfetch *kappctrlv1alpha1.AppFetchImgpkgBundle) *kappcorev1.
 	}
 	fetch := &kappcorev1.PackageRepositoryFetch{
 		ImgpkgBundle: &kappcorev1.PackageRepositoryImgpkg{
-			TagSelection: toVersionSelection(pkgfetch.TagSelection),
+			TagSelection: toVersionSelection(toNewVendirVS(pkgfetch.TagSelection)),
 		},
 	}
 	return fetch
@@ -363,7 +363,7 @@ func toFetchImage(pkgfetch *kappctrlv1alpha1.AppFetchImage) *kappcorev1.PackageR
 	fetch := &kappcorev1.PackageRepositoryFetch{
 		Image: &kappcorev1.PackageRepositoryImage{
 			SubPath:      pkgfetch.SubPath,
-			TagSelection: toVersionSelection(pkgfetch.TagSelection),
+			TagSelection: toVersionSelection(toNewVendirVS(pkgfetch.TagSelection)),
 		},
 	}
 	return fetch
@@ -376,7 +376,7 @@ func toFetchGit(pkgfetch *kappctrlv1alpha1.AppFetchGit) *kappcorev1.PackageRepos
 	fetch := &kappcorev1.PackageRepositoryFetch{
 		Git: &kappcorev1.PackageRepositoryGit{
 			Ref:           pkgfetch.Ref,
-			RefSelection:  toVersionSelection(pkgfetch.RefSelection),
+			RefSelection:  toVersionSelection(toNewVendirVS(pkgfetch.RefSelection)),
 			SubPath:       pkgfetch.SubPath,
 			LfsSkipSmudge: pkgfetch.LFSSkipSmudge,
 		},
@@ -451,17 +451,17 @@ func toVersionSelection(pkgversion *vendirversions.VersionSelection) *kappcorev1
 }
 
 func toPkgFetchImgpkg(from *kappcorev1.PackageRepositoryImgpkg, to *kappctrlv1alpha1.AppFetchImgpkgBundle) {
-	to.TagSelection = toPkgVersionSelection(from.TagSelection)
+	to.TagSelection = toOldVendirVS(toPkgVersionSelection(from.TagSelection))
 }
 
 func toPkgFetchImage(from *kappcorev1.PackageRepositoryImage, to *kappctrlv1alpha1.AppFetchImage) {
 	to.SubPath = from.SubPath
-	to.TagSelection = toPkgVersionSelection(from.TagSelection)
+	to.TagSelection = toOldVendirVS(toPkgVersionSelection(from.TagSelection))
 }
 
 func toPkgFetchGit(from *kappcorev1.PackageRepositoryGit, to *kappctrlv1alpha1.AppFetchGit) {
 	to.Ref = from.Ref
-	to.RefSelection = toPkgVersionSelection(from.RefSelection)
+	to.RefSelection = toOldVendirVS(toPkgVersionSelection(from.RefSelection))
 	to.SubPath = from.SubPath
 	to.LFSSkipSmudge = from.LfsSkipSmudge
 }

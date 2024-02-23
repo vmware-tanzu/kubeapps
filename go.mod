@@ -6,6 +6,7 @@ module github.com/vmware-tanzu/kubeapps
 go 1.21
 
 require (
+	carvel.dev/vendir v0.40.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/adhocore/gronx v1.6.7
