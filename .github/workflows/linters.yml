@@ -1,4 +1,4 @@
-# Copyright 2022-2023 the Kubeapps contributors.
+# Copyright 2022-2024 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
 ---
@@ -8,7 +8,7 @@ on:
       golang_version:
         type: string
         required: false
-        default: "1.21"
+        default: "1.22"
 
 jobs:
   yaml-linter:
