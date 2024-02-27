@@ -84,7 +84,7 @@
     "@testing-library/user-event": "^14.5.2",
     "@types/enzyme": "^3.10.18",
     "@types/jest": "^29.5.12",
-    "@types/jsonwebtoken": "^9.0.5",
+    "@types/jsonwebtoken": "^9.0.6",
     "@types/lodash": "^4.14.202",
     "@types/qs": "^6.9.11",
     "@types/react": "^17.0.74",
