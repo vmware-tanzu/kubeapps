@@ -26,7 +26,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.11.5
 	github.com/google/go-cmp v0.6.0
-	github.com/google/go-containerregistry v0.19.0
+	github.com/google/go-containerregistry v0.19.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1
 	github.com/itchyny/gojq v0.12.14
