@@ -390,7 +390,7 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 			// },
 			PackageRef: &packagingv1alpha1.PackageRef{
 				RefName:          packageRefName,
-				VersionSelection: toOldVendirVSS(versionSelection),
+				VersionSelection: versionSelection,
 			},
 		},
 	}
