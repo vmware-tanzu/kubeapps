@@ -1176,10 +1176,10 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@braintree/sanitize-url@=7.0.0":
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/@braintree/sanitize-url/-/sanitize-url-7.0.0.tgz#8899d8e68a1b3f6933d4ad57a263fd3cf1d34d8a"
-  integrity sha512-GMu2OJiTd1HSe74bbJYQnVvELANpYiGFZELyyTM1CR0sdv5ReQAcJ/c/8pIrPab3lO11+D+EpuGLUxqz+y832g==
+"@braintree/sanitize-url@=7.0.1":
+  version "7.0.1"
+  resolved "https://registry.yarnpkg.com/@braintree/sanitize-url/-/sanitize-url-7.0.1.tgz#457233b0a18741b7711855044102b82bae7a070b"
+  integrity sha512-URg8UM6lfC9ZYqFipItRSxYJdgpU5d2Z4KnjsJ+rj6tgAmGme7E+PQNCiud8g0HDaZKMovu2qjfa0f5Ge0Vlsg==
 
 "@bufbuild/buf-darwin-arm64@1.30.0":
   version "1.30.0"
@@ -2336,26 +2336,26 @@
     "@svgr/plugin-svgo" "^5.5.0"
     loader-utils "^2.0.0"
 
-"@swagger-api/apidom-ast@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-ast/-/apidom-ast-0.97.0.tgz#f2c51b53cb6f4618a3038c7b782f99d71f9bafba"
-  integrity sha512-KpPyC8x5ZrB4l9+jgl8FAhokedh+8b5VuBTTdTJKFf+x5uznMiBf/MZTWgvsIk8/9MtjkQYUN1qgVzEPiKWvHg==
+"@swagger-api/apidom-ast@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-ast/-/apidom-ast-0.98.0.tgz#8973f91d64a34ba826d613cff08969c04afaeb31"
+  integrity sha512-0PThtNVpLWWwWEt0AEFAiMAyXUDUkIQ5aspHBPQVyh2bKUg71H33/xOLAk0kgRSTLGlsWPrZtirgzAEz7AUWSw==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-error" "^0.97.0"
+    "@swagger-api/apidom-error" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.1.1"
     unraw "^3.0.0"
 
-"@swagger-api/apidom-core@>=0.97.0 <1.0.0", "@swagger-api/apidom-core@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-core/-/apidom-core-0.97.0.tgz#2dde706babe40facb69b29a92ec3ee845ad3a156"
-  integrity sha512-3LYlN0Cox0FBFNZqmgi7VyJ4MXppCmZoFjlurT+Y90ND1y2lCidcwjAthr3QpV8b+UCc7MG3APBGRfwqaYZ2IA==
+"@swagger-api/apidom-core@>=0.98.0 <1.0.0", "@swagger-api/apidom-core@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-core/-/apidom-core-0.98.0.tgz#34e3cdf022d589e566e8202b2ec56e23feccc684"
+  integrity sha512-WKyOmuloUC2jJ7qtSEiigx6RhCMwBTOnW/1qQlhttRy2HlrzziNPIpq2vfZUtSU6FG8InlWSrf939KLfrQG1Fw==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-ast" "^0.97.0"
-    "@swagger-api/apidom-error" "^0.97.0"
+    "@swagger-api/apidom-ast" "^0.98.0"
+    "@swagger-api/apidom-error" "^0.98.0"
     "@types/ramda" "~0.29.6"
     minim "~0.23.8"
     ramda "~0.29.1"
@@ -2363,209 +2363,209 @@
     short-unique-id "^5.0.2"
     stampit "^4.3.2"
 
-"@swagger-api/apidom-error@>=0.97.0 <1.0.0", "@swagger-api/apidom-error@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-error/-/apidom-error-0.97.0.tgz#5e7979f816dd186393de0245ce81bca344b3a8d6"
-  integrity sha512-Y2YRnsJSXp+MdgwwMSCtidzJfy/bL6CZEpc+5aWUw1mphTjfLZC66uA4btUgUevyiT6mNHXm8tUmGomHA7Izdw==
+"@swagger-api/apidom-error@>=0.98.0 <1.0.0", "@swagger-api/apidom-error@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-error/-/apidom-error-0.98.0.tgz#a1146b9b9bb0ffd88a7fba97775208a49817d2c8"
+  integrity sha512-c6Brf8Njg0zv0U6VZax6J0v/TkllP2+6//NCKKMvdecYknoJl9yfsG6dPP5DustbSNrsi2IGI9j0uyJ+osVh6Q==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
 
-"@swagger-api/apidom-json-pointer@>=0.97.0 <1.0.0", "@swagger-api/apidom-json-pointer@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-json-pointer/-/apidom-json-pointer-0.97.0.tgz#52f110a11f8ed2b6dc2d9ed5f2ada28319d878ca"
-  integrity sha512-9vcgePgcYXUiYEqnvx8Ew04j8JtfenosysbSuGgRs93Ls8mQ/+ndIOklHaXJzNjBZZxqxS0p6QLFcj1jpUiojQ==
+"@swagger-api/apidom-json-pointer@>=0.98.0 <1.0.0", "@swagger-api/apidom-json-pointer@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-json-pointer/-/apidom-json-pointer-0.98.0.tgz#f6ad769f3910050085d547206b92c125066f5935"
+  integrity sha512-CjQBBvvG26isK2YUx3+/cHWBLO/q0C7Lv42v6Ux5NVRbOtpqO7WQCX0gGiDg4MBDcPcuw0dgNilu9QoErRq2wg==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-error" "^0.97.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-error" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.0.0"
 
-"@swagger-api/apidom-ns-api-design-systems@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-ns-api-design-systems/-/apidom-ns-api-design-systems-0.97.0.tgz#b49cc0a58c7ee47868d1e4e7f3ae79ee213bd2f2"
-  integrity sha512-uSTIEX4q9XWoP9TQq9nEtW5xG3hVQN2VD5spYoxvYlzUOtg12yxkVgu776eq0kVZd74acZhKIF7mn3uiqaQcHA==
+"@swagger-api/apidom-ns-api-design-systems@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-ns-api-design-systems/-/apidom-ns-api-design-systems-0.98.0.tgz#32b73f209e174ee85e74a1444c9667f782f6f751"
+  integrity sha512-zs+BMXtffopb8h/gOgANVeF4xyt+MGo2EXRSiiqqKZObZ99vxvmZ3B/BvcKi41PIA14YLZAaXG8zDEpIgSTaRQ==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-error" "^0.97.0"
-    "@swagger-api/apidom-ns-openapi-3-1" "^0.97.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-error" "^0.98.0"
+    "@swagger-api/apidom-ns-openapi-3-1" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.1.1"
     ts-mixer "^6.0.3"
 
-"@swagger-api/apidom-ns-asyncapi-2@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-ns-asyncapi-2/-/apidom-ns-asyncapi-2-0.97.0.tgz#87ac15fe262974c93d3dd9e36fc9eeaec3ac5031"
-  integrity sha512-buEQSrXdtjoAkqIWSZ448HlvnareupthIoObYELp25LVuQwhxxVSY3NR0aCIR37GHgSchrmPBVcsvPMtXV96BA==
+"@swagger-api/apidom-ns-asyncapi-2@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-ns-asyncapi-2/-/apidom-ns-asyncapi-2-0.98.0.tgz#a8e8155ed26268a9dbb3074c1afe0177c3488752"
+  integrity sha512-3oXGYjNL60S+wKIOM7NGxoWpISAs9/mpXTOEtEBGwPy2LZ4HQ/DpAmkQJq5FUH3ChJDDkiWPR24jfBQDSIsLqw==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-ns-json-schema-draft-7" "^0.97.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-ns-json-schema-draft-7" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.1.1"
     ts-mixer "^6.0.3"
 
-"@swagger-api/apidom-ns-json-schema-draft-4@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-ns-json-schema-draft-4/-/apidom-ns-json-schema-draft-4-0.97.0.tgz#a24f3aa755e2acb9c5acad9123daa44e2ced6f0b"
-  integrity sha512-eBMIPxX4huNDGle6TOfSe1kKS1/HvL6w66GWWLFxZW2doCQHMADgjo7j/kVowrXiJtEoMgjBVp3W30WkcwBVug==
+"@swagger-api/apidom-ns-json-schema-draft-4@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-ns-json-schema-draft-4/-/apidom-ns-json-schema-draft-4-0.98.0.tgz#9f921eeb1f7a01fae51ef804ef84cf72afde791b"
+  integrity sha512-NgHyZ8a/Voeg4YzlWCX1zIidqFFA5236bjSs0g/DJAFDxi28jSs35OJKOXZz65T2LXIzdYytes9O/VyyxvHH5Q==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-ast" "^0.97.0"
-    "@swagger-api/apidom-core" "^0.97.0"
+    "@swagger-api/apidom-ast" "^0.98.0"
+    "@swagger-api/apidom-core" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.1.1"
     stampit "^4.3.2"
 
-"@swagger-api/apidom-ns-json-schema-draft-6@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-ns-json-schema-draft-6/-/apidom-ns-json-schema-draft-6-0.97.0.tgz#b1ab8f3963ecf8e55d4fc62727b466ebc4408cb0"
-  integrity sha512-tRbg3/b4aJGfcODc0HDngZDjBdhPAv8OZM1OZdsqI4EEIw3PI/wpd+b6b8a5udOjAdbUYqnYsq6gCylCDNBnzw==
+"@swagger-api/apidom-ns-json-schema-draft-6@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-ns-json-schema-draft-6/-/apidom-ns-json-schema-draft-6-0.98.0.tgz#3cc8a12aeec73cd7e0679f83f1578fbd734d5765"
+  integrity sha512-NOPB4byXEuZNl4Fh83GwUu3Vd7LgXNYjb3+4Zh6hC9JhMyTeN8yysbN+Llfh8Qq2KW4h7E+x9pZv7cIKrPAEMg==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-error" "^0.97.0"
-    "@swagger-api/apidom-ns-json-schema-draft-4" "^0.97.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-error" "^0.98.0"
+    "@swagger-api/apidom-ns-json-schema-draft-4" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.1.1"
     stampit "^4.3.2"
 
-"@swagger-api/apidom-ns-json-schema-draft-7@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-ns-json-schema-draft-7/-/apidom-ns-json-schema-draft-7-0.97.0.tgz#2f262e396acd2a8c8b47f11ad3b960c4d12de667"
-  integrity sha512-0GITsoa6kVVkoKBUxyeODmh6vjGXuvDQZd3Vxs1nz0c/O6ZR+VBfBB3JW5wzhVr+WCXebaOJGDyWkxJMHKycxw==
+"@swagger-api/apidom-ns-json-schema-draft-7@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-ns-json-schema-draft-7/-/apidom-ns-json-schema-draft-7-0.98.0.tgz#d235cd14b4c7c0daae52426a2b21209833126183"
+  integrity sha512-mHc3J34iA1OZk1uOO0KfAVfH+Z7qjKpyXBEKkXuaf7ICCFC5vbPWGj10Ufjb8yx93TZ7akLXHLh8DhDqvH6beA==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-error" "^0.97.0"
-    "@swagger-api/apidom-ns-json-schema-draft-6" "^0.97.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-error" "^0.98.0"
+    "@swagger-api/apidom-ns-json-schema-draft-6" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.1.1"
     stampit "^4.3.2"
 
-"@swagger-api/apidom-ns-openapi-2@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-ns-openapi-2/-/apidom-ns-openapi-2-0.97.0.tgz#036f35c49a735c74d9c4208e8cbb4ab18c9dc26f"
-  integrity sha512-5gOA9FiO1J9OxJhcVBeXdm77kuh2cwPXG6Sh/DOlbk733Pz9v9W0aQgpLi5Ltsgagxe1sHhBqxJ1asw10QFzzw==
+"@swagger-api/apidom-ns-openapi-2@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-ns-openapi-2/-/apidom-ns-openapi-2-0.98.0.tgz#f03970af308115948089ef0c90e2fe3931b7dc5f"
+  integrity sha512-AOZIUfRFwUN4ujb6BiFH16h8QEb93/ZDh7R5ly6lnKBsXhD/l8KgQFwZAB4PsGDJ1no6KlTWL1F0O3ucSv2cmQ==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-error" "^0.97.0"
-    "@swagger-api/apidom-ns-json-schema-draft-4" "^0.97.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-error" "^0.98.0"
+    "@swagger-api/apidom-ns-json-schema-draft-4" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.1.1"
     ts-mixer "^6.0.3"
 
-"@swagger-api/apidom-ns-openapi-3-0@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-ns-openapi-3-0/-/apidom-ns-openapi-3-0-0.97.0.tgz#eaec54949efa04b10bb90b121cc7c04756b8e998"
-  integrity sha512-fbnN87SF0WN/4DcSpceuo+NUtkAGeicMIucEMF+LIIiCAF27Xi5d6Q823i9DgOEfJtifHKVj6Zhl/zSKAD2eyw==
+"@swagger-api/apidom-ns-openapi-3-0@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-ns-openapi-3-0/-/apidom-ns-openapi-3-0-0.98.0.tgz#7fbed7edd53cb13c05a800d537cecc0f98a08c35"
+  integrity sha512-VHbdpH4y0zStSmKCaSUz+jalmj+sjbJfB7W8anKjqdiOMGywMHLjLYDkQWHg/z6fM+0OriWItHXe3sTtOBh7OQ==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-error" "^0.97.0"
-    "@swagger-api/apidom-ns-json-schema-draft-4" "^0.97.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-error" "^0.98.0"
+    "@swagger-api/apidom-ns-json-schema-draft-4" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.1.1"
     ts-mixer "^6.0.3"
 
-"@swagger-api/apidom-ns-openapi-3-1@>=0.97.0 <1.0.0", "@swagger-api/apidom-ns-openapi-3-1@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-ns-openapi-3-1/-/apidom-ns-openapi-3-1-0.97.0.tgz#af9e1a60995e45571c10704290b3a91a56721095"
-  integrity sha512-DyvkTim+t7iVKyze6N3tITsfyElthmOwOcxwOjKj/3lySEy61DuY4X2FaPD5+owftVDxMs4Q6F9Chm7qv91a+Q==
+"@swagger-api/apidom-ns-openapi-3-1@>=0.98.0 <1.0.0", "@swagger-api/apidom-ns-openapi-3-1@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-ns-openapi-3-1/-/apidom-ns-openapi-3-1-0.98.0.tgz#4f4b6aa9ee1cf88b2b9bfdb59cfeaa99012d523d"
+  integrity sha512-T+B0Fcreq1iEuvUJWnYujAjAdPltKPRmXZ6aI+iL1g0rT3kmEig4KSuiynhEyftU1wukRw8IbKj4KiOyuAwyLg==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-ast" "^0.97.0"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-ns-openapi-3-0" "^0.97.0"
+    "@swagger-api/apidom-ast" "^0.98.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-ns-openapi-3-0" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.1.1"
     ts-mixer "^6.0.3"
 
-"@swagger-api/apidom-ns-workflows-1@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-ns-workflows-1/-/apidom-ns-workflows-1-0.97.0.tgz#0b442a1703682c10646ecade070dd7c79654702c"
-  integrity sha512-eIuoTRSITlUtMjpM3J0H9b2rVeEVu13i/Fv6+ZMPob0yHmQBWo9bnLjxxnfEZkpvp050worKULfNMdJV8NKBkA==
+"@swagger-api/apidom-ns-workflows-1@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-ns-workflows-1/-/apidom-ns-workflows-1-0.98.0.tgz#8d212ec59557bc2d6894f16faae3f6df431c87e4"
+  integrity sha512-jaJYpBHKcX+Sz8f3QGFEM6jYzSKOJTKNrfqwNBLkOwa1AZrMwiofqGhjAiz5HHFNkfYJdR6LQmSU4sq24IamHw==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-ns-openapi-3-1" "^0.97.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-ns-openapi-3-1" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.1.1"
     ts-mixer "^6.0.3"
 
-"@swagger-api/apidom-parser-adapter-api-design-systems-json@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-api-design-systems-json/-/apidom-parser-adapter-api-design-systems-json-0.97.0.tgz#ac9b5ed454fa1a996760edbdf2c40e2b77576071"
-  integrity sha512-ZDzaiTHMEpz0kM0/iyHEjySTf0xoLKDJwJiSxKNuew141k0rakTVeVisxXeq+6JQi2eC6KuyS98DHMe7hEIVUw==
+"@swagger-api/apidom-parser-adapter-api-design-systems-json@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-api-design-systems-json/-/apidom-parser-adapter-api-design-systems-json-0.98.0.tgz#c8b24458261c842e7b06571ae99f178778b49e6a"
+  integrity sha512-gfQmKNexWhDN3uOuc8NUt5wXGRFzwdNYeEYyEVPFO0+Nbs8qrdqmfgiuXgpvEDXkDJZiIug4zPMC2Q1XiB7zMA==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-ns-api-design-systems" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-json" "^0.97.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-ns-api-design-systems" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-json" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.0.0"
 
-"@swagger-api/apidom-parser-adapter-api-design-systems-yaml@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-api-design-systems-yaml/-/apidom-parser-adapter-api-design-systems-yaml-0.97.0.tgz#905af36b200f8588407a418ebffd171bf4264265"
-  integrity sha512-5/BziPWqrHLr91VR+EC4pXt/fNToWMmvG+d7RVjksHinrjps2E6HA+oZOhqKqA2LRCLNjGhNUptXzRMDjjtenw==
+"@swagger-api/apidom-parser-adapter-api-design-systems-yaml@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-api-design-systems-yaml/-/apidom-parser-adapter-api-design-systems-yaml-0.98.0.tgz#31c90b37569f38b8d54e7e206ece751a1cec8f6c"
+  integrity sha512-U8zhua172l2CKh200rVKPwounwGDr6DEzi0BaA31pTcel8e2jwmEkGTJ4PdO1aCHN1cDYVYXMGyEf67gOoo/kg==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-ns-api-design-systems" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-yaml-1-2" "^0.97.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-ns-api-design-systems" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-yaml-1-2" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.0.0"
 
-"@swagger-api/apidom-parser-adapter-asyncapi-json-2@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-asyncapi-json-2/-/apidom-parser-adapter-asyncapi-json-2-0.97.0.tgz#fa4f5027b645cedbd7aad801741fbdf2101acd08"
-  integrity sha512-XLD/YZifnhezRQY5ADQQAje5G5qtZ4GAbXk//1sRNe3R/qCk1pDxmRYr27yzt8w1XhfM+9VQmCTI21ZFpNFQOA==
+"@swagger-api/apidom-parser-adapter-asyncapi-json-2@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-asyncapi-json-2/-/apidom-parser-adapter-asyncapi-json-2-0.98.0.tgz#9e18b50d2042987b644ccaab8e2f96507e66e23b"
+  integrity sha512-4mV0Ja+r2s5WAqJyZJHtQsNhyR2x8J+fYhcmuBHcqZp3sokzTObAAImsIdZ1zYdFYrrZgymD4GMk4RoLbJM3FQ==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-ns-asyncapi-2" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-json" "^0.97.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-ns-asyncapi-2" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-json" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.0.0"
 
-"@swagger-api/apidom-parser-adapter-asyncapi-yaml-2@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-asyncapi-yaml-2/-/apidom-parser-adapter-asyncapi-yaml-2-0.97.0.tgz#a9c450b7a393c42e401374d7a300ef48f5a7947a"
-  integrity sha512-whyThDiGN4FoNirgY0XtXF7IJeU6NfsrBwjaxCkYBuSPslZBoWy4ojEQbfg+2HqNLbnHKJyvabh9/tSIxgB92A==
+"@swagger-api/apidom-parser-adapter-asyncapi-yaml-2@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-asyncapi-yaml-2/-/apidom-parser-adapter-asyncapi-yaml-2-0.98.0.tgz#88c1c085c17c234bf0229aad5a0220f3178ea6e7"
+  integrity sha512-FLb5IUVhOdhRSfi2OnpOWxiB7CVZXrqG1rSniOWQ4fjeQ7urB5NJv6p2nbC9waduHA0B0mItiO1ijvbOFf0Dcw==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-ns-asyncapi-2" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-yaml-1-2" "^0.97.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-ns-asyncapi-2" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-yaml-1-2" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.0.0"
 
-"@swagger-api/apidom-parser-adapter-json@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-json/-/apidom-parser-adapter-json-0.97.0.tgz#bd863802843d5c3b9973e601215165e656ddbc07"
-  integrity sha512-MPhAX77Z9Csti+Kljtbrl/ez2H610R4fQg0RnkNW40f4e6TXeOogT5tmceeWP+IKGAKX45HA1JpVPxdtSJn3ww==
+"@swagger-api/apidom-parser-adapter-json@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-json/-/apidom-parser-adapter-json-0.98.0.tgz#feb6ddbdd12c42d2a54f56ce0d33de3399b17569"
+  integrity sha512-tZkL4sZ5JsICnhYGTeCApHRbfyAkjydb5h+OOE+MAEajRxi/PWklFDGiU7viScPWWE9cPnzRqtp8M0RutmHJew==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-ast" "^0.97.0"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-error" "^0.97.0"
+    "@swagger-api/apidom-ast" "^0.98.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-error" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.1.1"
@@ -2573,119 +2573,119 @@
     tree-sitter-json "=0.20.2"
     web-tree-sitter "=0.20.3"
 
-"@swagger-api/apidom-parser-adapter-openapi-json-2@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-openapi-json-2/-/apidom-parser-adapter-openapi-json-2-0.97.0.tgz#07460374a5667430234258fdfea4fb089e25f85b"
-  integrity sha512-HtaoRN7wnVB2ilxs/RpLBR7+MwIfUqUcdCzC/EVV788CnSbutwj61W3jR2w9BRXeANJ4K2APcvU4W7WiI9Sugg==
+"@swagger-api/apidom-parser-adapter-openapi-json-2@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-openapi-json-2/-/apidom-parser-adapter-openapi-json-2-0.98.0.tgz#e38474162d07f08e9c68a2c3ab9f9e2414d73aa1"
+  integrity sha512-81M0Z0N0oWCiUy251IIewm9YwKDFyR84XccrHnIIf/aWuikU2IRr5fDonxweIPuDYybKdpia8lca0GG/iI6G3g==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-ns-openapi-2" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-json" "^0.97.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-ns-openapi-2" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-json" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.0.0"
 
-"@swagger-api/apidom-parser-adapter-openapi-json-3-0@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-openapi-json-3-0/-/apidom-parser-adapter-openapi-json-3-0-0.97.0.tgz#caa0f061f52109baf77881be2d8f6111f3a3f438"
-  integrity sha512-psfxh7k671HukibaY53cems0fcsLQP8U5lQPzVDevEGJQoguAWHyV2C5kOr52XOJInmsN5E+COEn6oPzsIaDCg==
+"@swagger-api/apidom-parser-adapter-openapi-json-3-0@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-openapi-json-3-0/-/apidom-parser-adapter-openapi-json-3-0-0.98.0.tgz#9f329a79a4a4e357e917dc132c4aca9359689a39"
+  integrity sha512-mfvj3f75CYAUtslv5ildHllGl8ZWpuge9alTcjxtwIGUu85oXdQ6yv7EExWHe2icZ3w+VY12VzwMbpEumx6k/Q==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-ns-openapi-3-0" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-json" "^0.97.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-ns-openapi-3-0" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-json" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.0.0"
 
-"@swagger-api/apidom-parser-adapter-openapi-json-3-1@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-openapi-json-3-1/-/apidom-parser-adapter-openapi-json-3-1-0.97.0.tgz#a3cc2582f030be10ddf6d1cd8e3deeceb25251d5"
-  integrity sha512-PJpcLhS441ATFjbCHHhVUPd8K1JZaiFQJS7yfQEKQmA5MlBRh3w7mqCJAbZN49wuMkelTdB8qJJlVEGUDSxX5Q==
+"@swagger-api/apidom-parser-adapter-openapi-json-3-1@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-openapi-json-3-1/-/apidom-parser-adapter-openapi-json-3-1-0.98.0.tgz#3e9ece7376fcf12f3e9f7c908679466429904f9a"
+  integrity sha512-HzlF/G+tygojw8UswwdLptDUBGhp9d+nGzADG2j+M1onBrw35/jdRPtX4S2KQ8mmwyEEgHlRENhv7yndvCbvPg==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-ns-openapi-3-1" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-json" "^0.97.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-ns-openapi-3-1" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-json" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.0.0"
 
-"@swagger-api/apidom-parser-adapter-openapi-yaml-2@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-openapi-yaml-2/-/apidom-parser-adapter-openapi-yaml-2-0.97.0.tgz#a5dd4c7bc0f68f6689f645a3ff0c7914a569dd96"
-  integrity sha512-X5saN/AElpS+LohbSjNPesUPWYOM8Wb19+OD7/WS1r6AVRIlj5gKLy3vO7BLBvaER5G73qYylfrPxCoUPlpZZg==
+"@swagger-api/apidom-parser-adapter-openapi-yaml-2@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-openapi-yaml-2/-/apidom-parser-adapter-openapi-yaml-2-0.98.0.tgz#f120885318d86a90872644592dae96cebf05fb80"
+  integrity sha512-FzQNMk6gDUSp2PLtMKhnDF6MFk0T7y6ewPrYk0ztcul+m6YQD4pdcUXhpXcwtfy9dspJQERF7UKuaK9dZsm8BQ==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-ns-openapi-2" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-yaml-1-2" "^0.97.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-ns-openapi-2" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-yaml-1-2" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.0.0"
 
-"@swagger-api/apidom-parser-adapter-openapi-yaml-3-0@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-openapi-yaml-3-0/-/apidom-parser-adapter-openapi-yaml-3-0-0.97.0.tgz#4d88e29758eab53d4e084d30382c2521ba704d39"
-  integrity sha512-kBW6atIN0rONf9kjNeE5eHkxb3amfby0vxKfk+9fiRdQbJVCg4UiWOFmU5rD9bc2smtLWSQNkjlMkKS3i2/4Wg==
+"@swagger-api/apidom-parser-adapter-openapi-yaml-3-0@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-openapi-yaml-3-0/-/apidom-parser-adapter-openapi-yaml-3-0-0.98.0.tgz#68f89c806714ca2113f71a9e121901178ca2c4cf"
+  integrity sha512-H1EYjBDeKx0WiPqsrUkb+Zlm59rqbtQb6w+SAdkw4PBHi0+yOgOlvUrIkTYEVy8BD6he01dbMocv+EDXpd9rww==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-ns-openapi-3-0" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-yaml-1-2" "^0.97.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-ns-openapi-3-0" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-yaml-1-2" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.0.0"
 
-"@swagger-api/apidom-parser-adapter-openapi-yaml-3-1@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-openapi-yaml-3-1/-/apidom-parser-adapter-openapi-yaml-3-1-0.97.0.tgz#e057c74e4a53c42bec21028b70e80a4a4a0fb175"
-  integrity sha512-cclRwQ9IQj6sFLUCDzqRbbbplQfKdt9xz8YONvtq4XBHZO6Ab8z5CF3A9eLiuW1TJZ3y0QU7xmI6h5jWwUrC9w==
+"@swagger-api/apidom-parser-adapter-openapi-yaml-3-1@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-openapi-yaml-3-1/-/apidom-parser-adapter-openapi-yaml-3-1-0.98.0.tgz#636d5b8921b362cb513e71cc6c75492cca399603"
+  integrity sha512-sxnAJDg0TGK0T4HwtkE1mkfQWL564UGlgvU+gfrEmOLjsfqRDrlFfffYKguqtJdz17+HgUp78Sqj6Ey48J83Jw==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-ns-openapi-3-1" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-yaml-1-2" "^0.97.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-ns-openapi-3-1" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-yaml-1-2" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.0.0"
 
-"@swagger-api/apidom-parser-adapter-workflows-json-1@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-workflows-json-1/-/apidom-parser-adapter-workflows-json-1-0.97.0.tgz#4f74e9707a8a0d20cb9052f189d20e77ae2d9ed0"
-  integrity sha512-UvnISzq5JDG43sTIJ2oE8u8qALHmBKbYMGncYgUdlHx7z5RgPAWxIRDWH40YFzUSuKSRNp4TI7eG/9MUd3RnGA==
+"@swagger-api/apidom-parser-adapter-workflows-json-1@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-workflows-json-1/-/apidom-parser-adapter-workflows-json-1-0.98.0.tgz#dc6cf5332945b7d3fbb244d473b28a7ed9c114bf"
+  integrity sha512-XroOfEPbs6Ogl4pSZGQ4yctu4OsMQw5qvnVTFS3hCr+fHQXFIaD+remFRjHQRqhyVC0FDmw0mggWubcSosiyCg==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-ns-workflows-1" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-json" "^0.97.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-ns-workflows-1" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-json" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.0.0"
 
-"@swagger-api/apidom-parser-adapter-workflows-yaml-1@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-workflows-yaml-1/-/apidom-parser-adapter-workflows-yaml-1-0.97.0.tgz#d85966a9f1e507a71acc031dadea649dc046b903"
-  integrity sha512-TTZS0YkFvy0X8Huom+fr3muZsCy8mtDpuUks45EvPqv6gjGLCBw3/AZ507CS0YxYvoERbXkYfAYqxW8lptwKuQ==
+"@swagger-api/apidom-parser-adapter-workflows-yaml-1@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-workflows-yaml-1/-/apidom-parser-adapter-workflows-yaml-1-0.98.0.tgz#d4e5143d1a14f13de31deac44c0845118352c7f3"
+  integrity sha512-9SG9g+raKEU8cpEVT7eYlHGUEWAB7DYm/oNN5k3i4hLbJUIYKrL4KAK1sRrfxrGRiCIJG/O/jw4NLcSVgLcVJQ==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-ns-workflows-1" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-yaml-1-2" "^0.97.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-ns-workflows-1" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-yaml-1-2" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.0.0"
 
-"@swagger-api/apidom-parser-adapter-yaml-1-2@^0.97.0":
-  version "0.97.0"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-yaml-1-2/-/apidom-parser-adapter-yaml-1-2-0.97.0.tgz#c3834b45f0c8f00802dca35cec323fc1ec32062f"
-  integrity sha512-3f1ADjQyKyLnuRhPuoHMgWMW28o0ylohWCQwX4q69CMH0kqGxP7HnqIU/i0I2cxZdjGv72OCdiKwaR/OgHcmEw==
+"@swagger-api/apidom-parser-adapter-yaml-1-2@^0.98.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-parser-adapter-yaml-1-2/-/apidom-parser-adapter-yaml-1-2-0.98.0.tgz#4c11c69a6777a23fa71829429644371f91fcbda4"
+  integrity sha512-pEIZblIK+/k9p6wge3z9uX1bVD7zzXhoxg3hgpClojZmmJV/jriDUmRzLO1MeqVbH+JFXE2FGFvE5D4CRFCEVw==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-ast" "^0.97.0"
-    "@swagger-api/apidom-core" "^0.97.0"
-    "@swagger-api/apidom-error" "^0.97.0"
+    "@swagger-api/apidom-ast" "^0.98.0"
+    "@swagger-api/apidom-core" "^0.98.0"
+    "@swagger-api/apidom-error" "^0.98.0"
     "@types/ramda" "~0.29.6"
     ramda "~0.29.1"
     ramda-adjunct "^4.1.1"
@@ -2693,13 +2693,13 @@
     tree-sitter-yaml "=0.5.0"
     web-tree-sitter "=0.20.3"
 
-"@swagger-api/apidom-reference@>=0.97.0 <1.0.0":
-  version "0.97.1"
-  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-reference/-/apidom-reference-0.97.1.tgz#2eba0fd6701b84e6287a83d69ce107fc4d3892c2"
-  integrity sha512-Bs1U2VutmVpqbCxbCt4DTiL8v0s6osAJx+4v49BGrTcfFFh97K/EOAm48WgA8ViP7qHUNBhUF83rjbpEwOshFw==
+"@swagger-api/apidom-reference@>=0.98.0 <1.0.0":
+  version "0.98.0"
+  resolved "https://registry.yarnpkg.com/@swagger-api/apidom-reference/-/apidom-reference-0.98.0.tgz#8ff3a54bee92ebcddaad87320c57a83c792a781d"
+  integrity sha512-7/B6EOT3cYstbKHn0/liTJ//f7CenzBchbJxoiA0w31hEtRLWh/3cmmmp6ZUgh4YoDXKB/69FWd/SHjerBVo1g==
   dependencies:
     "@babel/runtime-corejs3" "^7.20.7"
-    "@swagger-api/apidom-core" "^0.97.0"
+    "@swagger-api/apidom-core" "^0.98.0"
     "@types/ramda" "~0.29.6"
     axios "^1.4.0"
     minimatch "^7.4.3"
@@ -2708,27 +2708,27 @@
     ramda-adjunct "^4.1.1"
     stampit "^4.3.2"
   optionalDependencies:
-    "@swagger-api/apidom-error" "^0.97.0"
-    "@swagger-api/apidom-json-pointer" "^0.97.0"
-    "@swagger-api/apidom-ns-asyncapi-2" "^0.97.0"
-    "@swagger-api/apidom-ns-openapi-2" "^0.97.0"
-    "@swagger-api/apidom-ns-openapi-3-0" "^0.97.0"
-    "@swagger-api/apidom-ns-openapi-3-1" "^0.97.0"
-    "@swagger-api/apidom-ns-workflows-1" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-api-design-systems-json" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-api-design-systems-yaml" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-asyncapi-json-2" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-asyncapi-yaml-2" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-json" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-openapi-json-2" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-openapi-json-3-0" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-openapi-json-3-1" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-openapi-yaml-2" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-openapi-yaml-3-0" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-openapi-yaml-3-1" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-workflows-json-1" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-workflows-yaml-1" "^0.97.0"
-    "@swagger-api/apidom-parser-adapter-yaml-1-2" "^0.97.0"
+    "@swagger-api/apidom-error" "^0.98.0"
+    "@swagger-api/apidom-json-pointer" "^0.98.0"
+    "@swagger-api/apidom-ns-asyncapi-2" "^0.98.0"
+    "@swagger-api/apidom-ns-openapi-2" "^0.98.0"
+    "@swagger-api/apidom-ns-openapi-3-0" "^0.98.0"
+    "@swagger-api/apidom-ns-openapi-3-1" "^0.98.0"
+    "@swagger-api/apidom-ns-workflows-1" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-api-design-systems-json" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-api-design-systems-yaml" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-asyncapi-json-2" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-asyncapi-yaml-2" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-json" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-openapi-json-2" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-openapi-json-3-0" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-openapi-json-3-1" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-openapi-yaml-2" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-openapi-yaml-3-0" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-openapi-yaml-3-1" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-workflows-json-1" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-workflows-yaml-1" "^0.98.0"
+    "@swagger-api/apidom-parser-adapter-yaml-1-2" "^0.98.0"
 
 "@tanstack/match-sorter-utils@^8.11.7":
   version "8.11.8"
@@ -5842,10 +5842,10 @@ domhandler@^5.0.2, domhandler@^5.0.3:
   dependencies:
     domelementtype "^2.3.0"
 
-dompurify@=3.0.9:
-  version "3.0.9"
-  resolved "https://registry.yarnpkg.com/dompurify/-/dompurify-3.0.9.tgz#b3f362f24b99f53498c75d43ecbd784b0b3ad65e"
-  integrity sha512-uyb4NDIvQ3hRn6NiC+SIFaP4mJ/MdXlvtunaqK9Bn6dD3RuB/1S/gasEjDHD8eiaqdSael2vBv+hOs7Y+jhYOQ==
+dompurify@=3.0.11:
+  version "3.0.11"
+  resolved "https://registry.yarnpkg.com/dompurify/-/dompurify-3.0.11.tgz#c163f5816eaac6aeef35dae2b77fca0504564efe"
+  integrity sha512-Fan4uMuyB26gFV3ovPoEoQbxRRPfTu3CvImyZnhGq5fsIEO+gEFLp45ISFt+kQBWsK5ulDdT0oV28jS1UrwQLg==
 
 domutils@^1.7.0:
   version "1.7.0"
@@ -14003,17 +14003,17 @@ svgo@^2.7.0:
     picocolors "^1.0.0"
     stable "^0.1.8"
 
-swagger-client@^3.26.0:
-  version "3.26.0"
-  resolved "https://registry.yarnpkg.com/swagger-client/-/swagger-client-3.26.0.tgz#95d28f0c61f39717b84e0e3914319d817c59a868"
-  integrity sha512-1yFR/S2V3v5DwgmNePoHEjq2dZJxDx1leDQ53r5M4hZs+dozm9VnznlSl9a1V5iTYw4UsS4PQuBRQsmBH21ViA==
+swagger-client@^3.26.4:
+  version "3.26.4"
+  resolved "https://registry.yarnpkg.com/swagger-client/-/swagger-client-3.26.4.tgz#da9a59ae8d0c3fbb1cb75010dc739534f2a723d7"
+  integrity sha512-Xj1DGEvnQt8dCJy15aPBhfzgxio1VzNEAsyRWVo/sorf8Ocs6nc4Ktx0xRqGFzgheDtUoCw/OXeSTeFKGtYmNA==
   dependencies:
     "@babel/runtime-corejs3" "^7.22.15"
-    "@swagger-api/apidom-core" ">=0.97.0 <1.0.0"
-    "@swagger-api/apidom-error" ">=0.97.0 <1.0.0"
-    "@swagger-api/apidom-json-pointer" ">=0.97.0 <1.0.0"
-    "@swagger-api/apidom-ns-openapi-3-1" ">=0.97.0 <1.0.0"
-    "@swagger-api/apidom-reference" ">=0.97.0 <1.0.0"
+    "@swagger-api/apidom-core" ">=0.98.0 <1.0.0"
+    "@swagger-api/apidom-error" ">=0.98.0 <1.0.0"
+    "@swagger-api/apidom-json-pointer" ">=0.98.0 <1.0.0"
+    "@swagger-api/apidom-ns-openapi-3-1" ">=0.98.0 <1.0.0"
+    "@swagger-api/apidom-reference" ">=0.98.0 <1.0.0"
     cookie "~0.6.0"
     deepmerge "~4.3.0"
     fast-json-patch "^3.0.0-1"
@@ -14024,18 +14024,18 @@ swagger-client@^3.26.0:
     qs "^6.10.2"
     traverse "~0.6.6"
 
-swagger-ui-react@^5.12.0:
-  version "5.12.0"
-  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-5.12.0.tgz#d394745cf2a6690479ebd468784eacc584d770b5"
-  integrity sha512-9QHLaGuo1x8jyGjGQMPOtcDFYH4lFb7L+FIYtplldUzo/JFgwfgUnpnUWadnhkVRJEGsHJqoy7IWJ4dK7WaPRQ==
+swagger-ui-react@^5.12.2:
+  version "5.12.2"
+  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-5.12.2.tgz#1a25738e8e25a3498fe8725678563b49898e436b"
+  integrity sha512-5tAKALaEWiUnuF+nd8THGI2ALlxcl3JLoqCMnJF3g1tftabCqjBBphtRp0FzSf0uO8BdRx/uSCOzkq8dVPynBw==
   dependencies:
     "@babel/runtime-corejs3" "^7.24.0"
-    "@braintree/sanitize-url" "=7.0.0"
+    "@braintree/sanitize-url" "=7.0.1"
     base64-js "^1.5.1"
     classnames "^2.5.1"
     css.escape "1.5.1"
     deep-extend "0.6.0"
-    dompurify "=3.0.9"
+    dompurify "=3.0.11"
     ieee754 "^1.2.1"
     immutable "^3.x.x"
     js-file-download "^0.4.12"
@@ -14058,7 +14058,7 @@ swagger-ui-react@^5.12.0:
     reselect "^5.1.0"
     serialize-error "^8.1.0"
     sha.js "^2.4.11"
-    swagger-client "^3.26.0"
+    swagger-client "^3.26.4"
     url-parse "^1.5.10"
     xml "=1.0.1"
     xml-but-prettier "^1.0.1"
