@@ -2730,12 +2730,12 @@
     "@swagger-api/apidom-parser-adapter-workflows-yaml-1" "^0.98.0"
     "@swagger-api/apidom-parser-adapter-yaml-1-2" "^0.98.0"
 
-"@tanstack/match-sorter-utils@^8.11.7":
-  version "8.11.8"
-  resolved "https://registry.yarnpkg.com/@tanstack/match-sorter-utils/-/match-sorter-utils-8.11.8.tgz#9132c2a21cf18ca2f0071b604ddadb7a66e73367"
-  integrity sha512-3VPh0SYMGCa5dWQEqNab87UpCMk+ANWHDP4ALs5PeEW9EpfTAbrezzaOk/OiM52IESViefkoAOYuxdoa04p6aA==
+"@tanstack/match-sorter-utils@^8.15.1":
+  version "8.15.1"
+  resolved "https://registry.yarnpkg.com/@tanstack/match-sorter-utils/-/match-sorter-utils-8.15.1.tgz#715e028ff43cf79ece10bd5a757047a1016c3bba"
+  integrity sha512-PnVV3d2poenUM31ZbZi/yXkBu3J7kd5k2u51CGwwNojag451AjTH9N6n41yjXz2fpLeewleyLBmNS6+HcGDlXw==
   dependencies:
-    remove-accents "0.4.2"
+    remove-accents "0.5.0"
 
 "@tanstack/react-table@^8.15.0":
   version "8.15.0"
@@ -12643,10 +12643,10 @@ remarkable@^2.0.1:
     argparse "^1.0.10"
     autolinker "^3.11.0"
 
-remove-accents@0.4.2:
-  version "0.4.2"
-  resolved "https://registry.yarnpkg.com/remove-accents/-/remove-accents-0.4.2.tgz#0a43d3aaae1e80db919e07ae254b285d9e1c7bb5"
-  integrity sha512-7pXIJqJOq5tFgG1A2Zxti3Ht8jJF337m4sowbuHsW30ZnkQFnDzy9qBNhgzX8ZLW4+UBcXiiR7SwR6pokHsxiA==
+remove-accents@0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/remove-accents/-/remove-accents-0.5.0.tgz#77991f37ba212afba162e375b627631315bed687"
+  integrity sha512-8g3/Otx1eJaVD12e31UbJj1YzdtVvzH85HV7t+9MJYk/u3XmkOUJ5Ys9wQrf9PCPK8+xn4ymzqYCiZl6QWKn+A==
 
 remove-trailing-separator@^1.0.1:
   version "1.1.0"
