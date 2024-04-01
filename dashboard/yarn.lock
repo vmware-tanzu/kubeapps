@@ -12127,10 +12127,10 @@ react-inspector@^6.0.1:
   resolved "https://registry.yarnpkg.com/react-inspector/-/react-inspector-6.0.2.tgz#aa3028803550cb6dbd7344816d5c80bf39d07e9d"
   integrity sha512-x+b7LxhmHXjHoU/VrFAzw5iutsILRoYyDq97EDYdFpPLcvqtEzk4ZSZSQjnFPbr5T57tLXnHcqFYoN1pI6u8uQ==
 
-react-intl@^6.6.3:
-  version "6.6.3"
-  resolved "https://registry.yarnpkg.com/react-intl/-/react-intl-6.6.3.tgz#ac2dd81e7ec7003195163970ebf1db4f1af03b9d"
-  integrity sha512-vLKI0f+Q3pXD5szmCUPikTY7CJDPtxCBMG5YABQZ3IGEKzNB47zlvXyasUFfT25zpgQXeOfhRCdx4q6ubuR6bA==
+react-intl@^6.6.4:
+  version "6.6.4"
+  resolved "https://registry.yarnpkg.com/react-intl/-/react-intl-6.6.4.tgz#4322942dbaf4f6edd3a227dc5e20d768ef071541"
+  integrity sha512-bD+7hVTX3zBFI3z/ffIVZrNkCVK0/sQguQ/DqW5uZ6JFWsuiwOieVcLnmtFiUgMQZLdmwNl2Ur5c10RaO7NWBQ==
   dependencies:
     "@formatjs/ecma402-abstract" "1.18.2"
     "@formatjs/icu-messageformat-parser" "2.7.6"
