@@ -19,7 +19,7 @@ func NewClient(ociCatalogAddr string) (ocicatalog.OCICatalogServiceClient, func(
 	if ociCatalogAddr == "" {
 		return nil, nil, fmt.Errorf("ociCatalogAddr must be specified")
 	}
-	conn, err := grpc.Dial(ociCatalogAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(ociCatalogAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to contact OCI Catalog at %q: %+v", ociCatalogAddr, err)
 	}
