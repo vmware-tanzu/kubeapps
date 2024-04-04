@@ -22,7 +22,7 @@ require (
 	github.com/fluxcd/pkg/apis/meta v1.4.0
 	github.com/fluxcd/pkg/oci v0.36.0
 	github.com/fluxcd/pkg/version v0.3.0
-	github.com/fluxcd/source-controller/api v1.2.4
+	github.com/fluxcd/source-controller/api v1.2.5
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.11.5
 	github.com/google/go-cmp v0.6.0
