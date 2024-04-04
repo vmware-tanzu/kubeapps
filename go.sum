@@ -262,8 +262,8 @@ github.com/fluxcd/pkg/apis/acl v0.1.0 h1:EoAl377hDQYL3WqanWCdifauXqXbMyFuK82NnX6
 github.com/fluxcd/pkg/apis/acl v0.1.0/go.mod h1:zfEZzz169Oap034EsDhmCAGgnWlcWmIObZjYMusoXS8=
 github.com/fluxcd/pkg/apis/kustomize v1.3.0 h1:qvB46CfaOWcL1SyR2RiVWN/j7/035D0OtB1ltLN7rgI=
 github.com/fluxcd/pkg/apis/kustomize v1.3.0/go.mod h1:PCXf5kktTzNav0aH2Ns3jsowqwmA9xTcsrEOoPzx/K8=
-github.com/fluxcd/pkg/apis/meta v1.3.0 h1:KxeEc6olmSZvQ5pBONPE4IKxyoWQbqTJF1X6K5nIXpU=
-github.com/fluxcd/pkg/apis/meta v1.3.0/go.mod h1:3Ui8xFkoU4sYehqmscjpq7NjqH2YN1A2iX2okbO3/yA=
+github.com/fluxcd/pkg/apis/meta v1.4.0 h1:nNdgB6FFHP3cubxZCViaCFDUVlAbpq9+hvKEIveOGMg=
+github.com/fluxcd/pkg/apis/meta v1.4.0/go.mod h1:81sZ01ShTuLc1C3M1dFJNkINareBysvmrO1b8zJFFKs=
 github.com/fluxcd/pkg/oci v0.36.0 h1:bC+Qkm6p8rN72McArNwYFjI9bt7M2vn6mnt7i/vOWv0=
 github.com/fluxcd/pkg/oci v0.36.0/go.mod h1:ocWsg1tjhjlIpdpdw0xZz7q9YQH8YzcrN1wi+Az0t7E=
 github.com/fluxcd/pkg/version v0.3.0 h1:+GSU3QKQK66Y09+cQMAEoyh7j4S0ZimXF6MyGgJwZB4=
