@@ -108,16 +108,23 @@ replaceImage_latestToProduction() {
         curl_opts=(-s -H "Authorization: token ${GITHUB_TOKEN}")
     fi
 
-    # Get the latest tag from the bitnami repository in DockerHub.
-    # Assumption: the more recent tag is the third one in the list after a reverse alphabetical sorting,
-    # first one is sha256-xxxx and second one is "latest", which we don't actually want.
-    local tag
-    tag=$(curl "${curl_opts[@]}" "https://hub.docker.com/v2/namespaces/bitnami/repositories/${repoName}/tags" | jq -r '.results[].name' | sort -r --version-sort | sed -n "3 {p;q}")
+    local tags, tag
 
-    if [[ $tag == "" || $tag == "latest" ]]; then
-        echo "ERROR: Unable to obtain the more recent tag for ${repoName}. Stopping..."
-        exit 1
-    fi
+    # Get the latest tag from the bitnami repository in DockerHub.
+    tags=$(curl "${curl_opts[@]}" "https://hub.docker.com/v2/namespaces/bitnami/repositories/${repoName}/tags" | jq -r '.results[].name' | sort -r --version-sort)
+
+    # Initialize an empty array to store the filtered tags
+    filtered_tags=()
+
+    # Read the output line by line and filter out unwanted tags (empty, "latest" and those with "sha")
+    while IFS= read -r tag; do
+        if [[ "$tag" != "latest" && "$tag" != sha* && "$tag" != "" ]]; then
+            filtered_tags+=("$tag")
+        fi
+    done <<<"$tags"
+
+    # Get the first tag (already ordered)
+    tag="${filtered_tags[0]}"
 
     # Replace image and tag from the values.yaml
     sed -i.bk -e '1h;2,$H;$!d;g' -re \
