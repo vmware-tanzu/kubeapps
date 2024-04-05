@@ -1,0 +1,200 @@
+# Copyright 2024 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+name: Sync chart from Bitnami
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.head_ref || github.ref_name }}_full
+  cancel-in-progress: true
+
+#TODO(agamez): re-use the definition from "kubeapps-general.yaml"
+env:
+  CHARTMUSEUM_VERSION: "3.10.2"
+  CHARTS_REPO_ORIGINAL: "bitnami/charts"
+  BRANCH_CHARTS_REPO_ORIGINAL: "main"
+  CHARTS_REPO_FORKED: "kubeapps-bot/charts"
+  BRANCH_CHARTS_REPO_FORKED: "main"
+  CI_BOT_USERNAME: "kubeapps-bot"
+  CI_BOT_EMAIL: "tanzu-kubeapps-team@vmware.com"
+  CI_BOT_GPG: "3BC1973CE3AC2BD2B5A2E7D06A7635AE8F48F448"
+  # DEBUG_MODE allows to activate some SSH debugging steps, and modify the verbosity level of some scripts (eg. e2e-tests.sh)
+  DEBUG_MODE: "false"
+  SSH_KEY_KUBEAPPS_DEPLOY_FILENAME: "id_rsa_kubeapps_deploy_key"
+  SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME: "id_rsa_forked_charts_deploy_key"
+  KUBEAPPS_REPO: "vmware-tanzu/kubeapps"
+  BRANCH_KUBEAPPS_REPO: "main"
+  README_GENERATOR_REPO: "bitnami-labs/readme-generator-for-helm"
+  DOCKER_REGISTRY_VERSION: "2.8.3"
+  GOLANG_VERSION: "1.22.2"
+  HELM_VERSION_MIN: "v3.8.0"
+  HELM_VERSION_STABLE: "v3.14.3"
+  GITHUB_VERSION: "2.47.0"
+  IMAGES_TO_PUSH: "apprepository-controller dashboard asset-syncer pinniped-proxy kubeapps-apis oci-catalog"
+  # IMG_DEV_TAG is the tags used for the Kubeapps docker images. Ideally there should be an IMG_PROD_TAG
+  # but its value is dynamic and GitHub actions doesn't support it in the `env` block, so it is generated
+  # as an output of the `setup` job.
+  IMG_DEV_TAG: "build-${{ github.sha }}"
+  # Apart from using a dev tag we use a different image ID to avoid polluting the tag history of the production tag
+  IMG_MODIFIER: "-ci"
+  IMG_PREFIX: "kubeapps/"
+  # We use IMG_PREFIX_FOR_FORKS for development purposes, it's used when the workflow is run from a fork of the kubeapps repo
+  IMG_PREFIX_FOR_FORKS: "your-dockerhub-username/"
+  # Currently, we only build the images for linux/amd64 because building cross-platform images is extremely slow...
+  IMG_PLATFORMS: "linux/amd64"
+  KAPP_CONTROLLER_VERSION: "v0.50.2"
+  FLUX_VERSION: "v2.2.3"
+  KIND_VERSION: "v0.22.0"
+  MKCERT_VERSION: "v1.4.4"
+  NODE_VERSION: "20.12.1"
+  OLM_VERSION: "v0.27.0"
+  POSTGRESQL_VERSION: "16.2.0-debian-12-r13"
+  RUST_VERSION: "1.77.1"
+  SEMVER_VERSION: "3.4.0"
+  K8S_KIND_VERSION: "v1.27.11@sha256:681253009e68069b8e01aad36a1e0fa8cf18bb0ab3e5c4069b2e65cafdd70843"
+  KUBECTL_VERSION: "v1.27.11"
+  GKE_REGULAR_VERSION: "1.27"
+  GKE_STABLE_VERSION: "1.27"
+  GKE_ZONE: "us-east1-c"
+  GKE_PROJECT: "vmware-kubeapps-ci"
+  GKE_CLUSTER: "kubeapps-test"
+
+jobs:
+  #TODO(agamez): re-use the definition from "kubeapps-general.yaml"
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      golang_version: ${{ steps.set-outputs.outputs.golang_version }}
+      img_modifier: ${{ steps.set-outputs.outputs.img_modifier }}
+      img_prefix: ${{ steps.set-outputs.outputs.img_prefix }}
+      img_dev_tag: ${{ steps.set-outputs.outputs.img_dev_tag }}
+      img_prod_tag: ${{ steps.set-outputs.outputs.img_prod_tag }}
+      postgresql_version: ${{ steps.set-outputs.outputs.postgresql_version }}
+      rust_version: ${{ steps.set-outputs.outputs.rust_version }}
+      running_on_main: ${{ steps.set-outputs.outputs.running_on_main }}
+      ssh_key_kubeapps_deploy_filename: ${{ steps.set-outputs.outputs.ssh_key_kubeapps_deploy_filename }}
+      ssh_key_forked_charts_deploy_filename: ${{ steps.set-outputs.outputs.ssh_key_forked_charts_deploy_filename }}
+      triggered_from_fork: ${{ steps.set-outputs.outputs.triggered_from_fork }}
+    steps:
+      - name: Show GitHub event
+        env:
+          EVENT_CONTEXT: ${{ toJSON(github.event) }}
+        run: echo $EVENT_CONTEXT | jq
+      - name: Show PR context
+        env:
+          PR_CONTEXT: ${{ toJSON(github.event.pull_request) }}
+        run: echo $PR_CONTEXT | jq
+      - name: Set outputs
+        id: set-outputs
+        env:
+          PR_CONTEXT: ${{ toJSON(github.event.pull_request) }}
+          PR_SOURCE_REPO_NAME: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          if [[ "${GITHUB_REPOSITORY}" == "${KUBEAPPS_REPO}" ]]; then
+            echo "img_prefix=${IMG_PREFIX}" >> $GITHUB_OUTPUT
+          else
+            # When running in forks (NOT triggered due to a PR from an external fork, but running the workflow in the
+            # external repo), we push the images to a personal dockerhub namespace (or whatever other registry) if configured
+            echo "img_prefix=${IMG_PREFIX_FOR_FORKS}" >> $GITHUB_OUTPUT
+          fi;
+
+          # Check if the workflow is triggered due to a PR from an external fork
+          if [[ ("${PR_CONTEXT}" != "" && "${PR_CONTEXT}" != null) && "${PR_SOURCE_REPO_NAME}" != "${GITHUB_REPOSITORY}" ]]; then
+            echo "triggered_from_fork=true" >> $GITHUB_OUTPUT
+          else
+            echo "triggered_from_fork=false" >> $GITHUB_OUTPUT
+          fi
+
+          if [[ ${GITHUB_REF_TYPE} == "tag" ]]; then
+            echo "img_prod_tag=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+            echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          else
+            echo "img_prod_tag=latest" >> $GITHUB_OUTPUT
+            echo "version=${GITHUB_SHA}" >> $GITHUB_OUTPUT
+          fi;
+
+          if [[ ${GITHUB_REF_NAME} == ${BRANCH_KUBEAPPS_REPO} ]]; then
+            echo "running_on_main=true" >> $GITHUB_OUTPUT
+          else
+            echo "running_on_main=false" >> $GITHUB_OUTPUT
+          fi
+
+          echo "golang_version=${GOLANG_VERSION}" >> $GITHUB_OUTPUT
+          echo "ssh_key_kubeapps_deploy_filename=${SSH_KEY_KUBEAPPS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
+          echo "ssh_key_forked_charts_deploy_filename=${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
+          echo "img_modifier=${IMG_MODIFIER}" >> $GITHUB_OUTPUT
+          echo "img_dev_tag=${IMG_DEV_TAG}" >> $GITHUB_OUTPUT
+          echo "postgresql_version=${POSTGRESQL_VERSION}" >> $GITHUB_OUTPUT
+          echo "rust_version=${RUST_VERSION}" >> $GITHUB_OUTPUT
+      - name: Show outputs
+        run: |
+          echo "GOLANG_VERSION: ${{steps.set-outputs.outputs.golang_version}}"
+          echo "IMG_MODIFIER: ${{steps.set-outputs.outputs.img_modifier}}"
+          echo "IMG_PREFIX: ${{steps.set-outputs.outputs.img_prefix}}"
+          echo "IMG_DEV_TAG: ${{steps.set-outputs.outputs.img_dev_tag}}"
+          echo "IMG_PROD_TAG: ${{steps.set-outputs.outputs.img_prod_tag}}"
+          echo "POSTGRESQL_VERSION: ${{steps.set-outputs.outputs.postgresql_version}}"
+          echo "RUST_VERSION: ${{steps.set-outputs.outputs.rust_version}}"
+          echo "RUNNING_ON_MAIN: ${{steps.set-outputs.outputs.running_on_main}}"
+          echo "SSH_KEY_KUBEAPPS_DEPLOY_FILENAME: ${{steps.set-outputs.outputs.ssh_key_kubeapps_deploy_filename}}"
+          echo "SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME: ${{steps.set-outputs.outputs.ssh_key_forked_charts_deploy_filename}}"
+          echo "TRIGGERED_FROM_FORK: ${{steps.set-outputs.outputs.triggered_from_fork}}"
+          echo "VERSION: ${{steps.set-outputs.outputs.version}}"
+
+  #TODO(agamez): re-use the definition from "kubeapps-general.yaml"
+  sync_chart_from_bitnami:
+    needs:
+      - setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: "Install CLI tools"
+        env:
+          GPG_KEY_PUBLIC: ${{ secrets.GPG_KEY_PUBLIC }}
+          GPG_KEY_PRIVATE: ${{ secrets.GPG_KEY_PRIVATE }}
+        run: |
+          set -eu
+          source ./script/lib/libcitools.sh
+
+          installGithubCLI ${GITHUB_VERSION}
+          installSemver ${SEMVER_VERSION}
+          installGPGKey
+      - name: "Install SSH key: Forked Charts Deploy Key"
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_KEY_FORKED_CHARTS_DEPLOY }}
+          name: ${{ needs.setup.outputs.ssh_key_forked_charts_deploy_filename }}
+          known_hosts: |
+            |1|2YkQ4jjACcc/1rgSBszyeEuKxW4=|hO4GB0XMwQj1gYQDmaS304aU8Tc= ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
+          if_key_exists: ignore
+      - # This is a key pair
+        # public key uploaded to GitHub as a deployment key with write permissions,
+        # private key stored as a secret.
+        name: Start ssh-agent and configure the key
+        run: |
+          set -eu
+          eval "$(ssh-agent -s)"
+          # Deployment key uploaded to the kubeapps-bot/charts repository
+          ssh-add ~/.ssh/${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}
+      - # Assuming there is a personal access token created in GitHub granted with the scopes
+        # "repo:status", "public_repo" and "read:org"
+        name: Run the check_upstream_chart script
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu
+          ./script/chart_upstream_checker.sh \
+              ${CI_BOT_USERNAME} \
+              ${CI_BOT_EMAIL} \
+              ${CI_BOT_GPG} \
+              ${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME} \
+              ${CHARTS_REPO_ORIGINAL} \
+              ${BRANCH_CHARTS_REPO_ORIGINAL} \
+              ${CHARTS_REPO_FORKED} \
+              ${BRANCH_CHARTS_REPO_FORKED} \
+              ${KUBEAPPS_REPO} \
+              ${BRANCH_KUBEAPPS_REPO} \
+              ${README_GENERATOR_REPO} \
