@@ -900,21 +900,19 @@ type GetAvailablePackageVersionsResponse struct {
 	// patch versions of the most recent three minor versions of the most recent three
 	// major versions when available, something like:
 	// [
-	//
-	//	{ pkg_version: "10.3.19", app_version: "2.16.8" },
-	//	{ pkg_version: "10.3.18", app_version: "2.16.8" },
-	//	{ pkg_version: "10.3.17", app_version: "2.16.7" },
-	//	{ pkg_version: "10.2.6", app_version: "2.15.3" },
-	//	{ pkg_version: "10.2.5", app_version: "2.15.2" },
-	//	{ pkg_version: "10.2.4", app_version: "2.15.2" },
-	//	{ pkg_version: "10.1.8", app_version: "2.13.5" },
-	//	{ pkg_version: "10.1.7", app_version: "2.13.5" },
-	//	{ pkg_version: "10.1.6", app_version: "2.13.5" },
-	//	{ pkg_version: "9.5.4", app_version: "2.8.9" },
-	//	...
-	//	{ pkg_version: "8.2.5", app_version: "1.19.5" },
-	//	...
-	//
+	//   { pkg_version: "10.3.19", app_version: "2.16.8" },
+	//   { pkg_version: "10.3.18", app_version: "2.16.8" },
+	//   { pkg_version: "10.3.17", app_version: "2.16.7" },
+	//   { pkg_version: "10.2.6", app_version: "2.15.3" },
+	//   { pkg_version: "10.2.5", app_version: "2.15.2" },
+	//   { pkg_version: "10.2.4", app_version: "2.15.2" },
+	//   { pkg_version: "10.1.8", app_version: "2.13.5" },
+	//   { pkg_version: "10.1.7", app_version: "2.13.5" },
+	//   { pkg_version: "10.1.6", app_version: "2.13.5" },
+	//   { pkg_version: "9.5.4", app_version: "2.8.9" },
+	//   ...
+	//   { pkg_version: "8.2.5", app_version: "1.19.5" },
+	//   ...
 	// ]
 	// If a version_query is present and the plugin chooses to support it,
 	// the full history of versions matching the version query should be returned.
@@ -1717,9 +1715,9 @@ type InstalledPackageSummary struct {
 	//
 	// The current version of the package being reconciled, which may be
 	// in one of these states:
-	//   - has been successfully installed/upgraded or
-	//   - is currently being installed/upgraded or
-	//   - has failed to install/upgrade
+	//  - has been successfully installed/upgraded or
+	//  - is currently being installed/upgraded or
+	//  - has failed to install/upgrade
 	CurrentVersion *PackageAppVersion `protobuf:"bytes,4,opt,name=current_version,json=currentVersion,proto3" json:"current_version,omitempty"`
 	// Installed package icon URL
 	//
@@ -1738,8 +1736,8 @@ type InstalledPackageSummary struct {
 	// Only non-empty if an available upgrade matches the specified pkg_version_reference.
 	// For example, if the pkg_version_reference is ">10.3.0 < 10.4.0" and 10.3.1
 	// is installed, then:
-	//   - if 10.3.2 is available, latest_matching_version should be 10.3.2, but
-	//   - if 10.4 is available while >10.3.1 is not, this should remain empty.
+	//   * if 10.3.2 is available, latest_matching_version should be 10.3.2, but
+	//   * if 10.4 is available while >10.3.1 is not, this should remain empty.
 	LatestMatchingVersion *PackageAppVersion `protobuf:"bytes,8,opt,name=latest_matching_version,json=latestMatchingVersion,proto3" json:"latest_matching_version,omitempty"`
 	// LatestVersion
 	//
@@ -1907,8 +1905,8 @@ type InstalledPackageDetail struct {
 	// Only non-empty if an available upgrade matches the specified pkg_version_reference.
 	// For example, if the pkg_version_reference is ">10.3.0 < 10.4.0" and 10.3.1
 	// is installed, then:
-	//   - if 10.3.2 is available, latest_matching_version should be 10.3.2, but
-	//   - if 10.4 is available while >10.3.1 is not, this should remain empty.
+	//   * if 10.3.2 is available, latest_matching_version should be 10.3.2, but
+	//   * if 10.4 is available while >10.3.1 is not, this should remain empty.
 	LatestMatchingVersion *PackageAppVersion `protobuf:"bytes,10,opt,name=latest_matching_version,json=latestMatchingVersion,proto3" json:"latest_matching_version,omitempty"`
 	// LatestVersion
 	//
