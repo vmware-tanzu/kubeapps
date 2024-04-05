@@ -26,13 +26,13 @@
   },
   "dependencies": {
     "@babel/parser": "^7.24.4",
-    "@bufbuild/protobuf": "^1.6.0",
+    "@bufbuild/protobuf": "^1.8.0",
     "@cds/city": "^1.1.0",
-    "@cds/core": "^6.9.2",
-    "@cds/react": "^6.9.2",
+    "@cds/core": "^6.10.0",
+    "@cds/react": "^6.10.0",
     "@clr/ui": "^17.0.1",
-    "@connectrpc/connect": "^1.2.0",
-    "@connectrpc/connect-web": "^1.2.0",
+    "@connectrpc/connect": "^1.4.0",
+    "@connectrpc/connect-web": "^1.4.0",
     "@paciolan/remote-component": "^2.13.0",
     "@redux-devtools/extension": "^3.3.0",
     "@tanstack/match-sorter-utils": "^8.15.1",
@@ -87,7 +87,7 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/lodash": "^4.17.0",
     "@types/qs": "^6.9.14",
-    "@types/react": "^17.0.74",
+    "@types/react": "^17.0.80",
     "@types/react-copy-to-clipboard": "^5.0.7",
     "@types/react-dom": "^17.0.25",
     "@types/react-helmet": "^6.1.11",
@@ -130,7 +130,7 @@
     "typescript": "^5.4.4"
   },
   "resolutions": {
-    "@types/react": "^17.0.74",
+    "@types/react": "^17.0.80",
     "swagger-ui-react/react": "^17.0.2",
     "swagger-ui-react/react-dom": "^17.0.2",
     "swagger-ui-react/react-redux": "^7.2.9"

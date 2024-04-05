@@ -1,12 +1,18 @@
-// Copyright 2021-2023 the Kubeapps contributors.
+// Copyright 2021-2024 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 import type { ServiceType } from "@bufbuild/protobuf";
+import { createPromiseClient } from "@connectrpc/connect";
 import { createGrpcWebTransport } from "@connectrpc/connect-web";
-import { createPromiseClient, Interceptor, PromiseClient, Transport } from "@connectrpc/connect";
+import { Interceptor } from "@connectrpc/connect/dist/cjs/interceptor";
+import { PromiseClient } from "@connectrpc/connect/dist/cjs/promise-client";
+import { Transport } from "@connectrpc/connect/dist/cjs/transport";
 import { PackagesService } from "gen/kubeappsapis/core/packages/v1alpha1/packages_connect";
 import { RepositoriesService } from "gen/kubeappsapis/core/packages/v1alpha1/repositories_connect";
 import { PluginsService } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins_connect";
-import { ResourcesService } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources_connect";
+import {
+  FluxV2PackagesService,
+  FluxV2RepositoriesService,
+} from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2_connect";
 import {
   HelmPackagesService,
   HelmRepositoriesService,
@@ -15,10 +21,7 @@ import {
   KappControllerPackagesService,
   KappControllerRepositoriesService,
 } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller_connect";
-import {
-  FluxV2PackagesService,
-  FluxV2RepositoriesService,
-} from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2_connect";
+import { ResourcesService } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources_connect";
 
 import { Auth } from "./Auth";
 import * as URL from "./url";
