@@ -109,10 +109,10 @@ replaceImage_latestToProduction() {
     fi
 
     # Get the latest tag from the bitnami repository in DockerHub.
-    # Assumption: the more recent tag is the second one in the list after a reverse alphabetical sorting,
-    # first one is "latest", which we don't actually want.
+    # Assumption: the more recent tag is the third one in the list after a reverse alphabetical sorting,
+    # first one is sha256-xxxx and second one is "latest", which we don't actually want.
     local tag
-    tag=$(curl "${curl_opts[@]}" "https://hub.docker.com/v2/namespaces/bitnami/repositories/${repoName}/tags" | jq -r '.results[].name' | sort -r --version-sort | sed -n "2 {p;q}")
+    tag=$(curl "${curl_opts[@]}" "https://hub.docker.com/v2/namespaces/bitnami/repositories/${repoName}/tags" | jq -r '.results[].name' | sort -r --version-sort | sed -n "3 {p;q}")
 
     if [[ $tag == "" || $tag == "latest" ]]; then
         echo "ERROR: Unable to obtain the more recent tag for ${repoName}. Stopping..."
