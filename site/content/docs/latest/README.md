@@ -1,9 +1,5 @@
 # Kubeapps documentation
 
-Everything you need to know about Kubeapps.
-
-> NOTE: we are currently moving our docs to a new website and reviewing our documentation files. In the meanwhile, eventual broken links and minor inconsistences may appear. Please, feel free to contact us if you have any questions: file an [issue](https://github.com/vmware-tanzu/kubeapps/issues), or talk to us on the [#Kubeapps slack channel](https://kubernetes.slack.com/messages/kubeapps).
-
 ## Documentation overview
 
 A high-level overview of how it's organized will help Kubeapps contributors and users know where to look for certain things.
