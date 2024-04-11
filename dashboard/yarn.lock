@@ -5888,10 +5888,10 @@ domhandler@^5.0.2, domhandler@^5.0.3:
   dependencies:
     domelementtype "^2.3.0"
 
-dompurify@=3.0.11:
-  version "3.0.11"
-  resolved "https://registry.yarnpkg.com/dompurify/-/dompurify-3.0.11.tgz#c163f5816eaac6aeef35dae2b77fca0504564efe"
-  integrity sha512-Fan4uMuyB26gFV3ovPoEoQbxRRPfTu3CvImyZnhGq5fsIEO+gEFLp45ISFt+kQBWsK5ulDdT0oV28jS1UrwQLg==
+dompurify@=3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/dompurify/-/dompurify-3.1.0.tgz#8c6b9fe986969a33aa4686bd829cbe8e14dd9445"
+  integrity sha512-yoU4rhgPKCo+p5UrWWWNKiIq+ToGqmVVhk0PmMYBK4kRsR3/qhemNFL8f6CFmBd4gMwm3F4T7HBoydP5uY07fA==
 
 domutils@^1.7.0:
   version "1.7.0"
@@ -14098,10 +14098,10 @@ swagger-client@^3.26.5:
     qs "^6.10.2"
     traverse "~0.6.6"
 
-swagger-ui-react@^5.14.0:
-  version "5.14.0"
-  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-5.14.0.tgz#9b7ea1fd1a7cb7e2d3cadbae8591755df8052ba8"
-  integrity sha512-6RUCv7ii6jcdMu9LpNuq5gGboxlS2HfNeeDPdWML0Wt3lwOc7yroOzux08a8FtwFQB5ridprYobcZXVQvLcyjQ==
+swagger-ui-react@^5.15.1:
+  version "5.15.1"
+  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-5.15.1.tgz#62708e4ad2169ff826f179e824241c6099f98bb8"
+  integrity sha512-fO2GVyT8KAaD4TuGljGKOQYcJpQwyV9yNrbSFVxKY4g9/fmTtJu4Ec7YEfG4DZ02M9yDjrJQgCjIXPHqSg2Glw==
   dependencies:
     "@babel/runtime-corejs3" "^7.24.4"
     "@braintree/sanitize-url" "=7.0.1"
@@ -14109,7 +14109,7 @@ swagger-ui-react@^5.14.0:
     classnames "^2.5.1"
     css.escape "1.5.1"
     deep-extend "0.6.0"
-    dompurify "=3.0.11"
+    dompurify "=3.1.0"
     ieee754 "^1.2.1"
     immutable "^3.x.x"
     js-file-download "^0.4.12"
