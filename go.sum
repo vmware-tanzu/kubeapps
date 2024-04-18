@@ -1,5 +1,5 @@
-carvel.dev/vendir v0.40.0 h1:JdhCp/EjAPGI8F5zoAVYwZHf1sPEFee19RpgGb3ciT8=
-carvel.dev/vendir v0.40.0/go.mod h1:XPdluJu7322RZNx05AA4gYnV52aKywBdh7Ma12GuM2Q=
+carvel.dev/vendir v0.40.1 h1:w2fIBASZ7X6N2XlN+5xEDOf2Vn8eVRdz0mIZHuM4080=
+carvel.dev/vendir v0.40.1/go.mod h1:gW5hdNd033NCV1TFbUtvUE1Kel1eEzyiwnDyDX+y2xE=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=
@@ -141,8 +141,8 @@ github.com/bufbuild/connect-go v1.10.0 h1:QAJ3G9A1OYQW2Jbk3DeoJbkCxuKArrvZgDt47m
 github.com/bufbuild/connect-go v1.10.0/go.mod h1:CAIePUgkDR5pAFaylSMtNK45ANQjp9JvpluG20rhpV8=
 github.com/bufbuild/connect-grpchealth-go v1.1.1 h1:ldceS3m7+Qvl3GI4yzB4oCg3uOdD+Y1bytc/5xuMpqo=
 github.com/bufbuild/connect-grpchealth-go v1.1.1/go.mod h1:9KbkogLoUIxOTPKyWDv5evkawr1IYXaHax4XoUHCgoQ=
-github.com/carvel-dev/semver/v4 v4.0.1-0.20230221220520-8090ce423695 h1:naCDnpJeqQq5OHOYR6j01yIVVUk3WI5MuSHpDTy+M1A=
-github.com/carvel-dev/semver/v4 v4.0.1-0.20230221220520-8090ce423695/go.mod h1:4cFTBLAr/U11ykiEEQMccu4uJ1i0GS+atJmeETHCFtI=
+github.com/carvel-dev/semver/v4 v4.0.1-0.20240402203627-beb83fbf25e4 h1:F4rZiMGZyC66j9VB7doVOE4tFHF1yNEihQlOuht4jmM=
+github.com/carvel-dev/semver/v4 v4.0.1-0.20240402203627-beb83fbf25e4/go.mod h1:4cFTBLAr/U11ykiEEQMccu4uJ1i0GS+atJmeETHCFtI=
 github.com/cenkalti/backoff/v4 v4.2.1 h1:y4OZtCnogmCPw98Zjyt5a6+QwPLGkiQsYW5oUqylYbM=
 github.com/cenkalti/backoff/v4 v4.2.1/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
