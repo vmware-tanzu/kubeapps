@@ -3,8 +3,7 @@
 
 module github.com/vmware-tanzu/kubeapps
 
-go 1.22
-toolchain go1.22.2
+go 1.22.0
 
 require (
 	carvel.dev/vendir v0.40.0
@@ -54,9 +53,9 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.14.4
 	k8s.io/api v0.30.0
-	k8s.io/apiextensions-apiserver v0.29.3
+	k8s.io/apiextensions-apiserver v0.30.0
 	k8s.io/apimachinery v0.30.0
-	k8s.io/apiserver v0.29.3
+	k8s.io/apiserver v0.30.0
 	k8s.io/cli-runtime v0.30.0
 	k8s.io/client-go v0.30.0
 	k8s.io/klog/v2 v2.120.1
