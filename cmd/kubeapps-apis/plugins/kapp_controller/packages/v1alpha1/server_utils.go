@@ -451,17 +451,17 @@ func toVersionSelection(pkgversion *vendirversions.VersionSelection) *kappcorev1
 }
 
 func toPkgFetchImgpkg(from *kappcorev1.PackageRepositoryImgpkg, to *kappctrlv1alpha1.AppFetchImgpkgBundle) {
-	to.TagSelection = toOldVendirVS(toPkgVersionSelection(from.TagSelection))
+	to.TagSelection = toPkgVersionSelection(from.TagSelection)
 }
 
 func toPkgFetchImage(from *kappcorev1.PackageRepositoryImage, to *kappctrlv1alpha1.AppFetchImage) {
 	to.SubPath = from.SubPath
-	to.TagSelection = toOldVendirVS(toPkgVersionSelection(from.TagSelection))
+	to.TagSelection = toPkgVersionSelection(from.TagSelection)
 }
 
 func toPkgFetchGit(from *kappcorev1.PackageRepositoryGit, to *kappctrlv1alpha1.AppFetchGit) {
 	to.Ref = from.Ref
-	to.RefSelection = toOldVendirVS(toPkgVersionSelection(from.RefSelection))
+	to.RefSelection = toPkgVersionSelection(from.RefSelection)
 	to.SubPath = from.SubPath
 	to.LFSSkipSmudge = from.LfsSkipSmudge
 }

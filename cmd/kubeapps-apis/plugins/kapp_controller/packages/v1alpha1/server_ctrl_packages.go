@@ -724,7 +724,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *connect.Re
 	}
 
 	// Set the versionSelection
-	pkgInstall.Spec.PackageRef.VersionSelection = toOldVendirVSS(versionSelection)
+	pkgInstall.Spec.PackageRef.VersionSelection = versionSelection
 
 	// Allow this PackageInstall to be downgraded
 	// https://carvel.dev/kapp-controller/docs/v0.32.0/package-consumer-concepts/#downgrading

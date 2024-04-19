@@ -1762,9 +1762,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						ServiceAccountName: "default",
 						PackageRef: &packagingv1alpha1.PackageRef{
 							RefName: "tetris.foo.example.com",
-							VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+							VersionSelection: &vendirversions.VersionSelectionSemver{
 								Constraints: "1.2.3",
-							}),
+							},
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -1896,9 +1896,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						ServiceAccountName: "default",
 						PackageRef: &packagingv1alpha1.PackageRef{
 							RefName: "tetris.foo.example.com",
-							VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+							VersionSelection: &vendirversions.VersionSelectionSemver{
 								Constraints: "1.2.3",
-							}),
+							},
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -2024,9 +2024,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						ServiceAccountName: "default",
 						PackageRef: &packagingv1alpha1.PackageRef{
 							RefName: "tetris.foo.example.com",
-							VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+							VersionSelection: &vendirversions.VersionSelectionSemver{
 								Constraints: "1.2.3",
-							}),
+							},
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -2128,9 +2128,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						ServiceAccountName: "default",
 						PackageRef: &packagingv1alpha1.PackageRef{
 							RefName: "tetris.foo.example.com",
-							VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+							VersionSelection: &vendirversions.VersionSelectionSemver{
 								Constraints: "1.2.3",
-							}),
+							},
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -2260,9 +2260,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						ServiceAccountName: "default",
 						PackageRef: &packagingv1alpha1.PackageRef{
 							RefName: "tetris.foo.example.com",
-							VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+							VersionSelection: &vendirversions.VersionSelectionSemver{
 								Constraints: "1.2.3",
-							}),
+							},
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -2304,9 +2304,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						ServiceAccountName: "default",
 						PackageRef: &packagingv1alpha1.PackageRef{
 							RefName: "tetris.foo.example.com",
-							VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+							VersionSelection: &vendirversions.VersionSelectionSemver{
 								Constraints: "1.2.3",
-							}),
+							},
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -2452,9 +2452,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						ServiceAccountName: "default",
 						PackageRef: &packagingv1alpha1.PackageRef{
 							RefName: "tetris.foo.example.com",
-							VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+							VersionSelection: &vendirversions.VersionSelectionSemver{
 								Constraints: "1.2.3",
-							}),
+							},
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -2594,9 +2594,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						ServiceAccountName: "default",
 						PackageRef: &packagingv1alpha1.PackageRef{
 							RefName: "tetris.foo.example.com",
-							VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+							VersionSelection: &vendirversions.VersionSelectionSemver{
 								Constraints: ">1.0.0 <2.0.0",
-							}),
+							},
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -2729,9 +2729,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						ServiceAccountName: "default",
 						PackageRef: &packagingv1alpha1.PackageRef{
 							RefName: "tetris.foo.example.com",
-							VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+							VersionSelection: &vendirversions.VersionSelectionSemver{
 								Constraints: "9.9.9",
-							}),
+							},
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -2933,9 +2933,9 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						ServiceAccountName: "default",
 						PackageRef: &packagingv1alpha1.PackageRef{
 							RefName: "tetris.foo.example.com",
-							VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+							VersionSelection: &vendirversions.VersionSelectionSemver{
 								Constraints: ">1.0.0 <2.0.0",
-							}),
+							},
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -3168,9 +3168,9 @@ fetchStderr
 						ServiceAccountName: "default",
 						PackageRef: &packagingv1alpha1.PackageRef{
 							RefName: "tetris.foo.example.com",
-							VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+							VersionSelection: &vendirversions.VersionSelectionSemver{
 								Constraints: ">1.0.0 <2.0.0",
-							}),
+							},
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -3365,9 +3365,9 @@ fetchStderr
 						ServiceAccountName: "default",
 						PackageRef: &packagingv1alpha1.PackageRef{
 							RefName: "tetris.foo.example.com",
-							VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+							VersionSelection: &vendirversions.VersionSelectionSemver{
 								Constraints: "9.9.9",
-							}),
+							},
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -3674,9 +3674,9 @@ func TestCreateInstalledPackage(t *testing.T) {
 					ServiceAccountName: "default",
 					PackageRef: &packagingv1alpha1.PackageRef{
 						RefName: "tetris.foo.example.com",
-						VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+						VersionSelection: &vendirversions.VersionSelectionSemver{
 							Constraints: "1.2.3",
-						}),
+						},
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -3914,9 +3914,9 @@ func TestCreateInstalledPackage(t *testing.T) {
 					ServiceAccountName: "default",
 					PackageRef: &packagingv1alpha1.PackageRef{
 						RefName: "tetris.foo.example.com",
-						VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+						VersionSelection: &vendirversions.VersionSelectionSemver{
 							Constraints: "1.2.3",
-						}),
+						},
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -4069,9 +4069,9 @@ func TestCreateInstalledPackage(t *testing.T) {
 					ServiceAccountName: "my-sa",
 					PackageRef: &packagingv1alpha1.PackageRef{
 						RefName: "tetris.foo.example.com",
-						VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+						VersionSelection: &vendirversions.VersionSelectionSemver{
 							Constraints: "1.2.3",
-						}),
+						},
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -4226,10 +4226,10 @@ func TestCreateInstalledPackage(t *testing.T) {
 					ServiceAccountName: "default",
 					PackageRef: &packagingv1alpha1.PackageRef{
 						RefName: "tetris.foo.example.com",
-						VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+						VersionSelection: &vendirversions.VersionSelectionSemver{
 							Constraints: "1.0.0",
 							Prereleases: nil,
-						}),
+						},
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -4496,10 +4496,10 @@ func TestCreateInstalledPackage(t *testing.T) {
 					ServiceAccountName: "default",
 					PackageRef: &packagingv1alpha1.PackageRef{
 						RefName: "tetris.foo.example.com",
-						VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+						VersionSelection: &vendirversions.VersionSelectionSemver{
 							Constraints: "1.0.0",
 							Prereleases: &vendirversions.VersionSelectionSemverPrereleases{},
-						}),
+						},
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -4654,10 +4654,10 @@ func TestCreateInstalledPackage(t *testing.T) {
 					ServiceAccountName: "default",
 					PackageRef: &packagingv1alpha1.PackageRef{
 						RefName: "tetris.foo.example.com",
-						VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+						VersionSelection: &vendirversions.VersionSelectionSemver{
 							Constraints: "1.0.0",
 							Prereleases: &vendirversions.VersionSelectionSemverPrereleases{Identifiers: []string{"rc"}},
-						}),
+						},
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -4808,9 +4808,9 @@ func TestCreateInstalledPackage(t *testing.T) {
 					ServiceAccountName: "default",
 					PackageRef: &packagingv1alpha1.PackageRef{
 						RefName: "tetris.foo.example.com",
-						VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+						VersionSelection: &vendirversions.VersionSelectionSemver{
 							Constraints: "1.0.0",
-						}),
+						},
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -4965,9 +4965,9 @@ func TestCreateInstalledPackage(t *testing.T) {
 					ServiceAccountName: "default",
 					PackageRef: &packagingv1alpha1.PackageRef{
 						RefName: "tetris.foo.example.com",
-						VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+						VersionSelection: &vendirversions.VersionSelectionSemver{
 							Constraints: ">=1.0.0",
-						}),
+						},
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -5122,9 +5122,9 @@ func TestCreateInstalledPackage(t *testing.T) {
 					ServiceAccountName: "default",
 					PackageRef: &packagingv1alpha1.PackageRef{
 						RefName: "tetris.foo.example.com",
-						VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+						VersionSelection: &vendirversions.VersionSelectionSemver{
 							Constraints: ">=1.0.0 <2.0.0",
-						}),
+						},
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -5279,9 +5279,9 @@ func TestCreateInstalledPackage(t *testing.T) {
 					ServiceAccountName: "default",
 					PackageRef: &packagingv1alpha1.PackageRef{
 						RefName: "tetris.foo.example.com",
-						VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+						VersionSelection: &vendirversions.VersionSelectionSemver{
 							Constraints: ">=1.0.0 <1.1.0",
-						}),
+						},
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -5437,9 +5437,9 @@ func TestCreateInstalledPackage(t *testing.T) {
 					ServiceAccountName: "default",
 					PackageRef: &packagingv1alpha1.PackageRef{
 						RefName: "tetris.foo.example.com",
-						VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+						VersionSelection: &vendirversions.VersionSelectionSemver{
 							Constraints: "1.0.0",
-						}),
+						},
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -5604,9 +5604,9 @@ func TestUpdateInstalledPackage(t *testing.T) {
 						ServiceAccountName: "default",
 						PackageRef: &packagingv1alpha1.PackageRef{
 							RefName: "tetris.foo.example.com",
-							VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+							VersionSelection: &vendirversions.VersionSelectionSemver{
 								Constraints: "1.2.3",
-							}),
+							},
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -5668,9 +5668,9 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					ServiceAccountName: "default",
 					PackageRef: &packagingv1alpha1.PackageRef{
 						RefName: "tetris.foo.example.com",
-						VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+						VersionSelection: &vendirversions.VersionSelectionSemver{
 							Constraints: "1.2.3",
-						}),
+						},
 					},
 					Values: []packagingv1alpha1.PackageInstallValues{{
 						SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -5778,9 +5778,9 @@ func TestUpdateInstalledPackage(t *testing.T) {
 						ServiceAccountName: "default",
 						PackageRef: &packagingv1alpha1.PackageRef{
 							RefName: "tetris.foo.example.com",
-							VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+							VersionSelection: &vendirversions.VersionSelectionSemver{
 								Constraints: "1.2.3",
-							}),
+							},
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -5908,9 +5908,9 @@ func TestDeleteInstalledPackage(t *testing.T) {
 						ServiceAccountName: "default",
 						PackageRef: &packagingv1alpha1.PackageRef{
 							RefName: "tetris.foo.example.com",
-							VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+							VersionSelection: &vendirversions.VersionSelectionSemver{
 								Constraints: "1.2.3",
-							}),
+							},
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -5977,9 +5977,9 @@ func TestDeleteInstalledPackage(t *testing.T) {
 						ServiceAccountName: "default",
 						PackageRef: &packagingv1alpha1.PackageRef{
 							RefName: "tetris.foo.example.com",
-							VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+							VersionSelection: &vendirversions.VersionSelectionSemver{
 								Constraints: "1.2.3",
-							}),
+							},
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -6098,9 +6098,9 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 						ServiceAccountName: "default",
 						PackageRef: &packagingv1alpha1.PackageRef{
 							RefName: "tetris.foo.example.com",
-							VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+							VersionSelection: &vendirversions.VersionSelectionSemver{
 								Constraints: "1.2.3",
-							}),
+							},
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -6197,9 +6197,9 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 						ServiceAccountName: "default",
 						PackageRef: &packagingv1alpha1.PackageRef{
 							RefName: "tetris.foo.example.com",
-							VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+							VersionSelection: &vendirversions.VersionSelectionSemver{
 								Constraints: "1.2.3",
-							}),
+							},
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -6296,9 +6296,9 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 						ServiceAccountName: "default",
 						PackageRef: &packagingv1alpha1.PackageRef{
 							RefName: "tetris.foo.example.com",
-							VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+							VersionSelection: &vendirversions.VersionSelectionSemver{
 								Constraints: "1.2.3",
-							}),
+							},
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -6353,9 +6353,9 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 						ServiceAccountName: "default",
 						PackageRef: &packagingv1alpha1.PackageRef{
 							RefName: "tetris.foo.example.com",
-							VersionSelection: toOldVendirVSS(&vendirversions.VersionSelectionSemver{
+							VersionSelection: &vendirversions.VersionSelectionSemver{
 								Constraints: "1.2.3",
-							}),
+							},
 						},
 						Values: []packagingv1alpha1.PackageInstallValues{{
 							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
@@ -6857,14 +6857,14 @@ func TestAddPackageRepository(t *testing.T) {
 				repository.Spec.Fetch = &packagingv1alpha1.PackageRepositoryFetch{
 					ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
 						Image: "projects.registry.example.com/repo-1/main@sha256:abcd",
-						TagSelection: toOldVendirVS(&vendirversions.VersionSelection{
+						TagSelection: &vendirversions.VersionSelection{
 							Semver: &vendirversions.VersionSelectionSemver{
 								Constraints: ">0.10.0 <0.11.0",
 								Prereleases: &vendirversions.VersionSelectionSemverPrereleases{
 									Identifiers: []string{"beta", "rc"},
 								},
 							},
-						}),
+						},
 					},
 				}
 				return repository
@@ -6898,14 +6898,14 @@ func TestAddPackageRepository(t *testing.T) {
 					Image: &kappctrlv1alpha1.AppFetchImage{
 						URL:     "projects.registry.example.com/repo-1/main@sha256:abcd",
 						SubPath: "packages",
-						TagSelection: toOldVendirVS(&vendirversions.VersionSelection{
+						TagSelection: &vendirversions.VersionSelection{
 							Semver: &vendirversions.VersionSelectionSemver{
 								Constraints: ">0.10.0 <0.11.0",
 								Prereleases: &vendirversions.VersionSelectionSemverPrereleases{
 									Identifiers: []string{"beta", "rc"},
 								},
 							},
-						}),
+						},
 					},
 				}
 				return repository
@@ -6942,14 +6942,14 @@ func TestAddPackageRepository(t *testing.T) {
 						URL:     "https://github.com/projects.registry.vmware.com/tce/main",
 						Ref:     "main",
 						SubPath: "packages",
-						RefSelection: toOldVendirVS(&vendirversions.VersionSelection{
+						RefSelection: &vendirversions.VersionSelection{
 							Semver: &vendirversions.VersionSelectionSemver{
 								Constraints: ">0.10.0 <0.11.0",
 								Prereleases: &vendirversions.VersionSelectionSemverPrereleases{
 									Identifiers: []string{"beta", "rc"},
 								},
 							},
-						}),
+						},
 						LFSSkipSmudge: true,
 					},
 				}
@@ -7560,14 +7560,14 @@ func TestUpdatePackageRepository(t *testing.T) {
 				repository.Spec.Fetch = &packagingv1alpha1.PackageRepositoryFetch{
 					ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
 						Image: "projects.registry.example.com/repo-1/main@sha256:abcd",
-						TagSelection: toOldVendirVS(&vendirversions.VersionSelection{
+						TagSelection: &vendirversions.VersionSelection{
 							Semver: &vendirversions.VersionSelectionSemver{
 								Constraints: ">0.10.0 <0.11.0",
 								Prereleases: &vendirversions.VersionSelectionSemverPrereleases{
 									Identifiers: []string{"beta", "rc"},
 								},
 							},
-						}),
+						},
 					},
 				}
 				return repository
@@ -7608,14 +7608,14 @@ func TestUpdatePackageRepository(t *testing.T) {
 					Image: &kappctrlv1alpha1.AppFetchImage{
 						URL:     "projects.registry.example.com/repo-1/main@sha256:abcd",
 						SubPath: "packages",
-						TagSelection: toOldVendirVS(&vendirversions.VersionSelection{
+						TagSelection: &vendirversions.VersionSelection{
 							Semver: &vendirversions.VersionSelectionSemver{
 								Constraints: ">0.10.0 <0.11.0",
 								Prereleases: &vendirversions.VersionSelectionSemverPrereleases{
 									Identifiers: []string{"beta", "rc"},
 								},
 							},
-						}),
+						},
 					},
 				}
 				return repository
@@ -7659,14 +7659,14 @@ func TestUpdatePackageRepository(t *testing.T) {
 						URL:     "https://github.com/projects.registry.vmware.com/tce/main",
 						Ref:     "main",
 						SubPath: "packages",
-						RefSelection: toOldVendirVS(&vendirversions.VersionSelection{
+						RefSelection: &vendirversions.VersionSelection{
 							Semver: &vendirversions.VersionSelectionSemver{
 								Constraints: ">0.10.0 <0.11.0",
 								Prereleases: &vendirversions.VersionSelectionSemverPrereleases{
 									Identifiers: []string{"beta", "rc"},
 								},
 							},
-						}),
+						},
 						LFSSkipSmudge: true,
 					},
 				}
@@ -8416,14 +8416,14 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				repository.Spec.Fetch = &packagingv1alpha1.PackageRepositoryFetch{
 					ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
 						Image: "projects.registry.example.com/repo-1/main@sha256:abcd",
-						TagSelection: toOldVendirVS(&vendirversions.VersionSelection{
+						TagSelection: &vendirversions.VersionSelection{
 							Semver: &vendirversions.VersionSelectionSemver{
 								Constraints: ">0.10.0 <0.11.0",
 								Prereleases: &vendirversions.VersionSelectionSemverPrereleases{
 									Identifiers: []string{"beta", "rc"},
 								},
 							},
-						}),
+						},
 					},
 				}
 				return repository
@@ -8455,14 +8455,14 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 					Image: &kappctrlv1alpha1.AppFetchImage{
 						URL:     "projects.registry.example.com/repo-1/main@sha256:abcd",
 						SubPath: "packages",
-						TagSelection: toOldVendirVS(&vendirversions.VersionSelection{
+						TagSelection: &vendirversions.VersionSelection{
 							Semver: &vendirversions.VersionSelectionSemver{
 								Constraints: ">0.10.0 <0.11.0",
 								Prereleases: &vendirversions.VersionSelectionSemverPrereleases{
 									Identifiers: []string{"beta", "rc"},
 								},
 							},
-						}),
+						},
 					},
 				}
 				return repository
@@ -8496,14 +8496,14 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 						URL:     "https://github.com/projects.registry.vmware.com/tce/main",
 						Ref:     "main",
 						SubPath: "packages",
-						RefSelection: toOldVendirVS(&vendirversions.VersionSelection{
+						RefSelection: &vendirversions.VersionSelection{
 							Semver: &vendirversions.VersionSelectionSemver{
 								Constraints: ">0.10.0 <0.11.0",
 								Prereleases: &vendirversions.VersionSelectionSemverPrereleases{
 									Identifiers: []string{"beta", "rc"},
 								},
 							},
-						}),
+						},
 						LFSSkipSmudge: true,
 					},
 				}
@@ -9026,14 +9026,14 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
 							ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
 								Image: "projects.registry.example.com/repo-1/main@sha256:abcd",
-								TagSelection: toOldVendirVS(&vendirversions.VersionSelection{
+								TagSelection: &vendirversions.VersionSelection{
 									Semver: &vendirversions.VersionSelectionSemver{
 										Constraints: ">0.10.0 <0.11.0",
 										Prereleases: &vendirversions.VersionSelectionSemverPrereleases{
 											Identifiers: []string{"beta", "rc"},
 										},
 									},
-								}),
+								},
 							},
 						},
 					},
