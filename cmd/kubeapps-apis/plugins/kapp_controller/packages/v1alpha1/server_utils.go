@@ -350,7 +350,7 @@ func toFetchImgpkg(pkgfetch *kappctrlv1alpha1.AppFetchImgpkgBundle) *kappcorev1.
 	}
 	fetch := &kappcorev1.PackageRepositoryFetch{
 		ImgpkgBundle: &kappcorev1.PackageRepositoryImgpkg{
-			TagSelection: toVersionSelection(toNewVendirVS(pkgfetch.TagSelection)),
+			TagSelection: toVersionSelection(pkgfetch.TagSelection),
 		},
 	}
 	return fetch
@@ -363,7 +363,7 @@ func toFetchImage(pkgfetch *kappctrlv1alpha1.AppFetchImage) *kappcorev1.PackageR
 	fetch := &kappcorev1.PackageRepositoryFetch{
 		Image: &kappcorev1.PackageRepositoryImage{
 			SubPath:      pkgfetch.SubPath,
-			TagSelection: toVersionSelection(toNewVendirVS(pkgfetch.TagSelection)),
+			TagSelection: toVersionSelection(pkgfetch.TagSelection),
 		},
 	}
 	return fetch
@@ -376,7 +376,7 @@ func toFetchGit(pkgfetch *kappctrlv1alpha1.AppFetchGit) *kappcorev1.PackageRepos
 	fetch := &kappcorev1.PackageRepositoryFetch{
 		Git: &kappcorev1.PackageRepositoryGit{
 			Ref:           pkgfetch.Ref,
-			RefSelection:  toVersionSelection(toNewVendirVS(pkgfetch.RefSelection)),
+			RefSelection:  toVersionSelection(pkgfetch.RefSelection),
 			SubPath:       pkgfetch.SubPath,
 			LfsSkipSmudge: pkgfetch.LFSSkipSmudge,
 		},
