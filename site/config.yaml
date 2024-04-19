@@ -39,7 +39,7 @@ params:
   github_base_url: "https://github.com/vmware-tanzu/kubeapps"
   github_url: "https://github.com/vmware-tanzu/kubeapps/"
   gtmId: GTM-PGL7FMT
-  oneTrustId: b9039ff0-42be-4f63-bc78-e2ecbbed5f06
+  oneTrustId: 018ee8c4-9885-7b0d-9105-e5b631424f1a
   sitename: Kubeapps
   slack_url: "https://kubernetes.slack.com/messages/kubeapps"
   twitter: bitnami
