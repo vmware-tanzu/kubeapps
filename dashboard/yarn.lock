@@ -1232,25 +1232,25 @@
     "@bufbuild/buf-win32-arm64" "1.30.1"
     "@bufbuild/buf-win32-x64" "1.30.1"
 
-"@bufbuild/protobuf@1.8.0", "@bufbuild/protobuf@^1.7.2", "@bufbuild/protobuf@^1.8.0":
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.8.0.tgz#1c8651ea34adb8019b483e09de02aeeb1cd57d79"
-  integrity sha512-qR9FwI8QKIveDnUYutvfzbC21UZJJryYrLuZGjeZ/VGz+vXelUkK+xgkOHsvPEdYEdxtgUUq4313N8QtOehJ1Q==
+"@bufbuild/protobuf@1.9.0", "@bufbuild/protobuf@^1.7.2", "@bufbuild/protobuf@^1.8.0", "@bufbuild/protobuf@^1.9.0":
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.9.0.tgz#fffac3183059a41ceef5311e07e3724d426a95c4"
+  integrity sha512-W7gp8Q/v1NlCZLsv8pQ3Y0uCu/SHgXOVFK+eUluUKWXmsb6VHkpNx0apdOWWcDbB9sJoKeP8uPrjmehJz6xETQ==
 
-"@bufbuild/protoc-gen-es@^1.8.0":
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-es/-/protoc-gen-es-1.8.0.tgz#b16cca884ccba23f1401104ca002028635a2b169"
-  integrity sha512-jnvBKwHq3o/iOgfKxaxn5Za7ay4oAs8KWgoHiDc9Fsb0g+/d1z+mHlHvmevOiCPcVZsnH6V3LImOJvGStPONpA==
+"@bufbuild/protoc-gen-es@^1.9.0":
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-es/-/protoc-gen-es-1.9.0.tgz#221b677c65e7cad4b11e35818e80bf366bf826cf"
+  integrity sha512-LJy1nC3Jsfdhs9v48P7qF6YXIqh+usFhXSVzJDTmw0yKjxQ3CKBNISRtaMql/g9hb1MLRU6unHCcFfdz4HSO/Q==
   dependencies:
-    "@bufbuild/protobuf" "^1.8.0"
-    "@bufbuild/protoplugin" "1.8.0"
+    "@bufbuild/protobuf" "^1.9.0"
+    "@bufbuild/protoplugin" "1.9.0"
 
-"@bufbuild/protoplugin@1.8.0", "@bufbuild/protoplugin@^1.7.2":
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protoplugin/-/protoplugin-1.8.0.tgz#0e60a79d195ad79d014c263ae9c57f64063d23a5"
-  integrity sha512-Pb89cTshW+I577qh27VvxGYvZEvQ3zJ8La1OfzPCKugP9d4A4P65WStkAY+aSCiDHk68m1/+mtBb6elfiLPuFg==
+"@bufbuild/protoplugin@1.9.0", "@bufbuild/protoplugin@^1.7.2":
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoplugin/-/protoplugin-1.9.0.tgz#a7f3ef12872c392abb38ba6de7639c5a633c0ec3"
+  integrity sha512-/mxMiGs5h78RUHT7v4+mv0Wt0gyRf/SOS5PLzKEg2sclEAlFPbXfZ8HjlvxJpXZP/YpP3HvsW/mil3E69G0mXg==
   dependencies:
-    "@bufbuild/protobuf" "1.8.0"
+    "@bufbuild/protobuf" "1.9.0"
     "@typescript/vfs" "^1.4.0"
     typescript "4.5.2"
 
