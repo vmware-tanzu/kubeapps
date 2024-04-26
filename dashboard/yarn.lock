@@ -14093,10 +14093,10 @@ svgo@^2.7.0:
     picocolors "^1.0.0"
     stable "^0.1.8"
 
-swagger-client@^3.27.0:
-  version "3.27.0"
-  resolved "https://registry.yarnpkg.com/swagger-client/-/swagger-client-3.27.0.tgz#555e1990448f1fe83164adb9a6120380abef3c43"
-  integrity sha512-DyuHrUzHxysUbhsCgPfsWKH3EULDwjD7jkRl0SHvXAd6gtZS3e3RHUZjDBA4cbrcgDiIuC7Ju/YIOkE+rKCutw==
+swagger-client@^3.27.2:
+  version "3.27.2"
+  resolved "https://registry.yarnpkg.com/swagger-client/-/swagger-client-3.27.2.tgz#bd09ceb990936f3a7364741be39d53766e7ae627"
+  integrity sha512-7dVtvyCXmpHXmv5xgS5DyAyxN17l75qmxN8BCNb/z3sj+kYDsxwJeJP3X6enPyxtZsMZFDMxC+EtiFbml7pS6Q==
   dependencies:
     "@babel/runtime-corejs3" "^7.22.15"
     "@swagger-api/apidom-core" ">=0.99.1 <1.0.0"
@@ -14112,12 +14112,12 @@ swagger-client@^3.27.0:
     node-abort-controller "^3.1.1"
     node-fetch-commonjs "^3.3.2"
     qs "^6.10.2"
-    traverse "~0.6.6"
+    traverse "=0.6.8"
 
-swagger-ui-react@^5.16.2:
-  version "5.16.2"
-  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-5.16.2.tgz#c78af7c2cdd8df29a5ef5632643ee71f67a2ef40"
-  integrity sha512-trni55effpq3O2nqnBCMjr3mmFpkpBvhAQa9MDyWleRSkAt4z2aETYiU9/yaIJqrzEL92gUnI7f8cVC2ncW51g==
+swagger-ui-react@^5.17.2:
+  version "5.17.2"
+  resolved "https://registry.yarnpkg.com/swagger-ui-react/-/swagger-ui-react-5.17.2.tgz#d14185a3252b034ba5667b6f8188e7b0fe69f92b"
+  integrity sha512-jwhKQ0IdM1t77clbJ9EorL7+6B5Sr1mG+ryqSELxT5MaG4y3yOIyFbZ0Xn/EnSyRuww/V8FTK/0KIX3gf41taw==
   dependencies:
     "@babel/runtime-corejs3" "^7.24.4"
     "@braintree/sanitize-url" "=7.0.1"
@@ -14148,7 +14148,7 @@ swagger-ui-react@^5.16.2:
     reselect "^5.1.0"
     serialize-error "^8.1.0"
     sha.js "^2.4.11"
-    swagger-client "^3.27.0"
+    swagger-client "^3.27.2"
     url-parse "^1.5.10"
     xml "=1.0.1"
     xml-but-prettier "^1.0.1"
@@ -14427,7 +14427,7 @@ tr46@^2.1.0:
   dependencies:
     punycode "^2.1.1"
 
-traverse@~0.6.6:
+traverse@=0.6.8:
   version "0.6.8"
   resolved "https://registry.yarnpkg.com/traverse/-/traverse-0.6.8.tgz#5e5e0c41878b57e4b73ad2f3d1e36a715ea4ab15"
   integrity sha512-aXJDbk6SnumuaZSANd21XAo15ucCDE38H4fkqiGsc3MhCK+wOlZvLP9cB/TvpHT0mOyWgC4Z8EwRlzqYSUzdsA==
