@@ -1733,6 +1733,16 @@ featureFlags:
     enabled: false
 ## @section Database Parameters
 
+## External DB chart configuration
+## This configuration will only be used if the field postgresql.enabled is set to false
+## @param externalDatabase.host Specifies the external database host
+## @param externalDatabase.port Specifies the external database port
+##
+## To set up the DB username, password and database name use the fields under postgresql.auth 
+externalDatabase:
+  host: ""
+  port: ""
+
 ## PostgreSQL chart configuration
 ## ref: https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml
 ## @param postgresql.enabled Deploy a PostgreSQL server to satisfy the applications database requirements
