@@ -4,6 +4,7 @@
 module github.com/vmware-tanzu/kubeapps
 
 go 1.22
+toolchain go1.22.2
 
 require (
 	carvel.dev/vendir v0.40.1
@@ -19,7 +20,7 @@ require (
 	github.com/distribution/reference v0.6.0
 	github.com/docker/cli v26.0.2+incompatible
 	github.com/fluxcd/helm-controller/api v0.37.4
-	github.com/fluxcd/pkg/apis/meta v1.4.0
+	github.com/fluxcd/pkg/apis/meta v1.5.0
 	github.com/fluxcd/pkg/oci v0.36.0
 	github.com/fluxcd/pkg/version v0.3.0
 	github.com/fluxcd/source-controller/api v1.2.5
@@ -53,7 +54,7 @@ require (
 	helm.sh/helm/v3 v3.14.4
 	k8s.io/api v0.29.3
 	k8s.io/apiextensions-apiserver v0.29.3
-	k8s.io/apimachinery v0.29.3
+	k8s.io/apimachinery v0.30.0
 	k8s.io/apiserver v0.29.3
 	k8s.io/cli-runtime v0.29.3
 	k8s.io/client-go v0.29.3
@@ -228,7 +229,7 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/component-base v0.29.3 // indirect
-	k8s.io/kube-openapi v0.0.0-20231113174909-778a5567bc1e // indirect
+	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/kustomize/api v0.13.5-0.20230601165947-6ce0bf390ce3 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.14.3-0.20230601165947-6ce0bf390ce3 // indirect
