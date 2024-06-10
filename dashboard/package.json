@@ -69,7 +69,7 @@
     "rxjs": "^7.8.1",
     "swagger-ui-react": "^5.16.2",
     "typesafe-actions": "^5.1.0",
-    "yaml": "^2.4.1"
+    "yaml": "^2.4.5"
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
