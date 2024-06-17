@@ -18,7 +18,7 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
 
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
-	sourcev1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
@@ -52,7 +52,7 @@ var (
 // returns a list of HelmRepositories from specified namespace.
 // ns can be "", in which case all namespaces (cluster-wide), excluding
 // the ones that the caller has no read access to
-func (s *Server) listReposInNamespace(ctx context.Context, headers http.Header, ns string) ([]sourcev1beta2.HelmRepository, error) {
+func (s *Server) listReposInNamespace(ctx context.Context, headers http.Header, ns string) ([]sourcev1.HelmRepository, error) {
 	// the actual List(...) call will be executed in the context of
 	// kubeapps-internal-kubeappsapis service account
 	// ref https://github.com/vmware-tanzu/kubeapps/issues/4390 for explanation
@@ -62,7 +62,7 @@ func (s *Server) listReposInNamespace(ctx context.Context, headers http.Header, 
 		return nil, err
 	}
 
-	var repoList sourcev1beta2.HelmRepositoryList
+	var repoList sourcev1.HelmRepositoryList
 	listOptions := ctrlclient.ListOptions{
 		Namespace: ns,
 	}
@@ -83,7 +83,7 @@ func (s *Server) listReposInNamespace(ctx context.Context, headers http.Header, 
 				return nil, err
 			}
 		}
-		items := []sourcev1beta2.HelmRepository{}
+		items := []sourcev1.HelmRepository{}
 		for _, item := range repoList.Items {
 			if allowedNamespaces.Has(item.GetNamespace()) {
 				items = append(items, item)
@@ -93,7 +93,7 @@ func (s *Server) listReposInNamespace(ctx context.Context, headers http.Header, 
 	}
 }
 
-func (s *Server) getRepoInCluster(ctx context.Context, headers http.Header, key types.NamespacedName) (*sourcev1beta2.HelmRepository, error) {
+func (s *Server) getRepoInCluster(ctx context.Context, headers http.Header, key types.NamespacedName) (*sourcev1.HelmRepository, error) {
 	// unlike List(), there is no need to execute Get() in the context of
 	// kubeapps-internal-kubeappsapis service account and then filter out results based on
 	// whether or not the caller hasAccessToNamespace(). We can just pass the caller
@@ -103,7 +103,7 @@ func (s *Server) getRepoInCluster(ctx context.Context, headers http.Header, key 
 	if err != nil {
 		return nil, err
 	}
-	var repo sourcev1beta2.HelmRepository
+	var repo sourcev1.HelmRepository
 	if err = client.Get(ctx, key, &repo); err != nil {
 		return nil, connecterror.FromK8sError("get", "HelmRepository", key.String(), err)
 	}
@@ -111,7 +111,7 @@ func (s *Server) getRepoInCluster(ctx context.Context, headers http.Header, key 
 }
 
 // regexp expressions are used for matching actual names against expected patters
-func (s *Server) filterReadyReposByName(repoList []sourcev1beta2.HelmRepository, match []string) (sets.Set[string], error) {
+func (s *Server) filterReadyReposByName(repoList []sourcev1.HelmRepository, match []string) (sets.Set[string], error) {
 	if s.repoCache == nil {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Server cache has not been properly initialized"))
 	}
@@ -232,7 +232,7 @@ func (s *Server) newRepo(ctx context.Context, request *connect.Request[corev1.Ad
 	}
 
 	typ := request.Msg.GetType()
-	if typ != "helm" && typ != sourcev1beta2.HelmRepositoryTypeOCI {
+	if typ != "helm" && typ != sourcev1.HelmRepositoryTypeOCI {
 		return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("Repository type [%s] not supported", typ))
 	}
 
@@ -323,7 +323,7 @@ func (s *Server) repoDetail(ctx context.Context, headers http.Header, repoRef *c
 	// will have a FluxPackageRepositoryCustomDetail in it. Flux spec already clearly states
 	// If you do not specify .spec.provider, it defaults to generic.
 	// https://fluxcd.io/flux/components/source/helmrepositories/#provider
-	if repo.Spec.Provider != "" && repo.Spec.Provider != sourcev1beta2.GenericOCIProvider {
+	if repo.Spec.Provider != "" && repo.Spec.Provider != "generic" {
 		if customDetail, err = anypb.New(&v1alpha1.FluxPackageRepositoryCustomDetail{
 			Provider: repo.Spec.Provider,
 		}); err != nil {
@@ -357,7 +357,7 @@ func (s *Server) repoDetail(ctx context.Context, headers http.Header, repoRef *c
 
 func (s *Server) repoSummaries(ctx context.Context, headers http.Header, ns string) ([]*corev1.PackageRepositorySummary, error) {
 	summaries := []*corev1.PackageRepositorySummary{}
-	var repos []sourcev1beta2.HelmRepository
+	var repos []sourcev1.HelmRepository
 	var err error
 	if ns == apiv1.NamespaceAll {
 		if repos, err = s.listReposInNamespace(ctx, headers, ns); err != nil {
@@ -368,7 +368,7 @@ func (s *Server) repoSummaries(ctx context.Context, headers http.Header, ns stri
 		// namely, if a specific namespace is passed in, we need to list repos in that namespace
 		// and if the caller happens not to have 'read' access to that namespace, a PermissionDenied
 		// error should be raised, as opposed to returning an empty list with no error
-		var repoList sourcev1beta2.HelmRepositoryList
+		var repoList sourcev1.HelmRepositoryList
 		var client ctrlclient.Client
 		if client, err = s.getClient(headers, ns); err != nil {
 			return nil, err
@@ -491,7 +491,7 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 	// process and the current status no longer applies. metadata and spec I want
 	// to keep, as they may have had added labels and/or annotations and/or
 	// even other changes made by the user.
-	repo.Status = sourcev1beta2.HelmRepositoryStatus{}
+	repo.Status = sourcev1.HelmRepositoryStatus{}
 
 	if client, err := s.getClient(request.Header(), key.Namespace); err != nil {
 		return nil, err
@@ -529,7 +529,7 @@ func (s *Server) deleteRepo(ctx context.Context, headers http.Header, repoRef *c
 	// For kubeapps-managed secrets environment secrets will be deleted (garbage-collected)
 	// when the owner repo is deleted
 
-	repo := &sourcev1beta2.HelmRepository{
+	repo := &sourcev1.HelmRepository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      repoRef.Identifier,
 			Namespace: repoRef.Context.Namespace,
@@ -562,10 +562,10 @@ func (s *repoEventSink) onAddRepo(key string, obj ctrlclient.Object) (interface{
 	log.V(4).Infof("+onAddRepo(%s)", key)
 	defer log.V(4).Info("-onAddRepo()")
 
-	if repo, ok := obj.(*sourcev1beta2.HelmRepository); !ok {
-		return nil, false, fmt.Errorf("expected an instance of *sourcev1beta2.HelmRepository, got: %T", obj)
+	if repo, ok := obj.(*sourcev1.HelmRepository); !ok {
+		return nil, false, fmt.Errorf("expected an instance of *sourcev1.HelmRepository, got: %T", obj)
 	} else if isRepoReady(*repo) {
-		if repo.Spec.Type == sourcev1beta2.HelmRepositoryTypeOCI {
+		if repo.Spec.Type == sourcev1.HelmRepositoryTypeOCI {
 			return s.onAddOciRepo(*repo)
 		} else {
 			return s.onAddHttpRepo(*repo)
@@ -579,7 +579,7 @@ func (s *repoEventSink) onAddRepo(key string, obj ctrlclient.Object) (interface{
 }
 
 // ref https://fluxcd.io/docs/components/source/helmrepositories/#status
-func (s *repoEventSink) onAddHttpRepo(repo sourcev1beta2.HelmRepository) ([]byte, bool, error) {
+func (s *repoEventSink) onAddHttpRepo(repo sourcev1.HelmRepository) ([]byte, bool, error) {
 	if artifact := repo.GetArtifact(); artifact != nil {
 		if checksum := artifact.Digest; checksum == "" {
 			return nil, false, connect.NewError(connect.CodeInternal,
@@ -595,7 +595,7 @@ func (s *repoEventSink) onAddHttpRepo(repo sourcev1beta2.HelmRepository) ([]byte
 	}
 }
 
-func (s *repoEventSink) indexAndEncode(checksum string, repo sourcev1beta2.HelmRepository) ([]byte, bool, error) {
+func (s *repoEventSink) indexAndEncode(checksum string, repo sourcev1.HelmRepository) ([]byte, bool, error) {
 	charts, err := s.indexOneRepo(repo)
 	if err != nil {
 		return nil, false, err
@@ -637,7 +637,7 @@ func (s *repoEventSink) indexAndEncode(checksum string, repo sourcev1beta2.HelmR
 
 // it is assumed the caller has already checked that this repo is ready
 // At present, there is only one caller of indexOneRepo() and this check is already done by it
-func (s *repoEventSink) indexOneRepo(repo sourcev1beta2.HelmRepository) ([]models.Chart, error) {
+func (s *repoEventSink) indexOneRepo(repo sourcev1.HelmRepository) ([]models.Chart, error) {
 	startTime := time.Now()
 
 	// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
@@ -698,12 +698,12 @@ func (s *repoEventSink) indexOneRepo(repo sourcev1beta2.HelmRepository) ([]model
 
 // onModifyRepo essentially tells the cache whether or not to and what to store for a given key
 func (s *repoEventSink) onModifyRepo(key string, obj ctrlclient.Object, oldValue interface{}) (interface{}, bool, error) {
-	if repo, ok := obj.(*sourcev1beta2.HelmRepository); !ok {
-		return nil, false, fmt.Errorf("expected an instance of *sourcev1beta2.HelmRepository, got: %T", obj)
+	if repo, ok := obj.(*sourcev1.HelmRepository); !ok {
+		return nil, false, fmt.Errorf("expected an instance of *sourcev1.HelmRepository, got: %T", obj)
 	} else if isRepoReady(*repo) {
 		// first check the repo is ready
 
-		if repo.Spec.Type == sourcev1beta2.HelmRepositoryTypeOCI {
+		if repo.Spec.Type == sourcev1.HelmRepositoryTypeOCI {
 			return s.onModifyOciRepo(key, oldValue, *repo)
 		} else {
 			return s.onModifyHttpRepo(key, oldValue, *repo)
@@ -716,7 +716,7 @@ func (s *repoEventSink) onModifyRepo(key string, obj ctrlclient.Object, oldValue
 	}
 }
 
-func (s *repoEventSink) onModifyHttpRepo(key string, oldValue interface{}, repo sourcev1beta2.HelmRepository) ([]byte, bool, error) {
+func (s *repoEventSink) onModifyHttpRepo(key string, oldValue interface{}, repo sourcev1.HelmRepository) ([]byte, bool, error) {
 	// We should to compare checksums on what's stored in the cache
 	// vs the modified object to see if the contents has really changed before embarking on
 	// expensive operation indexOneRepo() below.
@@ -796,7 +796,7 @@ func (s *repoEventSink) fromKey(key string) (*types.NamespacedName, error) {
 	return &types.NamespacedName{Namespace: parts[1], Name: parts[2]}, nil
 }
 
-func (s *repoEventSink) getRepoSecret(ctx context.Context, repo sourcev1beta2.HelmRepository) (*apiv1.Secret, error) {
+func (s *repoEventSink) getRepoSecret(ctx context.Context, repo sourcev1.HelmRepository) (*apiv1.Secret, error) {
 	if repo.Spec.SecretRef == nil {
 		return nil, nil
 	}
@@ -825,7 +825,7 @@ func (s *repoEventSink) getRepoSecret(ctx context.Context, repo sourcev1beta2.He
 
 // The reason I do this here is to set up auth that may be needed to fetch chart tarballs by
 // ChartCache
-func (s *repoEventSink) clientOptionsForHttpRepo(ctx context.Context, repo sourcev1beta2.HelmRepository) (*common.HttpClientOptions, error) {
+func (s *repoEventSink) clientOptionsForHttpRepo(ctx context.Context, repo sourcev1.HelmRepository) (*common.HttpClientOptions, error) {
 	if secret, err := s.getRepoSecret(ctx, repo); err == nil && secret != nil {
 		return common.HttpClientOptionsFromSecret(*secret)
 	} else {
@@ -837,7 +837,7 @@ func (s *repoEventSink) clientOptionsForHttpRepo(ctx context.Context, repo sourc
 // repo-related utilities
 //
 
-func isRepoReady(repo sourcev1beta2.HelmRepository) bool {
+func isRepoReady(repo sourcev1.HelmRepository) bool {
 	// see docs at https://fluxcd.io/docs/components/source/helmrepositories/
 	// Confirm the state we are observing is for the current generation
 	if !checkRepoGeneration(repo) {
@@ -854,7 +854,7 @@ func isRepoReady(repo sourcev1beta2.HelmRepository) bool {
 // - reason: if present
 // docs:
 // 1. https://fluxcd.io/docs/components/source/helmrepositories/#status-examples
-func isHelmRepositoryReady(repo sourcev1beta2.HelmRepository) (complete bool, success bool, reason string) {
+func isHelmRepositoryReady(repo sourcev1.HelmRepository) (complete bool, success bool, reason string) {
 	// flux source-controller v1beta2 API made a change so that we can no longer
 	// rely on a simple "metadata.generation" vs "status.observedGeneration" check for a
 	// quick answer. The resource may now exist with "observedGeneration": -1 either in
@@ -882,7 +882,7 @@ func isHelmRepositoryReady(repo sourcev1beta2.HelmRepository) (complete bool, su
 	return false, false, reason
 }
 
-func repoStatus(repo sourcev1beta2.HelmRepository) *corev1.PackageRepositoryStatus {
+func repoStatus(repo sourcev1.HelmRepository) *corev1.PackageRepositoryStatus {
 	complete, success, reason := isHelmRepositoryReady(repo)
 	s := &corev1.PackageRepositoryStatus{
 		Ready:      complete && success,
@@ -899,7 +899,7 @@ func repoStatus(repo sourcev1beta2.HelmRepository) *corev1.PackageRepositoryStat
 	return s
 }
 
-func checkRepoGeneration(repo sourcev1beta2.HelmRepository) bool {
+func checkRepoGeneration(repo sourcev1.HelmRepository) bool {
 	generation := repo.GetGeneration()
 	observedGeneration := repo.Status.ObservedGeneration
 	return generation > 0 && generation == observedGeneration
@@ -914,7 +914,7 @@ func newFluxHelmRepo(
 	interval string,
 	secret *apiv1.Secret,
 	passCredentials bool,
-	provider string) (*sourcev1beta2.HelmRepository, error) {
+	provider string) (*sourcev1.HelmRepository, error) {
 	pollInterval := defaultPollInterval
 	if interval != "" {
 		if duration, err := pkgutils.ToDuration(interval); err != nil {
@@ -923,18 +923,18 @@ func newFluxHelmRepo(
 			pollInterval = *duration
 		}
 	}
-	fluxRepo := &sourcev1beta2.HelmRepository{
+	fluxRepo := &sourcev1.HelmRepository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      targetName.Name,
 			Namespace: targetName.Namespace,
 		},
-		Spec: sourcev1beta2.HelmRepositorySpec{
+		Spec: sourcev1.HelmRepositorySpec{
 			URL:      url,
 			Interval: pollInterval,
 		},
 	}
-	if typ == sourcev1beta2.HelmRepositoryTypeOCI {
-		fluxRepo.Spec.Type = sourcev1beta2.HelmRepositoryTypeOCI
+	if typ == sourcev1.HelmRepositoryTypeOCI {
+		fluxRepo.Spec.Type = sourcev1.HelmRepositoryTypeOCI
 	}
 	if desc != "" {
 		k8sutils.SetDescription(&fluxRepo.ObjectMeta, desc)

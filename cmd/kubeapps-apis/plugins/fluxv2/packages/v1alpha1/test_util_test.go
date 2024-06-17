@@ -19,8 +19,8 @@ import (
 
 	k8stesting "k8s.io/client-go/testing"
 
-	helmv2beta2 "github.com/fluxcd/helm-controller/api/v2beta2"
-	sourcev1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
+	helmv2 "github.com/fluxcd/helm-controller/api/v2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -305,8 +305,8 @@ func setSecretOwnerRef(repoName string, secret *apiv1.Secret) *apiv1.Secret {
 	tRue := true
 	secret.OwnerReferences = []metav1.OwnerReference{
 		{
-			APIVersion:         sourcev1beta2.GroupVersion.String(),
-			Kind:               sourcev1beta2.HelmRepositoryKind,
+			APIVersion:         sourcev1.GroupVersion.String(),
+			Kind:               sourcev1.HelmRepositoryKind,
 			Name:               repoName,
 			Controller:         &tRue,
 			BlockOwnerDeletion: &tRue,
@@ -353,45 +353,45 @@ func repoRef(id, namespace string) *corev1.PackageRepositoryReference {
 	}
 }
 
-func newCtrlClient(repos []sourcev1beta2.HelmRepository, charts []sourcev1beta2.HelmChart, releases []helmv2beta2.HelmRelease) withWatchWrapper {
+func newCtrlClient(repos []sourcev1.HelmRepository, charts []sourcev1.HelmChart, releases []helmv2.HelmRelease) withWatchWrapper {
 	// register the flux GitOps Toolkit schema definitions
 	scheme := runtime.NewScheme()
-	err := sourcev1beta2.AddToScheme(scheme)
+	err := sourcev1.AddToScheme(scheme)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = helmv2beta2.AddToScheme(scheme)
+	err = helmv2.AddToScheme(scheme)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	rm := apimeta.NewDefaultRESTMapper([]schema.GroupVersion{sourcev1beta2.GroupVersion, helmv2beta2.GroupVersion})
+	rm := apimeta.NewDefaultRESTMapper([]schema.GroupVersion{sourcev1.GroupVersion, helmv2.GroupVersion})
 	rm.Add(schema.GroupVersionKind{
-		Group:   sourcev1beta2.GroupVersion.Group,
-		Version: sourcev1beta2.GroupVersion.Version,
-		Kind:    sourcev1beta2.HelmRepositoryKind},
+		Group:   sourcev1.GroupVersion.Group,
+		Version: sourcev1.GroupVersion.Version,
+		Kind:    sourcev1.HelmRepositoryKind},
 		apimeta.RESTScopeNamespace)
 	rm.Add(schema.GroupVersionKind{
-		Group:   sourcev1beta2.GroupVersion.Group,
-		Version: sourcev1beta2.GroupVersion.Version,
-		Kind:    sourcev1beta2.HelmChartKind},
+		Group:   sourcev1.GroupVersion.Group,
+		Version: sourcev1.GroupVersion.Version,
+		Kind:    sourcev1.HelmChartKind},
 		apimeta.RESTScopeNamespace)
 	rm.Add(schema.GroupVersionKind{
-		Group:   helmv2beta2.GroupVersion.Group,
-		Version: helmv2beta2.GroupVersion.Version,
-		Kind:    helmv2beta2.HelmReleaseKind},
+		Group:   helmv2.GroupVersion.Group,
+		Version: helmv2.GroupVersion.Version,
+		Kind:    helmv2.HelmReleaseKind},
 		apimeta.RESTScopeNamespace)
 
 	ctrlClientBuilder := ctrlfake.NewClientBuilder().WithScheme(scheme).WithRESTMapper(rm)
 	initLists := []client.ObjectList{}
 	if len(repos) > 0 {
-		initLists = append(initLists, &sourcev1beta2.HelmRepositoryList{Items: repos})
+		initLists = append(initLists, &sourcev1.HelmRepositoryList{Items: repos})
 	}
 	if len(charts) > 0 {
-		initLists = append(initLists, &sourcev1beta2.HelmChartList{Items: charts})
+		initLists = append(initLists, &sourcev1.HelmChartList{Items: charts})
 	}
 	if len(releases) > 0 {
-		initLists = append(initLists, &helmv2beta2.HelmReleaseList{Items: releases})
+		initLists = append(initLists, &helmv2.HelmReleaseList{Items: releases})
 	}
 	if len(initLists) > 0 {
 		ctrlClientBuilder = ctrlClientBuilder.WithLists(initLists...)

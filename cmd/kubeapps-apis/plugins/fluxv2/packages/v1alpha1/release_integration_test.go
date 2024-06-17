@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	helmv2beta2 "github.com/fluxcd/helm-controller/api/v2beta2"
-	sourcev1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
+	helmv2 "github.com/fluxcd/helm-controller/api/v2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -949,7 +949,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	rules := map[string][]rbacv1.PolicyRule{
 		ns2: {
 			{
-				APIGroups: []string{helmv2beta2.GroupVersion.Group},
+				APIGroups: []string{helmv2.GroupVersion.Group},
 				Resources: []string{fluxHelmReleases},
 				Verbs:     []string{"get", "list"},
 			},
@@ -1044,14 +1044,14 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	nsToRules := map[string][]rbacv1.PolicyRule{
 		ns1: {
 			{
-				APIGroups: []string{sourcev1beta2.GroupVersion.Group},
+				APIGroups: []string{sourcev1.GroupVersion.Group},
 				Resources: []string{"helmcharts"},
 				Verbs:     []string{"get", "list"},
 			},
 		},
 		ns2: {
 			{
-				APIGroups: []string{helmv2beta2.GroupVersion.Group},
+				APIGroups: []string{helmv2.GroupVersion.Group},
 				Resources: []string{fluxHelmReleases},
 				Verbs:     []string{"get", "list"},
 			},
@@ -1188,7 +1188,7 @@ func TestKindClusterRBAC_CreateRelease(t *testing.T) {
 	nsToRules := map[string][]rbacv1.PolicyRule{
 		ns2: {
 			{
-				APIGroups: []string{helmv2beta2.GroupVersion.Group},
+				APIGroups: []string{helmv2.GroupVersion.Group},
 				Resources: []string{fluxHelmReleases},
 				Verbs:     []string{"create"},
 			},
@@ -1218,14 +1218,14 @@ func TestKindClusterRBAC_CreateRelease(t *testing.T) {
 	nsToRules = map[string][]rbacv1.PolicyRule{
 		ns1: {
 			{
-				APIGroups: []string{sourcev1beta2.GroupVersion.Group},
+				APIGroups: []string{sourcev1.GroupVersion.Group},
 				Resources: []string{"helmcharts"},
 				Verbs:     []string{"get"},
 			},
 		},
 		ns2: {
 			{
-				APIGroups: []string{helmv2beta2.GroupVersion.Group},
+				APIGroups: []string{helmv2.GroupVersion.Group},
 				Resources: []string{fluxHelmReleases},
 				Verbs:     []string{"create"},
 			},
@@ -1335,7 +1335,7 @@ func TestKindClusterRBAC_UpdateRelease(t *testing.T) {
 	nsToRules := map[string][]rbacv1.PolicyRule{
 		ns2: {
 			{
-				APIGroups: []string{helmv2beta2.GroupVersion.Group},
+				APIGroups: []string{helmv2.GroupVersion.Group},
 				Resources: []string{fluxHelmReleases},
 				Verbs:     []string{"get"},
 			},
@@ -1368,7 +1368,7 @@ func TestKindClusterRBAC_UpdateRelease(t *testing.T) {
 	nsToRules = map[string][]rbacv1.PolicyRule{
 		ns2: {
 			{
-				APIGroups: []string{helmv2beta2.GroupVersion.Group},
+				APIGroups: []string{helmv2.GroupVersion.Group},
 				Resources: []string{fluxHelmReleases},
 				Verbs:     []string{"get", "update"},
 			},
@@ -1476,7 +1476,7 @@ func TestKindClusterRBAC_DeleteRelease(t *testing.T) {
 	nsToRules := map[string][]rbacv1.PolicyRule{
 		ns2: {
 			{
-				APIGroups: []string{helmv2beta2.GroupVersion.Group},
+				APIGroups: []string{helmv2.GroupVersion.Group},
 				Resources: []string{fluxHelmReleases},
 				Verbs:     []string{"delete"},
 			},

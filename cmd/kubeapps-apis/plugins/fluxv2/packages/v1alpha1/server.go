@@ -13,8 +13,8 @@ import (
 
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm"
 
-	helmv2beta2 "github.com/fluxcd/helm-controller/api/v2beta2"
-	sourcev1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
+	helmv2 "github.com/fluxcd/helm-controller/api/v2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1"
 	authorizationv1 "k8s.io/api/authorization/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -89,11 +89,11 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 
 		// register the GitOps Toolkit schema definitions
 		scheme := runtime.NewScheme()
-		err = sourcev1beta2.AddToScheme(scheme)
+		err = sourcev1.AddToScheme(scheme)
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
-		err = helmv2beta2.AddToScheme(scheme)
+		err = helmv2.AddToScheme(scheme)
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
@@ -112,11 +112,11 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			OnGetFunc:    s.onGetRepo,
 			OnDeleteFunc: s.onDeleteRepo,
 			OnResyncFunc: s.onResync,
-			NewObjFunc:   func() ctrlclient.Object { return &sourcev1beta2.HelmRepository{} },
-			NewListFunc:  func() ctrlclient.ObjectList { return &sourcev1beta2.HelmRepositoryList{} },
+			NewObjFunc:   func() ctrlclient.Object { return &sourcev1.HelmRepository{} },
+			NewListFunc:  func() ctrlclient.ObjectList { return &sourcev1.HelmRepositoryList{} },
 			ListItemsFunc: func(ol ctrlclient.ObjectList) []ctrlclient.Object {
-				if hl, ok := ol.(*sourcev1beta2.HelmRepositoryList); !ok {
-					log.Errorf("Expected: *sourcev1beta2.HelmRepositoryList, got: %T", ol)
+				if hl, ok := ol.(*sourcev1.HelmRepositoryList); !ok {
+					log.Errorf("Expected: *sourcev1.HelmRepositoryList, got: %T", ol)
 					return nil
 				} else {
 					ret := make([]ctrlclient.Object, len(hl.Items))
@@ -619,7 +619,7 @@ func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *c
 	}
 
 	resource := schema.GroupResource{
-		Group:    sourcev1beta2.GroupVersion.Group,
+		Group:    sourcev1.GroupVersion.Group,
 		Resource: fluxHelmRepositories,
 	}
 

@@ -24,8 +24,8 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/config/credentials"
-	helmv2beta2 "github.com/fluxcd/helm-controller/api/v2beta2"
-	sourcev1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
+	helmv2 "github.com/fluxcd/helm-controller/api/v2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/go-containerregistry/pkg/authn"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
@@ -68,20 +68,20 @@ func init() {
 	}
 
 	repositoriesGvr = schema.GroupVersionResource{
-		Group:    sourcev1beta2.GroupVersion.Group,
-		Version:  sourcev1beta2.GroupVersion.Version,
+		Group:    sourcev1.GroupVersion.Group,
+		Version:  sourcev1.GroupVersion.Version,
 		Resource: "helmrepositories",
 	}
 
 	chartsGvr = schema.GroupVersionResource{
-		Group:    sourcev1beta2.GroupVersion.Group,
-		Version:  sourcev1beta2.GroupVersion.Version,
+		Group:    sourcev1.GroupVersion.Group,
+		Version:  sourcev1.GroupVersion.Version,
 		Resource: "helmcharts",
 	}
 
 	releasesGvr = schema.GroupVersionResource{
-		Group:    helmv2beta2.GroupVersion.Group,
-		Version:  helmv2beta2.GroupVersion.Version,
+		Group:    helmv2.GroupVersion.Group,
+		Version:  helmv2.GroupVersion.Version,
 		Resource: "helmreleases",
 	}
 }

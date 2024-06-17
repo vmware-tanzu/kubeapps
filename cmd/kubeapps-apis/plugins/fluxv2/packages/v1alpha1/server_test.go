@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/bufbuild/connect-go"
-	helmv2beta2 "github.com/fluxcd/helm-controller/api/v2beta2"
+	helmv2 "github.com/fluxcd/helm-controller/api/v2"
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
-	sourcev1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1"
 	"github.com/go-redis/redis/v8"
 	"github.com/go-redis/redismock/v8"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -46,13 +46,13 @@ import (
 func TestGetAvailablePackagesStatus(t *testing.T) {
 	testCases := []struct {
 		name       string
-		repo       sourcev1beta2.HelmRepository
+		repo       sourcev1.HelmRepository
 		statusCode codes.Code
 	}{
 		{
 			name: "returns without error if response status does not contain conditions",
 			repo: newRepo("test", "default",
-				&sourcev1beta2.HelmRepositorySpec{
+				&sourcev1.HelmRepositorySpec{
 					URL:      "http://example.com",
 					Interval: metav1.Duration{Duration: 1 * time.Minute},
 				},
@@ -62,21 +62,21 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		{
 			name: "returns without error if response status does not contain conditions (2)",
 			repo: newRepo("test", "default",
-				&sourcev1beta2.HelmRepositorySpec{
+				&sourcev1.HelmRepositorySpec{
 					URL:      "http://example.com",
 					Interval: metav1.Duration{Duration: 1 * time.Minute},
 				},
-				&sourcev1beta2.HelmRepositoryStatus{}),
+				&sourcev1.HelmRepositoryStatus{}),
 			statusCode: codes.OK,
 		},
 		{
 			name: "returns without error if response does not contain ready repos",
 			repo: newRepo("test", "default",
-				&sourcev1beta2.HelmRepositorySpec{
+				&sourcev1.HelmRepositorySpec{
 					URL:      "http://example.com",
 					Interval: metav1.Duration{Duration: 1 * time.Minute},
 				},
-				&sourcev1beta2.HelmRepositoryStatus{
+				&sourcev1.HelmRepositoryStatus{
 					Conditions: []metav1.Condition{
 						{
 							Type:   fluxmeta.ReadyCondition,
@@ -91,7 +91,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 			name: "returns without error if repo object does not contain namespace",
 			repo: newRepo("test", "",
 				nil,
-				&sourcev1beta2.HelmRepositoryStatus{
+				&sourcev1.HelmRepositoryStatus{
 					Conditions: []metav1.Condition{
 						{
 							Type:   fluxmeta.ReadyCondition,
@@ -106,7 +106,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 			name: "returns without error if repo object contains default spec",
 			repo: newRepo("test", "default",
 				nil,
-				&sourcev1beta2.HelmRepositoryStatus{
+				&sourcev1.HelmRepositoryStatus{
 					Conditions: []metav1.Condition{
 						{
 							Type:   fluxmeta.ReadyCondition,
@@ -120,8 +120,8 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		{
 			name: "returns without error if repo object does not contain spec url",
 			repo: newRepo("test", "default",
-				&sourcev1beta2.HelmRepositorySpec{},
-				&sourcev1beta2.HelmRepositoryStatus{
+				&sourcev1.HelmRepositorySpec{},
+				&sourcev1.HelmRepositoryStatus{
 					Conditions: []metav1.Condition{
 						{
 							Type:   fluxmeta.ReadyCondition,
@@ -135,11 +135,11 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 		{
 			name: "returns without error if repo object does not contain status url",
 			repo: newRepo("test", "default",
-				&sourcev1beta2.HelmRepositorySpec{
+				&sourcev1.HelmRepositorySpec{
 					URL:      "http://example.com",
 					Interval: metav1.Duration{Duration: 1 * time.Minute},
 				},
-				&sourcev1beta2.HelmRepositoryStatus{
+				&sourcev1.HelmRepositoryStatus{
 					Conditions: []metav1.Condition{
 						{
 							Type:   fluxmeta.ReadyCondition,
@@ -154,7 +154,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s, mock, err := newSimpleServerWithRepos(t, []sourcev1beta2.HelmRepository{tc.repo})
+			s, mock, err := newSimpleServerWithRepos(t, []sourcev1.HelmRepository{tc.repo})
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -204,11 +204,11 @@ type testSpecChartWithUrl struct {
 	numRetries int
 }
 
-func newSimpleServerWithRepos(t *testing.T, repos []sourcev1beta2.HelmRepository) (*Server, redismock.ClientMock, error) {
+func newSimpleServerWithRepos(t *testing.T, repos []sourcev1.HelmRepository) (*Server, redismock.ClientMock, error) {
 	return newServerWithRepos(t, repos, nil, nil)
 }
 
-func newServerWithRepos(t *testing.T, repos []sourcev1beta2.HelmRepository, charts []testSpecChartWithUrl, secrets []runtime.Object) (*Server, redismock.ClientMock, error) {
+func newServerWithRepos(t *testing.T, repos []sourcev1.HelmRepository, charts []testSpecChartWithUrl, secrets []runtime.Object) (*Server, redismock.ClientMock, error) {
 	typedClient := typfake.NewSimpleClientset(secrets...)
 
 	// ref https://stackoverflow.com/questions/68794562/kubernetes-fake-client-doesnt-handle-generatename-in-objectmeta/68794563#68794563
@@ -243,7 +243,7 @@ func newServerWithRepos(t *testing.T, repos []sourcev1beta2.HelmRepository, char
 	return newServer(t, clientGetter, nil, repos, charts)
 }
 
-func newServerWithChartsAndReleases(t *testing.T, actionConfig *action.Configuration, charts []sourcev1beta2.HelmChart, releases []helmv2beta2.HelmRelease) (*Server, redismock.ClientMock, error) {
+func newServerWithChartsAndReleases(t *testing.T, actionConfig *action.Configuration, charts []sourcev1.HelmChart, releases []helmv2.HelmRelease) (*Server, redismock.ClientMock, error) {
 	typedClient := typfake.NewSimpleClientset()
 	// Creating an authorized clientGetter
 	typedClient.PrependReactor("create", "selfsubjectaccessreviews", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
@@ -316,7 +316,7 @@ func newHelmActionConfig(t *testing.T, namespace string, rels []helmReleaseStub)
 func newServer(t *testing.T,
 	clientGetter clientgetter.ClientProviderInterface,
 	actionConfig *action.Configuration,
-	repos []sourcev1beta2.HelmRepository,
+	repos []sourcev1.HelmRepository,
 	charts []testSpecChartWithUrl) (*Server, redismock.ClientMock, error) {
 
 	stopCh := make(chan struct{})
@@ -360,11 +360,11 @@ func newServer(t *testing.T,
 		OnGetFunc:    sink.onGetRepo,
 		OnDeleteFunc: sink.onDeleteRepo,
 		OnResyncFunc: sink.onResync,
-		NewObjFunc:   func() ctrlclient.Object { return &sourcev1beta2.HelmRepository{} },
-		NewListFunc:  func() ctrlclient.ObjectList { return &sourcev1beta2.HelmRepositoryList{} },
+		NewObjFunc:   func() ctrlclient.Object { return &sourcev1.HelmRepository{} },
+		NewListFunc:  func() ctrlclient.ObjectList { return &sourcev1.HelmRepositoryList{} },
 		ListItemsFunc: func(ol ctrlclient.ObjectList) []ctrlclient.Object {
-			if hl, ok := ol.(*sourcev1beta2.HelmRepositoryList); !ok {
-				t.Fatalf("Expected: *sourcev1beta2.HelmRepositoryList, got: %T", ol)
+			if hl, ok := ol.(*sourcev1.HelmRepositoryList); !ok {
+				t.Fatalf("Expected: *sourcev1.HelmRepositoryList, got: %T", ol)
 				return nil
 			} else {
 				ret := make([]ctrlclient.Object, len(hl.Items))
@@ -410,8 +410,8 @@ func newServer(t *testing.T,
 func seedRepoCacheWithRepos(t *testing.T,
 	mock redismock.ClientMock,
 	sink repoEventSink,
-	repos []sourcev1beta2.HelmRepository) map[string]sourcev1beta2.HelmRepository {
-	okRepos := make(map[string]sourcev1beta2.HelmRepository)
+	repos []sourcev1.HelmRepository) map[string]sourcev1.HelmRepository {
+	okRepos := make(map[string]sourcev1.HelmRepository)
 	for _, r := range repos {
 		key, err := redisKeyForRepo(r)
 		if err != nil {
@@ -441,7 +441,7 @@ func seedChartCacheWithCharts(t *testing.T,
 	mock redismock.ClientMock,
 	sink repoEventSink,
 	stopCh <-chan struct{},
-	repos map[string]sourcev1beta2.HelmRepository,
+	repos map[string]sourcev1.HelmRepository,
 	charts []testSpecChartWithUrl) (*cache.ChartCache, func(), error) {
 	t.Logf("+seedChartCacheWithCharts(%v)", charts)
 
