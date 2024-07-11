@@ -46,7 +46,7 @@ env:
   # Currently, we only build the images for linux/amd64 because building cross-platform images is extremely slow...
   IMG_PLATFORMS: "linux/amd64"
   KAPP_CONTROLLER_VERSION: "v0.50.2"
-  FLUX_VERSION: "v2.2.3"
+  FLUX_VERSION: "v2.3.0"
   KIND_VERSION: "v0.22.0"
   MKCERT_VERSION: "v1.4.4"
   NODE_VERSION: "20.12.1"
