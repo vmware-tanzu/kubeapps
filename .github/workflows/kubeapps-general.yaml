@@ -479,7 +479,6 @@ jobs:
       - name: "Export cluster variables"
         run: |
           set -eu
-          
           DEX_IP=`docker network inspect kind | jq -r '.[0].IPAM.Config[] | select(.Gateway) | .Gateway' | awk -F. '{ print $1"."$2"."$3"."$4+1 }'`
           ADDITIONAL_CLUSTER_IP=`docker network inspect kind | jq -r '.[0].IPAM.Config[] | select(.Gateway) | .Gateway' | awk -F. '{ print $1"."$2"."$3"."$4+2 }'`
 
