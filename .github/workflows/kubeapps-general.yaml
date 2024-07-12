@@ -522,11 +522,11 @@ jobs:
       - name: "Install multicluster deps"
         run: |
           ./script/install-multicluster-deps.sh
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
-        with:
-          limit-access-to-actor: true
-          limit-access-to-users: beni0888
+#      - name: Setup upterm session
+#        uses: lhotari/action-upterm@v1
+#        with:
+#          limit-access-to-actor: true
+#          limit-access-to-users: beni0888
       - name: "Run e2e tests script"
         run: ./script/run_e2e_tests.sh
       - name: "Print k8s KubeappsAPIs logs if the tests fail"
