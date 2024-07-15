@@ -10,10 +10,10 @@
     "test": "playwright test --workers=1"
   },
   "dependencies": {
-    "@playwright/test": "^1.43.1",
+    "@playwright/test": "^1.45.1",
     "axios": "^1.6.8"
   },
   "devDependencies": {
-    "prettier": "^3.2.5"
+    "prettier": "^3.3.3"
   }
 }
