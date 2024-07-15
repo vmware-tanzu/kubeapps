@@ -259,7 +259,8 @@ installFlux() {
 
   # Add test repository.
   info "Install flux helm repository"
-  kubectl apply -f https://raw.githubusercontent.com/fluxcd/source-controller/main/config/samples/source_v1_helmrepository.yaml
+  #kubectl apply -f https://raw.githubusercontent.com/fluxcd/source-controller/main/config/samples/source_v1_helmrepository.yaml
+  kubectl apply -f "${ROOT_DIR}/script/assets/flux-sample-helm-repository.yaml"
 
   # Add a flux-reconciler service account to the kubeapps-user-namespace with
   # cluster-admin.
