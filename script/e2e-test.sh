@@ -32,7 +32,7 @@ DEX_IP=${DEX_IP:-"172.18.0.2"}
 ADDITIONAL_CLUSTER_IP=${ADDITIONAL_CLUSTER_IP:-"172.18.0.3"}
 KAPP_CONTROLLER_VERSION=${KAPP_CONTROLLER_VERSION:-"v0.42.0"}
 CHARTMUSEUM_VERSION=${CHARTMUSEUM_VERSION:-"3.9.1"}
-FLUX_VERSION=${FLUX_VERSION:-"v2.2.2"}
+FLUX_VERSION=${FLUX_VERSION:-"v2.2.3"}
 GKE_VERSION=${GKE_VERSION:-}
 IMG_PREFIX=${IMG_PREFIX:-"kubeapps/"}
 TESTS_GROUP=${TESTS_GROUP:-"${ALL_TESTS}"}
@@ -258,7 +258,9 @@ installFlux() {
   k8s_wait_for_deployment ${namespace} source-controller
 
   # Add test repository.
-  kubectl apply -f https://raw.githubusercontent.com/fluxcd/source-controller/main/config/samples/source_v1beta2_helmrepository.yaml
+  info "Install flux helm repository"
+  #kubectl apply -f https://raw.githubusercontent.com/fluxcd/source-controller/main/config/samples/source_v1_helmrepository.yaml
+  kubectl apply -f "${ROOT_DIR}/script/assets/flux-sample-helm-repository.yaml"
 
   # Add a flux-reconciler service account to the kubeapps-user-namespace with
   # cluster-admin.
