@@ -1,0 +1,9 @@
+# Copyright 2022-2024 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: helmrepository-sample
+spec:
+  interval: 1m
+  url: https://stefanprodan.github.io/podinfo
