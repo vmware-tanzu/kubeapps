@@ -53,7 +53,7 @@
     "react-copy-to-clipboard": "^5.1.0",
     "react-error-boundary": "^4.0.13",
     "react-helmet": "^6.1.0",
-    "react-intl": "^6.6.5",
+    "react-intl": "^6.6.8",
     "react-markdown": "^8.0.7",
     "react-minimal-pie-chart": "^8.4.0",
     "react-monaco-editor": "^0.55.0",
