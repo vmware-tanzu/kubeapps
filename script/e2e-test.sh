@@ -3,6 +3,7 @@
 # Copyright 2018-2024 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
+set -x
 set -euo pipefail
 
 startTime=$(date +%s)
@@ -585,7 +586,7 @@ info "Bootstrap time: $(elapsedTimeSince "$startTime")"
 ########################################################################################################################
 getTestCommand() {
   local tests_group=${1:?Missing test group}
-  local timeout=${1:-20}
+  local timeout=${2:-20}
   echo "
     CI_TIMEOUT_MINUTES=${timeout} \
     DOCKER_USERNAME=${DOCKER_USERNAME} \
@@ -609,7 +610,7 @@ getTestCommand() {
 ########################################################################################################################
 runMainTestsSubgroup() {
   local subgroup=${1:?Missing main tests subgroup to run}
-  local test_command=getTestCommand "${subgroup}" "20"
+  local test_command=$(getTestCommand "${subgroup}" "20")
 
   sectionStartTime=$(date +%s)
   info "Running Main Integration tests subgroup [${subgroup}] without k8s API access..."
@@ -646,7 +647,7 @@ fi
 if [[ -z "${GKE_VERSION-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MULTICLUSTER_TESTS}") ]]; then
   sectionStartTime=$(date +%s)
   info "Running multi-cluster integration tests..."
-  test_command=getTestCommand "${TESTS_GROUP}" "40"
+  test_command=$(getTestCommand "${TESTS_GROUP}" "40")
   info "${test_command}"
   if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
     ## Integration tests failed, get report screenshot
@@ -675,7 +676,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${CARVEL_TESTS}
   k8s_wait_for_deployment kubeapps kubeapps-ci
 
   info "Running carvel integration test..."
-  test_command=getTestCommand "${TESTS_GROUP}" "20"
+  test_command=$(getTestCommand "${TESTS_GROUP}" "20")
   info "${test_command}"
   if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
     ## Integration tests failed, get report screenshot
@@ -705,7 +706,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${FLUX_TESTS}" 
   k8s_wait_for_deployment kubeapps kubeapps-ci
 
   info "Running flux integration test..."
-  test_command=getTestCommand "${TESTS_GROUP}" "20"
+  test_command=$(getTestCommand "${TESTS_GROUP}" "20")
   info "${test_command}"
 
   if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
@@ -745,7 +746,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${OPERATOR_TEST
     retry_while isOperatorHubCatalogRunning 24
 
     info "Running operator integration test with k8s API access..."
-    test_command=getTestCommand "${TESTS_GROUP}" "20"
+    test_command=$(getTestCommand "${TESTS_GROUP}" "20")
     if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
       ## Integration tests failed, get report screenshot
       warn "PODS status on failure"
@@ -800,7 +801,7 @@ if [[ -z "${GKE_VERSION-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GR
   info "Waiting for updated Kubeapps components to be ready..."
   k8s_wait_for_deployment kubeapps kubeapps-ci
 
-  test_command=getTestCommand "${TESTS_GROUP}" "40"
+  test_command=$(getTestCommand "${TESTS_GROUP}" "40")
   info "${test_command}"
 
   if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
