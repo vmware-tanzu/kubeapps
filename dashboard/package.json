@@ -25,7 +25,7 @@
     "watch-css": "yarn run build-css && yarn run compile-lang && sass src/ --watch --no-source-map"
   },
   "dependencies": {
-    "@babel/parser": "^7.24.4",
+    "@babel/parser": "^7.24.8",
     "@bufbuild/protobuf": "^1.10.0",
     "@cds/city": "^1.1.0",
     "@cds/core": "^6.10.0",
