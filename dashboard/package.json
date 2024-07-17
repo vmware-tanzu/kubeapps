@@ -77,7 +77,7 @@
     "@bufbuild/protoc-gen-es": "^1.10.0",
     "@connectrpc/protoc-gen-connect-es": "^1.4.0",
     "@craco/craco": "^7.1.0",
-    "@formatjs/cli": "^6.2.9",
+    "@formatjs/cli": "^6.2.12",
     "@reduxjs/toolkit": "^1.9.7",
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^12.1.5",
