@@ -436,7 +436,9 @@ jobs:
         tests_group:
           - carvel
           - flux
-          - main
+          - main-group-1
+          - main-group-2
+          - main-group-3
           - multicluster
           - multicluster-nokubeapps
           - operator
