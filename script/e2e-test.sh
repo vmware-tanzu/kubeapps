@@ -18,7 +18,7 @@ MULTICLUSTER_TESTS="multicluster"
 MULTICLUSTER_NOKUBEAPPS_TESTS="multicluster-nokubeapps"
 CARVEL_TESTS="carvel"
 FLUX_TESTS="flux"
-OPERATOR_TESTS="operator"
+OPERATOR_TESTS="operators"
 SUPPORTED_TESTS_GROUPS=("${ALL_TESTS}" "${MAIN_TESTS}" "${MULTICLUSTER_TESTS}" "${CARVEL_TESTS}" "${FLUX_TESTS}" "${OPERATOR_TESTS}" "${MULTICLUSTER_NOKUBEAPPS_TESTS}")
 INTEGRATION_HOST=kubeapps-ci.kubeapps
 INTEGRATION_ENTRYPOINT="http://${INTEGRATION_HOST}"
@@ -724,7 +724,7 @@ fi
 #######################################
 if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${OPERATOR_TESTS}" ]]; then
   sectionStartTime=$(date +%s)
-  ## Upgrade and run operator test
+  ## Upgrade and run operators test
   # Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
   if [[ -z "${GKE_VERSION-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
     installOLM "${OLM_VERSION}"
@@ -745,7 +745,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${OPERATOR_TEST
     info "Waiting for the OperatorHub Catalog to be ready ..."
     retry_while isOperatorHubCatalogRunning 24
 
-    info "Running operator integration test with k8s API access..."
+    info "Running operators integration test with k8s API access..."
     test_command=$(getTestCommand "${TESTS_GROUP}" "20")
     if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
       ## Integration tests failed, get report screenshot
@@ -753,8 +753,8 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${OPERATOR_TEST
       kubectl cp "${pod}:/app/reports" ./reports
       exit 1
     fi
-    info "Operator integration tests (with k8s API access) succeeded!!"
-    info "Operator tests execution time: $(elapsedTimeSince "$sectionStartTime")"
+    info "Operators integration tests (with k8s API access) succeeded!!"
+    info "Operators tests execution time: $(elapsedTimeSince "$sectionStartTime")"
   fi
 fi
 

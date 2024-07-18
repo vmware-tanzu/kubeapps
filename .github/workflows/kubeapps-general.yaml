@@ -441,7 +441,7 @@ jobs:
           - main-group-3
           - multicluster
           - multicluster-nokubeapps
-          - operator
+          - operators
     env:
       DEFAULT_DEX_IP: "172.18.0.2"
       IMG_PREFIX: ${{ needs.setup.outputs.img_prefix }}
