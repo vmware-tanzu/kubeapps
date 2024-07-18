@@ -3,7 +3,6 @@
 # Copyright 2018-2024 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
-set -x
 set -euo pipefail
 
 startTime=$(date +%s)
@@ -747,6 +746,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${OPERATOR_TEST
 
     info "Running operators integration test with k8s API access..."
     test_command=$(getTestCommand "${TESTS_GROUP}" "20")
+    info "${test_command}"
     if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
       ## Integration tests failed, get report screenshot
       warn "PODS status on failure"
