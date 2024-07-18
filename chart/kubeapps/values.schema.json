@@ -83,7 +83,7 @@
           "type": "string",
           "form": true,
           "title": "Identity Provider name",
-          "description": "See https://github.com/oauth2-proxy/oauth2-proxy/blob/master/docs/docs/configuration/overview.md#generating-a-cookie-secret to find available providers",
+          "description": "See https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview#generating-a-cookie-secret to find available providers",
           "hidden": {
             "value": false,
             "path": "authProxy/enabled"
