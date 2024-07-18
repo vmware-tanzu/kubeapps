@@ -217,7 +217,6 @@ func getFluxPluginClients(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient,
 
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	opts = append(opts, grpc.WithBlock())
 	target := "localhost:8080"
 	conn, err := grpc.NewClient(target, opts...)
 	if err != nil {
