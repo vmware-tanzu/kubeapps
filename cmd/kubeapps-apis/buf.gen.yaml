@@ -2,13 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ---
-version: v1beta1
+version: v1
 plugins:
   - name: go
     out: gen
     opt:
       - module=github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen
-  - name: connect-go
+  - plugin: buf.build/bufbuild/connect-go:v1.10.0
     out: gen
     opt:
       - module=github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen
