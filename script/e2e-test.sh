@@ -3,9 +3,7 @@
 # Copyright 2018-2024 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
-set -o errexit
-set -o nounset
-set -o pipefail
+set -euo pipefail
 
 startTime=$(date +%s)
 
@@ -13,11 +11,13 @@ startTime=$(date +%s)
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)"
 ALL_TESTS="all"
 MAIN_TESTS="main"
+MAIN_TESTS_SUBGROUP="main-group-"
+EXISTENT_MAIN_TESTS_SUBGROUPS=3
 MULTICLUSTER_TESTS="multicluster"
 MULTICLUSTER_NOKUBEAPPS_TESTS="multicluster-nokubeapps"
 CARVEL_TESTS="carvel"
 FLUX_TESTS="flux"
-OPERATOR_TESTS="operator"
+OPERATOR_TESTS="operators"
 SUPPORTED_TESTS_GROUPS=("${ALL_TESTS}" "${MAIN_TESTS}" "${MULTICLUSTER_TESTS}" "${CARVEL_TESTS}" "${FLUX_TESTS}" "${OPERATOR_TESTS}" "${MULTICLUSTER_NOKUBEAPPS_TESTS}")
 INTEGRATION_HOST=kubeapps-ci.kubeapps
 INTEGRATION_ENTRYPOINT="http://${INTEGRATION_HOST}"
@@ -40,9 +40,9 @@ DEBUG_MODE=${DEBUG_MODE:-false}
 TEST_LATEST_RELEASE=${TEST_LATEST_RELEASE:-false}
 
 # shellcheck disable=SC2076
-if [[ ! " ${SUPPORTED_TESTS_GROUPS[*]} " =~ " ${TESTS_GROUP} " ]]; then
+if [[ ! " ${SUPPORTED_TESTS_GROUPS[*]} " =~ " ${TESTS_GROUP} " && ! "${TESTS_GROUP}" == "${MAIN_TESTS_SUBGROUP}"* ]]; then
   # shellcheck disable=SC2046
-  echo $(IFS=','; echo "The provided TEST_GROUP [${TESTS_GROUP}] is not supported. Supported groups are: ${SUPPORTED_TESTS_GROUPS[*]}")
+  echo $(IFS=','; echo "The provided TESTS_GROUP [${TESTS_GROUP}] is not supported. Supported groups are: ${SUPPORTED_TESTS_GROUPS[*]}. Subgroups of the main group are also supported: ${MAIN_TESTS_SUBGROUP}*")
   exit 1
 fi
 
@@ -576,14 +576,18 @@ edit_token="$(kubectl get -n kubeapps secret kubeapps-edit-token -o go-template=
 
 info "Bootstrap time: $(elapsedTimeSince "$startTime")"
 
-##################################
-######## Main tests group ########
-##################################
-if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MAIN_TESTS}" ]]; then
-  sectionStartTime=$(date +%s)
-  info "Running main Integration tests without k8s API access..."
-  test_command="
-    CI_TIMEOUT_MINUTES=40 \
+########################################################################################################################
+# Returns the test command to be executed to run the e2e tests in the e2e runner image.
+# Arguments:
+#   $1: Test group to be executed (eg. main)
+#   $2: Timeout in minutes. Optional, default: 20
+# Returns: the command to be executed (a yarn command at the time of this writing).
+########################################################################################################################
+getTestCommand() {
+  local tests_group=${1:?Missing test group}
+  local timeout=${2:-20}
+  echo "
+    CI_TIMEOUT_MINUTES=${timeout} \
     DOCKER_USERNAME=${DOCKER_USERNAME} \
     DOCKER_PASSWORD=${DOCKER_PASSWORD} \
     DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} \
@@ -593,8 +597,22 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MAIN_TESTS}" 
     ADMIN_TOKEN=${admin_token} \
     VIEW_TOKEN=${view_token} \
     EDIT_TOKEN=${edit_token} \
-    yarn test \"tests/main/\"
+    yarn test \"tests/${tests_group}/\"
     "
+}
+
+########################################################################################################################
+# Run a subgroup of the Main tests group.
+# Arguments:
+#   $1: Subgroup to run (eg. main-group-1)
+# Returns: None
+########################################################################################################################
+runMainTestsSubgroup() {
+  local subgroup=${1:?Missing main tests subgroup to run}
+  local test_command=$(getTestCommand "${subgroup}" "20")
+
+  sectionStartTime=$(date +%s)
+  info "Running Main Integration tests subgroup [${subgroup}] without k8s API access..."
   info "${test_command}"
   if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
     ## Integration tests failed, get report screenshot
@@ -602,9 +620,24 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MAIN_TESTS}" 
     kubectl cp "${pod}:/app/reports" ./reports
     exit 1
   fi
-  info "Main integration tests succeeded!!"
+  info "Main integration tests subgroup [${subgroup}] succeeded!!"
+  info "Execution time: $(elapsedTimeSince "$sectionStartTime")"
+}
 
-  info "Main tests execution time: $(elapsedTimeSince "$sectionStartTime")"
+######################################
+######## Main tests SUBGROUPS ########
+######################################
+if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MAIN_TESTS_SUBGROUP}"* ]]; then
+  if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" ]]; then
+    # Run all subgroups
+    for group in $(seq 1 "${EXISTENT_MAIN_TESTS_SUBGROUPS}"); do
+      subgroup="${MAIN_TESTS_SUBGROUP}${group}"
+      runMainTestsSubgroup "${subgroup}"
+    done
+  else
+    # Run a specific subgroup
+    runMainTestsSubgroup "${TESTS_GROUP}"
+  fi
 fi
 
 ###########################################
@@ -613,19 +646,7 @@ fi
 if [[ -z "${GKE_VERSION-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MULTICLUSTER_TESTS}") ]]; then
   sectionStartTime=$(date +%s)
   info "Running multi-cluster integration tests..."
-  test_command="
-    CI_TIMEOUT_MINUTES=40 \
-    DOCKER_USERNAME=${DOCKER_USERNAME} \
-    DOCKER_PASSWORD=${DOCKER_PASSWORD} \
-    DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} \
-    TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
-    INTEGRATION_ENTRYPOINT=${INTEGRATION_ENTRYPOINT} \
-    USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
-    ADMIN_TOKEN=${admin_token} \
-    VIEW_TOKEN=${view_token} \
-    EDIT_TOKEN=${edit_token} \
-    yarn test \"tests/multicluster/\"
-    "
+  test_command=$(getTestCommand "${TESTS_GROUP}" "40")
   info "${test_command}"
   if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
     ## Integration tests failed, get report screenshot
@@ -654,16 +675,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${CARVEL_TESTS}
   k8s_wait_for_deployment kubeapps kubeapps-ci
 
   info "Running carvel integration test..."
-  test_command="
-    CI_TIMEOUT_MINUTES=20 \
-    TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
-    INTEGRATION_ENTRYPOINT=${INTEGRATION_ENTRYPOINT} \
-    USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
-    ADMIN_TOKEN=${admin_token} \
-    VIEW_TOKEN=${view_token} \
-    EDIT_TOKEN=${edit_token} \
-    yarn test \"tests/carvel/\"
-    "
+  test_command=$(getTestCommand "${TESTS_GROUP}" "20")
   info "${test_command}"
   if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
     ## Integration tests failed, get report screenshot
@@ -693,16 +705,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${FLUX_TESTS}" 
   k8s_wait_for_deployment kubeapps kubeapps-ci
 
   info "Running flux integration test..."
-  test_command="
-    CI_TIMEOUT_MINUTES=20 \
-    TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
-    INTEGRATION_ENTRYPOINT=${INTEGRATION_ENTRYPOINT} \
-    USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
-    ADMIN_TOKEN=${admin_token} \
-    VIEW_TOKEN=${view_token} \
-    EDIT_TOKEN=${edit_token} \
-    yarn test \"tests/flux/\"
-    "
+  test_command=$(getTestCommand "${TESTS_GROUP}" "20")
   info "${test_command}"
 
   if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
@@ -720,7 +723,7 @@ fi
 #######################################
 if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${OPERATOR_TESTS}" ]]; then
   sectionStartTime=$(date +%s)
-  ## Upgrade and run operator test
+  ## Upgrade and run operators test
   # Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
   if [[ -z "${GKE_VERSION-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
     installOLM "${OLM_VERSION}"
@@ -741,25 +744,17 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${OPERATOR_TEST
     info "Waiting for the OperatorHub Catalog to be ready ..."
     retry_while isOperatorHubCatalogRunning 24
 
-    info "Running operator integration test with k8s API access..."
-    test_command="
-      CI_TIMEOUT_MINUTES=20 \
-      TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
-      INTEGRATION_ENTRYPOINT=${INTEGRATION_ENTRYPOINT} \
-      USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
-      ADMIN_TOKEN=${admin_token} \
-      VIEW_TOKEN=${view_token} \
-      EDIT_TOKEN=${edit_token} \
-      yarn test \"tests/operators/\"
-      "
+    info "Running operators integration test with k8s API access..."
+    test_command=$(getTestCommand "${TESTS_GROUP}" "20")
+    info "${test_command}"
     if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
       ## Integration tests failed, get report screenshot
       warn "PODS status on failure"
       kubectl cp "${pod}:/app/reports" ./reports
       exit 1
     fi
-    info "Operator integration tests (with k8s API access) succeeded!!"
-    info "Operator tests execution time: $(elapsedTimeSince "$sectionStartTime")"
+    info "Operators integration tests (with k8s API access) succeeded!!"
+    info "Operators tests execution time: $(elapsedTimeSince "$sectionStartTime")"
   fi
 fi
 
@@ -806,19 +801,7 @@ if [[ -z "${GKE_VERSION-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GR
   info "Waiting for updated Kubeapps components to be ready..."
   k8s_wait_for_deployment kubeapps kubeapps-ci
 
-  test_command="
-    CI_TIMEOUT_MINUTES=40 \
-    DOCKER_USERNAME=${DOCKER_USERNAME} \
-    DOCKER_PASSWORD=${DOCKER_PASSWORD} \
-    DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} \
-    TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
-    INTEGRATION_ENTRYPOINT=${INTEGRATION_ENTRYPOINT} \
-    USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
-    ADMIN_TOKEN=${admin_token} \
-    VIEW_TOKEN=${view_token} \
-    EDIT_TOKEN=${edit_token} \
-    yarn test \"tests/multicluster-nokubeapps/\"
-    "
+  test_command=$(getTestCommand "${TESTS_GROUP}" "40")
   info "${test_command}"
 
   if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
@@ -828,9 +811,7 @@ if [[ -z "${GKE_VERSION-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GR
     exit 1
   fi
   info "Multi-cluster integration tests succeeded!!"
-
-  sectionEndTime=$(date +%s)
-  info "Multi-cluster tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
+  info "Multi-cluster tests execution time:$(elapsedTimeSince "$sectionStartTime")"
 fi
 
 info "Integration tests succeeded!"
