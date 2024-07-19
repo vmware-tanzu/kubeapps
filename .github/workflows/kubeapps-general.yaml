@@ -19,7 +19,7 @@ on:
         default: false
 
 env:
-  CHARTMUSEUM_VERSION: "3.10.2"
+  CHARTMUSEUM_VERSION: "3.10.3"
   CHARTS_REPO_ORIGINAL: "bitnami/charts"
   BRANCH_CHARTS_REPO_ORIGINAL: "main"
   CHARTS_REPO_FORKED: "kubeapps-bot/charts"
@@ -35,10 +35,10 @@ env:
   BRANCH_KUBEAPPS_REPO: "main"
   README_GENERATOR_REPO: "bitnami-labs/readme-generator-for-helm"
   DOCKER_REGISTRY_VERSION: "2.8.3"
-  GOLANG_VERSION: "1.22.2"
+  GOLANG_VERSION: "1.22.5"
   HELM_VERSION_MIN: "v3.8.0"
-  HELM_VERSION_STABLE: "v3.14.3"
-  GITHUB_VERSION: "2.47.0"
+  HELM_VERSION_STABLE: "v3.15.3"
+  GITHUB_VERSION: "2.53.0"
   IMAGES_TO_PUSH: "apprepository-controller dashboard asset-syncer pinniped-proxy kubeapps-apis oci-catalog"
   # IMG_DEV_TAG is the tags used for the Kubeapps docker images. Ideally there should be an IMG_PROD_TAG
   # but its value is dynamic and GitHub actions doesn't support it in the `env` block, so it is generated
@@ -51,18 +51,18 @@ env:
   IMG_PREFIX_FOR_FORKS: "your-dockerhub-username/"
   # Currently, we only build the images for linux/amd64 because building cross-platform images is extremely slow...
   IMG_PLATFORMS: "linux/amd64"
-  KAPP_CONTROLLER_VERSION: "v0.50.2"
+  KAPP_CONTROLLER_VERSION: "v0.50.5"
   FLUX_VERSION: "v2.2.3"
-  KIND_VERSION: "v0.22.0"
+  KIND_VERSION: "v0.23.0"
   MKCERT_VERSION: "v1.4.4"
-  NODE_VERSION: "20.12.1"
-  OLM_VERSION: "v0.27.0"
-  POSTGRESQL_VERSION: "16.2.0-debian-12-r13"
-  RUST_VERSION: "1.77.1"
+  NODE_VERSION: "20.15.1"
+  OLM_VERSION: "v0.28.0"
+  POSTGRESQL_VERSION: "16.3.0-debian-12-r19"
+  RUST_VERSION: "1.79.0"
   SEMVER_VERSION: "3.4.0"
-  K8S_KIND_VERSION: "v1.27.11@sha256:681253009e68069b8e01aad36a1e0fa8cf18bb0ab3e5c4069b2e65cafdd70843"
-  KUBECTL_VERSION: "v1.27.11"
-  GKE_REGULAR_VERSION: "1.27"
+  K8S_KIND_VERSION: "v1.29.4@sha256:3abb816a5b1061fb15c6e9e60856ec40d56b7b52bcea5f5f1350bc6e2320b6f8"
+  KUBECTL_VERSION: "v1.29.7"
+  GKE_REGULAR_VERSION: "1.29"
   GKE_STABLE_VERSION: "1.27"
   GKE_ZONE: "us-east1-c"
   GKE_PROJECT: "vmware-kubeapps-ci"
@@ -436,10 +436,12 @@ jobs:
         tests_group:
           - carvel
           - flux
-          - main
+          - main-group-1
+          - main-group-2
+          - main-group-3
           - multicluster
           - multicluster-nokubeapps
-          - operator
+          - operators
     env:
       DEFAULT_DEX_IP: "172.18.0.2"
       IMG_PREFIX: ${{ needs.setup.outputs.img_prefix }}
@@ -479,8 +481,8 @@ jobs:
       - name: "Export cluster variables"
         run: |
           set -eu
-          DEX_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+1 }'`
-          ADDITIONAL_CLUSTER_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+2 }'`
+          DEX_IP=`docker network inspect kind | jq -r '.[0].IPAM.Config[] | select(.Gateway) | .Gateway' | awk -F. '{ print $1"."$2"."$3"."$4+1 }'`
+          ADDITIONAL_CLUSTER_IP=`docker network inspect kind | jq -r '.[0].IPAM.Config[] | select(.Gateway) | .Gateway' | awk -F. '{ print $1"."$2"."$3"."$4+2 }'`
 
           echo DEFAULT_DEX_IP=$DEFAULT_DEX_IP
           echo DEX_IP=$DEX_IP

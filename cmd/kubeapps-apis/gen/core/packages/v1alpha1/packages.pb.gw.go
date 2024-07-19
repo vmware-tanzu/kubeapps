@@ -68,7 +68,7 @@ func local_request_PackagesService_GetAvailablePackageSummaries_0(ctx context.Co
 }
 
 var (
-	filter_PackagesService_GetAvailablePackageDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"available_package_ref": 0, "plugin": 1, "name": 2, "version": 3, "context": 4, "cluster": 5, "namespace": 6, "identifier": 7}, Base: []int{1, 7, 1, 1, 2, 2, 2, 3, 6, 0, 0, 0, 5, 0, 7, 0}, Check: []int{0, 1, 2, 3, 2, 5, 2, 7, 2, 4, 6, 8, 9, 13, 2, 15}}
+	filter_PackagesService_GetAvailablePackageDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"available_package_ref": 0, "plugin": 1, "name": 2, "version": 3, "context": 4, "cluster": 5, "namespace": 6, "identifier": 7}, Base: []int{1, 12, 3, 13, 14, 1, 15, 16, 17, 0, 8, 4, 0, 9, 7, 0, 11, 10, 0, 12, 0, 0, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 3, 1, 1, 1, 6, 2, 11, 12, 2, 14, 15, 2, 17, 18, 2, 20, 4, 5, 7, 8, 9}}
 )
 
 func request_PackagesService_GetAvailablePackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, client PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -218,7 +218,7 @@ func local_request_PackagesService_GetAvailablePackageDetail_0(ctx context.Conte
 }
 
 var (
-	filter_PackagesService_GetAvailablePackageVersions_0 = &utilities.DoubleArray{Encoding: map[string]int{"available_package_ref": 0, "plugin": 1, "name": 2, "version": 3, "context": 4, "cluster": 5, "namespace": 6, "identifier": 7}, Base: []int{1, 7, 1, 1, 2, 2, 2, 3, 6, 0, 0, 0, 5, 0, 7, 0}, Check: []int{0, 1, 2, 3, 2, 5, 2, 7, 2, 4, 6, 8, 9, 13, 2, 15}}
+	filter_PackagesService_GetAvailablePackageVersions_0 = &utilities.DoubleArray{Encoding: map[string]int{"available_package_ref": 0, "plugin": 1, "name": 2, "version": 3, "context": 4, "cluster": 5, "namespace": 6, "identifier": 7}, Base: []int{1, 12, 3, 13, 14, 1, 15, 16, 17, 0, 8, 4, 0, 9, 7, 0, 11, 10, 0, 12, 0, 0, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 3, 1, 1, 1, 6, 2, 11, 12, 2, 14, 15, 2, 17, 18, 2, 20, 4, 5, 7, 8, 9}}
 )
 
 func request_PackagesService_GetAvailablePackageVersions_0(ctx context.Context, marshaler runtime.Marshaler, client PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -368,7 +368,7 @@ func local_request_PackagesService_GetAvailablePackageVersions_0(ctx context.Con
 }
 
 var (
-	filter_PackagesService_GetAvailablePackageMetadatas_0 = &utilities.DoubleArray{Encoding: map[string]int{"available_package_ref": 0, "plugin": 1, "name": 2, "version": 3, "context": 4, "cluster": 5, "namespace": 6, "identifier": 7}, Base: []int{1, 7, 1, 1, 2, 2, 2, 3, 6, 0, 0, 0, 5, 0, 7, 0}, Check: []int{0, 1, 2, 3, 2, 5, 2, 7, 2, 4, 6, 8, 9, 13, 2, 15}}
+	filter_PackagesService_GetAvailablePackageMetadatas_0 = &utilities.DoubleArray{Encoding: map[string]int{"available_package_ref": 0, "plugin": 1, "name": 2, "version": 3, "context": 4, "cluster": 5, "namespace": 6, "identifier": 7}, Base: []int{1, 12, 3, 13, 14, 1, 15, 16, 17, 0, 8, 4, 0, 9, 7, 0, 11, 10, 0, 12, 0, 0, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 3, 1, 1, 1, 6, 2, 11, 12, 2, 14, 15, 2, 17, 18, 2, 20, 4, 5, 7, 8, 9}}
 )
 
 func request_PackagesService_GetAvailablePackageMetadatas_0(ctx context.Context, marshaler runtime.Marshaler, client PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -554,7 +554,7 @@ func local_request_PackagesService_GetInstalledPackageSummaries_0(ctx context.Co
 }
 
 var (
-	filter_PackagesService_GetInstalledPackageDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "plugin": 1, "name": 2, "version": 3, "context": 4, "cluster": 5, "namespace": 6, "identifier": 7}, Base: []int{1, 7, 1, 1, 2, 2, 2, 3, 6, 0, 0, 0, 5, 0, 7, 0}, Check: []int{0, 1, 2, 3, 2, 5, 2, 7, 2, 4, 6, 8, 9, 13, 2, 15}}
+	filter_PackagesService_GetInstalledPackageDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "plugin": 1, "name": 2, "version": 3, "context": 4, "cluster": 5, "namespace": 6, "identifier": 7}, Base: []int{1, 12, 3, 13, 14, 1, 15, 16, 17, 0, 8, 4, 0, 9, 7, 0, 11, 10, 0, 12, 0, 0, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 3, 1, 1, 1, 6, 2, 11, 12, 2, 14, 15, 2, 17, 18, 2, 20, 4, 5, 7, 8, 9}}
 )
 
 func request_PackagesService_GetInstalledPackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, client PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -707,7 +707,11 @@ func request_PackagesService_CreateInstalledPackage_0(ctx context.Context, marsh
 	var protoReq CreateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -720,7 +724,11 @@ func local_request_PackagesService_CreateInstalledPackage_0(ctx context.Context,
 	var protoReq CreateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -733,7 +741,11 @@ func request_PackagesService_UpdateInstalledPackage_0(ctx context.Context, marsh
 	var protoReq UpdateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -803,7 +815,11 @@ func local_request_PackagesService_UpdateInstalledPackage_0(ctx context.Context,
 	var protoReq UpdateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -870,7 +886,7 @@ func local_request_PackagesService_UpdateInstalledPackage_0(ctx context.Context,
 }
 
 var (
-	filter_PackagesService_DeleteInstalledPackage_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "plugin": 1, "name": 2, "version": 3, "context": 4, "cluster": 5, "namespace": 6, "identifier": 7}, Base: []int{1, 7, 1, 1, 2, 2, 2, 3, 6, 0, 0, 0, 5, 0, 7, 0}, Check: []int{0, 1, 2, 3, 2, 5, 2, 7, 2, 4, 6, 8, 9, 13, 2, 15}}
+	filter_PackagesService_DeleteInstalledPackage_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "plugin": 1, "name": 2, "version": 3, "context": 4, "cluster": 5, "namespace": 6, "identifier": 7}, Base: []int{1, 12, 3, 13, 14, 1, 15, 16, 17, 0, 8, 4, 0, 9, 7, 0, 11, 10, 0, 12, 0, 0, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 3, 1, 1, 1, 6, 2, 11, 12, 2, 14, 15, 2, 17, 18, 2, 20, 4, 5, 7, 8, 9}}
 )
 
 func request_PackagesService_DeleteInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -1020,7 +1036,7 @@ func local_request_PackagesService_DeleteInstalledPackage_0(ctx context.Context,
 }
 
 var (
-	filter_PackagesService_GetInstalledPackageResourceRefs_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "plugin": 1, "name": 2, "version": 3, "context": 4, "cluster": 5, "namespace": 6, "identifier": 7}, Base: []int{1, 7, 1, 1, 2, 2, 2, 3, 6, 0, 0, 0, 5, 0, 7, 0}, Check: []int{0, 1, 2, 3, 2, 5, 2, 7, 2, 4, 6, 8, 9, 13, 2, 15}}
+	filter_PackagesService_GetInstalledPackageResourceRefs_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "plugin": 1, "name": 2, "version": 3, "context": 4, "cluster": 5, "namespace": 6, "identifier": 7}, Base: []int{1, 12, 3, 13, 14, 1, 15, 16, 17, 0, 8, 4, 0, 9, 7, 0, 11, 10, 0, 12, 0, 0, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 3, 1, 1, 1, 6, 2, 11, 12, 2, 14, 15, 2, 17, 18, 2, 20, 4, 5, 7, 8, 9}}
 )
 
 func request_PackagesService_GetInstalledPackageResourceRefs_0(ctx context.Context, marshaler runtime.Marshaler, client PackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -1431,7 +1447,7 @@ func RegisterPackagesServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 // RegisterPackagesServiceHandlerFromEndpoint is same as RegisterPackagesServiceHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
 func RegisterPackagesServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
-	conn, err := grpc.DialContext(ctx, endpoint, opts...)
+	conn, err := grpc.Dial(endpoint, opts...)
 	if err != nil {
 		return err
 	}
