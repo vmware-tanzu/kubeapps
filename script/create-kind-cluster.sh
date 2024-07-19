@@ -24,7 +24,6 @@ info "KUBECONFIG: ${KUBECONFIG}"
 info "CONTEXT: ${CONTEXT}"
 
 function createKindCluster() {
-  set -x
   kind create cluster --image "kindest/node:${K8S_KIND_VERSION}" --name "${CLUSTER_NAME}" --config="${CLUSTER_CONFIG_FILE}" --kubeconfig="${KUBECONFIG}" --retain --wait 120s &&
   kubectl --context "${CONTEXT}" --kubeconfig="${KUBECONFIG}" apply -f ${ROOT_DIR}/site/content/docs/latest/reference/manifests/kubeapps-local-dev-users-rbac.yaml &&
   kubectl --context "${CONTEXT}" --kubeconfig="${KUBECONFIG}" apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml &&
@@ -33,7 +32,6 @@ function createKindCluster() {
   kubectl create rolebinding kubeapps-view-secret-oidc --context "${CONTEXT}" --kubeconfig="${KUBECONFIG}" --role view-secrets --user oidc:kubeapps-user@example.com &&
   kubectl create clusterrolebinding kubeapps-view-oidc --context "${CONTEXT}" --kubeconfig="${KUBECONFIG}" --clusterrole=view --user oidc:kubeapps-user@example.com &&
   echo "Cluster created"
-  set +x
 }
 
 sed -i "s/172.18.0.2/$DEFAULT_DEX_IP/g" "${CLUSTER_CONFIG_FILE}"

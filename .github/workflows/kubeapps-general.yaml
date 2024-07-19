@@ -61,7 +61,7 @@ env:
   RUST_VERSION: "1.79.0"
   SEMVER_VERSION: "3.4.0"
   K8S_KIND_VERSION: "v1.29.4@sha256:3abb816a5b1061fb15c6e9e60856ec40d56b7b52bcea5f5f1350bc6e2320b6f8"
-  KUBECTL_VERSION: "1.29.7"
+  KUBECTL_VERSION: "v1.29.7"
   GKE_REGULAR_VERSION: "1.29"
   GKE_STABLE_VERSION: "1.27"
   GKE_ZONE: "us-east1-c"
@@ -462,13 +462,6 @@ jobs:
           installMkcert ${MKCERT_VERSION}
           installHelm ${HELM_VERSION_MIN}
           installHelm ${HELM_VERSION_STABLE} helm-stable
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
-        with:
-          ## limits ssh access and adds the ssh public key for the user which triggered the workflow
-          limit-access-to-actor: true
-          ## limits ssh access and adds the ssh public keys of the listed GitHub users
-          limit-access-to-users: beni0888
       - name: "Spin up Kind cluster"
         run: |
           set -eu
