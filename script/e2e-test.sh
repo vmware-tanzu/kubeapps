@@ -646,7 +646,7 @@ fi
 if [[ -z "${GKE_VERSION-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MULTICLUSTER_TESTS}") ]]; then
   sectionStartTime=$(date +%s)
   info "Running multi-cluster integration tests..."
-  test_command=$(getTestCommand "${TESTS_GROUP}" "40")
+  test_command=$(getTestCommand "${MULTICLUSTER_TESTS}" "40")
   info "${test_command}"
   if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
     ## Integration tests failed, get report screenshot
@@ -675,7 +675,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${CARVEL_TESTS}
   k8s_wait_for_deployment kubeapps kubeapps-ci
 
   info "Running carvel integration test..."
-  test_command=$(getTestCommand "${TESTS_GROUP}" "20")
+  test_command=$(getTestCommand "${CARVEL_TESTS}" "20")
   info "${test_command}"
   if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
     ## Integration tests failed, get report screenshot
@@ -705,7 +705,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${FLUX_TESTS}" 
   k8s_wait_for_deployment kubeapps kubeapps-ci
 
   info "Running flux integration test..."
-  test_command=$(getTestCommand "${TESTS_GROUP}" "20")
+  test_command=$(getTestCommand "${FLUX_TESTS}" "20")
   info "${test_command}"
 
   if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
@@ -745,7 +745,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${OPERATOR_TEST
     retry_while isOperatorHubCatalogRunning 24
 
     info "Running operators integration test with k8s API access..."
-    test_command=$(getTestCommand "${TESTS_GROUP}" "20")
+    test_command=$(getTestCommand "${OPERATOR_TESTS}" "20")
     info "${test_command}"
     if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
       ## Integration tests failed, get report screenshot
@@ -801,7 +801,7 @@ if [[ -z "${GKE_VERSION-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GR
   info "Waiting for updated Kubeapps components to be ready..."
   k8s_wait_for_deployment kubeapps kubeapps-ci
 
-  test_command=$(getTestCommand "${TESTS_GROUP}" "40")
+  test_command=$(getTestCommand "${MULTICLUSTER_NOKUBEAPPS_TESTS}" "40")
   info "${test_command}"
 
   if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
