@@ -127,7 +127,7 @@
     "stylelint-scss": "^6.4.1",
     "ts-jest": "^29.2.3",
     "ts-proto": "^1.181.1",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.4"
   },
   "resolutions": {
     "@types/react": "^17.0.80",
