@@ -38,7 +38,7 @@
     "@tanstack/match-sorter-utils": "^8.15.1",
     "@tanstack/react-table": "^8.19.3",
     "ajv": "^8.17.1",
-    "axios": "^1.7.2",
+    "axios": "^1.7.3",
     "fast-json-patch": "^3.1.1",
     "google-protobuf": "^3.21.4",
     "jsonwebtoken": "^9.0.2",
@@ -58,7 +58,7 @@
     "react-minimal-pie-chart": "^8.4.0",
     "react-monaco-editor": "^0.55.0",
     "react-redux": "^7.2.9",
-    "react-router-dom": "^6.25.1",
+    "react-router-dom": "^6.26.0",
     "react-router-hash-link": "^2.4.3",
     "react-tooltip": "^5.27.1",
     "react-transition-group": "^4.4.5",
@@ -69,7 +69,7 @@
     "rxjs": "^7.8.1",
     "swagger-ui-react": "^5.17.14",
     "typesafe-actions": "^5.1.0",
-    "yaml": "^2.4.5"
+    "yaml": "^2.5.0"
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
@@ -120,12 +120,12 @@
     "resize-observer-polyfill": "^1.5.1",
     "sass": "^1.77.8",
     "shx": "^0.3.4",
-    "stylelint": "^16.8.0",
+    "stylelint": "^16.8.1",
     "stylelint-config-idiomatic-order": "^10.0.0",
     "stylelint-config-prettier": "^9.0.5",
     "stylelint-config-standard-scss": "^13.1.0",
     "stylelint-scss": "^6.4.1",
-    "ts-jest": "^29.2.3",
+    "ts-jest": "^29.2.4",
     "ts-proto": "^1.181.1",
     "typescript": "^5.5.4"
   },
