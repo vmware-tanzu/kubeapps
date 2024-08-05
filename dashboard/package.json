@@ -60,7 +60,7 @@
     "react-redux": "^7.2.9",
     "react-router-dom": "^6.26.0",
     "react-router-hash-link": "^2.4.3",
-    "react-tooltip": "^5.27.1",
+    "react-tooltip": "^5.28.0",
     "react-transition-group": "^4.4.5",
     "redux": "^4.2.1",
     "redux-thunk": "^2.4.2",
