@@ -35,7 +35,7 @@
     "@connectrpc/connect-web": "^1.4.0",
     "@paciolan/remote-component": "^2.13.0",
     "@redux-devtools/extension": "^3.3.0",
-    "@tanstack/match-sorter-utils": "^8.15.1",
+    "@tanstack/match-sorter-utils": "^8.19.4",
     "@tanstack/react-table": "^8.19.3",
     "ajv": "^8.17.1",
     "axios": "^1.7.3",
