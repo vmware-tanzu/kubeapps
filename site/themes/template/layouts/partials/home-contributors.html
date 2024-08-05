@@ -1,25 +1,6 @@
 <div class="team">
   <div class="wrapper">
-    <h2>Meet the Kubeapps team:</h2>
-    <div class="grid three">
-      {{ $contributors := .Site.GetPage "/contributors" }} {{ range
-      $contributors.Resources }}
-      <div class="bio">
-        <div class="image avatar">
-          <img class="rounded-circle" src="{{ .Params.image }}" alt="{{ .Params.full_name }}" />
-        </div>
-        <div class="info">
-          <p class="name">
-            <a target="_blank" rel="noopener" title="This link will open in a new tab"
-              href="https://github.com/{{ .Params.github_handle }}">
-              {{ .Params.full_name }}</a>
-          </p>
-          <p class="position">{{ .Params.role }}</p>
-        </div>
-      </div>
-      {{ end }}
-    </div>
-    <h3>Contributing</h3>
+    <h2>Contributing</h2>
     <p>
       The Kubeapps project team welcomes contributions from the community — please have a look at our
       <a href="/docs/latest/project/contributing/">
