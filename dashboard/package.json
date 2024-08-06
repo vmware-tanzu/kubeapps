@@ -56,7 +56,7 @@
     "react-intl": "^6.6.8",
     "react-markdown": "^8.0.7",
     "react-minimal-pie-chart": "^8.4.0",
-    "react-monaco-editor": "^0.55.0",
+    "react-monaco-editor": "^0.56.0",
     "react-redux": "^7.2.9",
     "react-router-dom": "^6.26.0",
     "react-router-hash-link": "^2.4.3",
