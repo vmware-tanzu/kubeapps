@@ -62,8 +62,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetAvailablePackageSummariesRes\
-                  ponse"
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageSummariesResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -198,8 +197,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetAvailablePackageDetailRespon\
-                  se"
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageDetailResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -306,6 +304,120 @@ paths:
             type: string
       tags:
         - PackagesService
+  "/apis/core/packages/v1alpha1/availablepackages/plugin/{availablePackageRef.plugin.name}/{availablePackageRef.plugin.version}/c/{availablePackageRef.context.cluster}/ns/{availablePackageRef.context.namespace}/{availablePackageRef.identifier}/metadata":
+    get:
+      operationId: PackagesService_GetAvailablePackageMetadatas
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageMetadatasResponse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: availablePackageRef.plugin.name
+          description: >-
+            Plugin name
+
+
+            The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: availablePackageRef.plugin.version
+          description: |-
+            Plugin version
+
+            The version of the plugin, such as v1alpha1
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: availablePackageRef.context.cluster
+          description: >-
+            Cluster
+
+
+            A cluster name can be provided to target a specific cluster if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: availablePackageRef.context.namespace
+          description: >-
+            Namespace
+
+
+            A namespace must be provided if the context of the operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: availablePackageRef.identifier
+          description: >-
+            Available package identifier
+
+
+            The fully qualified identifier for the available package
+
+            (ie. a unique name for the context). For some packaging systems
+
+            (particularly those where an available package is backed by a CR) this
+
+            will just be the name, but for others such as those where an available
+
+            package is not backed by a CR (eg. standard helm) it may be necessary
+
+            to include the repository in the name or even the repo namespace
+
+            to ensure this is unique.
+
+            For example two helm repositories can define
+
+            an "apache" chart that is available globally, the names would need to
+
+            encode that to be unique (ie. "repoA:apache" and "repoB:apache").
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: .+
+        - name: pkgVersion
+          description: |-
+            Package Version
+
+            Version reference for which metadata is requested.
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - PackagesService
   "/apis/core/packages/v1alpha1/availablepackages/plugin/{availablePackageRef.plugin.name}/{availablePackageRef.plugin.version}/c/{availablePackageRef.context.cluster}/ns/{availablePackageRef.context.namespace}/{availablePackageRef.identifier}/versions":
     get:
       operationId: PackagesService_GetAvailablePackageVersions
@@ -315,8 +427,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetAvailablePackageVersionsResp\
-                  onse"
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageVersionsResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -435,8 +546,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetInstalledPackageSummariesRes\
-                  ponse"
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageSummariesResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -545,8 +655,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetInstalledPackageDetailRespon\
-                  se"
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageDetailResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -789,74 +898,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                installedPackageRef:
-                  type: object
-                  properties:
-                    context:
-                      type: object
-                      description: The context (cluster/namespace) for the package.
-                      title: Installed package context
-                    plugin:
-                      type: object
-                      example:
-                        name: kapp_controller.packages
-                        version: v1alpha1
-                      description: >-
-                        The plugin used to identify and interact with the
-                        installed package.
-
-                        This field can be omitted when the request is in the context of a specific plugin.
-                      title: >-
-                        The plugin used to identify and interact with the
-                        installed package.
-
-                        This field can be omitted when the request is in the context of a specific plugin.
-                  title: >-
-                    A reference uniquely identifying the installed package being
-                    updated.
-
-                    Required
-                pkgVersionReference:
-                  $ref: "#/components/schemas/v1alpha1VersionReference"
-                values:
-                  type: string
-                  description: >-
-                    An optional serialized values string to be included when
-                    templating a
-
-                    package in the format expected by the plugin. Included when the backend
-
-                    format doesn't use secrets or configmaps for values or supports both.
-
-                    These values are layered on top of any values refs above, when
-
-                    relevant.
-                reconciliationOptions:
-                  $ref: "#/components/schemas/v1alpha1ReconciliationOptions"
-              description: >-
-                Request for UpdateInstalledPackage. The intent is to reach the
-                desired state specified
-
-                by the fields in the request, while leaving other fields intact. This is a whole
-
-                object "Update" semantics rather than "Patch" semantics. The caller will provide the
-
-                values for the fields below, which will replace, or be overlaid onto, the
-
-                corresponding fields in the existing resource. For example, with the
-
-                UpdateInstalledPackageRequest, it is not possible to change just the 'package version
-
-                reference' without also specifying 'values' field. As a side effect, not specifying the
-
-                'values' field in the request means there are no values specified in the desired state.
-
-                So the meaning of each field value is describing the desired state of the corresponding
-
-                field in the resource after the update operation has completed the renconciliation.
-              title: UpdateInstalledPackageRequest
+              $ref: "#/components/schemas/v1alpha1PackagesServiceUpdateInstalledPackageBody"
         required: true
       tags:
         - PackagesService
@@ -869,8 +911,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetInstalledPackageResourceRefs\
-                  Response"
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageResourceRefsResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -954,8 +995,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetPackageRepositorySummariesRe\
-                  sponse"
+                $ref: "#/components/schemas/v1alpha1GetPackageRepositorySummariesResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -1037,8 +1077,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetPackageRepositoryPermissions\
-                  Response"
+                $ref: "#/components/schemas/v1alpha1GetPackageRepositoryPermissionsResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -1095,8 +1134,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetPackageRepositoryDetailRespo\
-                  nse"
+                $ref: "#/components/schemas/v1alpha1GetPackageRepositoryDetailResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -1342,64 +1380,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                packageRepoRef:
-                  type: object
-                  properties:
-                    context:
-                      type: object
-                      description: The context (cluster/namespace) for the repository.
-                      title: The context (cluster/namespace) for the repository.
-                    plugin:
-                      type: object
-                      example:
-                        name: kapp_controller.packages
-                        version: v1alpha1
-                      description: >-
-                        The plugin used to interact with this available package.
-
-                        This field should be omitted when the request is in the context of a
-
-                        specific plugin.
-                      title: >-
-                        The plugin used to interact with this available package.
-
-                        This field should be omitted when the request is in the context of a
-
-                        specific plugin.
-                  title: >-
-                    A reference uniquely identifying the package repository
-                    being updated.
-
-                    The only required field
-                url:
-                  type: string
-                  description: URL identifying the package repository location.
-                description:
-                  type: string
-                  description: A user-provided description.
-                interval:
-                  type: string
-                  title: >-
-                    The interval at which to check the upstream for updates (in
-                    time+unit)
-
-                    Some plugins may, additionally, support other formats, for instance,
-
-                    a cron expression.
-
-                    e.g., "*/10 * * * *" will be equivalent to "10m"
-
-                    Optional. Defaults to 10m if not specified
-                tlsConfig:
-                  $ref: "#/components/schemas/v1alpha1PackageRepositoryTlsConfig"
-                auth:
-                  $ref: "#/components/schemas/v1alpha1PackageRepositoryAuth"
-                customDetail:
-                  $ref: "#/components/schemas/protobufAny"
-              description: Request for UpdatePackageRepository
-              title: UpdatePackageRepositoryRequest
+              $ref: "#/components/schemas/v1alpha1RepositoriesServiceUpdatePackageRepositoryBody"
         required: true
       tags:
         - RepositoriesService
@@ -1440,8 +1421,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetAvailablePackageSummariesRes\
-                  ponse"
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageSummariesResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -1578,8 +1558,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetAvailablePackageDetailRespon\
-                  se"
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageDetailResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -1697,8 +1676,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetAvailablePackageVersionsResp\
-                  onse"
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageVersionsResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -1819,8 +1797,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetInstalledPackageSummariesRes\
-                  ponse"
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageSummariesResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -1932,8 +1909,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetInstalledPackageDetailRespon\
-                  se"
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageDetailResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -2156,8 +2132,11 @@ paths:
           schema:
             type: string
       requestBody:
-        $ref: "#/components/requestBodies/FluxV2PackagesService_UpdateInstalledPack\
-          ageBody"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/v1alpha1FluxV2PackagesServiceUpdateInstalledPackageBody"
+        required: true
       tags:
         - FluxV2PackagesService
   "/apis/plugins/fluxv2/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}/resourcerefs":
@@ -2174,8 +2153,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetInstalledPackageResourceRefs\
-                  Response"
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageResourceRefsResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -2259,8 +2237,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetPackageRepositorySummariesRe\
-                  sponse"
+                $ref: "#/components/schemas/v1alpha1GetPackageRepositorySummariesResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -2347,8 +2324,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetPackageRepositoryPermissions\
-                  Response"
+                $ref: "#/components/schemas/v1alpha1GetPackageRepositoryPermissionsResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -2405,8 +2381,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetPackageRepositoryDetailRespo\
-                  nse"
+                $ref: "#/components/schemas/v1alpha1GetPackageRepositoryDetailResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -2630,8 +2605,11 @@ paths:
             type: string
             pattern: .+
       requestBody:
-        $ref: "#/components/requestBodies/FluxV2RepositoriesService_UpdatePackageRe\
-          positoryBody"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/v1alpha1FluxV2RepositoriesServiceUpdatePackageRepositoryBody"
+        required: true
       tags:
         - FluxV2RepositoriesService
   /apis/plugins/helm/packages/v1alpha1/availablepackages:
@@ -2645,8 +2623,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetAvailablePackageSummariesRes\
-                  ponse"
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageSummariesResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -2783,8 +2760,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetAvailablePackageDetailRespon\
-                  se"
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageDetailResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -2902,8 +2878,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetAvailablePackageVersionsResp\
-                  onse"
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageVersionsResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -3024,8 +2999,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetInstalledPackageSummariesRes\
-                  ponse"
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageSummariesResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -3137,8 +3111,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetInstalledPackageDetailRespon\
-                  se"
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageDetailResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -3361,8 +3334,11 @@ paths:
           schema:
             type: string
       requestBody:
-        $ref: "#/components/requestBodies/FluxV2PackagesService_UpdateInstalledPack\
-          ageBody"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/v1alpha1HelmPackagesServiceUpdateInstalledPackageBody"
+        required: true
       tags:
         - HelmPackagesService
   "/apis/plugins/helm/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}/resourcerefs":
@@ -3379,8 +3355,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetInstalledPackageResourceRefs\
-                  Response"
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageResourceRefsResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -3524,24 +3499,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                installedPackageRef:
-                  type: object
-                  properties:
-                    context:
-                      type: object
-                      description: The context (cluster/namespace) for the package.
-                      title: Installed package context
-                    plugin:
-                      $ref: "#/components/schemas/v1alpha1Plugin"
-                  description: A reference uniquely identifying the installed package.
-                  title: Installed package reference
-                releaseRevision:
-                  type: integer
-                  format: int32
-                  description: A number identifying the Helm revision to which to rollback.
-                  title: ReleaseRevision
+              $ref: "#/components/schemas/HelmPackagesServiceRollbackInstalledPackageBody"
         required: true
       tags:
         - HelmPackagesService
@@ -3554,8 +3512,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetPackageRepositorySummariesRe\
-                  sponse"
+                $ref: "#/components/schemas/v1alpha1GetPackageRepositorySummariesResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -3639,8 +3596,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetPackageRepositoryPermissions\
-                  Response"
+                $ref: "#/components/schemas/v1alpha1GetPackageRepositoryPermissionsResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -3697,8 +3653,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetPackageRepositoryDetailRespo\
-                  nse"
+                $ref: "#/components/schemas/v1alpha1GetPackageRepositoryDetailResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -3922,8 +3877,11 @@ paths:
             type: string
             pattern: .+
       requestBody:
-        $ref: "#/components/requestBodies/FluxV2RepositoriesService_UpdatePackageRe\
-          positoryBody"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/v1alpha1HelmRepositoriesServiceUpdatePackageRepositoryBody"
+        required: true
       tags:
         - HelmRepositoriesService
   /apis/plugins/kapp_controller/packages/v1alpha1/availablepackages:
@@ -3937,8 +3895,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetAvailablePackageSummariesRes\
-                  ponse"
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageSummariesResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -4075,8 +4032,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetAvailablePackageDetailRespon\
-                  se"
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageDetailResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -4194,8 +4150,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetAvailablePackageVersionsResp\
-                  onse"
+                $ref: "#/components/schemas/v1alpha1GetAvailablePackageVersionsResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -4316,8 +4271,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetInstalledPackageSummariesRes\
-                  ponse"
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageSummariesResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -4429,8 +4383,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetInstalledPackageDetailRespon\
-                  se"
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageDetailResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -4653,8 +4606,11 @@ paths:
           schema:
             type: string
       requestBody:
-        $ref: "#/components/requestBodies/FluxV2PackagesService_UpdateInstalledPack\
-          ageBody"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/v1alpha1KappControllerPackagesServiceUpdateInstalledPackageBody"
+        required: true
       tags:
         - KappControllerPackagesService
   "/apis/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}/resourcerefs":
@@ -4671,8 +4627,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetInstalledPackageResourceRefs\
-                  Response"
+                $ref: "#/components/schemas/v1alpha1GetInstalledPackageResourceRefsResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -4756,8 +4711,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetPackageRepositorySummariesRe\
-                  sponse"
+                $ref: "#/components/schemas/v1alpha1GetPackageRepositorySummariesResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -4841,8 +4795,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetPackageRepositoryPermissions\
-                  Response"
+                $ref: "#/components/schemas/v1alpha1GetPackageRepositoryPermissionsResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -4899,8 +4852,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/v1alpha1GetPackageRepositoryDetailRespo\
-                  nse"
+                $ref: "#/components/schemas/v1alpha1GetPackageRepositoryDetailResponse"
         "401":
           description: Returned when the user does not have permission to access the
             resource.
@@ -5124,8 +5076,11 @@ paths:
             type: string
             pattern: .+
       requestBody:
-        $ref: "#/components/requestBodies/FluxV2RepositoriesService_UpdatePackageRe\
-          positoryBody"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/v1alpha1KappControllerRepositoriesServiceUpdatePackageRepositoryBody"
+        required: true
       tags:
         - KappControllerRepositoriesService
   "/apis/plugins/resources/v1alpha1/c/{cluster}/namespacenames":
@@ -5301,6 +5256,16 @@ paths:
             be filtered by any filtering options of the request. Plugins may choose to return
 
             Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: labels
+          description: >-
+            Labels
+
+
+            This is a request variable of the map type. The query format is "map_name[key]=value", e.g. If the map name is Age, the key type is string, and the value type is integer, the query parameter is expressed as Age["bob"]=18
           in: query
           required: false
           schema:
@@ -5505,6 +5470,16 @@ paths:
           required: false
           schema:
             type: string
+        - name: stringData
+          description: >-
+            StringData
+
+
+            This is a request variable of the map type. The query format is "map_name[key]=value", e.g. If the map name is Age, the key type is string, and the value type is integer, the query parameter is expressed as Age["bob"]=18
+          in: query
+          required: false
+          schema:
+            type: string
       tags:
         - ResourcesService
   "/apis/plugins/resources/v1alpha1/c/{context.cluster}/ns/{context.namespace}/serviceaccountnames":
@@ -5667,54 +5642,6 @@ paths:
         - ResourcesService
 components:
   requestBodies:
-    FluxV2RepositoriesService_UpdatePackageRepositoryBody:
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              packageRepoRef:
-                type: object
-                properties:
-                  context:
-                    type: object
-                    description: The context (cluster/namespace) for the repository.
-                    title: The context (cluster/namespace) for the repository.
-                  plugin:
-                    $ref: "#/components/schemas/v1alpha1Plugin"
-                title: >-
-                  A reference uniquely identifying the package repository being
-                  updated.
-
-                  The only required field
-              url:
-                type: string
-                description: URL identifying the package repository location.
-              description:
-                type: string
-                description: A user-provided description.
-              interval:
-                type: string
-                title: >-
-                  The interval at which to check the upstream for updates (in
-                  time+unit)
-
-                  Some plugins may, additionally, support other formats, for instance,
-
-                  a cron expression.
-
-                  e.g., "*/10 * * * *" will be equivalent to "10m"
-
-                  Optional. Defaults to 10m if not specified
-              tlsConfig:
-                $ref: "#/components/schemas/v1alpha1PackageRepositoryTlsConfig"
-              auth:
-                $ref: "#/components/schemas/v1alpha1PackageRepositoryAuth"
-              customDetail:
-                $ref: "#/components/schemas/protobufAny"
-            description: Request for UpdatePackageRepository
-            title: UpdatePackageRepositoryRequest
-      required: true
     v1alpha1CreateInstalledPackageRequest:
       content:
         application/json:
@@ -5729,72 +5656,31 @@ components:
             $ref: "#/components/schemas/v1alpha1AddPackageRepositoryRequest"
       description: Request for AddPackageRepository
       required: true
-    FluxV2PackagesService_UpdateInstalledPackageBody:
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              installedPackageRef:
-                type: object
-                properties:
-                  context:
-                    type: object
-                    description: The context (cluster/namespace) for the package.
-                    title: Installed package context
-                  plugin:
-                    $ref: "#/components/schemas/v1alpha1Plugin"
-                title: >-
-                  A reference uniquely identifying the installed package being
-                  updated.
-
-                  Required
-              pkgVersionReference:
-                $ref: "#/components/schemas/v1alpha1VersionReference"
-              values:
-                type: string
-                description: >-
-                  An optional serialized values string to be included when
-                  templating a
-
-                  package in the format expected by the plugin. Included when the backend
-
-                  format doesn't use secrets or configmaps for values or supports both.
-
-                  These values are layered on top of any values refs above, when
-
-                  relevant.
-              reconciliationOptions:
-                $ref: "#/components/schemas/v1alpha1ReconciliationOptions"
-            description: >-
-              Request for UpdateInstalledPackage. The intent is to reach the
-              desired state specified
-
-              by the fields in the request, while leaving other fields intact. This is a whole
-
-              object "Update" semantics rather than "Patch" semantics. The caller will provide the
-
-              values for the fields below, which will replace, or be overlaid onto, the
-
-              corresponding fields in the existing resource. For example, with the
-
-              UpdateInstalledPackageRequest, it is not possible to change just the 'package version
-
-              reference' without also specifying 'values' field. As a side effect, not specifying the
-
-              'values' field in the request means there are no values specified in the desired state.
-
-              So the meaning of each field value is describing the desired state of the corresponding
-
-              field in the resource after the update operation has completed the renconciliation.
-            title: UpdateInstalledPackageRequest
-      required: true
   securitySchemes:
     ApiKeyAuth:
       type: apiKey
       name: Authorization
       in: header
   schemas:
+    HelmPackagesServiceRollbackInstalledPackageBody:
+      type: object
+      properties:
+        installedPackageRef:
+          type: object
+          properties:
+            context:
+              type: object
+              description: The context (cluster/namespace) for the package.
+              title: Installed package context
+            plugin:
+              $ref: "#/components/schemas/v1alpha1Plugin"
+          description: A reference uniquely identifying the installed package.
+          title: Installed package reference
+        releaseRevision:
+          type: integer
+          format: int32
+          description: A number identifying the Helm revision to which to rollback.
+          title: ReleaseRevision
     PackageRepositoryAuthPackageRepositoryAuthType:
       type: string
       enum:
@@ -5858,7 +5744,9 @@ components:
 
             protobuf release, and it is not used for type URLs beginning with
 
-            type.googleapis.com.
+            type.googleapis.com. As of May 2023, there are no widely used type server
+
+            implementations and no plans to implement one.
 
 
             Schemes other than `http`, `https` (or the empty scheme) might be
@@ -5900,7 +5788,7 @@ components:
               foo = any.unpack(Foo.getDefaultInstance());
             }
 
-        Example 3: Pack and unpack a message in Python.
+         Example 3: Pack and unpack a message in Python.
 
             foo = Foo(...)
             any = Any()
@@ -5910,7 +5798,7 @@ components:
               any.Unpack(foo)
               ...
 
-        Example 4: Pack and unpack a message in Go
+         Example 4: Pack and unpack a message in Go
 
              foo := &pb.Foo{...}
              any, err := anypb.New(foo)
@@ -5936,6 +5824,7 @@ components:
 
         JSON
 
+        ====
 
         The JSON representation of an `Any` value uses the regular
 
@@ -5951,8 +5840,8 @@ components:
 
             {
               "@type": "type.googleapis.com/google.profile.Person",
-              "firstName": ,
-              "lastName":
+              "firstName": <string>,
+              "lastName": <string>
             }
 
         If the embedded message type is well-known and has a custom JSON
@@ -6383,6 +6272,106 @@ components:
            example: '{}'
          };
       title: FilterOptions
+    v1alpha1FluxV2PackagesServiceUpdateInstalledPackageBody:
+      type: object
+      properties:
+        installedPackageRef:
+          type: object
+          properties:
+            context:
+              type: object
+              description: The context (cluster/namespace) for the package.
+              title: Installed package context
+            plugin:
+              $ref: "#/components/schemas/v1alpha1Plugin"
+          title: >-
+            A reference uniquely identifying the installed package being
+            updated.
+
+            Required
+        pkgVersionReference:
+          $ref: "#/components/schemas/v1alpha1VersionReference"
+        values:
+          type: string
+          description: >-
+            An optional serialized values string to be included when templating
+            a
+
+            package in the format expected by the plugin. Included when the backend
+
+            format doesn't use secrets or configmaps for values or supports both.
+
+            These values are layered on top of any values refs above, when
+
+            relevant.
+        reconciliationOptions:
+          $ref: "#/components/schemas/v1alpha1ReconciliationOptions"
+      description: >-
+        Request for UpdateInstalledPackage. The intent is to reach the desired
+        state specified
+
+        by the fields in the request, while leaving other fields intact. This is a whole
+
+        object "Update" semantics rather than "Patch" semantics. The caller will provide the
+
+        values for the fields below, which will replace, or be overlaid onto, the
+
+        corresponding fields in the existing resource. For example, with the
+
+        UpdateInstalledPackageRequest, it is not possible to change just the 'package version
+
+        reference' without also specifying 'values' field. As a side effect, not specifying the
+
+        'values' field in the request means there are no values specified in the desired state.
+
+        So the meaning of each field value is describing the desired state of the corresponding
+
+        field in the resource after the update operation has completed the renconciliation.
+      title: UpdateInstalledPackageRequest
+    v1alpha1FluxV2RepositoriesServiceUpdatePackageRepositoryBody:
+      type: object
+      properties:
+        packageRepoRef:
+          type: object
+          properties:
+            context:
+              type: object
+              description: The context (cluster/namespace) for the repository.
+              title: The context (cluster/namespace) for the repository.
+            plugin:
+              $ref: "#/components/schemas/v1alpha1Plugin"
+          title: >-
+            A reference uniquely identifying the package repository being
+            updated.
+
+            The only required field
+        url:
+          type: string
+          description: URL identifying the package repository location.
+        description:
+          type: string
+          description: A user-provided description.
+        interval:
+          type: string
+          title: >-
+            The interval at which to check the upstream for updates (in
+            time+unit)
+
+            Some plugins may, additionally, support other formats, for instance,
+
+            a cron expression.
+
+            e.g., "*/10 * * * *" will be equivalent to "10m"
+
+            Optional. Defaults to 10m if not specified
+        tlsConfig:
+          $ref: "#/components/schemas/v1alpha1PackageRepositoryTlsConfig"
+        auth:
+          $ref: "#/components/schemas/v1alpha1PackageRepositoryAuth"
+        customDetail:
+          $ref: "#/components/schemas/protobufAny"
+      description: Request for UpdatePackageRepository
+      title: UpdatePackageRepositoryRequest
     v1alpha1GetAvailablePackageDetailResponse:
       type: object
       properties:
@@ -6396,6 +6385,19 @@ components:
            example: '{"available_package_detail": [{}]}'
          };
       title: GetAvailablePackageDetailResponse
+    v1alpha1GetAvailablePackageMetadatasResponse:
+      type: object
+      properties:
+        availablePackageRef:
+          $ref: "#/components/schemas/v1alpha1AvailablePackageReference"
+        packageMetadata:
+          type: array
+          items:
+            $ref: "#/components/schemas/v1alpha1PackageMetadata"
+          description: A list of metadata associated with this available package.
+          title: Package Metadata
+      description: Response for GetAvailablePackageMetadatas
+      title: GetAvailablePackageMetadatasResponse
     v1alpha1GetAvailablePackageSummariesResponse:
       type: object
       properties:
@@ -6417,8 +6419,8 @@ components:
           type: array
           items:
             type: string
-          description: This optional field contains the distinct category names considering
-            the FilterOptions.
+          description: This optional field contains the distinct category names
+            considering the FilterOptions.
           title: Categories
       description: |-
         Response for GetAvailablePackageSummaries
@@ -6605,6 +6607,106 @@ components:
           title: ServiceAccountNames
       description: Response for GetServiceAccountNames
       title: GetServiceAccountNamesResponse
+    v1alpha1HelmPackagesServiceUpdateInstalledPackageBody:
+      type: object
+      properties:
+        installedPackageRef:
+          type: object
+          properties:
+            context:
+              type: object
+              description: The context (cluster/namespace) for the package.
+              title: Installed package context
+            plugin:
+              $ref: "#/components/schemas/v1alpha1Plugin"
+          title: >-
+            A reference uniquely identifying the installed package being
+            updated.
+
+            Required
+        pkgVersionReference:
+          $ref: "#/components/schemas/v1alpha1VersionReference"
+        values:
+          type: string
+          description: >-
+            An optional serialized values string to be included when templating
+            a
+
+            package in the format expected by the plugin. Included when the backend
+
+            format doesn't use secrets or configmaps for values or supports both.
+
+            These values are layered on top of any values refs above, when
+
+            relevant.
+        reconciliationOptions:
+          $ref: "#/components/schemas/v1alpha1ReconciliationOptions"
+      description: >-
+        Request for UpdateInstalledPackage. The intent is to reach the desired
+        state specified
+
+        by the fields in the request, while leaving other fields intact. This is a whole
+
+        object "Update" semantics rather than "Patch" semantics. The caller will provide the
+
+        values for the fields below, which will replace, or be overlaid onto, the
+
+        corresponding fields in the existing resource. For example, with the
+
+        UpdateInstalledPackageRequest, it is not possible to change just the 'package version
+
+        reference' without also specifying 'values' field. As a side effect, not specifying the
+
+        'values' field in the request means there are no values specified in the desired state.
+
+        So the meaning of each field value is describing the desired state of the corresponding
+
+        field in the resource after the update operation has completed the renconciliation.
+      title: UpdateInstalledPackageRequest
+    v1alpha1HelmRepositoriesServiceUpdatePackageRepositoryBody:
+      type: object
+      properties:
+        packageRepoRef:
+          type: object
+          properties:
+            context:
+              type: object
+              description: The context (cluster/namespace) for the repository.
+              title: The context (cluster/namespace) for the repository.
+            plugin:
+              $ref: "#/components/schemas/v1alpha1Plugin"
+          title: >-
+            A reference uniquely identifying the package repository being
+            updated.
+
+            The only required field
+        url:
+          type: string
+          description: URL identifying the package repository location.
+        description:
+          type: string
+          description: A user-provided description.
+        interval:
+          type: string
+          title: >-
+            The interval at which to check the upstream for updates (in
+            time+unit)
+
+            Some plugins may, additionally, support other formats, for instance,
+
+            a cron expression.
+
+            e.g., "*/10 * * * *" will be equivalent to "10m"
+
+            Optional. Defaults to 10m if not specified
+        tlsConfig:
+          $ref: "#/components/schemas/v1alpha1PackageRepositoryTlsConfig"
+        auth:
+          $ref: "#/components/schemas/v1alpha1PackageRepositoryAuth"
+        customDetail:
+          $ref: "#/components/schemas/protobufAny"
+      description: Request for UpdatePackageRepository
+      title: UpdatePackageRepositoryRequest
     v1alpha1InstalledPackageDetail:
       type: object
       properties:
@@ -6719,8 +6821,8 @@ components:
           title: Installed package icon URL
         pkgDisplayName:
           type: string
-          description: The package name as displayed to users (provided by the package, eg.
-            "PostgreSQL")
+          description: The package name as displayed to users (provided by the package,
+            eg. "PostgreSQL")
           title: PackageDisplayName
         shortDescription:
           type: string
@@ -6741,6 +6843,106 @@ components:
            example: '{}'
          };
       title: InstalledPackageSummary
+    v1alpha1KappControllerPackagesServiceUpdateInstalledPackageBody:
+      type: object
+      properties:
+        installedPackageRef:
+          type: object
+          properties:
+            context:
+              type: object
+              description: The context (cluster/namespace) for the package.
+              title: Installed package context
+            plugin:
+              $ref: "#/components/schemas/v1alpha1Plugin"
+          title: >-
+            A reference uniquely identifying the installed package being
+            updated.
+
+            Required
+        pkgVersionReference:
+          $ref: "#/components/schemas/v1alpha1VersionReference"
+        values:
+          type: string
+          description: >-
+            An optional serialized values string to be included when templating
+            a
+
+            package in the format expected by the plugin. Included when the backend
+
+            format doesn't use secrets or configmaps for values or supports both.
+
+            These values are layered on top of any values refs above, when
+
+            relevant.
+        reconciliationOptions:
+          $ref: "#/components/schemas/v1alpha1ReconciliationOptions"
+      description: >-
+        Request for UpdateInstalledPackage. The intent is to reach the desired
+        state specified
+
+        by the fields in the request, while leaving other fields intact. This is a whole
+
+        object "Update" semantics rather than "Patch" semantics. The caller will provide the
+
+        values for the fields below, which will replace, or be overlaid onto, the
+
+        corresponding fields in the existing resource. For example, with the
+
+        UpdateInstalledPackageRequest, it is not possible to change just the 'package version
+
+        reference' without also specifying 'values' field. As a side effect, not specifying the
+
+        'values' field in the request means there are no values specified in the desired state.
+
+        So the meaning of each field value is describing the desired state of the corresponding
+
+        field in the resource after the update operation has completed the renconciliation.
+      title: UpdateInstalledPackageRequest
+    v1alpha1KappControllerRepositoriesServiceUpdatePackageRepositoryBody:
+      type: object
+      properties:
+        packageRepoRef:
+          type: object
+          properties:
+            context:
+              type: object
+              description: The context (cluster/namespace) for the repository.
+              title: The context (cluster/namespace) for the repository.
+            plugin:
+              $ref: "#/components/schemas/v1alpha1Plugin"
+          title: >-
+            A reference uniquely identifying the package repository being
+            updated.
+
+            The only required field
+        url:
+          type: string
+          description: URL identifying the package repository location.
+        description:
+          type: string
+          description: A user-provided description.
+        interval:
+          type: string
+          title: >-
+            The interval at which to check the upstream for updates (in
+            time+unit)
+
+            Some plugins may, additionally, support other formats, for instance,
+
+            a cron expression.
+
+            e.g., "*/10 * * * *" will be equivalent to "10m"
+
+            Optional. Defaults to 10m if not specified
+        tlsConfig:
+          $ref: "#/components/schemas/v1alpha1PackageRepositoryTlsConfig"
+        auth:
+          $ref: "#/components/schemas/v1alpha1PackageRepositoryAuth"
+        customDetail:
+          $ref: "#/components/schemas/protobufAny"
+      description: Request for UpdatePackageRepository
+      title: UpdatePackageRepositoryRequest
     v1alpha1Maintainer:
       type: object
       properties:
@@ -6780,9 +6982,40 @@ components:
           type: string
           description: Version of the packaged application
           title: Application version
-      description: PackageAppVersion conveys both the package version and the packaged app
-        version.
+      description: PackageAppVersion conveys both the package version and the packaged
+        app version.
       title: Package AppVersion
+    v1alpha1PackageMetadata:
+      type: object
+      properties:
+        mediaType:
+          type: string
+          description: Media type of this metadata
+          title: Media type
+        artifactType:
+          type: string
+          description: Artifact type of this metadata
+          title: Artifact type
+        digest:
+          type: string
+          description: Digest of this metadata
+          title: Digest
+        name:
+          type: string
+          description: Human readable name for this metadata.
+          title: Name
+        description:
+          type: string
+          description: Human readable description for this metadata.
+          title: Description
+        url:
+          type: string
+          description: The url reference for this metadata.
+          title: URL
+      description: |-
+        PackageMetadata contains info to display and fetch SBOMs, scan results
+        and other linked package metadata.
+      title: Package Metadata
     v1alpha1PackageRepositoriesPermissions:
       type: object
       properties:
@@ -6995,6 +7228,75 @@ components:
         secretRef:
           $ref: "#/components/schemas/v1alpha1SecretKeyReference"
       title: PackageRepositoryTlsConfig
+    v1alpha1PackagesServiceUpdateInstalledPackageBody:
+      type: object
+      properties:
+        installedPackageRef:
+          type: object
+          properties:
+            context:
+              type: object
+              description: The context (cluster/namespace) for the package.
+              title: Installed package context
+            plugin:
+              type: object
+              example:
+                name: kapp_controller.packages
+                version: v1alpha1
+              description: >-
+                The plugin used to identify and interact with the installed
+                package.
+
+                This field can be omitted when the request is in the context of a specific plugin.
+              title: >-
+                The plugin used to identify and interact with the installed
+                package.
+
+                This field can be omitted when the request is in the context of a specific plugin.
+          title: >-
+            A reference uniquely identifying the installed package being
+            updated.
+
+            Required
+        pkgVersionReference:
+          $ref: "#/components/schemas/v1alpha1VersionReference"
+        values:
+          type: string
+          description: >-
+            An optional serialized values string to be included when templating
+            a
+
+            package in the format expected by the plugin. Included when the backend
+
+            format doesn't use secrets or configmaps for values or supports both.
+
+            These values are layered on top of any values refs above, when
+
+            relevant.
+        reconciliationOptions:
+          $ref: "#/components/schemas/v1alpha1ReconciliationOptions"
+      description: >-
+        Request for UpdateInstalledPackage. The intent is to reach the desired
+        state specified
+
+        by the fields in the request, while leaving other fields intact. This is a whole
+
+        object "Update" semantics rather than "Patch" semantics. The caller will provide the
+
+        values for the fields below, which will replace, or be overlaid onto, the
+
+        corresponding fields in the existing resource. For example, with the
+
+        UpdateInstalledPackageRequest, it is not possible to change just the 'package version
+
+        reference' without also specifying 'values' field. As a side effect, not specifying the
+
+        'values' field in the request means there are no values specified in the desired state.
+
+        So the meaning of each field value is describing the desired state of the corresponding
+
+        field in the resource after the update operation has completed the renconciliation.
+      title: UpdateInstalledPackageRequest
     v1alpha1PaginationOptions:
       type: object
       properties:
@@ -7080,6 +7382,65 @@ components:
 
         InstalledPackage.
       title: ReconciliationOptions
+    v1alpha1RepositoriesServiceUpdatePackageRepositoryBody:
+      type: object
+      properties:
+        packageRepoRef:
+          type: object
+          properties:
+            context:
+              type: object
+              description: The context (cluster/namespace) for the repository.
+              title: The context (cluster/namespace) for the repository.
+            plugin:
+              type: object
+              example:
+                name: kapp_controller.packages
+                version: v1alpha1
+              description: >-
+                The plugin used to interact with this available package.
+
+                This field should be omitted when the request is in the context of a
+
+                specific plugin.
+              title: >-
+                The plugin used to interact with this available package.
+
+                This field should be omitted when the request is in the context of a
+
+                specific plugin.
+          title: >-
+            A reference uniquely identifying the package repository being
+            updated.
+
+            The only required field
+        url:
+          type: string
+          description: URL identifying the package repository location.
+        description:
+          type: string
+          description: A user-provided description.
+        interval:
+          type: string
+          title: >-
+            The interval at which to check the upstream for updates (in
+            time+unit)
+
+            Some plugins may, additionally, support other formats, for instance,
+
+            a cron expression.
+
+            e.g., "*/10 * * * *" will be equivalent to "10m"
+
+            Optional. Defaults to 10m if not specified
+        tlsConfig:
+          $ref: "#/components/schemas/v1alpha1PackageRepositoryTlsConfig"
+        auth:
+          $ref: "#/components/schemas/v1alpha1PackageRepositoryAuth"
+        customDetail:
+          $ref: "#/components/schemas/protobufAny"
+      description: Request for UpdatePackageRepository
+      title: UpdatePackageRepositoryRequest
     v1alpha1ResourceRef:
       type: object
       properties:

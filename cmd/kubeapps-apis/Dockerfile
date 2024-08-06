@@ -3,7 +3,7 @@
 
 # syntax = docker/dockerfile:1
 
-FROM bitnami/golang:1.22.2 AS builder
+FROM bitnami/golang:1.22.5 AS builder
 WORKDIR /go/src/github.com/vmware-tanzu/kubeapps
 COPY go.mod go.sum ./
 ARG VERSION="devel"
@@ -13,13 +13,13 @@ ARG TARGETARCH
 ARG lint
 
 # https://github.com/bufbuild/buf/releases/
-ARG BUF_VERSION="1.30.1"
+ARG BUF_VERSION="1.34.0"
 
 # https://github.com/golangci/golangci-lint/releases
-ARG GOLANGCILINT_VERSION="1.57.2"
+ARG GOLANGCILINT_VERSION="1.59.1"
 
 # https://github.com/grpc-ecosystem/grpc-health-probe/releases/
-ARG GRPC_HEALTH_PROBE_VERSION="0.4.25"
+ARG GRPC_HEALTH_PROBE_VERSION="0.4.28"
 
 # Install lint tools
 RUN if [ ! -z ${lint:-} ]; then \

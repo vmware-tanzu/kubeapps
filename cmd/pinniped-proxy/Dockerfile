@@ -3,7 +3,7 @@
 
 # syntax = docker/dockerfile:1
 
-FROM rust:1.77.1 AS builder
+FROM rust:1.79.0 AS builder
 
 WORKDIR /pinniped-proxy
 ARG VERSION
