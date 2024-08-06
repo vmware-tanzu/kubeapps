@@ -287,6 +287,8 @@ jobs:
       - uses: docker/setup-buildx-action@v3
       - name: Build image
         uses: docker/build-push-action@v6
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
         with:
           file: cmd/${{matrix.image}}/Dockerfile
           platforms: ${{ env.IMG_PLATFORMS }}
@@ -324,6 +326,8 @@ jobs:
       - uses: docker/setup-buildx-action@v3
       - name: Build image
         uses: docker/build-push-action@v6
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
         with:
           context: dashboard
           platforms: ${{ env.IMG_PLATFORMS }}
@@ -360,6 +364,8 @@ jobs:
       - uses: docker/setup-buildx-action@v3
       - name: Build image
         uses: docker/build-push-action@v6
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
         with:
           context: integration
           # It doesn't make sense investing CI time in making a multiplatform image here
