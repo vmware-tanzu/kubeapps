@@ -10381,10 +10381,10 @@ modern-normalize@1.1.0, modern-normalize@^1.1.0:
   resolved "https://registry.yarnpkg.com/modern-normalize/-/modern-normalize-1.1.0.tgz#da8e80140d9221426bd4f725c6e11283d34f90b7"
   integrity sha512-2lMlY1Yc1+CUy0gw4H95uNN7vjbpoED7NNRSBHE25nWfLBdmMzFCsPshlzbxHz+gYMcBEUN8V4pU16prcdPSgA==
 
-modern-normalize@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/modern-normalize/-/modern-normalize-2.0.0.tgz#3d04ed01c81a3d4e0a0fd9ceba6abd1b16f5964b"
-  integrity sha512-CxBoEVKh5U4DH3XuNbc5ONLF6dQBc8dSc7pdZ1957FGbIO5JBqGqqchhET9dTexri8/pk9xBL6+5ceOtCIp1QA==
+modern-normalize@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/modern-normalize/-/modern-normalize-3.0.0.tgz#b44f1e4f1e8781333fb5fe0dec3956b69e17c0bb"
+  integrity sha512-oY2uocgMUQC33i5rKZMWzhyJ+U2nsoiHDYyoDVFxYVBob8RIjZoCbRSbE4+a2/SfbGmZOhOJIavLrzz3BC72tw==
 
 monaco-editor-webpack-plugin@^7.1.0:
   version "7.1.0"

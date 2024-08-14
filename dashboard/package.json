@@ -44,7 +44,7 @@
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
-    "modern-normalize": "^2.0.0",
+    "modern-normalize": "^3.0.0",
     "monaco-editor": "^0.50.0",
     "prop-types": "^15.8.1",
     "protobufjs": "^7.3.2",
