@@ -394,9 +394,9 @@ func (o *OciAPIClient) getOrasRepoClient(appName string, userAgent string) (*rem
 	if userAgent != "" {
 		header.Set("User-Agent", userAgent)
 	}
-    if o.AuthorizationHeader != "" {
-        header.Set("Authorization", o.AuthorizationHeader)
-    }
+	if o.AuthorizationHeader != "" {
+		header.Set("Authorization", o.AuthorizationHeader)
+	}
 	orasRepoClient.Client = &auth.Client{
 		Client: o.HttpClient,
 		Cache:  auth.DefaultCache,
