@@ -1804,10 +1804,10 @@ postgresql:
   ## Example:
   ## resources:
   ##   requests:
-  ##     cpu: 2
+  ##     cpu: 2000m
   ##     memory: 512Mi
   ##   limits:
-  ##     cpu: 3
+  ##     cpu: 3000m
   ##     memory: 1024Mi
   ##
   ##
