@@ -35,7 +35,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: golangci/golangci-lint-action@v6
         with:
-          version: latest
+          version: v1.59.1
           args: --timeout=10m
 
   license-headers-linter:
