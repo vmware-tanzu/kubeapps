@@ -97,7 +97,7 @@
     "@types/redux-mock-store": "^1.0.6",
     "@types/swagger-ui-react": "^4.18.3",
     "@wojtekmaj/enzyme-adapter-react-17": "^0.8.0",
-    "axios-mock-adapter": "^1.22.0",
+    "axios-mock-adapter": "^2.1.0",
     "cross-env": "^7.0.3",
     "enzyme": "^3.11.0",
     "eslint-config-prettier": "^9.1.0",
