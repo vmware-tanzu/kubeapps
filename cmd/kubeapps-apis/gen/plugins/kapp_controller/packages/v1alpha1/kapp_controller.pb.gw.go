@@ -69,7 +69,7 @@ func local_request_KappControllerPackagesService_GetAvailablePackageSummaries_0(
 }
 
 var (
-	filter_KappControllerPackagesService_GetAvailablePackageDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"available_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 7, 4, 8, 9, 10, 2, 0, 6, 5, 0, 7, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 1, 3, 7, 2, 9, 10, 2, 12, 4, 5, 6}}
+	filter_KappControllerPackagesService_GetAvailablePackageDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"available_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
 )
 
 func request_KappControllerPackagesService_GetAvailablePackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -179,7 +179,7 @@ func local_request_KappControllerPackagesService_GetAvailablePackageDetail_0(ctx
 }
 
 var (
-	filter_KappControllerPackagesService_GetAvailablePackageVersions_0 = &utilities.DoubleArray{Encoding: map[string]int{"available_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 7, 4, 8, 9, 10, 2, 0, 6, 5, 0, 7, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 1, 3, 7, 2, 9, 10, 2, 12, 4, 5, 6}}
+	filter_KappControllerPackagesService_GetAvailablePackageVersions_0 = &utilities.DoubleArray{Encoding: map[string]int{"available_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
 )
 
 func request_KappControllerPackagesService_GetAvailablePackageVersions_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -325,7 +325,7 @@ func local_request_KappControllerPackagesService_GetInstalledPackageSummaries_0(
 }
 
 var (
-	filter_KappControllerPackagesService_GetInstalledPackageDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 7, 4, 8, 9, 10, 2, 0, 6, 5, 0, 7, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 1, 3, 7, 2, 9, 10, 2, 12, 4, 5, 6}}
+	filter_KappControllerPackagesService_GetInstalledPackageDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
 )
 
 func request_KappControllerPackagesService_GetInstalledPackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -438,11 +438,7 @@ func request_KappControllerPackagesService_CreateInstalledPackage_0(ctx context.
 	var protoReq v1alpha1.CreateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -455,11 +451,7 @@ func local_request_KappControllerPackagesService_CreateInstalledPackage_0(ctx co
 	var protoReq v1alpha1.CreateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -472,11 +464,7 @@ func request_KappControllerPackagesService_UpdateInstalledPackage_0(ctx context.
 	var protoReq v1alpha1.UpdateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -526,11 +514,7 @@ func local_request_KappControllerPackagesService_UpdateInstalledPackage_0(ctx co
 	var protoReq v1alpha1.UpdateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -577,7 +561,7 @@ func local_request_KappControllerPackagesService_UpdateInstalledPackage_0(ctx co
 }
 
 var (
-	filter_KappControllerPackagesService_DeleteInstalledPackage_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 7, 4, 8, 9, 10, 2, 0, 6, 5, 0, 7, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 1, 3, 7, 2, 9, 10, 2, 12, 4, 5, 6}}
+	filter_KappControllerPackagesService_DeleteInstalledPackage_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
 )
 
 func request_KappControllerPackagesService_DeleteInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -687,7 +671,7 @@ func local_request_KappControllerPackagesService_DeleteInstalledPackage_0(ctx co
 }
 
 var (
-	filter_KappControllerPackagesService_GetInstalledPackageResourceRefs_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 7, 4, 8, 9, 10, 2, 0, 6, 5, 0, 7, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 1, 3, 7, 2, 9, 10, 2, 12, 4, 5, 6}}
+	filter_KappControllerPackagesService_GetInstalledPackageResourceRefs_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
 )
 
 func request_KappControllerPackagesService_GetInstalledPackageResourceRefs_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -800,11 +784,7 @@ func request_KappControllerRepositoriesService_AddPackageRepository_0(ctx contex
 	var protoReq v1alpha1.AddPackageRepositoryRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -817,11 +797,7 @@ func local_request_KappControllerRepositoriesService_AddPackageRepository_0(ctx 
 	var protoReq v1alpha1.AddPackageRepositoryRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -831,7 +807,7 @@ func local_request_KappControllerRepositoriesService_AddPackageRepository_0(ctx 
 }
 
 var (
-	filter_KappControllerRepositoriesService_GetPackageRepositoryDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"package_repo_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 7, 4, 8, 9, 10, 2, 0, 6, 5, 0, 7, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 1, 3, 7, 2, 9, 10, 2, 12, 4, 5, 6}}
+	filter_KappControllerRepositoriesService_GetPackageRepositoryDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"package_repo_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
 )
 
 func request_KappControllerRepositoriesService_GetPackageRepositoryDetail_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerRepositoriesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -980,11 +956,7 @@ func request_KappControllerRepositoriesService_UpdatePackageRepository_0(ctx con
 	var protoReq v1alpha1.UpdatePackageRepositoryRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -1034,11 +1006,7 @@ func local_request_KappControllerRepositoriesService_UpdatePackageRepository_0(c
 	var protoReq v1alpha1.UpdatePackageRepositoryRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -1085,7 +1053,7 @@ func local_request_KappControllerRepositoriesService_UpdatePackageRepository_0(c
 }
 
 var (
-	filter_KappControllerRepositoriesService_DeletePackageRepository_0 = &utilities.DoubleArray{Encoding: map[string]int{"package_repo_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 7, 4, 8, 9, 10, 2, 0, 6, 5, 0, 7, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 1, 3, 7, 2, 9, 10, 2, 12, 4, 5, 6}}
+	filter_KappControllerRepositoriesService_DeletePackageRepository_0 = &utilities.DoubleArray{Encoding: map[string]int{"package_repo_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
 )
 
 func request_KappControllerRepositoriesService_DeletePackageRepository_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerRepositoriesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -1195,7 +1163,7 @@ func local_request_KappControllerRepositoriesService_DeletePackageRepository_0(c
 }
 
 var (
-	filter_KappControllerRepositoriesService_GetPackageRepositoryPermissions_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "cluster": 1}, Base: []int{1, 2, 3, 2, 0, 0}, Check: []int{0, 1, 1, 2, 4, 3}}
+	filter_KappControllerRepositoriesService_GetPackageRepositoryPermissions_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "cluster": 1}, Base: []int{1, 1, 1, 0}, Check: []int{0, 1, 2, 3}}
 )
 
 func request_KappControllerRepositoriesService_GetPackageRepositoryPermissions_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerRepositoriesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -1660,21 +1628,21 @@ func RegisterKappControllerRepositoriesServiceHandlerServer(ctx context.Context,
 // RegisterKappControllerPackagesServiceHandlerFromEndpoint is same as RegisterKappControllerPackagesServiceHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
 func RegisterKappControllerPackagesServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
-	conn, err := grpc.Dial(endpoint, opts...)
+	conn, err := grpc.NewClient(endpoint, opts...)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		if err != nil {
 			if cerr := conn.Close(); cerr != nil {
-				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
+				grpclog.Errorf("Failed to close conn to %s: %v", endpoint, cerr)
 			}
 			return
 		}
 		go func() {
 			<-ctx.Done()
 			if cerr := conn.Close(); cerr != nil {
-				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
+				grpclog.Errorf("Failed to close conn to %s: %v", endpoint, cerr)
 			}
 		}()
 	}()
@@ -1939,21 +1907,21 @@ var (
 // RegisterKappControllerRepositoriesServiceHandlerFromEndpoint is same as RegisterKappControllerRepositoriesServiceHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
 func RegisterKappControllerRepositoriesServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
-	conn, err := grpc.Dial(endpoint, opts...)
+	conn, err := grpc.NewClient(endpoint, opts...)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		if err != nil {
 			if cerr := conn.Close(); cerr != nil {
-				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
+				grpclog.Errorf("Failed to close conn to %s: %v", endpoint, cerr)
 			}
 			return
 		}
 		go func() {
 			<-ctx.Done()
 			if cerr := conn.Close(); cerr != nil {
-				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
+				grpclog.Errorf("Failed to close conn to %s: %v", endpoint, cerr)
 			}
 		}()
 	}()
