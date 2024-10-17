@@ -36,6 +36,7 @@ env:
   README_GENERATOR_REPO: "bitnami-labs/readme-generator-for-helm"
   DOCKER_REGISTRY_VERSION: "2.8.3"
   GOLANG_VERSION: "1.23.2"
+  GOLANGCI_LINT_VERSION: "1.61.0"
   HELM_VERSION_MIN: "v3.8.0"
   HELM_VERSION_STABLE: "v3.16.2"
   GITHUB_VERSION: "2.59.0"
@@ -128,6 +129,7 @@ jobs:
           fi
 
           echo "golang_version=${GOLANG_VERSION}" >> $GITHUB_OUTPUT
+          echo "golangci_lint_version=${GOLANGCI_LINT_VERSION}" >> $GITHUB_OUTPUT
           echo "ssh_key_kubeapps_deploy_filename=${SSH_KEY_KUBEAPPS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
           echo "ssh_key_forked_charts_deploy_filename=${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
           echo "img_modifier=${IMG_MODIFIER}" >> $GITHUB_OUTPUT
@@ -137,6 +139,7 @@ jobs:
       - name: Show outputs
         run: |
           echo "GOLANG_VERSION: ${{steps.set-outputs.outputs.golang_version}}"
+          echo "GOLANGCI_LINT_VERSION: ${{steps.set-outputs.outputs.golangci_lint_version}}"
           echo "IMG_MODIFIER: ${{steps.set-outputs.outputs.img_modifier}}"
           echo "IMG_PREFIX: ${{steps.set-outputs.outputs.img_prefix}}"
           echo "IMG_DEV_TAG: ${{steps.set-outputs.outputs.img_dev_tag}}"
@@ -156,6 +159,7 @@ jobs:
     uses: ./.github/workflows/linters.yml
     with:
       golang_version: ${{ needs.setup.outputs.golang_version }}
+      golangci_lint_version: ${{ needs.setup.outputs.golangci_lint_version }}
 
   linters_result:
     if: inputs.run_linters && always()
