@@ -2059,7 +2059,7 @@ func TestOrderedChartVersions(t *testing.T) {
 			orderedChartVersions(chartVersions)
 
 			if !cmp.Equal(chartVersions, tc.expected) {
-				t.Errorf(cmp.Diff(tc.expected, chartVersions))
+				t.Errorf("%s", cmp.Diff(tc.expected, chartVersions))
 			}
 		})
 	}
