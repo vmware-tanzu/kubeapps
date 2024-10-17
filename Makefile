@@ -6,7 +6,7 @@ GO = /usr/bin/env go
 GOFMT = /usr/bin/env gofmt
 IMAGE_TAG ?= dev-$(shell date +%FT%H-%M-%S-%Z)
 VERSION ?= $$(git rev-parse HEAD)
-TARGET_ARCHITECTURE ?= $(shell uname -m)
+TARGET_ARCHITECTURE ?= amd64
 SUPPORTED_ARCHITECTURES := amd64 arm64 riscv64 ppc64le s390x 386 arm/v7 arm/v6
 
 ifeq ($(filter $(TARGET_ARCHITECTURE),$(SUPPORTED_ARCHITECTURES)),)
