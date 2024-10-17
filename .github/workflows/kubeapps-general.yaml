@@ -468,10 +468,14 @@ jobs:
           source ./script/lib/libcitools.sh
 
           installKind ${KIND_VERSION}
+          set -x
           installKubectl ${KUBECTL_VERSION}
+          set +x
           installMkcert ${MKCERT_VERSION}
           installHelm ${HELM_VERSION_MIN}
           installHelm ${HELM_VERSION_STABLE} helm-stable
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
       - name: "Spin up Kind cluster"
         run: |
           set -eu
