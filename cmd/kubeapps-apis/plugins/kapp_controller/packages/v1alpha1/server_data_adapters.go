@@ -314,7 +314,7 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 		installedPackageDetail.ReconciliationOptions.Interval = pkgutils.FromDuration(app.Spec.SyncPeriod)
 	}
 
-	if pkgInstall.Status.Conditions != nil && len(pkgInstall.Status.Conditions) > 0 {
+	if len(pkgInstall.Status.Conditions) > 0 {
 		installedPackageDetail.Status = &corev1.InstalledPackageStatus{
 			Ready:      pkgInstall.Status.Conditions[0].Type == kappctrlv1alpha1.ReconcileSucceeded,
 			Reason:     statusReasonForKappStatus(pkgInstall.Status.Conditions[0].Type),

@@ -111,7 +111,7 @@ function installKubectl() {
 
   info "Installing Kubectl ${KUBECTL_VERSION}"
   pushd /tmp
-    curl -LO https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl
+    curl -LO https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl
     chmod +x ./kubectl
     sudo mv ./kubectl /usr/local/bin/kubectl
   popd

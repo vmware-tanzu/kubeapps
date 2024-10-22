@@ -947,7 +947,7 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, headers http
 	var tarballURL string
 	// If the chart is cached, we can use the tarball URL from the cache,
 	// we assume cachedChart.ChartVersions only contains 1 element
-	if cachedChart.ChartVersions != nil && len(cachedChart.ChartVersions) == 1 && cachedChart.ChartVersions[0].URLs != nil {
+	if len(cachedChart.ChartVersions) == 1 && cachedChart.ChartVersions[0].URLs != nil {
 		tarballURL = chartTarballURL(cachedChart.Repo, cachedChart.ChartVersions[0])
 		log.InfoS("Using chart tarball", "url", tarballURL)
 	}
