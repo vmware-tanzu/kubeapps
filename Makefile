@@ -76,7 +76,7 @@ buf-generate:
 	cd dashboard && yarn prettier
 
 buf-mod-update:
-	buf mod update cmd/kubeapps-apis
-	buf mod update cmd/oci-catalog
+	buf dep update cmd/kubeapps-apis
+	buf dep update cmd/oci-catalog
 
 .PHONY: default all buf-generate buf-mod-update test-all test test-dashboard fmt vet lint install-tools

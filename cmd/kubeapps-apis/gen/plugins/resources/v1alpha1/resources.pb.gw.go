@@ -32,7 +32,7 @@ var _ = utilities.NewDoubleArray
 var _ = metadata.Join
 
 var (
-	filter_ResourcesService_GetResources_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "plugin": 1, "name": 2, "version": 3, "context": 4, "cluster": 5, "namespace": 6, "identifier": 7}, Base: []int{1, 12, 3, 13, 14, 1, 15, 16, 17, 0, 8, 4, 0, 9, 7, 0, 11, 10, 0, 12, 0, 0, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 3, 1, 1, 1, 6, 2, 11, 12, 2, 14, 15, 2, 17, 18, 2, 20, 4, 5, 7, 8, 9}}
+	filter_ResourcesService_GetResources_0 = &utilities.DoubleArray{Encoding: map[string]int{"installed_package_ref": 0, "plugin": 1, "name": 2, "version": 3, "context": 4, "cluster": 5, "namespace": 6, "identifier": 7}, Base: []int{1, 7, 1, 1, 2, 2, 2, 3, 6, 0, 0, 0, 5, 0, 7, 0}, Check: []int{0, 1, 2, 3, 2, 5, 2, 7, 2, 4, 6, 8, 9, 13, 2, 15}}
 )
 
 func request_ResourcesService_GetResources_0(ctx context.Context, marshaler runtime.Marshaler, client ResourcesServiceClient, req *http.Request, pathParams map[string]string) (ResourcesService_GetResourcesClient, runtime.ServerMetadata, error) {
@@ -117,7 +117,7 @@ func request_ResourcesService_GetResources_0(ctx context.Context, marshaler runt
 }
 
 var (
-	filter_ResourcesService_GetServiceAccountNames_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "cluster": 1, "namespace": 2}, Base: []int{1, 4, 5, 6, 2, 0, 4, 0, 0, 0}, Check: []int{0, 1, 1, 1, 2, 5, 2, 7, 3, 4}}
+	filter_ResourcesService_GetServiceAccountNames_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "cluster": 1, "namespace": 2}, Base: []int{1, 1, 1, 2, 0, 0}, Check: []int{0, 1, 2, 2, 3, 4}}
 )
 
 func request_ResourcesService_GetServiceAccountNames_0(ctx context.Context, marshaler runtime.Marshaler, client ResourcesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -259,7 +259,7 @@ func local_request_ResourcesService_GetNamespaceNames_0(ctx context.Context, mar
 }
 
 var (
-	filter_ResourcesService_CreateNamespace_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "cluster": 1}, Base: []int{1, 2, 3, 2, 0, 0}, Check: []int{0, 1, 1, 2, 4, 3}}
+	filter_ResourcesService_CreateNamespace_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "cluster": 1}, Base: []int{1, 1, 1, 0}, Check: []int{0, 1, 2, 3}}
 )
 
 func request_ResourcesService_CreateNamespace_0(ctx context.Context, marshaler runtime.Marshaler, client ResourcesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -329,7 +329,7 @@ func local_request_ResourcesService_CreateNamespace_0(ctx context.Context, marsh
 }
 
 var (
-	filter_ResourcesService_CheckNamespaceExists_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "cluster": 1, "namespace": 2}, Base: []int{1, 4, 5, 6, 2, 0, 4, 0, 0, 0}, Check: []int{0, 1, 1, 1, 2, 5, 2, 7, 3, 4}}
+	filter_ResourcesService_CheckNamespaceExists_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "cluster": 1, "namespace": 2}, Base: []int{1, 1, 1, 2, 0, 0}, Check: []int{0, 1, 2, 2, 3, 4}}
 )
 
 func request_ResourcesService_CheckNamespaceExists_0(ctx context.Context, marshaler runtime.Marshaler, client ResourcesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -419,7 +419,7 @@ func local_request_ResourcesService_CheckNamespaceExists_0(ctx context.Context, 
 }
 
 var (
-	filter_ResourcesService_GetSecretNames_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "cluster": 1, "namespace": 2}, Base: []int{1, 4, 5, 6, 2, 0, 4, 0, 0, 0}, Check: []int{0, 1, 1, 1, 2, 5, 2, 7, 3, 4}}
+	filter_ResourcesService_GetSecretNames_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "cluster": 1, "namespace": 2}, Base: []int{1, 1, 1, 2, 0, 0}, Check: []int{0, 1, 2, 2, 3, 4}}
 )
 
 func request_ResourcesService_GetSecretNames_0(ctx context.Context, marshaler runtime.Marshaler, client ResourcesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -509,7 +509,7 @@ func local_request_ResourcesService_GetSecretNames_0(ctx context.Context, marsha
 }
 
 var (
-	filter_ResourcesService_CreateSecret_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "cluster": 1, "namespace": 2}, Base: []int{1, 4, 5, 6, 2, 0, 4, 0, 0, 0}, Check: []int{0, 1, 1, 1, 2, 5, 2, 7, 3, 4}}
+	filter_ResourcesService_CreateSecret_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "cluster": 1, "namespace": 2}, Base: []int{1, 1, 1, 2, 0, 0}, Check: []int{0, 1, 2, 2, 3, 4}}
 )
 
 func request_ResourcesService_CreateSecret_0(ctx context.Context, marshaler runtime.Marshaler, client ResourcesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -599,7 +599,7 @@ func local_request_ResourcesService_CreateSecret_0(ctx context.Context, marshale
 }
 
 var (
-	filter_ResourcesService_CanI_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "cluster": 1}, Base: []int{1, 2, 3, 2, 0, 0}, Check: []int{0, 1, 1, 2, 4, 3}}
+	filter_ResourcesService_CanI_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "cluster": 1}, Base: []int{1, 1, 1, 0}, Check: []int{0, 1, 2, 3}}
 )
 
 func request_ResourcesService_CanI_0(ctx context.Context, marshaler runtime.Marshaler, client ResourcesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -862,21 +862,21 @@ func RegisterResourcesServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 // RegisterResourcesServiceHandlerFromEndpoint is same as RegisterResourcesServiceHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
 func RegisterResourcesServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
-	conn, err := grpc.Dial(endpoint, opts...)
+	conn, err := grpc.NewClient(endpoint, opts...)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		if err != nil {
 			if cerr := conn.Close(); cerr != nil {
-				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
+				grpclog.Errorf("Failed to close conn to %s: %v", endpoint, cerr)
 			}
 			return
 		}
 		go func() {
 			<-ctx.Done()
 			if cerr := conn.Close(); cerr != nil {
-				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
+				grpclog.Errorf("Failed to close conn to %s: %v", endpoint, cerr)
 			}
 		}()
 	}()

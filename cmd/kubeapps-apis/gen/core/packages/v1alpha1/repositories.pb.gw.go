@@ -35,11 +35,7 @@ func request_RepositoriesService_AddPackageRepository_0(ctx context.Context, mar
 	var protoReq AddPackageRepositoryRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -52,11 +48,7 @@ func local_request_RepositoriesService_AddPackageRepository_0(ctx context.Contex
 	var protoReq AddPackageRepositoryRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -66,7 +58,7 @@ func local_request_RepositoriesService_AddPackageRepository_0(ctx context.Contex
 }
 
 var (
-	filter_RepositoriesService_GetPackageRepositoryDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"package_repo_ref": 0, "plugin": 1, "name": 2, "version": 3, "context": 4, "cluster": 5, "namespace": 6, "identifier": 7}, Base: []int{1, 12, 3, 13, 14, 1, 15, 16, 17, 0, 8, 4, 0, 9, 7, 0, 11, 10, 0, 12, 0, 0, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 3, 1, 1, 1, 6, 2, 11, 12, 2, 14, 15, 2, 17, 18, 2, 20, 4, 5, 7, 8, 9}}
+	filter_RepositoriesService_GetPackageRepositoryDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"package_repo_ref": 0, "plugin": 1, "name": 2, "version": 3, "context": 4, "cluster": 5, "namespace": 6, "identifier": 7}, Base: []int{1, 7, 1, 1, 2, 2, 2, 3, 6, 0, 0, 0, 5, 0, 7, 0}, Check: []int{0, 1, 2, 3, 2, 5, 2, 7, 2, 4, 6, 8, 9, 13, 2, 15}}
 )
 
 func request_RepositoriesService_GetPackageRepositoryDetail_0(ctx context.Context, marshaler runtime.Marshaler, client RepositoriesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -255,11 +247,7 @@ func request_RepositoriesService_UpdatePackageRepository_0(ctx context.Context, 
 	var protoReq UpdatePackageRepositoryRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -329,11 +317,7 @@ func local_request_RepositoriesService_UpdatePackageRepository_0(ctx context.Con
 	var protoReq UpdatePackageRepositoryRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -400,7 +384,7 @@ func local_request_RepositoriesService_UpdatePackageRepository_0(ctx context.Con
 }
 
 var (
-	filter_RepositoriesService_DeletePackageRepository_0 = &utilities.DoubleArray{Encoding: map[string]int{"package_repo_ref": 0, "plugin": 1, "name": 2, "version": 3, "context": 4, "cluster": 5, "namespace": 6, "identifier": 7}, Base: []int{1, 12, 3, 13, 14, 1, 15, 16, 17, 0, 8, 4, 0, 9, 7, 0, 11, 10, 0, 12, 0, 0, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 3, 1, 1, 1, 6, 2, 11, 12, 2, 14, 15, 2, 17, 18, 2, 20, 4, 5, 7, 8, 9}}
+	filter_RepositoriesService_DeletePackageRepository_0 = &utilities.DoubleArray{Encoding: map[string]int{"package_repo_ref": 0, "plugin": 1, "name": 2, "version": 3, "context": 4, "cluster": 5, "namespace": 6, "identifier": 7}, Base: []int{1, 7, 1, 1, 2, 2, 2, 3, 6, 0, 0, 0, 5, 0, 7, 0}, Check: []int{0, 1, 2, 3, 2, 5, 2, 7, 2, 4, 6, 8, 9, 13, 2, 15}}
 )
 
 func request_RepositoriesService_DeletePackageRepository_0(ctx context.Context, marshaler runtime.Marshaler, client RepositoriesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -550,7 +534,7 @@ func local_request_RepositoriesService_DeletePackageRepository_0(ctx context.Con
 }
 
 var (
-	filter_RepositoriesService_GetPackageRepositoryPermissions_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "cluster": 1}, Base: []int{1, 2, 3, 2, 0, 0}, Check: []int{0, 1, 1, 2, 4, 3}}
+	filter_RepositoriesService_GetPackageRepositoryPermissions_0 = &utilities.DoubleArray{Encoding: map[string]int{"context": 0, "cluster": 1}, Base: []int{1, 1, 1, 0}, Check: []int{0, 1, 2, 3}}
 )
 
 func request_RepositoriesService_GetPackageRepositoryPermissions_0(ctx context.Context, marshaler runtime.Marshaler, client RepositoriesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -781,21 +765,21 @@ func RegisterRepositoriesServiceHandlerServer(ctx context.Context, mux *runtime.
 // RegisterRepositoriesServiceHandlerFromEndpoint is same as RegisterRepositoriesServiceHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
 func RegisterRepositoriesServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
-	conn, err := grpc.Dial(endpoint, opts...)
+	conn, err := grpc.NewClient(endpoint, opts...)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		if err != nil {
 			if cerr := conn.Close(); cerr != nil {
-				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
+				grpclog.Errorf("Failed to close conn to %s: %v", endpoint, cerr)
 			}
 			return
 		}
 		go func() {
 			<-ctx.Done()
 			if cerr := conn.Close(); cerr != nil {
-				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
+				grpclog.Errorf("Failed to close conn to %s: %v", endpoint, cerr)
 			}
 		}()
 	}()
