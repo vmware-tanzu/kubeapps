@@ -972,19 +972,17 @@ func TestDefaultValues(t *testing.T) {
 					},
 				},
 				"additionalProperties": {
-					Generic: structuralschema.Generic{
-						AdditionalProperties: &structuralschema.StructuralOrBool{
-							Structural: &structuralschema.Structural{
-								Properties: map[string]structuralschema.Structural{
-									"a": {
-										Generic: structuralschema.Generic{
-											Default: structuralschema.JSON{Object: "alpha"},
-										},
+					AdditionalProperties: &structuralschema.StructuralOrBool{
+						Structural: &structuralschema.Structural{
+							Properties: map[string]structuralschema.Structural{
+								"a": {
+									Generic: structuralschema.Generic{
+										Default: structuralschema.JSON{Object: "alpha"},
 									},
-									"b": {
-										Generic: structuralschema.Generic{
-											Default: structuralschema.JSON{Object: "beta"},
-										},
+								},
+								"b": {
+									Generic: structuralschema.Generic{
+										Default: structuralschema.JSON{Object: "beta"},
 									},
 								},
 							},
@@ -1055,34 +1053,28 @@ func TestDefaultValues(t *testing.T) {
 			},
 		}, `{"a": "A"}`},
 		{"null in nullable object with additionalProperties", `{"a": null}`, &structuralschema.Structural{
-			Generic: structuralschema.Generic{
-				AdditionalProperties: &structuralschema.StructuralOrBool{
-					Structural: &structuralschema.Structural{
-						Generic: structuralschema.Generic{
-							Nullable: true,
-							Default:  structuralschema.JSON{Object: "A"},
-						},
+			AdditionalProperties: &structuralschema.StructuralOrBool{
+				Structural: &structuralschema.Structural{
+					Generic: structuralschema.Generic{
+						Nullable: true,
+						Default:  structuralschema.JSON{Object: "A"},
 					},
 				},
 			},
 		}, `{"a": null}`},
 		{"null in non-nullable object with additionalProperties", `{"a": null}`, &structuralschema.Structural{
-			Generic: structuralschema.Generic{
-				AdditionalProperties: &structuralschema.StructuralOrBool{
-					Structural: &structuralschema.Structural{
-						Generic: structuralschema.Generic{
-							Nullable: false,
-							Default:  structuralschema.JSON{Object: "A"},
-						},
+			AdditionalProperties: &structuralschema.StructuralOrBool{
+				Structural: &structuralschema.Structural{
+					Generic: structuralschema.Generic{
+						Nullable: false,
+						Default:  structuralschema.JSON{Object: "A"},
 					},
 				},
 			},
 		}, `{"a": "A"}`},
 		{"null unknown field", `{"a": null}`, &structuralschema.Structural{
-			Generic: structuralschema.Generic{
-				AdditionalProperties: &structuralschema.StructuralOrBool{
-					Bool: true,
-				},
+			AdditionalProperties: &structuralschema.StructuralOrBool{
+				Bool: true,
 			},
 		}, `{"a": null}`},
 	}
