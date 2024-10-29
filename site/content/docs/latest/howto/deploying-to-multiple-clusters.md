@@ -133,7 +133,7 @@ Updating the value of the `clusters` chart option is just like updating any othe
 So if you had originally installed Kubeapps with a command like:
 
 ```bash
-helm install kubeapps bitnami/kubeapps --namespace kubeapps --values ./path/to/my/values.yaml
+helm install kubeapps oci://registry-1.docker.io/bitnamicharts/kubeapps --namespace kubeapps --values ./path/to/my/values.yaml
 ```
 
 then to modify the clusters configured for Kubeapps at some later point you will need to

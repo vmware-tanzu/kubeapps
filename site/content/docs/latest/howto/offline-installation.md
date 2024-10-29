@@ -36,7 +36,7 @@ To be able to able to install Kubeapps without an Internet connection, it's nece
 First, download the tarball containing the Kubeapps chart from the publicly available repository maintained by Bitnami.
 
 ```bash
-helm pull --untar https://charts.bitnami.com/bitnami/kubeapps-x.y.z.tgz
+helm pull --untar oci://registry-1.docker.io/bitnamicharts/kubeapps --version x.y.z
 helm dep update ./kubeapps
 ```
 

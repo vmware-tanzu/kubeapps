@@ -20,7 +20,7 @@ Kubeapps supports the ability for developers to inject custom app views for spec
 1. The bundle can be added via the command line:
 
    ```bash
-   helm install  bitnami/kubeapps --set-file dashboard.customComponents=*path to file* <other_flags>
+   helm install oci://registry-1.docker.io/bitnamicharts/kubeapps --set-file dashboard.customComponents=*path to file* <other_flags>
    ```
 
    Note: The file can be located anywhere on your file system or even a remote source!
