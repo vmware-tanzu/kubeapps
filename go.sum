@@ -1,3 +1,5 @@
+carvel.dev/kapp v0.63.3 h1:YKFQa8INOsmdlflHWJGhB4oSvWbOxU0Niybok1/YPaI=
+carvel.dev/kapp v0.63.3/go.mod h1:JJfWYClyhCed6rhwuRqjAbBGvDl0/EGMf1MQ/FKYbWw=
 carvel.dev/vendir v0.40.1 h1:w2fIBASZ7X6N2XlN+5xEDOf2Vn8eVRdz0mIZHuM4080=
 carvel.dev/vendir v0.40.1/go.mod h1:gW5hdNd033NCV1TFbUtvUE1Kel1eEzyiwnDyDX+y2xE=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
@@ -783,8 +785,6 @@ github.com/subosito/gotenv v1.6.0/go.mod h1:Dk4QP5c2W3ibzajGcXpNraDfq2IrhjMIvMSW
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/vito/go-interact v1.0.1 h1:O8xi8c93bRUv2Tb/v6HdiuGc+WnWt+AQzF74MOOdlBs=
 github.com/vito/go-interact v1.0.1/go.mod h1:HrdHSJXD2yn1MhlTwSIMeFgQ5WftiIorszVGd3S/DAA=
-github.com/vmware-tanzu/carvel-kapp v0.61.0 h1:BBRtZNoGFar0O2lIfofcidAerrOln8tcATyytq5OopQ=
-github.com/vmware-tanzu/carvel-kapp v0.61.0/go.mod h1:mJBWyXmRiill2rBLrj9JAMDYFkEFYX/wMRy/7vw+V8E=
 github.com/vmware-tanzu/carvel-kapp-controller v0.51.0 h1:lCCHy9n/AzWPtq5gqbINJHgmF32RCUkh9DbVQgx6HAs=
 github.com/vmware-tanzu/carvel-kapp-controller v0.51.0/go.mod h1:go1MQz1D2kVgjaE2ZHtuHGECFk8EDLeXMpjmDNDzuJM=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=

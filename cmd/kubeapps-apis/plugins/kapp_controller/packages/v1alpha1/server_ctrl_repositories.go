@@ -6,7 +6,6 @@ package main
 import (
 	"context"
 	"fmt"
-
 	"github.com/bufbuild/connect-go"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/connecterror"

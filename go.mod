@@ -8,6 +8,7 @@ go 1.23
 toolchain go1.23.2
 
 require (
+	carvel.dev/kapp v0.63.3
 	carvel.dev/vendir v0.40.1
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/Masterminds/semver/v3 v3.3.0
@@ -43,7 +44,6 @@ require (
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/stretchr/testify v1.9.0
-	github.com/vmware-tanzu/carvel-kapp v0.61.0
 	github.com/vmware-tanzu/carvel-kapp-controller v0.51.0
 	golang.org/x/net v0.27.0
 	golang.org/x/sync v0.8.0

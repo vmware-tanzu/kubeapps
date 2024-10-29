@@ -4,12 +4,12 @@
 package main
 
 import (
+	"github.com/Masterminds/semver/v3"
 	"strings"
 	"testing"
 	"time"
 
 	vendirversions "carvel.dev/vendir/pkg/vendir/versions/v1alpha1"
-	"github.com/Masterminds/semver/v3"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"

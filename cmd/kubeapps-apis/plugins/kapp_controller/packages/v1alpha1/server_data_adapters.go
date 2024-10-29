@@ -6,10 +6,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/bufbuild/connect-go"
 	"net/http"
 	"strings"
 
-	"github.com/bufbuild/connect-go"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/connecterror"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
 
