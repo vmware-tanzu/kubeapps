@@ -43,13 +43,13 @@ Key user interface parameters are:
 > - As values passed via command line:
 >
 > ```bash
-> helm install kubeapps --namespace kubeapps --set ingress.enabled=true bitnami/kubeapps
+> helm install kubeapps --namespace kubeapps --set ingress.enabled=true oci://registry-1.docker.io/bitnamicharts/kubeapps
 > ```
 >
 > - As values stored in a custom `values.yaml` file read in during chart deployment:
 >
 > ```bash
-> helm install kubeapps --namespace kubeapps -f custom-values.yaml  bitnami/kubeapps
+> helm install kubeapps --namespace kubeapps -f custom-values.yaml  oci://registry-1.docker.io/bitnamicharts/kubeapps
 > ```
 
 ### Step 2.1: Configure Authentication
@@ -177,14 +177,11 @@ To install Kubeapps in an air-gapped environment, please follow the [offline ins
 Use the commands below to install Kubeapps. The final command assumes that the Kubeapps chart configuration parameters are defined in a file named `custom-values.yaml`, so ensure this file exists before running that command.
 
 ```bash
-# Install the Bitnami helm repository
-helm repo add bitnami https://charts.bitnami.com/bitnami
-
 # Create a 'kubeapps' namespace in our cluster
 kubectl create namespace kubeapps
 
 # Install a 'kubeapps' release in the 'kubeapps' namespace with the values defined at 'custom-values.yaml'
-helm install kubeapps --namespace kubeapps bitnami/kubeapps -f custom-values.yaml
+helm install kubeapps --namespace kubeapps oci://registry-1.docker.io/bitnamicharts/kubeapps -f custom-values.yaml
 ```
 
 Finally, remember to replace the placeholder _Redirect URIs_ you entered when [creating the OAuth2 application during step 1](./step-1.md#create-an-oauth2-application) with the actual value.

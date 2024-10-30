@@ -209,7 +209,7 @@ func GetStream(url string, cli *http.Client, reqHeaders map[string]string) (io.R
 		if err == nil && len(errPayload) > 0 {
 			errorMsg += ": " + string(errPayload)
 		}
-		return nil, respContentType, fmt.Errorf(errorMsg)
+		return nil, respContentType, fmt.Errorf("%s", errorMsg)
 	}
 
 	return res.Body, respContentType, nil

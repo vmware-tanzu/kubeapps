@@ -515,7 +515,7 @@ func (c *NamespacedResourceWatcherCache) processOneEvent(event watch.Event) {
 	} else {
 		sb.WriteString(fmt.Sprintf("\n[%s]", common.PrettyPrint(event.Object)))
 	}
-	log.Infof(sb.String())
+	log.Info(sb.String())
 
 	switch event.Type {
 	case watch.Added, watch.Modified, watch.Deleted:
