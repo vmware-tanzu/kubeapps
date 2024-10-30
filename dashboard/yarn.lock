@@ -12234,10 +12234,10 @@ react-minimal-pie-chart@^8.4.0:
   dependencies:
     "@types/svg-path-parser" "^1.1.3"
 
-react-monaco-editor@^0.56.0:
-  version "0.56.0"
-  resolved "https://registry.yarnpkg.com/react-monaco-editor/-/react-monaco-editor-0.56.0.tgz#50378e8811b3ebc7e3f3542d7649155dddd26e1e"
-  integrity sha512-DY59d8aEbds1X2hJgTNVCLMgxkL4lUGf67UqcsPEbA4RnV/q7T/yFSz3M/lE320+8UklzngEwnrq5cb18ylnCA==
+react-monaco-editor@^0.56.1:
+  version "0.56.1"
+  resolved "https://registry.yarnpkg.com/react-monaco-editor/-/react-monaco-editor-0.56.1.tgz#36a69c3c81e42b94ff33cfcc67042c2f5bc19f05"
+  integrity sha512-L2/QjVK+C95zqvl19ACo5ftg3MWAL0ku4zaMzcgt8LO2mhH2gIDfHr1sIZYY7LaKdriWq4EUO6pIdnQDswZ9gA==
   dependencies:
     prop-types "^15.8.1"
 
