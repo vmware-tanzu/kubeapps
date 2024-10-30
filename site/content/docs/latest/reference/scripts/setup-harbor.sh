@@ -120,7 +120,7 @@ silence kubectl create ns "$namespace"
 silence helm install harbor \
     --namespace "$namespace" \
     -f <(echo "$values") \
-    bitnami/harbor
+    oci://registry-1.docker.io/bitnamicharts/harbor
 # Wait for Harbor components
 info "Waiting for Harbor components to be ready..."
 deployments=(
