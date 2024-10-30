@@ -35,10 +35,11 @@ env:
   BRANCH_KUBEAPPS_REPO: "main"
   README_GENERATOR_REPO: "bitnami-labs/readme-generator-for-helm"
   DOCKER_REGISTRY_VERSION: "2.8.3"
-  GOLANG_VERSION: "1.22.5"
+  GOLANG_VERSION: "1.23.2"
+  GOLANGCI_LINT_VERSION: "1.61.0"
   HELM_VERSION_MIN: "v3.8.0"
-  HELM_VERSION_STABLE: "v3.15.3"
-  GITHUB_VERSION: "2.53.0"
+  HELM_VERSION_STABLE: "v3.16.2"
+  GITHUB_VERSION: "2.59.0"
   IMAGES_TO_PUSH: "apprepository-controller dashboard asset-syncer pinniped-proxy kubeapps-apis oci-catalog"
   # IMG_DEV_TAG is the tags used for the Kubeapps docker images. Ideally there should be an IMG_PROD_TAG
   # but its value is dynamic and GitHub actions doesn't support it in the `env` block, so it is generated
@@ -51,19 +52,19 @@ env:
   IMG_PREFIX_FOR_FORKS: "your-dockerhub-username/"
   # Currently, we only build the images for linux/amd64 because building cross-platform images is extremely slow...
   IMG_PLATFORMS: "linux/amd64"
-  KAPP_CONTROLLER_VERSION: "v0.50.5"
+  KAPP_CONTROLLER_VERSION: "v0.50.6"
   FLUX_VERSION: "v2.2.3"
   KIND_VERSION: "v0.23.0"
+  K8S_KIND_VERSION: "v1.30.0@sha256:047357ac0cfea04663786a612ba1eaba9702bef25227a794b52890dd8bcd692e"
   MKCERT_VERSION: "v1.4.4"
-  NODE_VERSION: "20.15.1"
+  NODE_VERSION: "20.18.0"
   OLM_VERSION: "v0.28.0"
-  POSTGRESQL_VERSION: "16.3.0-debian-12-r19"
-  RUST_VERSION: "1.79.0"
+  POSTGRESQL_VERSION: "17.0.0-debian-12-r3"
+  RUST_VERSION: "1.81.0"
   SEMVER_VERSION: "3.4.0"
-  K8S_KIND_VERSION: "v1.29.4@sha256:3abb816a5b1061fb15c6e9e60856ec40d56b7b52bcea5f5f1350bc6e2320b6f8"
-  KUBECTL_VERSION: "v1.29.7"
-  GKE_REGULAR_VERSION: "1.29"
-  GKE_STABLE_VERSION: "1.27"
+  KUBECTL_VERSION: "v1.30.5"
+  GKE_REGULAR_VERSION: "1.30"
+  GKE_STABLE_VERSION: "1.30"
   GKE_ZONE: "us-east1-c"
   GKE_PROJECT: "vmware-kubeapps-ci"
   GKE_CLUSTER: "kubeapps-test"
@@ -128,6 +129,7 @@ jobs:
           fi
 
           echo "golang_version=${GOLANG_VERSION}" >> $GITHUB_OUTPUT
+          echo "golangci_lint_version=${GOLANGCI_LINT_VERSION}" >> $GITHUB_OUTPUT
           echo "ssh_key_kubeapps_deploy_filename=${SSH_KEY_KUBEAPPS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
           echo "ssh_key_forked_charts_deploy_filename=${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
           echo "img_modifier=${IMG_MODIFIER}" >> $GITHUB_OUTPUT
@@ -137,6 +139,7 @@ jobs:
       - name: Show outputs
         run: |
           echo "GOLANG_VERSION: ${{steps.set-outputs.outputs.golang_version}}"
+          echo "GOLANGCI_LINT_VERSION: ${{steps.set-outputs.outputs.golangci_lint_version}}"
           echo "IMG_MODIFIER: ${{steps.set-outputs.outputs.img_modifier}}"
           echo "IMG_PREFIX: ${{steps.set-outputs.outputs.img_prefix}}"
           echo "IMG_DEV_TAG: ${{steps.set-outputs.outputs.img_dev_tag}}"
@@ -156,6 +159,7 @@ jobs:
     uses: ./.github/workflows/linters.yml
     with:
       golang_version: ${{ needs.setup.outputs.golang_version }}
+      golangci_lint_version: ${{ needs.setup.outputs.golangci_lint_version }}
 
   linters_result:
     if: inputs.run_linters && always()
@@ -286,7 +290,9 @@ jobs:
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
       - name: Build image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
         with:
           file: cmd/${{matrix.image}}/Dockerfile
           platforms: ${{ env.IMG_PLATFORMS }}
@@ -323,7 +329,9 @@ jobs:
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
       - name: Build image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
         with:
           context: dashboard
           platforms: ${{ env.IMG_PLATFORMS }}
@@ -359,7 +367,9 @@ jobs:
           tags: ${{needs.setup.outputs.img_dev_tag}}
       - uses: docker/setup-buildx-action@v3
       - name: Build image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
         with:
           context: integration
           # It doesn't make sense investing CI time in making a multiplatform image here

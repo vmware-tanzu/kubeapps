@@ -18,7 +18,7 @@ Kubeapps chart allows you to automatically deploy the proxy for you as a sidecar
 This example uses `oauth2-proxy`'s generic OIDC provider with Google, but is applicable to any OIDC provider such as Keycloak, Dex, Okta or Azure Active Directory etc. Note that the issuer url is passed as an additional flag here, together with an option to enable the cookie being set over an insecure connection for local development only:
 
 ```bash
-helm install kubeapps bitnami/kubeapps \
+helm install kubeapps oci://registry-1.docker.io/bitnamicharts/kubeapps \
   --namespace kubeapps \
   --set authProxy.enabled=true \
   --set authProxy.provider=oidc \
@@ -35,7 +35,7 @@ Some of the specific providers that come with `oauth2-proxy` are using OpenIDCon
 Here we no longer need to provide the issuer -url as an additional flag:
 
 ```bash
-helm install kubeapps bitnami/kubeapps \
+helm install kubeapps oci://registry-1.docker.io/bitnamicharts/kubeapps \
   --namespace kubeapps \
   --set authProxy.enabled=true \
   --set authProxy.provider=google \
@@ -56,7 +56,7 @@ For this reason, when deploying Kubeapps on GKE we need to ensure that
 Note that using the custom `google` provider here enables google to prompt the user for consent for the specific permissions requested in the scopes below, in a user-friendly way. You can also use the `oidc` provider but in this case the user is not prompted for the extra consent:
 
 ```bash
-helm install kubeapps bitnami/kubeapps \
+helm install kubeapps oci://registry-1.docker.io/bitnamicharts/kubeapps \
   --namespace kubeapps \
   --set authProxy.enabled=true \
   --set authProxy.provider=google \
