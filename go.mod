@@ -3,10 +3,10 @@
 
 module github.com/vmware-tanzu/kubeapps
 
-go 1.22
+go 1.23.2
 
 require (
-	carvel.dev/vendir v0.40.1
+	carvel.dev/vendir v0.42.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/adhocore/gronx v1.8.1
@@ -34,7 +34,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opencontainers/image-spec v1.1.0
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	github.com/spf13/cobra-cli v1.3.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.18.2
