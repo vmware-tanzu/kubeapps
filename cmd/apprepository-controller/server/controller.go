@@ -390,7 +390,7 @@ func (c *Controller) syncHandler(key string) error {
 	if !metav1.IsControlledBy(cronjob, apprepo) && !objectBelongsTo(cronjob, apprepo) {
 		msg := fmt.Sprintf(messageResourceExists, cronjob.GetName())
 		c.recorder.Event(apprepo, corev1.EventTypeWarning, errResourceExists, msg)
-		return fmt.Errorf(msg)
+		return fmt.Errorf("%s", msg)
 	}
 
 	if apprepo.GetNamespace() == c.conf.KubeappsNamespace {

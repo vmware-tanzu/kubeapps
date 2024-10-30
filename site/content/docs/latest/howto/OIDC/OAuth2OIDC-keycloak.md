@@ -125,7 +125,7 @@ auth:
 Then just deploy Keycloak either using Kubeapps UI or helm cli as follows:
 
 ```shell
-helm install keycloak bitnami/keycloak --values my-values.yaml
+helm install keycloak oci://registry-1.docker.io/bitnamicharts/keycloak --values my-values.yaml
 ```
 
 ## Keycloak Configuration
