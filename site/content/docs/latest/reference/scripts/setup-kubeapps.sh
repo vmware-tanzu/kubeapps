@@ -117,7 +117,7 @@ silence kubectl create ns "$namespace"
 silence helm install kubeapps \
     --namespace "$namespace" \
     -f <(echo "$values") \
-    bitnami/kubeapps
+    oci://registry-1.docker.io/bitnamicharts/kubeapps
 # Wait for Kubeapps components
 info "Waiting for Kubeapps components to be ready..."
 deployments=(

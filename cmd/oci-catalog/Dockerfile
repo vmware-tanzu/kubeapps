@@ -3,14 +3,14 @@
 
 # syntax = docker/dockerfile:1
 
-FROM rust:1.79.0 AS builder
+FROM rust:1.81.0 AS builder
 
 WORKDIR /oci-catalog
 ARG VERSION="devel"
 ARG TARGETARCH
 
 # https://github.com/grpc-ecosystem/grpc-health-probe/releases/
-ARG GRPC_HEALTH_PROBE_VERSION="0.4.28"
+ARG GRPC_HEALTH_PROBE_VERSION="0.4.34"
 
 # Ensure protoc is available for the build.rs step.
 RUN apt-get update && apt-get -y install --no-install-recommends protobuf-compiler && rm -rf /var/lib/apt/lists/*
