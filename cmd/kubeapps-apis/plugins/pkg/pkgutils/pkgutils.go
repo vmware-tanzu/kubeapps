@@ -153,7 +153,7 @@ func IsValidChart(chart *models.Chart) (bool, error) {
 	if chart.Repo == nil {
 		return false, connect.NewError(connect.CodeInternal, fmt.Errorf("Required field .Repo not found on helm chart: %v", chart))
 	}
-	if chart.ChartVersions == nil || len(chart.ChartVersions) == 0 {
+	if len(chart.ChartVersions) == 0 {
 		return false, connect.NewError(connect.CodeInternal, fmt.Errorf("Required field .chart.ChartVersions not found on helm chart or is empty: %v", chart))
 	} else {
 		for _, chartVersion := range chart.ChartVersions {
