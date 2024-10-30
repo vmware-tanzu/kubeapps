@@ -3,21 +3,21 @@
 
 module github.com/vmware-tanzu/kubeapps
 
-go 1.22
+go 1.23.2
 
 require (
-	carvel.dev/vendir v0.40.1
+	carvel.dev/vendir v0.42.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/Masterminds/semver/v3 v3.2.1
-	github.com/adhocore/gronx v1.8.1
+	github.com/Masterminds/semver/v3 v3.3.0
+	github.com/adhocore/gronx v1.19.3
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/bufbuild/connect-go v1.10.0
 	github.com/bufbuild/connect-grpchealth-go v1.1.1
-	github.com/containerd/containerd v1.7.19
+	github.com/containerd/containerd v1.7.23
 	github.com/cppforlife/go-cli-ui v0.0.0-20220622150351-995494831c6c
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/reference v0.6.0
-	github.com/docker/cli v27.0.3+incompatible
+	github.com/docker/cli v27.3.1+incompatible
 	github.com/fluxcd/helm-controller/api v0.37.4
 	github.com/fluxcd/pkg/apis/meta v1.4.0
 	github.com/fluxcd/pkg/oci v0.36.0
@@ -28,27 +28,27 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-containerregistry v0.20.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0
-	github.com/itchyny/gojq v0.12.15
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0
+	github.com/itchyny/gojq v0.12.16
 	github.com/jinzhu/copier v0.4.0
 	github.com/lib/pq v1.10.9
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opencontainers/image-spec v1.1.0
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	github.com/spf13/cobra-cli v1.3.0
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.18.2
+	github.com/spf13/viper v1.19.0
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/stretchr/testify v1.9.0
 	github.com/vmware-tanzu/carvel-kapp v0.61.0
 	github.com/vmware-tanzu/carvel-kapp-controller v0.51.0
-	golang.org/x/net v0.27.0
-	golang.org/x/sync v0.7.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20240513163218-0867130af1f8
-	google.golang.org/grpc v1.64.1
-	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
-	google.golang.org/protobuf v1.34.2
+	golang.org/x/net v0.30.0
+	golang.org/x/sync v0.8.0
+	google.golang.org/genproto/googleapis/api v0.0.0-20241021214115-324edc3d5d38
+	google.golang.org/grpc v1.67.1
+	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1
+	google.golang.org/protobuf v1.35.1
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.14.4
 	k8s.io/api v0.29.3
@@ -95,9 +95,9 @@ require (
 	github.com/aws/smithy-go v1.20.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/carvel-dev/semver/v4 v4.0.1-0.20240402203627-beb83fbf25e4 // indirect
-	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
-	github.com/containerd/errdefs v0.1.0 // indirect
+	github.com/containerd/errdefs v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/cppforlife/cobrautil v0.0.0-20221130162803-acdfead391ef // indirect
@@ -150,7 +150,7 @@ require (
 	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/itchyny/timefmt-go v0.1.5 // indirect
+	github.com/itchyny/timefmt-go v0.1.6 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jmoiron/sqlx v1.3.5 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
@@ -183,7 +183,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
+	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -208,22 +208,22 @@ require (
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.46.1 // indirect
-	go.opentelemetry.io/otel v1.21.0 // indirect
-	go.opentelemetry.io/otel/metric v1.21.0 // indirect
-	go.opentelemetry.io/otel/trace v1.21.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0 // indirect
+	go.opentelemetry.io/otel v1.24.0 // indirect
+	go.opentelemetry.io/otel/metric v1.24.0 // indirect
+	go.opentelemetry.io/otel/trace v1.24.0 // indirect
 	go.starlark.net v0.0.0-20230726094710-7dadff395006 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.25.0 // indirect
+	golang.org/x/crypto v0.28.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/image v0.18.0 // indirect
-	golang.org/x/oauth2 v0.20.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
-	golang.org/x/term v0.22.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/oauth2 v0.22.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
+	golang.org/x/term v0.25.0 // indirect
+	golang.org/x/text v0.19.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240513163218-0867130af1f8 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241015192408-796eee8c2d53 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

@@ -37,9 +37,8 @@ This guide walks you through the process of deploying Kubeapps for your cluster 
 Use the official [Bitnami Kubeapps chart](https://github.com/bitnami/charts/tree/main/bitnami/kubeapps) to install the latest version of Kubeapps:
 
 ```bash
-helm repo add bitnami https://charts.bitnami.com/bitnami
 kubectl create namespace kubeapps
-helm install kubeapps --namespace kubeapps bitnami/kubeapps
+helm install kubeapps --namespace kubeapps oci://registry-1.docker.io/bitnamicharts/kubeapps
 ```
 
 For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](https://github.com/vmware-tanzu/kubeapps/blob/main/chart/kubeapps/README.md).
