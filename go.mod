@@ -13,7 +13,7 @@ require (
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/bufbuild/connect-go v1.10.0
 	github.com/bufbuild/connect-grpchealth-go v1.1.1
-	github.com/containerd/containerd v1.7.19
+	github.com/containerd/containerd v1.7.23
 	github.com/cppforlife/go-cli-ui v0.0.0-20220622150351-995494831c6c
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/reference v0.6.0
@@ -97,7 +97,7 @@ require (
 	github.com/carvel-dev/semver/v4 v4.0.1-0.20240402203627-beb83fbf25e4 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
-	github.com/containerd/errdefs v0.1.0 // indirect
+	github.com/containerd/errdefs v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/cppforlife/cobrautil v0.0.0-20221130162803-acdfead391ef // indirect
