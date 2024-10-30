@@ -8,7 +8,11 @@ on:
       golang_version:
         type: string
         required: false
-        default: "1.22"
+        default: "1.23"
+      golangci_lint_version:
+        type: string
+        required: false
+        default: "1.61.0"
 
 jobs:
   yaml-linter:
@@ -35,7 +39,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: golangci/golangci-lint-action@v6
         with:
-          version: latest
+          version: ${{ inputs.golangci_lint_version }}
           args: --timeout=10m
 
   license-headers-linter:

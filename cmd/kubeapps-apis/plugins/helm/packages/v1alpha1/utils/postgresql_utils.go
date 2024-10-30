@@ -221,7 +221,7 @@ func (m *PostgresAssetManager) GenerateWhereClause(cq ChartQuery) (string, []int
 		whereClauses = append(whereClauses, fmt.Sprintf("(info->'chartVersions' @> $%d::jsonb)", len(whereQueryParams)))
 	}
 
-	if cq.Repos != nil && len(cq.Repos) > 0 {
+	if len(cq.Repos) > 0 {
 		repoClauses := []string{}
 		for _, repo := range cq.Repos {
 			if repo != "" {
@@ -234,7 +234,7 @@ func (m *PostgresAssetManager) GenerateWhereClause(cq ChartQuery) (string, []int
 			whereClauses = append(whereClauses, repoQuery)
 		}
 	}
-	if cq.Categories != nil && len(cq.Categories) > 0 {
+	if len(cq.Categories) > 0 {
 		categoryClauses := []string{}
 		for _, category := range cq.Categories {
 			if category != "" {
