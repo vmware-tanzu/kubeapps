@@ -1244,15 +1244,29 @@
   resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.10.0.tgz#1a67ac889c2d464a3492b3e54c38f80517963b16"
   integrity sha512-QDdVFLoN93Zjg36NoQPZfsVH9tZew7wKDKyV5qRdj8ntT4wQCOradQjRaTdwMhWUYsgKsvCINKKm87FdEk96Ag==
 
-"@bufbuild/protoc-gen-es@^1.10.0":
-  version "1.10.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-es/-/protoc-gen-es-1.10.0.tgz#8771794259b6b78554458b85f7149df155ebe21b"
-  integrity sha512-zBYBsVT/ul4uZb6F+kD7/k4sWNHVVbEPfJwKi0FDr+9VJo8MKIofI6pkr5ksBLr4fi/74r+e/75Xi/0clL5dXg==
-  dependencies:
-    "@bufbuild/protobuf" "^1.10.0"
-    "@bufbuild/protoplugin" "1.10.0"
+"@bufbuild/protobuf@2.2.2", "@bufbuild/protobuf@^2.2.2":
+  version "2.2.2"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-2.2.2.tgz#1a6d89603fb215dc4d4178052d05b30b83c75402"
+  integrity sha512-UNtPCbrwrenpmrXuRwn9jYpPoweNXj8X5sMvYgsqYyaH8jQ6LfUJSk3dJLnBK+6sfYPrF4iAIo5sd5HQ+tg75A==
 
-"@bufbuild/protoplugin@1.10.0", "@bufbuild/protoplugin@^1.7.2":
+"@bufbuild/protoc-gen-es@^2.2.2":
+  version "2.2.2"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-es/-/protoc-gen-es-2.2.2.tgz#50ab4784c91f06f97fea60d5c34adc1090d06057"
+  integrity sha512-dQNfX2c6srAevuT0NR+C5OrNp+dlebIhR2R/GQOhJykCMJB1GB0jBnniSEWC+6YIUGFGLXgSyYbtNPaxZGPM0Q==
+  dependencies:
+    "@bufbuild/protobuf" "^2.2.2"
+    "@bufbuild/protoplugin" "2.2.2"
+
+"@bufbuild/protoplugin@2.2.2":
+  version "2.2.2"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoplugin/-/protoplugin-2.2.2.tgz#dbbc43342473a0b174e10841c6dffab07121ef10"
+  integrity sha512-EKKrjBsA/F2l502PPWfmvx//qRJpOXpyDhwFOYSbwRYfqzEUuuNSb1A+YGE7iDxoEqxwo+len/CJny29iP1ESg==
+  dependencies:
+    "@bufbuild/protobuf" "2.2.2"
+    "@typescript/vfs" "^1.5.2"
+    typescript "5.4.5"
+
+"@bufbuild/protoplugin@^1.7.2":
   version "1.10.0"
   resolved "https://registry.yarnpkg.com/@bufbuild/protoplugin/-/protoplugin-1.10.0.tgz#314035fa2b80fa56e72d1aa06eb9ea6de6877c4c"
   integrity sha512-u6NE4vL0lw1+EK4/PiE/SQB7fKO4LRJNTEScIXVOi2x88K/c8WKc/k0KyEaA0asVBMpwekJQZGnRyj04ZtN5Gg==
@@ -3426,6 +3440,13 @@
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/@typescript/vfs/-/vfs-1.5.0.tgz#ed942922724f9ace8c07c80b006c47e5e3833218"
   integrity sha512-AJS307bPgbsZZ9ggCT3wwpg3VbTKMFNHfaY/uF0ahSkYYrPF2dSSKDNIDIQAHm9qJqbLvCsSJH7yN4Vs/CsMMg==
+  dependencies:
+    debug "^4.1.1"
+
+"@typescript/vfs@^1.5.2":
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/@typescript/vfs/-/vfs-1.6.0.tgz#9c90d8c43f7ac53cc77d5959e5c4c9b639f0959e"
+  integrity sha512-hvJUjNVeBMp77qPINuUvYXj4FyWeeMMKZkxEATEU3hqBAQ7qdTBCUFT7Sp0Zu0faeEtFf+ldXxMEDr/bk73ISg==
   dependencies:
     debug "^4.1.1"
 
@@ -14652,6 +14673,11 @@ typescript@4.5.2:
   version "4.5.2"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.5.2.tgz#8ac1fba9f52256fdb06fb89e4122fa6a346c2998"
   integrity sha512-5BlMof9H1yGt0P8/WF+wPNw6GfctgGjXp5hkblpyT+8rkASSmkUKMXrxR0Xg8ThVCi/JnHQiKXeBaEwCeQwMFw==
+
+typescript@5.4.5:
+  version "5.4.5"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.4.5.tgz#42ccef2c571fdbd0f6718b1d1f5e6e5ef006f611"
+  integrity sha512-vcI4UpRgg81oIRUFwR0WSIHKt11nJ7SAVlYNIu+QpqeyXP+gpQJy/Z4+F0aGxSE4MqwjyXvW/TzgkLAx2AGHwQ==
 
 typescript@^5.5.4:
   version "5.5.4"
