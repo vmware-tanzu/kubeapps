@@ -18,9 +18,9 @@ import (
 	"testing"
 	"time"
 
-	helmv2beta2 "github.com/fluxcd/helm-controller/api/v2beta2"
+	helmv2 "github.com/fluxcd/helm-controller/api/v2"
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
-	sourcev1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1"
 	"github.com/go-redis/redis/v8"
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
@@ -143,7 +143,7 @@ func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.
 		}
 
 		// Check for helmrepositories left over from manual testing. This has caused me a lot grief
-		var l *sourcev1beta2.HelmRepositoryList
+		var l *sourcev1.HelmRepositoryList
 		var names []string
 		const maxWait = 25
 		for i := 0; i <= maxWait; i++ {
@@ -250,12 +250,12 @@ func kubeAddHelmRepository(t *testing.T, name types.NamespacedName, typ, url, se
 	if interval <= 0 {
 		interval = time.Duration(10 * time.Minute)
 	}
-	repo := sourcev1beta2.HelmRepository{
+	repo := sourcev1.HelmRepository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name.Name,
 			Namespace: name.Namespace,
 		},
-		Spec: sourcev1beta2.HelmRepositorySpec{
+		Spec: sourcev1.HelmRepositorySpec{
 			URL:      url,
 			Interval: metav1.Duration{Duration: interval},
 		},
@@ -296,7 +296,7 @@ func kubeAddHelmRepositoryAndCleanup(t *testing.T, name types.NamespacedName, ty
 	return err
 }
 
-func kubeGetHelmRepository(t *testing.T, name types.NamespacedName) (*sourcev1beta2.HelmRepository, error) {
+func kubeGetHelmRepository(t *testing.T, name types.NamespacedName) (*sourcev1.HelmRepository, error) {
 	t.Logf("+kubeGetHelmRepository(%s)", name)
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
@@ -304,7 +304,7 @@ func kubeGetHelmRepository(t *testing.T, name types.NamespacedName) (*sourcev1be
 	if ifc, err := kubeGetCtrlClient(); err != nil {
 		return nil, err
 	} else {
-		var repo sourcev1beta2.HelmRepository
+		var repo sourcev1.HelmRepository
 		if err := ifc.Get(ctx, name, &repo); err != nil {
 			return nil, err
 		}
@@ -312,7 +312,7 @@ func kubeGetHelmRepository(t *testing.T, name types.NamespacedName) (*sourcev1be
 	}
 }
 
-func kubeListAllHelmRepositories(t *testing.T) (*sourcev1beta2.HelmRepositoryList, error) {
+func kubeListAllHelmRepositories(t *testing.T) (*sourcev1.HelmRepositoryList, error) {
 	t.Logf("+kubeListAllHelmRepositories()")
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
@@ -320,7 +320,7 @@ func kubeListAllHelmRepositories(t *testing.T) (*sourcev1beta2.HelmRepositoryLis
 	if ifc, err := kubeGetCtrlClient(); err != nil {
 		return nil, err
 	} else {
-		var repoList sourcev1beta2.HelmRepositoryList
+		var repoList sourcev1.HelmRepositoryList
 		if err := ifc.List(ctx, &repoList); err != nil {
 			return nil, err
 		}
@@ -339,7 +339,7 @@ func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name types.NamespacedName)
 	} else {
 		ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 		defer cancel()
-		var repoList sourcev1beta2.HelmRepositoryList
+		var repoList sourcev1.HelmRepositoryList
 		if watcher, err := ifc.Watch(ctx, &repoList); err != nil {
 			return err
 		} else {
@@ -356,8 +356,8 @@ func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name types.NamespacedName)
 				}
 				switch event.Type {
 				case watch.Added, watch.Modified:
-					if repo, ok := event.Object.(*sourcev1beta2.HelmRepository); !ok {
-						return errors.New("Could not cast to *sourcev1beta2.HelmRepository")
+					if repo, ok := event.Object.(*sourcev1.HelmRepository); !ok {
+						return errors.New("Could not cast to *sourcev1.HelmRepository")
 					} else {
 						hour, minute, second := time.Now().Clock()
 						complete, success, reason := isHelmRepositoryReady(*repo)
@@ -380,7 +380,7 @@ func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name types.NamespacedName)
 // this should eventually be replaced with flux plugin's DeleteRepository()
 func kubeDeleteHelmRepository(t *testing.T, name types.NamespacedName) error {
 	t.Logf("+kubeDeleteHelmRepository(%s)", name)
-	repo := &sourcev1beta2.HelmRepository{
+	repo := &sourcev1.HelmRepository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name.Name,
 			Namespace: name.Namespace,
@@ -399,7 +399,7 @@ func kubeExistsHelmRepository(t *testing.T, name types.NamespacedName) (bool, er
 	t.Logf("+kubeExistsHelmRepository(%s)", name)
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	var repo sourcev1beta2.HelmRepository
+	var repo sourcev1.HelmRepository
 	if ifc, err := kubeGetCtrlClient(); err != nil {
 		return false, err
 	} else if err = ifc.Get(ctx, name, &repo); err == nil {
@@ -413,7 +413,7 @@ func kubeDeleteHelmRelease(t *testing.T, name types.NamespacedName) error {
 	t.Logf("+kubeDeleteHelmRelease(%s)", name)
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	release := &helmv2beta2.HelmRelease{
+	release := &helmv2.HelmRelease{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name.Name,
 			Namespace: name.Namespace,
@@ -430,7 +430,7 @@ func kubeExistsHelmRelease(t *testing.T, name types.NamespacedName) (bool, error
 	t.Logf("+kubeExistsHelmRelease(%s)", name)
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	var rel helmv2beta2.HelmRelease
+	var rel helmv2.HelmRelease
 	if ifc, err := kubeGetCtrlClient(); err != nil {
 		return false, err
 	} else if err = ifc.Get(ctx, name, &rel); err == nil {
@@ -825,7 +825,7 @@ func kubeCreateSecret(t *testing.T, secret *apiv1.Secret) error {
 	return err
 }
 
-func kubeSetKubeappsManagedSecretOwnerRef(t *testing.T, secretName types.NamespacedName, ownerRepo *sourcev1beta2.HelmRepository) error {
+func kubeSetKubeappsManagedSecretOwnerRef(t *testing.T, secretName types.NamespacedName, ownerRepo *sourcev1.HelmRepository) error {
 	t.Logf("+kubeSetKubeappsManagedSecretOwnerRef(%s, %s)", secretName, ownerRepo.Name)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
@@ -851,9 +851,9 @@ func kubeSetKubeappsManagedSecretOwnerRef(t *testing.T, secretName types.Namespa
 		*metav1.NewControllerRef(
 			ownerRepo,
 			schema.GroupVersionKind{
-				Group:   sourcev1beta2.GroupVersion.Group,
-				Version: sourcev1beta2.GroupVersion.Version,
-				Kind:    sourcev1beta2.HelmRepositoryKind,
+				Group:   sourcev1.GroupVersion.Group,
+				Version: sourcev1.GroupVersion.Version,
+				Kind:    sourcev1.HelmRepositoryKind,
 			}),
 	}
 
@@ -1028,11 +1028,11 @@ func kubeGetCtrlClient() (ctrlclient.WithWatch, error) {
 			return nil, err
 		} else {
 			scheme := runtime.NewScheme()
-			err = sourcev1beta2.AddToScheme(scheme)
+			err = sourcev1.AddToScheme(scheme)
 			if err != nil {
 				return nil, err
 			}
-			err = helmv2beta2.AddToScheme(scheme)
+			err = helmv2.AddToScheme(scheme)
 			if err != nil {
 				return nil, err
 			}

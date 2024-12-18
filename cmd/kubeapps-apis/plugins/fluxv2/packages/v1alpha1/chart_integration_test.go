@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	sourcev1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	fluxplugin "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
@@ -329,12 +329,12 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 	rules := map[string][]rbacv1.PolicyRule{
 		names[1].Namespace: {
 			{
-				APIGroups: []string{sourcev1beta2.GroupVersion.Group},
+				APIGroups: []string{sourcev1.GroupVersion.Group},
 				Resources: []string{fluxHelmRepositories},
 				Verbs:     []string{"get", "list"},
 			},
 			{
-				APIGroups: []string{sourcev1beta2.GroupVersion.Group},
+				APIGroups: []string{sourcev1.GroupVersion.Group},
 				Resources: []string{"helmcharts"},
 				Verbs:     []string{"get", "list"},
 			},

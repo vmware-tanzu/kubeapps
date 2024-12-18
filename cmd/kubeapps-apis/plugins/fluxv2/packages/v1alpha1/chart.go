@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/bufbuild/connect-go"
-	sourcev1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
@@ -27,12 +27,12 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func (s *Server) getChartInCluster(ctx context.Context, headers http.Header, key types.NamespacedName) (*sourcev1beta2.HelmChart, error) {
+func (s *Server) getChartInCluster(ctx context.Context, headers http.Header, key types.NamespacedName) (*sourcev1.HelmChart, error) {
 	client, err := s.getClient(headers, key.Namespace)
 	if err != nil {
 		return nil, err
 	}
-	var chartObj sourcev1beta2.HelmChart
+	var chartObj sourcev1.HelmChart
 	if err = client.Get(ctx, key, &chartObj); err != nil {
 		return nil, connecterror.FromK8sError("get", "HelmChart", key.String(), err)
 	}

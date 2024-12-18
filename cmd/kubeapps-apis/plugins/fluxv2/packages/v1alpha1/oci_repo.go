@@ -47,7 +47,7 @@ import (
 
 	"github.com/fluxcd/pkg/oci/auth/login"
 	"github.com/fluxcd/pkg/version"
-	sourcev1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1"
 
 	// OCI Registry As a Storage (ORAS)
 	orasregistryauthv2 "oras.land/oras-go/v2/registry/remote/auth"
@@ -386,7 +386,7 @@ func newRegistryClient(isLogin bool, tlsConfig *tls.Config, getterOpts []getter.
 // OCI Helm repository, which defines a source, does not produce an Artifact
 // ref https://fluxcd.io/docs/components/source/helmrepositories/#helm-oci-repository
 
-func (s *repoEventSink) onAddOciRepo(repo sourcev1beta2.HelmRepository) ([]byte, bool, error) {
+func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool, error) {
 	log.V(4).Infof("+onAddOciRepo(%s)", common.PrettyPrint(repo))
 	defer log.V(4).Info("-onAddOciRepo")
 
@@ -444,7 +444,7 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1beta2.HelmRepository) ([]byte,
 	return buf.Bytes(), true, nil
 }
 
-func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo sourcev1beta2.HelmRepository) ([]byte, bool, error) {
+func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo sourcev1.HelmRepository) ([]byte, bool, error) {
 	log.Infof("+onModifyOciRepo(%s)", common.PrettyPrint(repo))
 	defer log.Info("-onModifyOciRepo")
 
@@ -576,12 +576,12 @@ func (r *OCIChartRepository) shortRepoName(fullRepoName string) (string, error) 
 	}
 }
 
-func (s *Server) newOCIChartRepositoryAndLogin(ctx context.Context, repo sourcev1beta2.HelmRepository) (*OCIChartRepository, error) {
+func (s *Server) newOCIChartRepositoryAndLogin(ctx context.Context, repo sourcev1.HelmRepository) (*OCIChartRepository, error) {
 	sink := s.newRepoEventSink()
 	return sink.newOCIChartRepositoryAndLogin(ctx, repo)
 }
 
-func (s *repoEventSink) newOCIChartRepositoryAndLogin(ctx context.Context, repo sourcev1beta2.HelmRepository) (*OCIChartRepository, error) {
+func (s *repoEventSink) newOCIChartRepositoryAndLogin(ctx context.Context, repo sourcev1.HelmRepository) (*OCIChartRepository, error) {
 	if loginOpts, getterOpts, cred, err := s.clientOptionsForOciRepo(ctx, repo); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to create registry client: %w", err))
 	} else {
@@ -649,7 +649,7 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 	return ociRepo, nil
 }
 
-func (s *repoEventSink) clientOptionsForOciRepo(ctx context.Context, repo sourcev1beta2.HelmRepository) ([]registry.LoginOption, []getter.Option, *orasregistryauthv2.Credential, error) {
+func (s *repoEventSink) clientOptionsForOciRepo(ctx context.Context, repo sourcev1.HelmRepository) ([]registry.LoginOption, []getter.Option, *orasregistryauthv2.Credential, error) {
 	var loginOpts []registry.LoginOption
 	var cred *orasregistryauthv2.Credential
 	getterOpts := []getter.Option{
@@ -680,7 +680,7 @@ func (s *repoEventSink) clientOptionsForOciRepo(ctx context.Context, repo source
 		}
 	}
 
-	if repo.Spec.Provider != "" && repo.Spec.Provider != sourcev1beta2.GenericOCIProvider {
+	if repo.Spec.Provider != "" && repo.Spec.Provider != "generic" {
 		ctxTimeout, cancel := context.WithTimeout(ctx, repo.Spec.Timeout.Duration)
 		defer cancel()
 
@@ -734,7 +734,7 @@ func downloadChartWithHelmGetter(tlsConfig *tls.Config, getterOptions []getter.O
 	return buf, err
 }
 
-func getOciChartModels(appNames []string, allTags map[string]TagList, ociChartRepo *OCIChartRepository, repo *sourcev1beta2.HelmRepository) ([]models.Chart, error) {
+func getOciChartModels(appNames []string, allTags map[string]TagList, ociChartRepo *OCIChartRepository, repo *sourcev1.HelmRepository) ([]models.Chart, error) {
 	charts := []models.Chart{}
 	for _, fullAppName := range appNames {
 		appName, err := ociChartRepo.shortRepoName(fullAppName)
@@ -756,7 +756,7 @@ func getOciChartModels(appNames []string, allTags map[string]TagList, ociChartRe
 	return charts, nil
 }
 
-func getOciChartModel(appName string, tags TagList, ociChartRepo *OCIChartRepository, repo *sourcev1beta2.HelmRepository) (*models.Chart, error) {
+func getOciChartModel(appName string, tags TagList, ociChartRepo *OCIChartRepository, repo *sourcev1.HelmRepository) (*models.Chart, error) {
 	// Encode repository names to store them in the database.
 	encodedAppName := url.PathEscape(appName)
 	chartID := path.Join(repo.Name, encodedAppName)
@@ -870,8 +870,8 @@ func downloadOCIChartFn(ociRepo *OCIChartRepository) func(chartID, chartUrl, cha
 }
 
 // oidcAuth generates the OIDC credential authenticator based on the specified cloud provider.
-func oidcAuth(ctx context.Context, repo sourcev1beta2.HelmRepository) (*orasregistryauthv2.Credential, error) {
-	url := strings.TrimPrefix(repo.Spec.URL, sourcev1beta2.OCIRepositoryPrefix)
+func oidcAuth(ctx context.Context, repo sourcev1.HelmRepository) (*orasregistryauthv2.Credential, error) {
+	url := strings.TrimPrefix(repo.Spec.URL, "oci://")
 	ref, err := name.ParseReference(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse URL '%s': %w", repo.Spec.URL, err)
@@ -888,11 +888,11 @@ func oidcAuth(ctx context.Context, repo sourcev1beta2.HelmRepository) (*orasregi
 func loginWithManager(ctx context.Context, provider, url string, ref name.Reference) (*orasregistryauthv2.Credential, error) {
 	opts := login.ProviderOptions{}
 	switch provider {
-	case sourcev1beta2.AmazonOCIProvider:
+	case "amazon":
 		opts.AwsAutoLogin = true
-	case sourcev1beta2.AzureOCIProvider:
+	case "azure":
 		opts.AzureAutoLogin = true
-	case sourcev1beta2.GoogleOCIProvider:
+	case "gcp":
 		opts.GcpAutoLogin = true
 	}
 
