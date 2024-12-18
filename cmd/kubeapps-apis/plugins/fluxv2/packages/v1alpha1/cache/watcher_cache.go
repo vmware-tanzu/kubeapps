@@ -131,7 +131,7 @@ type NamespacedResourceWatcherCacheConfig struct {
 	OnResyncFunc ResyncFunc
 
 	// These funcs are needed to manipulate API-specific objects, such as flux's
-	// sourcev1beta2.HelmRepository, in a generic fashion
+	// sourcev1.HelmRepository, in a generic fashion
 	NewObjFunc    NewObjectFunc
 	NewListFunc   NewObjectListFunc
 	ListItemsFunc GetListItemsFunc
