@@ -374,6 +374,7 @@ type OciAPIClient struct {
 	// aims to work around some of the shortfalls of the OCI Distribution spec
 	// API
 	GrpcClient ocicatalog.OCICatalogServiceClient
+	AuthorizationHeader string
 }
 
 func (o *OciAPIClient) getOrasRepoClient(appName string, userAgent string) (*remote.Repository, error) {
@@ -392,6 +393,9 @@ func (o *OciAPIClient) getOrasRepoClient(appName string, userAgent string) (*rem
 	header := auth.DefaultClient.Header.Clone()
 	if userAgent != "" {
 		header.Set("User-Agent", userAgent)
+	}
+	if o.AuthorizationHeader != "" {
+		header.Set("Authorization", o.AuthorizationHeader)
 	}
 	orasRepoClient.Client = &auth.Client{
 		Client: o.HttpClient,
@@ -916,7 +920,7 @@ func getOCIRepo(namespace, name, repoURL, authorizationHeader string, filter *ap
 		repositories:          ociRepos,
 		AppRepositoryInternal: &models.AppRepositoryInternal{Namespace: namespace, Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader},
 		puller:                &helm.OCIPuller{Resolver: ociResolver},
-		ociCli:                &OciAPIClient{RegistryNamespaceUrl: url, HttpClient: netClient, GrpcClient: *grpcClient},
+		ociCli:                &OciAPIClient{RegistryNamespaceUrl: url, HttpClient: netClient, GrpcClient: *grpcClient, AuthorizationHeader: authorizationHeader},
 		filter:                filter,
 		manager:               manager,
 	}, nil
