@@ -300,17 +300,80 @@ func (r *HelmRepo) Charts(ctx context.Context, fetchLatestOnly bool, chartResult
 // FetchFiles retrieves the important files of a chart and version from the repo
 func (r *HelmRepo) FetchFiles(cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
 	authorizationHeader := ""
-	chartTarballURL := chartTarballURL(r.AppRepositoryInternal, cv)
+	chartTarballURL, err := url.Parse(chartTarballURL(r.AppRepositoryInternal, cv))
+	if err != nil {
+		return nil, err
+	}
 
-	if passCredentials || len(r.AuthorizationHeader) > 0 && isURLDomainEqual(chartTarballURL, r.URL) {
+	if passCredentials || len(r.AuthorizationHeader) > 0 && isURLDomainEqual(chartTarballURL.String(), r.URL) {
 		authorizationHeader = r.AuthorizationHeader
 	}
 
+	// If URL points to an OCI chart, we transform its URL to its tgz blob URL
+	if chartTarballURL.Scheme == "oci" {
+		// Override the chart tarball with the oci blob tarball
+		chartTarballURL, err = getOciTarballUrl(chartTarballURL, userAgent, authorizationHeader, r.netClient)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return tarutil.FetchChartDetailFromTarballUrl(
-		chartTarballURL,
+		chartTarballURL.String(),
 		userAgent,
 		authorizationHeader,
 		r.netClient)
+}
+
+func getOciTarballUrl(chartTarballURL *url.URL, userAgent string, authorizationHeader string, netClient *http.Client) (*url.URL, error) {
+	// If URL points to an OCI chart, we transform its URL to its tgz blob URL
+	// Extract the tag from the chart Path
+	chartTag := "latest"
+	i := strings.Index(chartTarballURL.Path, ":")
+	if i >= 0 {
+		chartTag = chartTarballURL.Path[i+1:]
+		chartTarballURL.Path = chartTarballURL.Path[:i]
+	}
+	// TODO: I would like to refactor the OciAPIClient to be generic and allow generating an OCI client without all the oci-catalog specific code
+	// IMPORTANT: Currently, getOrasRepoClient(appname, userAgent) is too specific, I would need to be able to generate an OCI client for other general purposes by simply providing an url.
+	o := OciAPIClient{RegistryNamespaceUrl: chartTarballURL, HttpClient: netClient, GrpcClient: nil, AuthorizationHeader: authorizationHeader}
+	orasRepoClient, err := o.getOrasRepoClient(path.Join(chartTarballURL.Host, chartTarballURL.Path), "", "")
+	if err != nil {
+		panic(err)
+	}
+	ctx := context.TODO()
+	// TODO: This code is too similar to the function 'IsHelmChart'.
+	// Again, I would like to move both functions into a common 'fetchOciManifest' function in order to simplify the code structure
+	descriptor, rc, err := orasRepoClient.Manifests().FetchReference(ctx, chartTag)
+	if err != nil {
+		panic(err)
+	}
+	defer rc.Close()
+
+	manifestData, err := content.ReadAll(rc, descriptor)
+	if err != nil {
+		panic(err)
+	}
+
+	var manifest OCIManifest
+	err = json.Unmarshal(manifestData, &manifest)
+
+	if len(manifest.Layers) != 1 || manifest.Layers[0].MediaType != "application/vnd.cncf.helm.chart.content.v1.tar+gzip" {
+		log.Errorf("Unexpected layer in index manifest: %v", manifest)
+		return nil, fmt.Errorf("unexpected layer in chart manifest")
+	}
+
+	ociTarballUrl, err := buildChartOciTarballUrl("https", chartTarballURL.Host, chartTarballURL.Path, manifest.Layers[0].Digest)
+	if err != nil {
+		return nil, err
+	}
+
+	return ociTarballUrl, nil
+}
+
+func buildChartOciTarballUrl(schema string, registry string, repository string, blobDigest string) (*url.URL, error) {
+	ociTarballUrl := fmt.Sprintf("%s://%s/v2/%s/blobs/%s", schema, registry, repository, blobDigest)
+	return url.Parse(ociTarballUrl)
 }
 
 // TagList represents a list of tags as specified at
