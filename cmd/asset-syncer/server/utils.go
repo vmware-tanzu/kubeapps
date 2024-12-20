@@ -329,15 +329,18 @@ func getOciTarballUrl(chartTarballURL *url.URL, userAgent string, authorizationH
 	// If URL points to an OCI chart, we transform its URL to its tgz blob URL
 	// Extract the tag from the chart Path
 	chartTag := "latest"
-	i := strings.LastIndex(chartTarballURL.Path, ":")
+	i := strings.Index(chartTarballURL.Path, ":")
 	if i >= 0 {
 		chartTag = chartTarballURL.Path[i+1:]
 		chartTarballURL.Path = chartTarballURL.Path[:i]
 	}
+	j := strings.LastIndex(chartTarballURL.Path, "/")
+	RegistryNamespaceUrl, err := url.Parse(chartTarballURL.Path[j+1:])
+	appName := chartTarballURL.Path[:j]
 	// TODO: I would like to refactor the OciAPIClient to be generic and allow generating an OCI client without all the oci-catalog specific code
 	// IMPORTANT: Currently, getOrasRepoClient(appname, userAgent) is too specific, I would need to be able to generate an OCI client for other general purposes by simply providing an url.
-	o := OciAPIClient{RegistryNamespaceUrl: chartTarballURL, HttpClient: netClient, GrpcClient: nil, AuthorizationHeader: authorizationHeader}
-	orasRepoClient, err := o.getOrasRepoClient(path.Join(chartTarballURL.Host, chartTarballURL.Path), "", "")
+	o := OciAPIClient{RegistryNamespaceUrl: RegistryNamespaceUrl, HttpClient: netClient, GrpcClient: nil}
+	orasRepoClient, err := o.getOrasRepoClient(appName, "")
 	if err != nil {
 		panic(err)
 	}
