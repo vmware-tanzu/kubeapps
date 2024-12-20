@@ -329,7 +329,7 @@ func getOciTarballUrl(chartTarballURL *url.URL, userAgent string, authorizationH
 	// If URL points to an OCI chart, we transform its URL to its tgz blob URL
 	// Extract the tag from the chart Path
 	chartTag := "latest"
-	i := strings.Index(chartTarballURL.Path, ":")
+	i := strings.LastIndex(chartTarballURL.Path, ":")
 	if i >= 0 {
 		chartTag = chartTarballURL.Path[i+1:]
 		chartTarballURL.Path = chartTarballURL.Path[:i]
