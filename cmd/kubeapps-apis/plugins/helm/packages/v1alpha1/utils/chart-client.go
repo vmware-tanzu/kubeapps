@@ -183,10 +183,9 @@ func (c *OCIRepoClient) GetChart(details *ChartDetails, repoURL string) (*chart.
 	if c.puller == nil {
 		return nil, fmt.Errorf("unable to retrieve chart, Init should be called first")
 	}
-	if details.TarballURL == "" {
-		return nil, fmt.Errorf("calling GetChart '%s - %s' without any tarball url", details.ChartName, details.Version)
+	if details == nil || details.TarballURL == "" {
+		return nil, fmt.Errorf("unable to retrieve chart, missing chart details")
 	}
-
 	ref := strings.TrimPrefix(strings.TrimSpace(details.TarballURL), "oci://")
 	chartBuffer, _, err := c.puller.PullOCIChart(ref)
 	if err != nil {

@@ -218,7 +218,7 @@ func TestOCIClient(t *testing.T) {
 		cli := NewOCIClient("foo")
 		cli.(*OCIRepoClient).puller = &helmfake.OCIPuller{}
 		_, err := cli.GetChart(nil, "foo")
-		if !strings.Contains(err.Error(), "invalid URI for request") {
+		if !strings.Contains(err.Error(), "missing chart details") {
 			t.Errorf("Unexpected error %v", err)
 		}
 	})
