@@ -8,12 +8,39 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
+	"net/http"
 	"path"
 	"regexp"
 	"strings"
 
 	chart "github.com/vmware-tanzu/kubeapps/pkg/chart/models"
+	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 )
+
+// Fetches helm chart details from a gzipped tarball
+//
+// name is expected in format "foo/bar" or "foo%2Fbar" if url-escaped
+func FetchChartDetailFromTarballUrl(chartTarballURL string, userAgent string, authz string, netClient *http.Client) (map[string]string, error) {
+	reqHeaders := make(map[string]string)
+	if len(userAgent) > 0 {
+		reqHeaders["User-Agent"] = userAgent
+	}
+	if len(authz) > 0 {
+		reqHeaders["Authorization"] = authz
+	}
+
+	// use our "standard" http-client library
+	reader, _, err := httpclient.GetStream(chartTarballURL, netClient, reqHeaders)
+	if reader != nil {
+		defer reader.Close()
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return FetchChartDetailFromTarball(reader)
+}
 
 // Fetches helm chart details from a gzipped tarball
 //

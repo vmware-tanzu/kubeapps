@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"path"
 	"strings"
 
 	"github.com/containerd/containerd/remotes/docker"
@@ -184,12 +183,8 @@ func (c *OCIRepoClient) GetChart(details *ChartDetails, repoURL string) (*chart.
 	if c.puller == nil {
 		return nil, fmt.Errorf("unable to retrieve chart, Init should be called first")
 	}
-	parsedURL, err := url.Parse(strings.TrimSpace(details.TarballURL))
-	if err != nil {
-		return nil, err
-	}
 
-	ref := path.Join(parsedURL.Host, parsedURL.Path)
+	ref := strings.TrimPrefix(strings.TrimSpace(details.TarballURL), "oci://")
 	chartBuffer, _, err := c.puller.PullOCIChart(ref)
 	if err != nil {
 		return nil, err

@@ -300,102 +300,39 @@ func (r *HelmRepo) Charts(ctx context.Context, fetchLatestOnly bool, chartResult
 // FetchFiles retrieves the important files of a chart and version from the repo
 func (r *HelmRepo) FetchFiles(cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
 	authorizationHeader := ""
-	chartTarballURL, err := url.Parse(chartTarballURL(r.AppRepositoryInternal, cv))
-	if err != nil {
-		return nil, err
-	}
+	chartTarballURL := chartTarballURL(r.AppRepositoryInternal, cv)
 
-	if passCredentials || len(r.AuthorizationHeader) > 0 && isURLDomainEqual(chartTarballURL.String(), r.URL) {
+	if passCredentials || len(r.AuthorizationHeader) > 0 && isURLDomainEqual(chartTarballURL, r.URL) {
 		authorizationHeader = r.AuthorizationHeader
 	}
 
 	// If URL points to an OCI chart, we transform its URL to its tgz blob URL
-	if chartTarballURL.Scheme == "oci" {
+	if strings.HasPrefix(chartTarballURL, "oci://") {
 		return FetchChartDetailFromOciUrl(chartTarballURL, userAgent, authorizationHeader, r.netClient)
 	} else {
-		return FetchChartDetailFromTarballUrl(chartTarballURL, userAgent, authorizationHeader, r.netClient)
+		return tarutil.FetchChartDetailFromTarballUrl(chartTarballURL, userAgent, authorizationHeader, r.netClient)
 	}
 }
 
-// Fetches helm chart details from a gzipped tarball
-//
-// name is expected in format "foo/bar" or "foo%2Fbar" if url-escaped
-func FetchChartDetailFromTarballUrl(chartTarballURL *url.URL, userAgent string, authz string, netClient *http.Client) (map[string]string, error) {
-	reqHeaders := make(map[string]string)
+// Fetches helm chart details from an OCI url
+func FetchChartDetailFromOciUrl(chartTarballURL string, userAgent string, authz string, netClient *http.Client) (map[string]string, error) {
+	headers := http.Header{}
 	if len(userAgent) > 0 {
-		reqHeaders["User-Agent"] = userAgent
+		headers.Add("User-Agent", userAgent)
 	}
 	if len(authz) > 0 {
-		reqHeaders["Authorization"] = authz
+		headers.Add("Authorization", authz)
 	}
 
-	// use our "standard" http-client library
-	reader, _, err := httpclient.GetStream(chartTarballURL.String(), netClient, reqHeaders)
-	if reader != nil {
-		defer reader.Close()
-	}
+	puller := &helm.OCIPuller{Resolver: docker.NewResolver(docker.ResolverOptions{Headers: headers, Client: netClient})}
 
-	if err != nil {
-		return nil, err
-	}
-	return tarutil.FetchChartDetailFromTarball(reader)
-}
-
-func FetchChartDetailFromOciUrl(chartTarballURL *url.URL, userAgent string, authorizationHeader string, netClient *http.Client) (map[string]string, error) {
-	// If URL points to an OCI chart, we transform its URL to its tgz blob URL
-	// Extract the tag from the chart Path
-	chartTag := "latest"
-	i := strings.Index(chartTarballURL.Path, ":")
-	if i >= 0 {
-		chartTag = chartTarballURL.Path[i+1:]
-		chartTarballURL.Path = chartTarballURL.Path[:i]
-	}
-	// Separate the appname from the oci Url
-	j := strings.LastIndex(chartTarballURL.Path, "/")
-	appName := chartTarballURL.Path[j+1:]
-	chartTarballURL.Path = chartTarballURL.Path[:j]
-	// TODO: I would like to refactor the OciAPIClient to be generic and allow generating an OCI client without all the oci-catalog specific code
-	// IMPORTANT: Currently, getOrasRepoClient(appname, userAgent) is too specific, I would need to be able to generate an OCI client for other general purposes by simply providing an url.
-	o := OciAPIClient{RegistryNamespaceUrl: chartTarballURL, HttpClient: netClient, GrpcClient: nil}
-	orasRepoClient, err := o.getOrasRepoClient(appName, "")
-	if err != nil {
-		panic(err)
-	}
-	ctx := context.TODO()
-	// TODO: This code is too similar to the function 'IsHelmChart'.
-	// Again, I would like to move both functions into a common 'fetchOciManifest' function in order to simplify the code structure
-	manifestDescriptor, rc, err := orasRepoClient.Manifests().FetchReference(ctx, chartTag)
-	if err != nil {
-		panic(err)
-	}
-	defer rc.Close()
-
-	manifestData, err := content.ReadAll(rc, manifestDescriptor)
-	if err != nil {
-		panic(err)
-	}
-
-	var manifest OCIManifest
-	err = json.Unmarshal(manifestData, &manifest)
-
-	if len(manifest.Layers) != 1 || manifest.Layers[0].MediaType != "application/vnd.cncf.helm.chart.content.v1.tar+gzip" {
-		log.Errorf("Unexpected layer in index manifest: %v", manifest)
-		return nil, fmt.Errorf("unexpected layer in chart manifest")
-	}
-
-	blobDescriptor, err := orasRepoClient.Blobs().Resolve(ctx, manifest.Layers[0].Digest)
-	if err != nil {
-		return nil, err
-	}
-	reader, err := orasRepoClient.Blobs().Fetch(ctx, blobDescriptor)
-	if reader != nil {
-		defer reader.Close()
-	}
+	ref := strings.TrimPrefix(strings.TrimSpace(chartTarballURL), "oci://")
+	chartBuffer, _, err := puller.PullOCIChart(ref)
 	if err != nil {
 		return nil, err
 	}
 
-	return tarutil.FetchChartDetailFromTarball(reader)
+	return tarutil.FetchChartDetailFromTarball(chartBuffer)
 }
 
 // TagList represents a list of tags as specified at
