@@ -184,16 +184,12 @@ func (c *OCIRepoClient) GetChart(details *ChartDetails, repoURL string) (*chart.
 	if c.puller == nil {
 		return nil, fmt.Errorf("unable to retrieve chart, Init should be called first")
 	}
-	parsedURL, err := url.ParseRequestURI(strings.TrimSpace(repoURL))
-	if err != nil {
-		return nil, err
-	}
-	unescapedChartName, err := url.QueryUnescape(details.ChartName)
+	parsedURL, err := url.Parse(strings.TrimSpace(details.TarballURL))
 	if err != nil {
 		return nil, err
 	}
 
-	ref := path.Join(parsedURL.Host, parsedURL.Path, fmt.Sprintf("%s:%s", unescapedChartName, details.Version))
+	ref := path.Join(parsedURL.Host, parsedURL.Path)
 	chartBuffer, _, err := c.puller.PullOCIChart(ref)
 	if err != nil {
 		return nil, err
@@ -215,12 +211,11 @@ type ChartClientFactoryInterface interface {
 type ChartClientFactory struct{}
 
 // New for ClientResolver
-func (c *ChartClientFactory) New(repoType, userAgent string) ChartClient {
+func (c *ChartClientFactory) New(tarballUrl string, userAgent string) ChartClient {
 	var client ChartClient
-	switch repoType {
-	case "oci":
+	if strings.HasPrefix(tarballUrl, "oci://") {
 		client = NewOCIClient(userAgent)
-	default:
+	} else {
 		client = NewChartClient(userAgent)
 	}
 	return client
