@@ -306,11 +306,33 @@ func (r *HelmRepo) FetchFiles(cv models.ChartVersion, userAgent string, passCred
 		authorizationHeader = r.AuthorizationHeader
 	}
 
-	return tarutil.FetchChartDetailFromTarballUrl(
-		chartTarballURL,
-		userAgent,
-		authorizationHeader,
-		r.netClient)
+	// If URL points to an OCI chart, we transform its URL to its tgz blob URL
+	if strings.HasPrefix(chartTarballURL, "oci://") {
+		return FetchChartDetailFromOciUrl(chartTarballURL, userAgent, authorizationHeader, r.netClient)
+	} else {
+		return tarutil.FetchChartDetailFromTarballUrl(chartTarballURL, userAgent, authorizationHeader, r.netClient)
+	}
+}
+
+// Fetches helm chart details from an OCI url
+func FetchChartDetailFromOciUrl(chartTarballURL string, userAgent string, authz string, netClient *http.Client) (map[string]string, error) {
+	headers := http.Header{}
+	if len(userAgent) > 0 {
+		headers.Add("User-Agent", userAgent)
+	}
+	if len(authz) > 0 {
+		headers.Add("Authorization", authz)
+	}
+
+	puller := &helm.OCIPuller{Resolver: docker.NewResolver(docker.ResolverOptions{Headers: headers, Client: netClient})}
+
+	ref := strings.TrimPrefix(strings.TrimSpace(chartTarballURL), "oci://")
+	chartBuffer, _, err := puller.PullOCIChart(ref)
+	if err != nil {
+		return nil, err
+	}
+
+	return tarutil.FetchChartDetailFromTarball(chartBuffer)
 }
 
 // TagList represents a list of tags as specified at

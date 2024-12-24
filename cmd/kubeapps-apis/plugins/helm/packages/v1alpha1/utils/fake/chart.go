@@ -47,6 +47,6 @@ func (f *ChartClient) Init(appRepo *appRepov1.AppRepository, caCertSecret *corev
 type ChartClientFactory struct{}
 
 // New returns a fake ChartClient
-func (c *ChartClientFactory) New(repoType, userAgent string) utils.ChartClient {
+func (c *ChartClientFactory) New(tarballURL string, userAgent string) utils.ChartClient {
 	return &ChartClient{}
 }
