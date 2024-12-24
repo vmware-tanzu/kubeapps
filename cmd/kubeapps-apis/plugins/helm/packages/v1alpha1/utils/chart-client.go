@@ -188,6 +188,10 @@ func (c *OCIRepoClient) GetChart(details *ChartDetails, repoURL string) (*chart.
 		return nil, fmt.Errorf("unable to retrieve chart, missing chart details")
 	}
 	chartURL, err := resolveChartURL(repoURL, details.TarballURL)
+	if err != nil {
+		return nil, err
+	}
+
 	ref := path.Join(chartURL.Host, chartURL.Path)
 	chartBuffer, _, err := c.puller.PullOCIChart(ref)
 	if err != nil {
