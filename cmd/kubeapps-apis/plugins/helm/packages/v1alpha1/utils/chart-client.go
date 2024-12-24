@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 
 	"github.com/containerd/containerd/remotes/docker"
@@ -100,7 +101,7 @@ func (c *HelmRepoClient) GetChart(details *ChartDetails, repoURL string) (*chart
 	}
 
 	log.Infof("Downloading %s ...", chartURL)
-	chart, err := fetchChart(c.netClient, chartURL)
+	chart, err := fetchChart(c.netClient, chartURL.String())
 	if err != nil {
 		return nil, err
 	}
@@ -108,16 +109,16 @@ func (c *HelmRepoClient) GetChart(details *ChartDetails, repoURL string) (*chart
 	return chart, nil
 }
 
-func resolveChartURL(indexURL, chartURL string) (string, error) {
+func resolveChartURL(indexURL, chartURL string) (*url.URL, error) {
 	parsedIndexURL, err := url.Parse(strings.TrimSpace(indexURL))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	parsedChartURL, err := parsedIndexURL.Parse(strings.TrimSpace(chartURL))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return parsedChartURL.String(), nil
+	return parsedChartURL, nil
 }
 
 // fetchChart returns the Chart content given an URL
@@ -186,7 +187,8 @@ func (c *OCIRepoClient) GetChart(details *ChartDetails, repoURL string) (*chart.
 	if details == nil || details.TarballURL == "" {
 		return nil, fmt.Errorf("unable to retrieve chart, missing chart details")
 	}
-	ref := strings.TrimPrefix(strings.TrimSpace(details.TarballURL), "oci://")
+	chartURL, err := resolveChartURL(repoURL, details.TarballURL)
+	ref := path.Join(chartURL.Host, chartURL.Path)
 	chartBuffer, _, err := c.puller.PullOCIChart(ref)
 	if err != nil {
 		return nil, err

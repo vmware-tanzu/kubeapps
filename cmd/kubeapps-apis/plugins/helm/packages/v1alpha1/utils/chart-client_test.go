@@ -57,7 +57,7 @@ func Test_resolveChartURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			chartURL, err := resolveChartURL(tt.baseURL, tt.chartURL)
 			assert.NoError(t, err)
-			assert.Equal(t, chartURL, tt.wantedURL, "url")
+			assert.Equal(t, chartURL.String(), tt.wantedURL, "url")
 		})
 	}
 }
@@ -231,7 +231,7 @@ func TestOCIClient(t *testing.T) {
 			ExpectedName: "foo/bar/nginx:5.1.1",
 			Content:      map[string]*bytes.Buffer{"5.1.1": bytes.NewBuffer(data)},
 		}
-		ch, err := cli.GetChart(&ChartDetails{ChartName: "nginx", Version: "5.1.1"}, "http://foo/bar")
+		ch, err := cli.GetChart(&ChartDetails{ChartName: "nginx", Version: "5.1.1", TarballURL: "oci://foo/bar/nginx:5.1.1"}, "http://foo/bar")
 		if ch == nil {
 			t.Errorf("Unexpected error: %s", err)
 		}
@@ -248,7 +248,7 @@ func TestOCIClient(t *testing.T) {
 			ExpectedName: "foo/bar/bar/nginx:5.1.1",
 			Content:      map[string]*bytes.Buffer{"5.1.1": bytes.NewBuffer(data)},
 		}
-		ch, err := cli.GetChart(&ChartDetails{ChartName: "nginx", Version: "5.1.1"}, "http://foo/bar%2Fbar")
+		ch, err := cli.GetChart(&ChartDetails{ChartName: "nginx", Version: "5.1.1", TarballURL: "oci://foo/bar%2Fbar/nginx:5.1.1"}, "http://foo/bar%2Fbar")
 		if ch == nil {
 			t.Errorf("Unexpected error: %s", err)
 		}
