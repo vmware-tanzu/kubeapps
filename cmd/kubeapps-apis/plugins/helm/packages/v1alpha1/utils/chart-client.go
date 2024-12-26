@@ -101,7 +101,7 @@ func (c *HelmRepoClient) GetChart(details *ChartDetails, repoURL string) (*chart
 	}
 
 	log.Infof("Downloading %s ...", chartURL)
-	chart, err := fetchChart(c.netClient, chartURL)
+	chart, err := fetchChart(c.netClient, chartURL.String())
 	if err != nil {
 		return nil, err
 	}
@@ -109,16 +109,16 @@ func (c *HelmRepoClient) GetChart(details *ChartDetails, repoURL string) (*chart
 	return chart, nil
 }
 
-func resolveChartURL(indexURL, chartURL string) (string, error) {
+func resolveChartURL(indexURL, chartURL string) (*url.URL, error) {
 	parsedIndexURL, err := url.Parse(strings.TrimSpace(indexURL))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	parsedChartURL, err := parsedIndexURL.Parse(strings.TrimSpace(chartURL))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return parsedChartURL.String(), nil
+	return parsedChartURL, nil
 }
 
 // fetchChart returns the Chart content given an URL
@@ -184,16 +184,15 @@ func (c *OCIRepoClient) GetChart(details *ChartDetails, repoURL string) (*chart.
 	if c.puller == nil {
 		return nil, fmt.Errorf("unable to retrieve chart, Init should be called first")
 	}
-	parsedURL, err := url.ParseRequestURI(strings.TrimSpace(repoURL))
-	if err != nil {
-		return nil, err
+	if details == nil || details.TarballURL == "" {
+		return nil, fmt.Errorf("unable to retrieve chart, missing chart details")
 	}
-	unescapedChartName, err := url.QueryUnescape(details.ChartName)
+	chartURL, err := resolveChartURL(repoURL, details.TarballURL)
 	if err != nil {
 		return nil, err
 	}
 
-	ref := path.Join(parsedURL.Host, parsedURL.Path, fmt.Sprintf("%s:%s", unescapedChartName, details.Version))
+	ref := path.Join(chartURL.Host, chartURL.Path)
 	chartBuffer, _, err := c.puller.PullOCIChart(ref)
 	if err != nil {
 		return nil, err
@@ -215,12 +214,11 @@ type ChartClientFactoryInterface interface {
 type ChartClientFactory struct{}
 
 // New for ClientResolver
-func (c *ChartClientFactory) New(repoType, userAgent string) ChartClient {
+func (c *ChartClientFactory) New(tarballUrl string, userAgent string) ChartClient {
 	var client ChartClient
-	switch repoType {
-	case "oci":
+	if strings.HasPrefix(tarballUrl, "oci://") {
 		client = NewOCIClient(userAgent)
-	default:
+	} else {
 		client = NewChartClient(userAgent)
 	}
 	return client

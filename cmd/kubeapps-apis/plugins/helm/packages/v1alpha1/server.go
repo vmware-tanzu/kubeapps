@@ -963,7 +963,7 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, headers http
 		},
 		appRepo,
 		caCertSecret, authSecret,
-		s.chartClientFactory.New(appRepo.Spec.Type, userAgentString),
+		s.chartClientFactory.New(tarballURL, userAgentString),
 	)
 	if err != nil {
 		return nil, nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Unable to fetch the chart %s from the namespace %q: %w", chartDetails.ChartName, appRepo.Namespace, err))
