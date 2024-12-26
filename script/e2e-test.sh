@@ -319,6 +319,7 @@ installOrUpgradeKubeapps() {
     --set apprepository.initialRepos[0].basicAuth.user=admin
     --set apprepository.initialRepos[0].basicAuth.password=password
     --set apprepository.globalReposNamespaceSuffix=-repos-global
+    --set global.security.allowInsecureImages=true
     --wait)
 
   echo "${cmd[@]}"
@@ -793,6 +794,7 @@ if [[ -z "${GKE_VERSION-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GR
     --set apprepository.initialRepos[0].basicAuth.password=password
     --set apprepository.globalReposNamespaceSuffix=-repos-global
     --set global.postgresql.auth.postgresPassword=password
+    --set global.security.allowInsecureImages=true
     --wait)
 
   echo "${cmd[@]}"
