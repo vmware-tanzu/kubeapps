@@ -17,7 +17,7 @@ sed -i.bk -e "s/kubeVersion.*//g" "${CHART_DIR}Chart.yaml"
 helm dep up "${CHART_DIR}"
 
 # test with the minimum supported helm version
-helm template "${CHART_DIR}" --debug
+helm template "${CHART_DIR}" --debug --set global.security.allowInsecureImages=yes
 
 # test with the latest stable helm version
-helm-stable template "${CHART_DIR}" --debug
+helm-stable template "${CHART_DIR}" --debug --set global.security.allowInsecureImages=yes
