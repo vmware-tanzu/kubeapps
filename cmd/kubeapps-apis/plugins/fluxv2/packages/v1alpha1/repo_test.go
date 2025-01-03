@@ -19,7 +19,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1"
-	sourcev1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1"
 	"github.com/go-redis/redismock/v8"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -414,7 +414,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			repos := []sourcev1beta2.HelmRepository{}
+			repos := []sourcev1.HelmRepository{}
 
 			for _, rs := range tc.repos {
 				ts2, repo, err := newHttpRepoAndServeIndex(rs.index, rs.name, rs.namespace, nil, "")
@@ -479,7 +479,7 @@ func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
 				index:     testYaml("index-with-categories.yaml"),
 			},
 		}
-		repos := []sourcev1beta2.HelmRepository{}
+		repos := []sourcev1.HelmRepository{}
 		for _, rs := range existingRepos {
 			ts2, repo, err := newHttpRepoAndServeIndex(rs.index, rs.name, rs.namespace, nil, "")
 			if err != nil {
@@ -616,12 +616,12 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		}))
 		defer ts.Close()
 
-		repoSpec := &sourcev1beta2.HelmRepositorySpec{
+		repoSpec := &sourcev1.HelmRepositorySpec{
 			URL:      "https://example.repo.com/charts",
 			Interval: metav1.Duration{Duration: 1 * time.Minute},
 		}
 
-		repoStatus := &sourcev1beta2.HelmRepositoryStatus{
+		repoStatus := &sourcev1.HelmRepositoryStatus{
 			Artifact: &sourcev1.Artifact{
 				Digest:         "651f952130ea96823711d08345b85e82be011dc6",
 				LastUpdateTime: metav1.Time{Time: lastUpdateTime},
@@ -640,7 +640,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		repoName := types.NamespacedName{Namespace: "ns2", Name: "testrepo"}
 		repo := newRepo(repoName.Name, repoName.Namespace, repoSpec, repoStatus)
 
-		s, mock, err := newSimpleServerWithRepos(t, []sourcev1beta2.HelmRepository{repo})
+		s, mock, err := newSimpleServerWithRepos(t, []sourcev1.HelmRepository{repo})
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
@@ -752,7 +752,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		}
 		defer ts.Close()
 
-		s, mock, err := newServerWithRepos(t, []sourcev1beta2.HelmRepository{*repo}, charts, nil)
+		s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, charts, nil)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -847,7 +847,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 		}
 		defer ts2.Close()
 
-		s, mock, err := newSimpleServerWithRepos(t, []sourcev1beta2.HelmRepository{*repo})
+		s, mock, err := newSimpleServerWithRepos(t, []sourcev1.HelmRepository{*repo})
 		if err != nil {
 			t.Fatalf("error instantiating the server: %v", err)
 		}
@@ -932,7 +932,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 		}
 
 		// first, I'd like to fill up the work queue with a whole bunch of work items
-		repos := []*sourcev1beta2.HelmRepository{}
+		repos := []*sourcev1.HelmRepository{}
 		mapReposCached := make(map[string][]byte)
 		keysInOrder := []string{}
 
@@ -1181,7 +1181,7 @@ func TestAddPackageRepository(t *testing.T) {
 		name                  string
 		request               *corev1.AddPackageRepositoryRequest
 		expectedResponse      *corev1.AddPackageRepositoryResponse
-		expectedRepo          *sourcev1beta2.HelmRepository
+		expectedRepo          *sourcev1.HelmRepository
 		errorCode             connect.Code
 		existingSecret        *apiv1.Secret
 		expectedCreatedSecret *apiv1.Secret
@@ -1411,7 +1411,7 @@ func TestAddPackageRepository(t *testing.T) {
 			if ctrlClient, err := s.clientGetter.ControllerRuntime(http.Header{}, s.kubeappsCluster); err != nil {
 				t.Fatal(err)
 			} else {
-				var actualRepo sourcev1beta2.HelmRepository
+				var actualRepo sourcev1.HelmRepository
 				if err = ctrlClient.Get(ctx, nsname, &actualRepo); err != nil {
 					t.Fatal(err)
 				} else {
@@ -1429,7 +1429,7 @@ func TestAddPackageRepository(t *testing.T) {
 						}
 					} else {
 						// TODO(agamez): flux upgrade - migrate to CertSecretRef, see https://github.com/fluxcd/flux2/releases/tag/v2.1.0
-						opt1 := cmpopts.IgnoreFields(sourcev1beta2.HelmRepositorySpec{}, "SecretRef")
+						opt1 := cmpopts.IgnoreFields(sourcev1.HelmRepositorySpec{}, "SecretRef")
 
 						// Manually setting TypeMeta, as the fakeclient doesn't do it anymore:
 						// https://github.com/kubernetes-sigs/controller-runtime/pull/2633
@@ -1637,7 +1637,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				secretRef = tc.repoSecret.Name
 				secrets = append(secrets, tc.repoSecret)
 			}
-			var repo *sourcev1beta2.HelmRepository
+			var repo *sourcev1.HelmRepository
 			if !tc.pending && !tc.failed {
 				var ts *httptest.Server
 				var err error
@@ -1647,11 +1647,11 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				}
 				defer ts.Close()
 			} else if tc.pending {
-				repoSpec := &sourcev1beta2.HelmRepositorySpec{
+				repoSpec := &sourcev1.HelmRepositorySpec{
 					URL:      "https://example.repo.com/charts",
 					Interval: metav1.Duration{Duration: 1 * time.Minute},
 				}
-				repoStatus := &sourcev1beta2.HelmRepositoryStatus{
+				repoStatus := &sourcev1.HelmRepositoryStatus{
 					Conditions: []metav1.Condition{
 						{
 							LastTransitionTime: metav1.Time{Time: lastTransitionTime},
@@ -1665,11 +1665,11 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				repo1 := newRepo(tc.repoName, tc.repoNamespace, repoSpec, repoStatus)
 				repo = &repo1
 			} else { // failed
-				repoSpec := &sourcev1beta2.HelmRepositorySpec{
+				repoSpec := &sourcev1.HelmRepositorySpec{
 					URL:      "https://example.repo.com/charts",
 					Interval: metav1.Duration{Duration: 1 * time.Minute},
 				}
-				repoStatus := &sourcev1beta2.HelmRepositoryStatus{
+				repoStatus := &sourcev1.HelmRepositoryStatus{
 					Conditions: []metav1.Condition{
 						{
 							LastTransitionTime: metav1.Time{Time: lastTransitionTime},
@@ -1686,7 +1686,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 
 			// the index.yaml will contain links to charts but for the purposes
 			// of this test they do not matter
-			s, _, err := newServerWithRepos(t, []sourcev1beta2.HelmRepository{*repo}, nil, secrets)
+			s, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, secrets)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -1744,7 +1744,7 @@ func TestGetOciPackageRepositoryDetail(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			s, mock, err := newServerWithRepos(t, []sourcev1beta2.HelmRepository{*repo}, nil, nil)
+			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, nil)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -1786,7 +1786,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 	testCases := []struct {
 		name              string
 		request           *corev1.GetPackageRepositorySummariesRequest
-		existingRepos     []sourcev1beta2.HelmRepository
+		existingRepos     []sourcev1.HelmRepository
 		expectedErrorCode connect.Code
 		expectedResponse  *corev1.GetPackageRepositorySummariesResponse
 	}{
@@ -1795,7 +1795,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 			request: &corev1.GetPackageRepositorySummariesRequest{
 				Context: &corev1.Context{},
 			},
-			existingRepos: []sourcev1beta2.HelmRepository{
+			existingRepos: []sourcev1.HelmRepository{
 				get_summaries_repo_1,
 				get_summaries_repo_2,
 				get_summaries_repo_3,
@@ -1815,7 +1815,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 			request: &corev1.GetPackageRepositorySummariesRequest{
 				Context: &corev1.Context{Namespace: "foo"},
 			},
-			existingRepos: []sourcev1beta2.HelmRepository{
+			existingRepos: []sourcev1.HelmRepository{
 				get_summaries_repo_1,
 				get_summaries_repo_2,
 				get_summaries_repo_3,
@@ -2124,7 +2124,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			if tc.newRepoSecret != nil {
 				secrets = append(secrets, tc.newRepoSecret)
 			}
-			var repo *sourcev1beta2.HelmRepository
+			var repo *sourcev1.HelmRepository
 			if !tc.pending {
 				var ts *httptest.Server
 				var err error
@@ -2134,11 +2134,11 @@ func TestUpdatePackageRepository(t *testing.T) {
 				}
 				defer ts.Close()
 			} else {
-				repoSpec := &sourcev1beta2.HelmRepositorySpec{
+				repoSpec := &sourcev1.HelmRepositorySpec{
 					URL:      "https://example.repo.com/charts",
 					Interval: metav1.Duration{Duration: 1 * time.Minute},
 				}
-				repoStatus := &sourcev1beta2.HelmRepositoryStatus{
+				repoStatus := &sourcev1.HelmRepositoryStatus{
 					Conditions: []metav1.Condition{
 						{
 							LastTransitionTime: metav1.Time{Time: lastTransitionTime},
@@ -2156,7 +2156,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 
 			// the index.yaml will contain links to charts but for the purposes
 			// of this test they do not matter
-			s, _, err := newServerWithRepos(t, []sourcev1beta2.HelmRepository{*repo}, nil, secrets)
+			s, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, secrets)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -2219,7 +2219,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 
 				// check the created/updated secret
 				if tc.expectedCreatedSecret != nil {
-					var actualRepo sourcev1beta2.HelmRepository
+					var actualRepo sourcev1.HelmRepository
 					if err = ctrlClient.Get(ctx, types.NamespacedName{Namespace: tc.repoNamespace, Name: tc.repoName}, &actualRepo); err != nil {
 						t.Fatal(err)
 					}
@@ -2285,7 +2285,7 @@ func TestDeletePackageRepository(t *testing.T) {
 			if tc.newRepoSecret != nil {
 				secrets = append(secrets, tc.newRepoSecret)
 			}
-			var repo *sourcev1beta2.HelmRepository
+			var repo *sourcev1.HelmRepository
 			if !tc.pending {
 				var ts *httptest.Server
 				var err error
@@ -2295,11 +2295,11 @@ func TestDeletePackageRepository(t *testing.T) {
 				}
 				defer ts.Close()
 			} else {
-				repoSpec := &sourcev1beta2.HelmRepositorySpec{
+				repoSpec := &sourcev1.HelmRepositorySpec{
 					URL:      "https://example.repo.com/charts",
 					Interval: metav1.Duration{Duration: 1 * time.Minute},
 				}
-				repoStatus := &sourcev1beta2.HelmRepositoryStatus{
+				repoStatus := &sourcev1.HelmRepositoryStatus{
 					Conditions: []metav1.Condition{
 						{
 							LastTransitionTime: metav1.Time{Time: lastTransitionTime},
@@ -2317,7 +2317,7 @@ func TestDeletePackageRepository(t *testing.T) {
 
 			// the index.yaml will contain links to charts but for the purposes
 			// of this test they do not matter
-			s, _, err := newServerWithRepos(t, []sourcev1beta2.HelmRepository{*repo}, nil, secrets)
+			s, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, secrets)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -2331,7 +2331,7 @@ func TestDeletePackageRepository(t *testing.T) {
 				Namespace: tc.request.PackageRepoRef.Context.Namespace,
 				Name:      tc.request.PackageRepoRef.Identifier,
 			}
-			var actualRepo sourcev1beta2.HelmRepository
+			var actualRepo sourcev1.HelmRepository
 			if tc.expectedErrorCode == 0 {
 				if err = ctrlClient.Get(ctx, nsname, &actualRepo); err != nil {
 					t.Fatal(err)
@@ -2414,7 +2414,7 @@ func TestGetOciAvailablePackageSummariesWithoutPagination(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			initOciFakeClientBuilder(t, *tc.seedData)
 
-			repos := []sourcev1beta2.HelmRepository{}
+			repos := []sourcev1.HelmRepository{}
 
 			for _, rs := range tc.repos {
 				repo, err := newOciRepo(rs.repoName, rs.repoNamespace, rs.repoUrl)
@@ -2451,8 +2451,8 @@ func TestGetOciAvailablePackageSummariesWithoutPagination(t *testing.T) {
 	}
 }
 
-func newRepo(name string, namespace string, spec *sourcev1beta2.HelmRepositorySpec, status *sourcev1beta2.HelmRepositoryStatus) sourcev1beta2.HelmRepository {
-	helmRepository := sourcev1beta2.HelmRepository{
+func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, status *sourcev1.HelmRepositoryStatus) sourcev1.HelmRepository {
+	helmRepository := sourcev1.HelmRepository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       name,
 			Generation: 1,
@@ -2489,7 +2489,7 @@ func newRepo(name string, namespace string, spec *sourcev1beta2.HelmRepositorySp
 
 // these functions should affect only unit test, not production code
 // does a series of mock.ExpectGet(...)
-func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...sourcev1beta2.HelmRepository) error {
+func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...sourcev1.HelmRepository) error {
 	mapVals := make(map[string][]byte)
 	ociRepoKeys := sets.Set[string]{}
 	for _, r := range repos {
@@ -2532,7 +2532,7 @@ func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filt
 	return nil
 }
 
-func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1beta2.HelmRepository, oldValue []byte) (key string, bytes []byte, err error) {
+func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository, oldValue []byte) (key string, bytes []byte, err error) {
 	bg := &clientgetter.FixedClusterClientProvider{ClientsFunc: func(ctx context.Context) (*clientgetter.ClientGetter, error) {
 		return s.clientGetter.GetClients(http.Header{}, s.kubeappsCluster)
 	}}
@@ -2540,7 +2540,7 @@ func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo source
 	return sinkNoCache.redisMockSetValueForRepo(mock, repo, oldValue)
 }
 
-func (sink *repoEventSink) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1beta2.HelmRepository, oldValue []byte) (key string, newValue []byte, err error) {
+func (sink *repoEventSink) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository, oldValue []byte) (key string, newValue []byte, err error) {
 	if key, newValue, err = sink.redisKeyValueForRepo(repo); err != nil {
 		if oldValue == nil {
 			mock.ExpectGet(key).RedisNil()
@@ -2565,7 +2565,7 @@ func redisMockSetValueForRepo(mock redismock.ClientMock, key string, newValue, o
 	mock.ExpectInfo("memory").SetVal("used_memory_rss_human:NA\r\nmaxmemory_human:NA")
 }
 
-func (s *Server) redisKeyValueForRepo(r sourcev1beta2.HelmRepository) (key string, byteArray []byte, err error) {
+func (s *Server) redisKeyValueForRepo(r sourcev1.HelmRepository) (key string, byteArray []byte, err error) {
 	cg := &clientgetter.FixedClusterClientProvider{ClientsFunc: func(ctx context.Context) (*clientgetter.ClientGetter, error) {
 		return s.clientGetter.GetClients(http.Header{}, s.kubeappsCluster)
 	}}
@@ -2573,7 +2573,7 @@ func (s *Server) redisKeyValueForRepo(r sourcev1beta2.HelmRepository) (key strin
 	return sinkNoChartCache.redisKeyValueForRepo(r)
 }
 
-func (sink *repoEventSink) redisKeyValueForRepo(r sourcev1beta2.HelmRepository) (key string, byteArray []byte, err error) {
+func (sink *repoEventSink) redisKeyValueForRepo(r sourcev1.HelmRepository) (key string, byteArray []byte, err error) {
 	if key, err = redisKeyForRepo(r); err != nil {
 		return key, nil, err
 	} else {
@@ -2591,7 +2591,7 @@ func (sink *repoEventSink) redisKeyValueForRepo(r sourcev1beta2.HelmRepository) 
 	}
 }
 
-func redisKeyForRepo(r sourcev1beta2.HelmRepository) (string, error) {
+func redisKeyForRepo(r sourcev1.HelmRepository) (string, error) {
 	// redis convention on key format
 	// https://redis.io/topics/data-types-intro
 	// Try to stick with a schema. For instance "object-type:id" is a good idea, as in "user:1000".
@@ -2612,7 +2612,7 @@ func redisKeyForRepoNamespacedName(name types.NamespacedName) (string, error) {
 	return fmt.Sprintf("%s:%s:%s", fluxHelmRepositories, name.Namespace, name.Name), nil
 }
 
-func newHttpRepoAndServeIndex(repoIndex, repoName, repoNamespace string, replaceUrls map[string]string, secretRef string) (*httptest.Server, *sourcev1beta2.HelmRepository, error) {
+func newHttpRepoAndServeIndex(repoIndex, repoName, repoNamespace string, replaceUrls map[string]string, secretRef string) (*httptest.Server, *sourcev1.HelmRepository, error) {
 	indexYAMLBytes, err := os.ReadFile(repoIndex)
 	if err != nil {
 		return nil, nil, err
@@ -2631,7 +2631,7 @@ func newHttpRepoAndServeIndex(repoIndex, repoName, repoNamespace string, replace
 		fmt.Fprintln(w, string(indexYAMLBytes))
 	}))
 
-	repoSpec := &sourcev1beta2.HelmRepositorySpec{
+	repoSpec := &sourcev1.HelmRepositorySpec{
 		URL:      "https://example.repo.com/charts",
 		Interval: metav1.Duration{Duration: 1 * time.Minute},
 	}
@@ -2644,7 +2644,7 @@ func newHttpRepoAndServeIndex(repoIndex, repoName, repoNamespace string, replace
 	revision := "651f952130ea96823711d08345b85e82be011dc6"
 	sz := int64(31989)
 
-	repoStatus := &sourcev1beta2.HelmRepositoryStatus{
+	repoStatus := &sourcev1.HelmRepositoryStatus{
 		Artifact: &sourcev1.Artifact{
 			Path:           fmt.Sprintf("helmrepository/%s/%s/index-%s.yaml", repoNamespace, repoName, revision),
 			Digest:         revision,
@@ -2669,16 +2669,16 @@ func newHttpRepoAndServeIndex(repoIndex, repoName, repoNamespace string, replace
 	return ts, &repo, nil
 }
 
-func newOciRepo(repoName, repoNamespace, repoUrl string) (*sourcev1beta2.HelmRepository, error) {
+func newOciRepo(repoName, repoNamespace, repoUrl string) (*sourcev1.HelmRepository, error) {
 	timeout := metav1.Duration{Duration: 60 * time.Second}
-	repoSpec := &sourcev1beta2.HelmRepositorySpec{
+	repoSpec := &sourcev1.HelmRepositorySpec{
 		URL:      repoUrl,
 		Interval: metav1.Duration{Duration: 1 * time.Minute},
 		Timeout:  &timeout,
 		Type:     "oci",
 	}
 
-	repoStatus := &sourcev1beta2.HelmRepositoryStatus{
+	repoStatus := &sourcev1.HelmRepositoryStatus{
 		Conditions: []metav1.Condition{
 			{
 				Type:               fluxmeta.ReadyCondition,
