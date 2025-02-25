@@ -8,7 +8,7 @@ go 1.23.2
 require (
 	carvel.dev/vendir v0.42.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/Masterminds/semver/v3 v3.3.0
+	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/adhocore/gronx v1.19.3
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/bufbuild/connect-go v1.10.0
