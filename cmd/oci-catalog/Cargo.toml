@@ -21,7 +21,7 @@ serde_json = "1.0"
 tokio = { version = "1.37", features = ["macros", "rt-multi-thread"] }
 tokio-stream = "0.1"
 tonic = "0.11"
-tonic-health = "0.11"
+tonic-health = "0.13"
 url = "2.5"
 
 [build-dependencies]
