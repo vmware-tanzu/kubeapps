@@ -1,8 +1,40 @@
 # Changelog
 
-## 17.1.1 (2024-12-24)
+## 18.0.0 (2025-05-07)
 
-* [bitnami/kubeapps] Release 17.1.1 ([#31153](https://github.com/bitnami/charts/pull/31153))
+* [bitnami/kubeapps] feat!: :arrow_up: :boom: Bump Redis(R) to 8.0 ([#33503](https://github.com/bitnami/charts/pull/33503))
+
+## <small>17.1.7 (2025-05-06)</small>
+
+* [bitnami/kubeapps] chore: :recycle: :arrow_up: Update common and remove k8s < 1.23 references (#3338 ([4041a6e](https://github.com/bitnami/charts/commit/4041a6ea2e1c7fac693ce41beb3a0c997725570d)), closes [#33389](https://github.com/bitnami/charts/issues/33389)
+
+## <small>17.1.6 (2025-04-28)</small>
+
+* [bitnami/kubeapps] Release 17.1.6 (#33212) ([1ead8af](https://github.com/bitnami/charts/commit/1ead8af0f7a0c75aba2f13270b3504769c43c987)), closes [#33212](https://github.com/bitnami/charts/issues/33212)
+
+## <small>17.1.5 (2025-04-21)</small>
+
+* [bitnami/kubeapps] Release 17.1.5 (#33097) ([c28a66c](https://github.com/bitnami/charts/commit/c28a66cd17f0fd2f05d130a0ff3d275cfbc0246d)), closes [#33097](https://github.com/bitnami/charts/issues/33097)
+
+## <small>17.1.4 (2025-03-23)</small>
+
+* [bitnami/*] Add tanzuCategory annotation (#32409) ([a8fba5c](https://github.com/bitnami/charts/commit/a8fba5cb01f6f4464ca7f69c50b0fbe97d837a95)), closes [#32409](https://github.com/bitnami/charts/issues/32409)
+* [bitnami/kubeapps] Release 17.1.4 (#32568) ([d9f041d](https://github.com/bitnami/charts/commit/d9f041d9cca4c83fd77f3dcba95d741ccf320e9a)), closes [#32568](https://github.com/bitnami/charts/issues/32568)
+
+## <small>17.1.3 (2025-02-21)</small>
+
+* [bitnami/*] Use CDN url for the Bitnami Application Icons (#31881) ([d9bb11a](https://github.com/bitnami/charts/commit/d9bb11a9076b9bfdcc70ea022c25ef50e9713657)), closes [#31881](https://github.com/bitnami/charts/issues/31881)
+* [bitnami/kubeapps] Release 17.1.3 (#32093) ([51dcb53](https://github.com/bitnami/charts/commit/51dcb533a096a5df4787bed39f306854a55bbca4)), closes [#32093](https://github.com/bitnami/charts/issues/32093)
+
+## <small>17.1.2 (2025-02-03)</small>
+
+* [bitnami/kubeapps] Release 17.1.2 (#31703) ([f12f39a](https://github.com/bitnami/charts/commit/f12f39ab142fd10d7e1303b2706ad57c6231c8bd)), closes [#31703](https://github.com/bitnami/charts/issues/31703)
+* Update copyright year (#31682) ([e9f02f5](https://github.com/bitnami/charts/commit/e9f02f5007068751f7eb2270fece811e685c99b6)), closes [#31682](https://github.com/bitnami/charts/issues/31682)
+
+## <small>17.1.1 (2024-12-24)</small>
+
+* [bitnami/*] Fix typo in README (#31052) ([b41a51d](https://github.com/bitnami/charts/commit/b41a51d1bd04841fc108b78d3b8357a5292771c8)), closes [#31052](https://github.com/bitnami/charts/issues/31052)
+* [bitnami/kubeapps] Release 17.1.1 (#31153) ([1229341](https://github.com/bitnami/charts/commit/12293419b20d4194dc3095d7ef2ec6974eb41bf9)), closes [#31153](https://github.com/bitnami/charts/issues/31153)
 
 ## 17.1.0 (2024-12-10)
 
@@ -579,7 +611,7 @@
 
 ## <small>8.0.16 (2022-05-05)</small>
 
-* [bitnami/kubeapps] Values references postgresPassword used by Kubeapps. (#10006) ([ec5fbdd](https://github.com/bitnami/charts/commit/ec5fbdd0148f1c2de0ba40d649508b8a636b1a32)), closes [#10006](https://github.com/bitnami/charts/issues/10006) [/github.com/bitnami/charts/pull/9441/files#diff-0f1b69af1b7c9c48d9d4f43c74fd880405aec305533aa650e1c26d7a2d20c300R1976-R1988](https://github.com//github.com/bitnami/charts/pull/9441/files/issues/diff-0f1b69af1b7c9c48d9d4f43c74fd880405aec305533aa650e1c26d7a2d20c300R1976-R1988)
+* [bitnami/kubeapps] Values references postgresPassword used by Kubeapps. (#10006) ([ec5fbdd](https://github.com/bitnami/charts/commit/ec5fbdd0148f1c2de0ba40d649508b8a636b1a32)), closes [#10006](https://github.com/bitnami/charts/issues/10006)
 
 ## <small>8.0.15 (2022-04-30)</small>
 
