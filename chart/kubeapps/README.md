@@ -1017,6 +1017,10 @@ Feel free to [open an issue](https://github.com/vmware-tanzu/kubeapps/issues/new
 
 ## Upgrading
 
+### To 18.0.0
+
+This major updates the Redis&reg; subchart to its newest major, 21.0.0, which updates Redis&reg; from 7.4 to 8.0. [Here](https://redis.io/docs/latest/operate/oss_and_stack/install/upgrade/cluster/) you can find more information about the changes introduced in that version. No major issues are expected during the upgrade.
+
 ### To 17.1.0
 
 This version introduces image verification for security purposes. To disable it, set `global.security.allowInsecureImages` to `true`. More details at [GitHub issue](https://github.com/bitnami/charts/issues/30850). Kubeapps
@@ -1214,7 +1218,7 @@ After that, you should be able to upgrade Kubeapps as always and the database wi
 
 ## License
 
-Copyright &copy; 2024 Broadcom. The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+Copyright &copy; 2025 Broadcom. The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
