@@ -73,7 +73,7 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@bufbuild/buf": "^1.35.1",
+    "@bufbuild/buf": "^1.55.1",
     "@bufbuild/protoc-gen-es": "^2.2.2",
     "@connectrpc/protoc-gen-connect-es": "^1.4.0",
     "@craco/craco": "^7.1.0",
