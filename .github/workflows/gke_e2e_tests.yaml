@@ -89,7 +89,7 @@ jobs:
       USE_MULTICLUSTER_OIDC_ENV: ${{ inputs.USE_MULTICLUSTER_OIDC_ENV }}
       ALLOW_GKE_VERSION_FALLBACK: ${{ inputs.ALLOW_GKE_VERSION_FALLBACK }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: |
           set -euo pipefail
           source ./script/lib/libcitools.sh
