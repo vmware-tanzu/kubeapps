@@ -187,7 +187,7 @@ jobs:
         env:
           ALLOW_EMPTY_PASSWORD: "yes"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -207,7 +207,7 @@ jobs:
       # See https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
       NODE_OPTIONS: "--max-old-space-size=1024"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -225,7 +225,7 @@ jobs:
     container:
       image: rust:${{needs.setup.outputs.rust_version}}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Run rust unit tests
         run: cargo test --manifest-path cmd/pinniped-proxy/Cargo.toml
 
@@ -236,7 +236,7 @@ jobs:
     container:
       image: rust:${{needs.setup.outputs.rust_version}}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install protoc dependency
         run: |
           apt-get update -y
@@ -249,7 +249,7 @@ jobs:
       - setup
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GOLANG_VERSION }}
@@ -319,7 +319,7 @@ jobs:
         run: |
           echo "img_name=${IMG_NAME}" >> $GITHUB_OUTPUT
           echo "img_file=/tmp/${IMG_NAME}-image.tar" >> $GITHUB_OUTPUT
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: docker/metadata-action@v5
         id: meta
         with:
@@ -358,7 +358,7 @@ jobs:
         run: |
           echo "img_name=${IMG_NAME}" >> $GITHUB_OUTPUT
           echo "img_file=/tmp/${IMG_NAME}-image.tar" >> $GITHUB_OUTPUT
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: docker/metadata-action@v5
         id: meta
         with:
@@ -461,7 +461,7 @@ jobs:
       TEST_TIMEOUT_MINUTES: 6  # Timeout minutes for each test
       USE_MULTICLUSTER_OIDC_ENV: "true"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: "Install required CLI tools"
         run: |
           set -eu
@@ -610,7 +610,7 @@ jobs:
     if: needs.setup.outputs.running_on_main == 'true' || inputs.trigger_release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: "Install CLI tools"
         env:
           GPG_KEY_PUBLIC: ${{ secrets.GPG_KEY_PUBLIC }}
@@ -668,7 +668,7 @@ jobs:
     if: inputs.trigger_release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: "Install CLI tools"
         env:
           GPG_KEY_PUBLIC: ${{ secrets.GPG_KEY_PUBLIC }}
@@ -724,7 +724,7 @@ jobs:
       - GKE_STABLE_VERSION
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: |
           set -eu
           source ./script/lib/libcitools.sh

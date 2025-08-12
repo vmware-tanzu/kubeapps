@@ -18,7 +18,7 @@ jobs:
   yaml-linter:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - id: yaml-lint
         uses: ibiqlik/action-yamllint@v3
         with:
@@ -36,7 +36,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ inputs.golang_version }}
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: golangci/golangci-lint-action@v6
         with:
           version: ${{ inputs.golangci_lint_version }}
@@ -48,6 +48,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ inputs.golang_version }}
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Check license Headers
         uses: apache/skywalking-eyes/header@v0.6.0
