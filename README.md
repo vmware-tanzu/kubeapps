@@ -6,7 +6,7 @@
 [![Netlify Status](https://api.netlify.com/api/v1/badges/7e0e2833-1d75-43f6-b006-632d359bb83b/deploy-status)](https://app.netlify.com/sites/kubeapps-dev/deploys)
 
 > [!CAUTION]
-> After many years of growth and milestones, the time has come for the next chapter of Kubeapps. The current maintainers are concentrating their efforts on new projects. We are looking for volunteers to help us maintain the project going forward. Without new volunteers, the project will be deprecated and the repo archived on August 8th, 2025.
+> After many years of growth and milestones, the time has come for the next chapter of Kubeapps. The current maintainers are concentrating their efforts on new projects. As of August 25th, 2025, the project has been deprecated and the repository archived. If a widely adopted fork emerges, we will link to it here to guide users arriving at this repository.
 
 ## Overview
 
