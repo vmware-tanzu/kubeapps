@@ -25,7 +25,7 @@ tonic-health = "0.11"
 url = "2.5"
 
 [build-dependencies]
-tonic-build = "0.11"
+tonic-build = "0.14"
 
 [dev-dependencies]
 rstest = "0.22.0"
