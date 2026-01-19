@@ -28,4 +28,4 @@ url = "2.5"
 tonic-build = "0.11"
 
 [dev-dependencies]
-rstest = "0.22.0"
+rstest = "0.26.1"
