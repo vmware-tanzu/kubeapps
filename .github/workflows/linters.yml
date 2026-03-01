@@ -50,4 +50,4 @@ jobs:
           go-version: ${{ inputs.golang_version }}
       - uses: actions/checkout@v4
       - name: Check license Headers
-        uses: apache/skywalking-eyes/header@v0.6.0
+        uses: apache/skywalking-eyes/header@v0.7.0
