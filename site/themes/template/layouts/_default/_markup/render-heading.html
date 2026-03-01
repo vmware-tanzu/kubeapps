@@ -1,7 +1,0 @@
-{{ $level := .Level }}
-{{- if not (eq .Level 6) }}
-  {{ $level = add $level 1 }}
-{{- end }}
-<a href="#{{ .Anchor | safeURL }}" title="{{ replace (.Anchor | safeURL) "-" " " }} anchor" class="section-link">
-  <h{{ $level }} id="{{ .Anchor | safeURL }}">{{ .Text | safeHTML }} ¶</h{{ $level }}>
-</a>
